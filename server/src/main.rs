@@ -17,6 +17,7 @@ async fn main() -> Result<()> {
         App::new()
             .app_data(web::Data::new(AppData {}))
             .route("/healthz", web::get().to(healthz))
+            .service(web::scope("/api").configure(api::configure))
     })
     .bind((args.listen_address, args.port))?
     .run()
