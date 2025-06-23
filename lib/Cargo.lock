@@ -3,12 +3,5 @@
 version = 4
 
 [[package]]
-name = "backend"
-version = "0.1.0"
-dependencies = [
- "hakanai-lib",
-]
-
-[[package]]
 name = "hakanai-lib"
 version = "0.1.0"
