@@ -1,11 +1,18 @@
+mod options;
+
 use std::io::Result;
 
 use actix_web::{App, HttpResponse, HttpServer, Responder, web};
+use clap::Parser;
+
+use options::Args;
 
 #[actix_web::main]
 async fn main() -> Result<()> {
+    let args = Args::parse();
+
     HttpServer::new(|| App::new().route("/healthz", web::get().to(healthz)))
-        .bind(("127.0.0.1", 8080))?
+        .bind((args.listen_address, args.port))?
         .run()
         .await
 }
