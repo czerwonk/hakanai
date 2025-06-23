@@ -3,7 +3,7 @@
 version = 4
 
 [[package]]
-name = "cli"
+name = "hakanai-cli"
 version = "0.1.0"
 dependencies = [
  "hakanai-lib",
