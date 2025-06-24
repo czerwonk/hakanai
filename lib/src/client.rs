@@ -6,6 +6,8 @@ use url::Url;
 
 use crate::models::{PostSecretRequest, PostSecretResponse};
 
+const API_SECRET_PATH: &str = "api/secret";
+
 /// Defines the asynchronous interface for a client that can send and receive secrets.
 #[async_trait]
 pub trait Client: Send + Sync {
@@ -80,10 +82,15 @@ impl Client for WebClient {
         data: String,
         ttl: Duration,
     ) -> Result<Url, ClientError> {
-        let url = format!("{}api/secret", base_url);
+        let url = base_url.join(API_SECRET_PATH)?;
         let req = PostSecretRequest::new(data, ttl);
 
-        let resp = self.web_client.post(&url).json(&req).send().await?;
+        let resp = self
+            .web_client
+            .post(&url.to_string())
+            .json(&req)
+            .send()
+            .await?;
         if resp.status() != reqwest::StatusCode::OK {
             let mut err_msg = format!("HTTP error: {}", resp.status());
 
@@ -96,7 +103,7 @@ impl Client for WebClient {
 
         let res = resp.json::<PostSecretResponse>().await?;
 
-        let secret_url = Url::parse(&format!("{}/secret/{}", base_url, res.id))?;
+        let secret_url = base_url.join(&format!("{}/{}", API_SECRET_PATH, res.id))?;
         Ok(secret_url)
     }
 
@@ -160,7 +167,10 @@ mod tests {
         }
         assert!(result.is_ok());
         let url = result.unwrap();
-        assert_eq!(url.as_str(), format!("{}/secret/{}", base_url, secret_id));
+        assert_eq!(
+            url.as_str(),
+            format!("{}api/secret/{}", base_url, secret_id)
+        );
     }
 
     #[tokio::test]
