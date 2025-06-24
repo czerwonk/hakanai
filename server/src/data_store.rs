@@ -57,6 +57,9 @@ pub trait DataStore: Send + Sync {
     ) -> Result<(), DataStoreError>;
 }
 
+/// An implementation of the `DataStore` trait that uses Redis as its backend.
+/// This struct holds a `ConnectionManager` for interacting with the Redis
+/// server. It is designed to be cloneable and thread-safe.
 #[derive(Clone)]
 pub struct RedisDataStore {
     con: ConnectionManager,
