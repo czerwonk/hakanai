@@ -3,7 +3,6 @@ use std::time::Duration;
 use async_trait::async_trait;
 use thiserror::Error;
 use url::Url;
-use uuid::Uuid;
 
 use crate::models::{PostSecretRequest, PostSecretResponse};
 
@@ -14,6 +13,7 @@ pub trait Client: Send + Sync {
     ///
     /// # Arguments
     ///
+    /// * `base_url` - The base URL of the service.
     /// * `data` - The secret data to be sent.
     /// * `ttl` - The time-to-live for the secret.
     ///
@@ -22,20 +22,25 @@ pub trait Client: Send + Sync {
     /// A `Result` which is:
     /// - `Ok(Url)` containing the URL of the stored secret.
     /// - `Err(ClientError)` with an error message if the operation fails.
-    async fn send_secret(&self, data: String, ttl: Duration) -> Result<Url, ClientError>;
+    async fn send_secret(
+        &self,
+        base_url: Url,
+        data: String,
+        ttl: Duration,
+    ) -> Result<Url, ClientError>;
 
-    /// Retrieves a secret from the store using its ID.
+    /// Retrieves a secret from the store using its URL.
     ///
     /// # Arguments
     ///
-    /// * `id` - The `Uuid` of the secret to be retrieved.
+    /// * `url` - The URL of the secret to be retrieved.
     ///
     /// # Returns
     ///
     /// A `Result` which is:
     /// - `Ok(String)` containing the secret data.
     /// - `Err(ClientError)` with an error message if the secret is not found or another error occurs.
-    async fn receive_secret(&self, id: Uuid) -> Result<String, ClientError>;
+    async fn receive_secret(&self, url: Url) -> Result<String, ClientError>;
 }
 
 #[derive(Debug, Error)]
@@ -56,23 +61,26 @@ pub enum ClientError {
 #[derive(Debug)]
 pub struct WebClient {
     web_client: reqwest::Client,
-    base_url: Url,
 }
 
 impl WebClient {
     /// Creates a new instance of `WebClient`.
-    pub fn new(base_url: Url) -> Self {
+    fn new() -> Self {
         WebClient {
             web_client: reqwest::Client::new(),
-            base_url,
         }
     }
 }
 
 #[async_trait]
 impl Client for WebClient {
-    async fn send_secret(&self, data: String, ttl: Duration) -> Result<Url, ClientError> {
-        let url = format!("{}api/secret", self.base_url);
+    async fn send_secret(
+        &self,
+        base_url: Url,
+        data: String,
+        ttl: Duration,
+    ) -> Result<Url, ClientError> {
+        let url = format!("{}api/secret", base_url);
         let req = PostSecretRequest::new(data, ttl);
 
         let resp = self.web_client.post(&url).json(&req).send().await?;
@@ -88,13 +96,11 @@ impl Client for WebClient {
 
         let res = resp.json::<PostSecretResponse>().await?;
 
-        let secret_url = Url::parse(&format!("{}/secret/{}", self.base_url, res.id))?;
+        let secret_url = Url::parse(&format!("{}/secret/{}", base_url, res.id))?;
         Ok(secret_url)
     }
 
-    async fn receive_secret(&self, id: Uuid) -> Result<String, ClientError> {
-        let url = format!("{}api/secret/{}", self.base_url, id);
-
+    async fn receive_secret(&self, url: Url) -> Result<String, ClientError> {
         let resp = self.web_client.get(url).send().await?;
         if resp.status() != reqwest::StatusCode::OK {
             let mut err_msg = format!("HTTP error: {}", resp.status());
@@ -114,8 +120,8 @@ impl Client for WebClient {
 /// Creates a new web client.
 ///
 /// This function returns a new instance of `WebClient` that implements the `Client` trait.
-pub fn new(base_url: Url) -> impl Client {
-    WebClient::new(base_url)
+pub fn new() -> impl Client {
+    WebClient::new()
 }
 
 #[cfg(test)]
@@ -123,20 +129,13 @@ mod tests {
     use super::*;
     use mockito;
     use std::time::Duration;
-
-    #[test]
-    fn test_web_client_new() {
-        let base_url = Url::parse("https://example.com").unwrap();
-        let client = WebClient::new(base_url.clone());
-
-        assert_eq!(client.base_url.as_str(), "https://example.com/");
-    }
+    use url::Url;
+    use uuid::Uuid;
 
     #[tokio::test]
     async fn test_send_secret_success() {
         let mut server = mockito::Server::new_async().await;
-        let base_url = Url::parse(&server.url()).unwrap();
-        let client = WebClient::new(base_url.clone());
+        let client = WebClient::new();
 
         let secret_id = Uuid::new_v4();
         let _m = server
@@ -147,8 +146,13 @@ mod tests {
             .create_async()
             .await;
 
+        let base_url = Url::parse(&server.url()).unwrap();
         let result = client
-            .send_secret("test_secret".to_string(), Duration::from_secs(3600))
+            .send_secret(
+                base_url.clone(),
+                "test_secret".to_string(),
+                Duration::from_secs(3600),
+            )
             .await;
 
         if let Err(e) = &result {
@@ -162,8 +166,7 @@ mod tests {
     #[tokio::test]
     async fn test_send_secret_server_error() {
         let mut server = mockito::Server::new_async().await;
-        let base_url = Url::parse(&server.url()).unwrap();
-        let client = WebClient::new(base_url);
+        let client = WebClient::new();
 
         let _m = server
             .mock("POST", "/api/secret")
@@ -171,8 +174,13 @@ mod tests {
             .create_async()
             .await;
 
+        let base_url = Url::parse(&server.url()).unwrap();
         let result = client
-            .send_secret("test_secret".to_string(), Duration::from_secs(3600))
+            .send_secret(
+                base_url,
+                "test_secret".to_string(),
+                Duration::from_secs(3600),
+            )
             .await;
 
         assert!(result.is_err());
@@ -181,8 +189,7 @@ mod tests {
     #[tokio::test]
     async fn test_receive_secret_success() {
         let mut server = mockito::Server::new_async().await;
-        let base_url = Url::parse(&server.url()).unwrap();
-        let client = WebClient::new(base_url);
+        let client = WebClient::new();
 
         let secret_id = Uuid::new_v4();
         let secret_data = "my_secret_data";
@@ -194,7 +201,11 @@ mod tests {
             .create_async()
             .await;
 
-        let result = client.receive_secret(secret_id).await;
+        let base_url = Url::parse(&server.url()).unwrap();
+        let url = base_url
+            .join(&format!("/api/secret/{}", secret_id))
+            .unwrap();
+        let result = client.receive_secret(url).await;
 
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), secret_data);
@@ -203,27 +214,28 @@ mod tests {
     #[tokio::test]
     async fn test_receive_secret_not_found() {
         let mut server = mockito::Server::new_async().await;
-        let base_url = Url::parse(&server.url()).unwrap();
-        let client = WebClient::new(base_url);
+        let client = WebClient::new();
 
         let secret_id = Uuid::new_v4();
 
-        dbg!(&client);
         let _m = server
             .mock("GET", format!("/api/secret/{}", secret_id).as_str())
             .with_status(404)
             .create_async()
             .await;
 
-        let result = client.receive_secret(secret_id).await;
+        let base_url = Url::parse(&server.url()).unwrap();
+        let url = base_url
+            .join(&format!("/api/secret/{}", secret_id))
+            .unwrap();
+        let result = client.receive_secret(url).await;
         assert!(result.is_err());
     }
 
     #[tokio::test]
     async fn test_send_secret_invalid_json_response() {
         let mut server = mockito::Server::new_async().await;
-        let base_url = Url::parse(&server.url()).unwrap();
-        let client = WebClient::new(base_url);
+        let client = WebClient::new();
 
         let _m = server
             .mock("POST", "/api/secret")
@@ -233,8 +245,13 @@ mod tests {
             .create_async()
             .await;
 
+        let base_url = Url::parse(&server.url()).unwrap();
         let result = client
-            .send_secret("test_secret".to_string(), Duration::from_secs(3600))
+            .send_secret(
+                base_url,
+                "test_secret".to_string(),
+                Duration::from_secs(3600),
+            )
             .await;
 
         assert!(result.is_err());
