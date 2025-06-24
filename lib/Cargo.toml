@@ -12,6 +12,10 @@ thiserror = "2.0.12"
 url = { version = "2.5.4", optional = true }
 uuid = { version = "1.17.0", features = ["serde", "v4"] }
 
+[dev-dependencies]
+mockito = "1.7.0"
+tokio = { version = "1.43.0", features = ["rt-multi-thread", "macros"] }
+
 [features]
 default = ["reqwest", "serde_json", "url"]
 minimal = []
