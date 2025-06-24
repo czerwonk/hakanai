@@ -1,5 +1,5 @@
 use actix_web::{Result, error, get, post, web};
-use serde::Deserialize;
+use uuid::Uuid;
 
 use hakanai_lib::{PostSecretRequest, PostSecretResponse};
 
@@ -23,17 +23,9 @@ pub fn configure(cfg: &mut web::ServiceConfig, data_store: Box<dyn DataStore>) {
         .app_data(web::Data::new(app_data));
 }
 
-#[derive(Deserialize)]
-struct GetSecretRequest {
-    id: uuid::Uuid,
-}
-
 #[get("/secret/{id}")]
-async fn get_secret(
-    req: web::Path<GetSecretRequest>,
-    app_data: web::Data<AppData>,
-) -> Result<String> {
-    let id = req.id;
+async fn get_secret(req: web::Path<Uuid>, app_data: web::Data<AppData>) -> Result<String> {
+    let id = req.into_inner();
     let data_store = app_data.data_store.as_ref();
 
     match data_store.get(id).await {
