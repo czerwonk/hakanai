@@ -72,7 +72,7 @@ impl WebClient {
 #[async_trait]
 impl Client for WebClient {
     async fn send_secret(&self, data: String, ttl: Duration) -> Result<Url, ClientError> {
-        let url = format!("{}/api/secret", self.base_url);
+        let url = format!("{}api/secret", self.base_url);
         let req = PostSecretRequest::new(data, ttl);
 
         let resp = self.web_client.post(&url).json(&req).send().await?;
@@ -93,7 +93,7 @@ impl Client for WebClient {
     }
 
     async fn receive_secret(&self, id: Uuid) -> Result<String, ClientError> {
-        let url = format!("{}/api/secret/{}", self.base_url, id);
+        let url = format!("{}api/secret/{}", self.base_url, id);
 
         let resp = self.web_client.get(url).send().await?;
         if resp.status() != reqwest::StatusCode::OK {
@@ -151,6 +151,9 @@ mod tests {
             .send_secret("test_secret".to_string(), Duration::from_secs(3600))
             .await;
 
+        if let Err(e) = &result {
+            eprintln!("Error in test_send_secret_success: {:?}", e);
+        }
         assert!(result.is_ok());
         let url = result.unwrap();
         assert_eq!(url.as_str(), format!("{}/secret/{}", base_url, secret_id));
