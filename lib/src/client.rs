@@ -90,7 +90,7 @@ impl Client for WebClient {
 
         let resp = self
             .web_client
-            .post(&url.to_string())
+            .post(url.to_string())
             .json(&req)
             .send()
             .await?;
