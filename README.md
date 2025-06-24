@@ -15,14 +15,14 @@ Hakanai embodies the Japanese concept of transience - secrets that exist only fo
 
 ## How It Works
 
-1. Your browser encrypts the secret locally
-2. Sends only the ciphertext to our server  
+1. Your client (CLI or browser) encrypts the secret locally
+2. Sends only the ciphertext to our server
 3. You share the link with the decryption key
 4. Recipient views once, then it's gone forever
 
 ## Security Opinion
 
-We chose true client-side encryption over convenience. This means JavaScript or the CLI tool is required, but your secrets remain yours alone. The server is just a temporary dead drop that forgets everything.
+We chose true client-side encryption over convenience. This means client (Browser with JS, CLI) is required to perform the crypto operations, but your secrets remain yours alone. The server is just a temporary dead drop that forgets everything.
 
 Built for those who believe privacy isn't about having something to hide - it's about having something to protect.
 

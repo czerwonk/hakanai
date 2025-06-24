@@ -1,10 +1,31 @@
 use std::collections::HashMap;
-use std::io::Error;
+use std::fmt;
 use std::sync::Mutex;
 use std::time::Duration;
 
 use async_trait::async_trait;
 use uuid::Uuid;
+
+/// Custom error type for DataStore operations
+#[derive(Debug)]
+pub enum DataStoreError {
+    /// The mutex protecting the data store was poisoned
+    MutexPoisoned,
+
+    /// A generic internal error occurred
+    InternalError(String),
+}
+
+impl fmt::Display for DataStoreError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            DataStoreError::MutexPoisoned => write!(f, "Data store mutex was poisoned"),
+            DataStoreError::InternalError(msg) => write!(f, "Internal data store error: {}", msg),
+        }
+    }
+}
+
+impl std::error::Error for DataStoreError {}
 
 /// `DataStore` is a trait that defines the contract for a simple, asynchronous,
 /// key-value storage system. Implementations of this trait are expected to be
@@ -22,7 +43,7 @@ pub trait DataStore: Send + Sync {
     /// A `Result` which is `Ok(Some(String))` if the item is found, `Ok(None)`
     /// if the item is not found, or an `Err` if an error occurs during the
     /// operation.
-    async fn get(&self, id: Uuid) -> Result<Option<String>, Error>;
+    async fn get(&self, id: Uuid) -> Result<Option<String>, DataStoreError>;
 
     /// Stores a value in the data store with a given `Uuid` and an expiration
     /// duration.
@@ -39,7 +60,8 @@ pub trait DataStore: Send + Sync {
     ///
     /// A `Result` which is `Ok(())` on successful insertion, or an `Err` if an
     /// error occurs.
-    async fn put(&self, id: Uuid, data: String, expires_in: Duration) -> Result<(), Error>;
+    async fn put(&self, id: Uuid, data: String, expires_in: Duration)
+    -> Result<(), DataStoreError>;
 }
 
 /// An in-memory implementation of the `DataStore` trait.
@@ -65,16 +87,27 @@ impl InMemoryDataStore {
 
 #[async_trait]
 impl DataStore for InMemoryDataStore {
-    async fn get(&self, id: Uuid) -> Result<Option<String>, Error> {
-        let d = self.data.lock().unwrap();
+    async fn get(&self, id: Uuid) -> Result<Option<String>, DataStoreError> {
+        let d = self
+            .data
+            .lock()
+            .map_err(|_| DataStoreError::MutexPoisoned)?;
         match d.get(&id) {
             Some(data) => Ok(Some(data.clone())),
             None => Ok(None),
         }
     }
 
-    async fn put(&self, id: Uuid, data: String, _expires_in: Duration) -> Result<(), Error> {
-        let mut d = self.data.lock().unwrap();
+    async fn put(
+        &self,
+        id: Uuid,
+        data: String,
+        _expires_in: Duration,
+    ) -> Result<(), DataStoreError> {
+        let mut d = self
+            .data
+            .lock()
+            .map_err(|_| DataStoreError::MutexPoisoned)?;
         d.insert(id, data);
 
         Ok(())

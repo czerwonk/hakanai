@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(find:*)",
-      "Bash(cargo test)"
+      "Bash(cargo test)",
+      "Bash(cargo test:*)",
+      "Bash(cargo:*)"
     ],
     "deny": []
   }

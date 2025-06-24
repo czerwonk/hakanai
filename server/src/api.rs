@@ -77,9 +77,10 @@ mod tests {
     use super::*;
     use actix_web::{App, test};
     use async_trait::async_trait;
-    use std::io::{Error, ErrorKind};
     use std::sync::{Arc, Mutex};
     use uuid::Uuid;
+
+    use crate::data_store::{DataStore, DataStoreError};
 
     struct MockDataStore {
         get_result: Option<Option<String>>,
@@ -116,17 +117,22 @@ mod tests {
 
     #[async_trait]
     impl DataStore for MockDataStore {
-        async fn get(&self, _id: Uuid) -> Result<Option<String>, Error> {
+        async fn get(&self, _id: Uuid) -> Result<Option<String>, DataStoreError> {
             if self.get_error {
-                Err(Error::new(ErrorKind::Other, "mock error"))
+                Err(DataStoreError::InternalError("mock error".to_string()))
             } else {
                 Ok(self.get_result.clone().unwrap_or(None))
             }
         }
 
-        async fn put(&self, id: Uuid, data: String, expires_in: Duration) -> Result<(), Error> {
+        async fn put(
+            &self,
+            id: Uuid,
+            data: String,
+            expires_in: Duration,
+        ) -> Result<(), DataStoreError> {
             if self.put_error {
-                Err(Error::new(ErrorKind::Other, "mock error"))
+                Err(DataStoreError::InternalError("mock error".to_string()))
             } else {
                 let mut stored = self.stored_data.lock().unwrap();
                 stored.push((id, data, expires_in));
