@@ -1,7 +1,7 @@
-use std::time::Duration;
-
 use actix_web::{Result, error, get, post, web};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+
+use hakanai_lib::{PostSecretRequest, PostSecretResponse};
 
 use crate::data_store::DataStore;
 
@@ -25,17 +25,6 @@ pub fn configure(cfg: &mut web::ServiceConfig, data_store: Box<dyn DataStore>) {
 
 #[derive(Deserialize)]
 struct GetSecretRequest {
-    id: uuid::Uuid,
-}
-
-#[derive(Deserialize, Serialize)]
-struct PostSecretRequest {
-    data: String,
-    expires_in: Duration,
-}
-
-#[derive(Deserialize, Serialize)]
-struct PostSecretResponse {
     id: uuid::Uuid,
 }
 
@@ -78,6 +67,7 @@ mod tests {
     use actix_web::{App, test};
     use async_trait::async_trait;
     use std::sync::{Arc, Mutex};
+    use std::time::Duration;
     use uuid::Uuid;
 
     use crate::data_store::{DataStore, DataStoreError};

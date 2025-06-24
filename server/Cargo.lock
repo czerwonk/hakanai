@@ -648,6 +648,10 @@ dependencies = [
 [[package]]
 name = "hakanai-lib"
 version = "0.1.0"
+dependencies = [
+ "serde",
+ "uuid",
+]
 
 [[package]]
 name = "hakanai-server"
