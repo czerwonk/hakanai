@@ -31,12 +31,18 @@ pub trait Client {
     async fn receive_secret(&self, id: Uuid) -> Result<String, ClientError>;
 }
 
+/// Represents an error that can occur during client operations.
 pub struct ClientError {
     message: String,
 }
 
 impl ClientError {
-    fn new(message: &str) -> Self {
+    /// Creates a new `ClientError` with the given message.
+    ///
+    /// # Arguments
+    ///
+    /// * `message` - A string slice that holds the error message.
+    pub fn new(message: &str) -> Self {
         ClientError {
             message: message.to_string(),
         }
