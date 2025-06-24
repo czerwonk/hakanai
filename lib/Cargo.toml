@@ -4,5 +4,12 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+async-trait = "0.1.88"
+reqwest = { version = "0.12.20", optional = true }
 serde = { version = "1.0.219", features = ["derive"] }
+serde_json = { version = "1.0.140", optional = true }
 uuid = { version = "1.17.0", features = ["serde"] }
+
+[features]
+default = []
+client = ["reqwest", "serde_json"]
