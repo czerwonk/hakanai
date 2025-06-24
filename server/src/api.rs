@@ -1,7 +1,7 @@
 use actix_web::{Result, error, get, post, web};
 use uuid::Uuid;
 
-use hakanai_lib::{PostSecretRequest, PostSecretResponse};
+use hakanai_lib::models::{PostSecretRequest, PostSecretResponse};
 
 use crate::data_store::DataStore;
 
