@@ -12,6 +12,7 @@ pub enum DataStoreError {
     Redis(#[from] redis::RedisError),
 
     #[error("internal error: {0}")]
+    #[allow(dead_code)]
     InternalError(String),
 }
 
@@ -84,7 +85,7 @@ impl DataStore for RedisDataStore {
     ) -> Result<(), DataStoreError> {
         let _: () = self
             .con
-            .set_ex(&id.to_string(), &data, expires_in.as_secs() as u64)
+            .set_ex(id.to_string(), data, expires_in.as_secs())
             .await?;
         Ok(())
     }
