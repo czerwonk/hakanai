@@ -108,6 +108,10 @@ impl Client for WebClient {
     }
 
     async fn receive_secret(&self, url: Url) -> Result<String, ClientError> {
+        if !url.path().starts_with(&format!("/{}", API_SECRET_PATH)) {
+            return Err(ClientError::Http("Invalid API path".to_string()));
+        }
+
         let resp = self.web_client.get(url).send().await?;
         if resp.status() != reqwest::StatusCode::OK {
             let mut err_msg = format!("HTTP error: {}", resp.status());
