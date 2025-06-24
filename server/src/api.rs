@@ -27,7 +27,7 @@ struct GetSecretRequest {
 #[derive(Deserialize)]
 struct PostSecretRequest {
     data: String,
-    expires_in: Option<Duration>,
+    expires_in: Duration,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -40,7 +40,16 @@ async fn get_secret(
     req: web::Path<GetSecretRequest>,
     app_data: web::Data<AppData>,
 ) -> Result<String> {
-    Err(error::ErrorInternalServerError("Not implemented yet"))
+    let id = req.id;
+    let data_store = app_data.data_store.as_ref();
+
+    match data_store.get(id).await {
+        Ok(data) => match data {
+            Some(secret) => Ok(secret),
+            None => Err(error::ErrorNotFound("Secret not found")),
+        },
+        Err(e) => Err(error::ErrorInternalServerError(e)),
+    }
 }
 
 #[post("/secret")]
@@ -48,5 +57,13 @@ async fn post_secret(
     req: web::Json<PostSecretRequest>,
     app_data: web::Data<AppData>,
 ) -> Result<web::Json<PostSecretResponse>> {
-    Err(error::ErrorInternalServerError("Not implemented yet"))
+    let id = uuid::Uuid::new_v4();
+
+    let data_store = app_data.data_store.as_ref();
+    data_store
+        .put(id, req.data.clone(), req.expires_in)
+        .await
+        .map_err(|e| error::ErrorInternalServerError(e))?;
+
+    Ok(web::Json(PostSecretResponse { id }))
 }
