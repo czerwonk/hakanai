@@ -18,10 +18,7 @@ async fn main() -> Result<()> {
         Ok(store) => store,
         Err(e) => {
             eprintln!("Failed to create Redis data store: {}", e);
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "Data store initialization failed",
-            ));
+            return Err(std::io::Error::other(e));
         }
     };
 
