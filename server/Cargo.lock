@@ -658,6 +658,7 @@ dependencies = [
  "clap",
  "hakanai-lib",
  "serde",
+ "serde_json",
  "tokio",
  "uuid",
 ]
