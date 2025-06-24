@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(cargo test)",
-      "Bash(RUST_BACKTRACE=1 cargo test test_send_secret_success -- --nocapture)"
-    ],
-    "deny": []
-  }
-}
