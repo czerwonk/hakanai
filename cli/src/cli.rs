@@ -11,11 +11,11 @@ use url::Url;
 )]
 pub struct Args {
     #[clap(subcommand)]
-    command: Command,
+    pub command: Command,
 }
 
 #[derive(Debug, Subcommand)]
-enum Command {
+pub enum Command {
     /// Receives an ephemeral secret from the server.
     Get { link: Url },
 
