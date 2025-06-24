@@ -8,3 +8,6 @@ hakanai-lib = { path = "../lib" }
 tokio = { version = "1.45.1", features = ["full"] }
 clap = { version = "4.5.40", features = ["derive"] }
 url = "2.5.4"
+anyhow = "1.0.98"
+humantime = "2.2.0"
+colored = "3.0.0"

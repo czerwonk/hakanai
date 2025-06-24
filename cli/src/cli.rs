@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use clap::{Parser, Subcommand};
 use url::Url;
 
@@ -29,5 +31,14 @@ pub enum Command {
             help = "Hakanai Server URL to send the secret to (eg. https://hakanai.routing.rocks)."
         )]
         server: Url,
+
+        #[arg(
+            short,
+            long,
+            default_value = "24h",
+            help = "Time after the secret vanishes.",
+            value_parser = humantime::parse_duration,
+        )]
+        ttl: Duration,
     },
 }
