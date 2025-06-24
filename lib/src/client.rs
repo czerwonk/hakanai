@@ -58,6 +58,9 @@ pub enum ClientError {
 
     #[error("HTTP error: {0}")]
     Http(String),
+
+    #[error("Client error: {0}")]
+    Custom(String),
 }
 
 #[derive(Debug)]
@@ -109,7 +112,7 @@ impl Client for WebClient {
 
     async fn receive_secret(&self, url: Url) -> Result<String, ClientError> {
         if !url.path().starts_with(&format!("/{}", API_SECRET_PATH)) {
-            return Err(ClientError::Http("Invalid API path".to_string()));
+            return Err(ClientError::Custom("Invalid API path".to_string()));
         }
 
         let resp = self.web_client.get(url).send().await?;
