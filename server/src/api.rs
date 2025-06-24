@@ -3,12 +3,20 @@ use std::time::Duration;
 use actix_web::{Result, error, get, post, web};
 use serde::{Deserialize, Serialize};
 
-struct AppData {}
+use crate::data_store::DataStore;
 
-pub fn configure(cfg: &mut web::ServiceConfig) {
+struct AppData {
+    data_store: Box<dyn DataStore>,
+}
+
+pub fn configure(cfg: &mut web::ServiceConfig, data_store: Box<dyn DataStore>) {
+    let app_data = AppData {
+        data_store: data_store,
+    };
+
     cfg.service(get_secret)
         .service(post_secret)
-        .app_data(web::Data::new(AppData {}));
+        .app_data(web::Data::new(app_data));
 }
 
 #[derive(Deserialize)]
@@ -28,11 +36,17 @@ struct PostSecretResponse {
 }
 
 #[get("/secret/{id}")]
-async fn get_secret(req: web::Path<GetSecretRequest>) -> Result<String> {
+async fn get_secret(
+    req: web::Path<GetSecretRequest>,
+    app_data: web::Data<AppData>,
+) -> Result<String> {
     Err(error::ErrorInternalServerError("Not implemented yet"))
 }
 
 #[post("/secret")]
-async fn post_secret(form: web::Json<PostSecretRequest>) -> Result<web::Json<PostSecretResponse>> {
+async fn post_secret(
+    req: web::Json<PostSecretRequest>,
+    app_data: web::Data<AppData>,
+) -> Result<web::Json<PostSecretResponse>> {
     Err(error::ErrorInternalServerError("Not implemented yet"))
 }
