@@ -7,19 +7,30 @@ use std::io::Result;
 use actix_web::{App, HttpResponse, HttpServer, Responder, web};
 use clap::Parser;
 
-use crate::data_store::InMemoryDataStore;
+use crate::data_store::RedisDataStore;
 use crate::options::Args;
 
-#[actix_web::main]
+#[tokio::main]
 async fn main() -> Result<()> {
     let args = Args::parse();
 
-    HttpServer::new(|| {
+    let data_store: RedisDataStore = match RedisDataStore::new(&args.redis_dsn).await {
+        Ok(store) => store,
+        Err(e) => {
+            eprintln!("Failed to create Redis data store: {}", e);
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Data store initialization failed",
+            ));
+        }
+    };
+
+    HttpServer::new(move || {
         App::new()
             .route("/healthz", web::get().to(healthz))
             .service(
                 web::scope("/api")
-                    .configure(|cfg| api::configure(cfg, Box::new(InMemoryDataStore::new()))),
+                    .configure(|cfg| api::configure(cfg, Box::new(data_store.clone()))),
             )
     })
     .bind((args.listen_address, args.port))?

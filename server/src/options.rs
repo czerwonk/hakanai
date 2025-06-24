@@ -21,4 +21,13 @@ pub struct Args {
         default_value = "127.0.0.1"
     )]
     pub listen_address: String,
+
+    /// The Data Source Name (DSN) for the Redis database.
+    #[arg(
+        short,
+        long,
+        value_name = "REDIS_DSN",
+        default_value = "redis://127.0.0.1:6379/"
+    )]
+    pub redis_dsn: String,
 }

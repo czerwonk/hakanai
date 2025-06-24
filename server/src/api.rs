@@ -26,7 +26,7 @@ pub fn configure(cfg: &mut web::ServiceConfig, data_store: Box<dyn DataStore>) {
 #[get("/secret/{id}")]
 async fn get_secret(req: web::Path<Uuid>, app_data: web::Data<AppData>) -> Result<String> {
     let id = req.into_inner();
-    let data_store = app_data.data_store.as_ref();
+    let mut data_store = app_data.data_store.as_mut();
 
     match data_store.get(id).await {
         Ok(data) => match data {
@@ -44,7 +44,7 @@ async fn post_secret(
 ) -> Result<web::Json<PostSecretResponse>> {
     let id = uuid::Uuid::new_v4();
 
-    let data_store = app_data.data_store.as_ref();
+    let data_store = app_data.data_store.as_mut();
     data_store
         .put(id, req.data.clone(), req.expires_in)
         .await
@@ -99,7 +99,7 @@ mod tests {
 
     #[async_trait]
     impl DataStore for MockDataStore {
-        async fn get(&self, _id: Uuid) -> Result<Option<String>, DataStoreError> {
+        async fn get(&mut self, _id: Uuid) -> Result<Option<String>, DataStoreError> {
             if self.get_error {
                 Err(DataStoreError::InternalError("mock error".to_string()))
             } else {
@@ -108,7 +108,7 @@ mod tests {
         }
 
         async fn put(
-            &self,
+            &mut self,
             id: Uuid,
             data: String,
             expires_in: Duration,

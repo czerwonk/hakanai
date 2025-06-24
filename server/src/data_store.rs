@@ -1,31 +1,19 @@
-use std::collections::HashMap;
-use std::fmt;
-use std::sync::Mutex;
 use std::time::Duration;
 
 use async_trait::async_trait;
+use redis::AsyncCommands;
+use redis::aio::ConnectionManager;
+use thiserror::Error;
 use uuid::Uuid;
 
-/// Custom error type for DataStore operations
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum DataStoreError {
-    /// The mutex protecting the data store was poisoned
-    MutexPoisoned,
+    #[error("web request failed")]
+    Redis(#[from] redis::RedisError),
 
-    /// A generic internal error occurred
+    #[error("internal error: {0}")]
     InternalError(String),
 }
-
-impl fmt::Display for DataStoreError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            DataStoreError::MutexPoisoned => write!(f, "Data store mutex was poisoned"),
-            DataStoreError::InternalError(msg) => write!(f, "Internal data store error: {}", msg),
-        }
-    }
-}
-
-impl std::error::Error for DataStoreError {}
 
 /// `DataStore` is a trait that defines the contract for a simple, asynchronous,
 /// key-value storage system. Implementations of this trait are expected to be
@@ -43,7 +31,7 @@ pub trait DataStore: Send + Sync {
     /// A `Result` which is `Ok(Some(String))` if the item is found, `Ok(None)`
     /// if the item is not found, or an `Err` if an error occurs during the
     /// operation.
-    async fn get(&self, id: Uuid) -> Result<Option<String>, DataStoreError>;
+    async fn get(&mut self, id: Uuid) -> Result<Option<String>, DataStoreError>;
 
     /// Stores a value in the data store with a given `Uuid` and an expiration
     /// duration.
@@ -60,189 +48,44 @@ pub trait DataStore: Send + Sync {
     ///
     /// A `Result` which is `Ok(())` on successful insertion, or an `Err` if an
     /// error occurs.
-    async fn put(&self, id: Uuid, data: String, expires_in: Duration)
-    -> Result<(), DataStoreError>;
+    async fn put(
+        &mut self,
+        id: Uuid,
+        data: String,
+        expires_in: Duration,
+    ) -> Result<(), DataStoreError>;
 }
 
-/// An in-memory implementation of the `DataStore` trait.
-///
-/// This implementation uses a `std::collections::HashMap` protected by a
-/// `std::sync::Mutex` to store key-value pairs in memory. It is intended for
-/// use in environments where a simple, non-persistent data store is sufficient,
-/// such as for testing or in applications with short-lived data.
-///
-/// Note that this implementation does not enforce item expiration. The
-/// `expires_in` parameter of the `put` method is ignored.
-pub struct InMemoryDataStore {
-    data: Mutex<HashMap<uuid::Uuid, String>>,
+#[derive(Clone)]
+pub struct RedisDataStore {
+    con: ConnectionManager,
 }
 
-impl InMemoryDataStore {
-    pub fn new() -> Self {
-        InMemoryDataStore {
-            data: Mutex::new(HashMap::new()),
-        }
+impl RedisDataStore {
+    pub async fn new(redis_url: &str) -> redis::RedisResult<Self> {
+        let client = redis::Client::open(redis_url)?;
+        let con = ConnectionManager::new(client).await?;
+        Ok(Self { con })
     }
 }
 
 #[async_trait]
-impl DataStore for InMemoryDataStore {
-    async fn get(&self, id: Uuid) -> Result<Option<String>, DataStoreError> {
-        let d = self
-            .data
-            .lock()
-            .map_err(|_| DataStoreError::MutexPoisoned)?;
-        match d.get(&id) {
-            Some(data) => Ok(Some(data.clone())),
-            None => Ok(None),
-        }
+impl DataStore for RedisDataStore {
+    async fn get(&mut self, id: Uuid) -> Result<Option<String>, DataStoreError> {
+        let value = self.con.get(id.to_string()).await?;
+        Ok(value)
     }
 
     async fn put(
-        &self,
+        &mut self,
         id: Uuid,
         data: String,
-        _expires_in: Duration,
+        expires_in: Duration,
     ) -> Result<(), DataStoreError> {
-        let mut d = self
-            .data
-            .lock()
-            .map_err(|_| DataStoreError::MutexPoisoned)?;
-        d.insert(id, data);
-
+        let _: () = self
+            .con
+            .set_ex(&id.to_string(), &data, expires_in.as_secs() as u64)
+            .await?;
         Ok(())
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use tokio;
-
-    #[tokio::test]
-    async fn test_in_memory_store_new() {
-        let store = InMemoryDataStore::new();
-        let data = store.data.lock().unwrap();
-        assert!(data.is_empty());
-    }
-
-    #[tokio::test]
-    async fn test_in_memory_store_put_and_get() {
-        let store = InMemoryDataStore::new();
-        let id = Uuid::new_v4();
-        let data = "test_data".to_string();
-        let expires_in = Duration::from_secs(3600);
-
-        let result = store.put(id, data.clone(), expires_in).await;
-        assert!(result.is_ok());
-
-        let get_result = store.get(id).await;
-        assert!(get_result.is_ok());
-        assert_eq!(get_result.unwrap(), Some(data));
-    }
-
-    #[tokio::test]
-    async fn test_in_memory_store_get_non_existent() {
-        let store = InMemoryDataStore::new();
-        let id = Uuid::new_v4();
-
-        let result = store.get(id).await;
-        assert!(result.is_ok());
-        assert_eq!(result.unwrap(), None);
-    }
-
-    #[tokio::test]
-    async fn test_in_memory_store_multiple_entries() {
-        let store = InMemoryDataStore::new();
-        let id1 = Uuid::new_v4();
-        let id2 = Uuid::new_v4();
-        let data1 = "data1".to_string();
-        let data2 = "data2".to_string();
-
-        store
-            .put(id1, data1.clone(), Duration::from_secs(60))
-            .await
-            .unwrap();
-        store
-            .put(id2, data2.clone(), Duration::from_secs(120))
-            .await
-            .unwrap();
-
-        let result1 = store.get(id1).await.unwrap();
-        let result2 = store.get(id2).await.unwrap();
-
-        assert_eq!(result1, Some(data1));
-        assert_eq!(result2, Some(data2));
-    }
-
-    #[tokio::test]
-    async fn test_in_memory_store_overwrite() {
-        let store = InMemoryDataStore::new();
-        let id = Uuid::new_v4();
-        let data1 = "original".to_string();
-        let data2 = "updated".to_string();
-
-        store.put(id, data1, Duration::from_secs(60)).await.unwrap();
-        store
-            .put(id, data2.clone(), Duration::from_secs(120))
-            .await
-            .unwrap();
-
-        let result = store.get(id).await.unwrap();
-        assert_eq!(result, Some(data2));
-    }
-
-    #[tokio::test]
-    async fn test_in_memory_store_thread_safety() {
-        use std::sync::Arc;
-        use tokio::task;
-
-        let store = Arc::new(InMemoryDataStore::new());
-        let store1 = store.clone();
-        let store2 = store.clone();
-
-        let id1 = Uuid::new_v4();
-        let id2 = Uuid::new_v4();
-
-        let handle1 = task::spawn(async move {
-            store1
-                .put(id1, "data1".to_string(), Duration::from_secs(60))
-                .await
-        });
-
-        let handle2 = task::spawn(async move {
-            store2
-                .put(id2, "data2".to_string(), Duration::from_secs(60))
-                .await
-        });
-
-        let result1 = handle1.await.unwrap();
-        let result2 = handle2.await.unwrap();
-
-        assert!(result1.is_ok());
-        assert!(result2.is_ok());
-
-        let get1 = store.get(id1).await.unwrap();
-        let get2 = store.get(id2).await.unwrap();
-
-        assert_eq!(get1, Some("data1".to_string()));
-        assert_eq!(get2, Some("data2".to_string()));
-    }
-
-    #[tokio::test]
-    async fn test_in_memory_store_ignores_expiration() {
-        let store = InMemoryDataStore::new();
-        let id = Uuid::new_v4();
-        let data = "test_data".to_string();
-
-        store
-            .put(id, data.clone(), Duration::from_millis(1))
-            .await
-            .unwrap();
-
-        tokio::time::sleep(Duration::from_millis(10)).await;
-
-        let result = store.get(id).await.unwrap();
-        assert_eq!(result, Some(data));
     }
 }
