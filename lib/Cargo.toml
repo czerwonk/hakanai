@@ -5,11 +5,13 @@ edition = "2024"
 
 [dependencies]
 async-trait = "0.1.88"
-reqwest = { version = "0.12.20", optional = true }
+reqwest = { version = "0.12.20", optional = true, features = ["json"] }
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = { version = "1.0.140", optional = true }
-uuid = { version = "1.17.0", features = ["serde"] }
+thiserror = "2.0.12"
+url = { version = "2.5.4", optional = true }
+uuid = { version = "1.17.0", features = ["serde", "v4"] }
 
 [features]
-default = []
-client = ["reqwest", "serde_json"]
+default = ["reqwest", "serde_json", "url"]
+minimal = []
