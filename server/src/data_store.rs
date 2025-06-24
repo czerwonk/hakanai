@@ -47,7 +47,7 @@ mod tests {
     use super::*;
 
     #[tokio::test]
-    async fn test_put_and_get() {
+    async fn test_inmemory_impl() {
         let store = InMemoryDataStore::new();
         let data = "test data".to_string();
         let id = Uuid::new_v4();
