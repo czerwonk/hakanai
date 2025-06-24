@@ -6,12 +6,51 @@ use std::time::Duration;
 use async_trait::async_trait;
 use uuid::Uuid;
 
+/// `DataStore` is a trait that defines the contract for a simple, asynchronous,
+/// key-value storage system. Implementations of this trait are expected to be
+/// thread-safe.
 #[async_trait]
 pub trait DataStore: Send + Sync {
+    /// Retrieves a value from the data store based on its `Uuid`.
+    ///
+    /// # Arguments
+    ///
+    /// * `id` - The `Uuid` of the item to retrieve.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` which is `Ok(Some(String))` if the item is found, `Ok(None)`
+    /// if the item is not found, or an `Err` if an error occurs during the
+    /// operation.
     async fn get(&self, id: Uuid) -> Result<Option<String>, Error>;
+
+    /// Stores a value in the data store with a given `Uuid` and an expiration
+    /// duration.
+    ///
+    /// # Arguments
+    ///
+    /// * `id` - The `Uuid` to use as the key for the stored data.
+    /// * `data` - The `String` data to store.
+    /// * `expires_in` - A `Duration` after which the stored item should be
+    ///   considered expired. Note that the implementation of the data store
+    ///   determines how expiration is handled.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` which is `Ok(())` on successful insertion, or an `Err` if an
+    /// error occurs.
     async fn put(&self, id: Uuid, data: String, expires_in: Duration) -> Result<(), Error>;
 }
 
+/// An in-memory implementation of the `DataStore` trait.
+///
+/// This implementation uses a `std::collections::HashMap` protected by a
+/// `std::sync::Mutex` to store key-value pairs in memory. It is intended for
+/// use in environments where a simple, non-persistent data store is sufficient,
+/// such as for testing or in applications with short-lived data.
+///
+/// Note that this implementation does not enforce item expiration. The
+/// `expires_in` parameter of the `put` method is ignored.
 pub struct InMemoryDataStore {
     data: Mutex<HashMap<uuid::Uuid, String>>,
 }
@@ -87,8 +126,14 @@ mod tests {
         let data1 = "data1".to_string();
         let data2 = "data2".to_string();
 
-        store.put(id1, data1.clone(), Duration::from_secs(60)).await.unwrap();
-        store.put(id2, data2.clone(), Duration::from_secs(120)).await.unwrap();
+        store
+            .put(id1, data1.clone(), Duration::from_secs(60))
+            .await
+            .unwrap();
+        store
+            .put(id2, data2.clone(), Duration::from_secs(120))
+            .await
+            .unwrap();
 
         let result1 = store.get(id1).await.unwrap();
         let result2 = store.get(id2).await.unwrap();
@@ -105,7 +150,10 @@ mod tests {
         let data2 = "updated".to_string();
 
         store.put(id, data1, Duration::from_secs(60)).await.unwrap();
-        store.put(id, data2.clone(), Duration::from_secs(120)).await.unwrap();
+        store
+            .put(id, data2.clone(), Duration::from_secs(120))
+            .await
+            .unwrap();
 
         let result = store.get(id).await.unwrap();
         assert_eq!(result, Some(data2));
@@ -124,11 +172,15 @@ mod tests {
         let id2 = Uuid::new_v4();
 
         let handle1 = task::spawn(async move {
-            store1.put(id1, "data1".to_string(), Duration::from_secs(60)).await
+            store1
+                .put(id1, "data1".to_string(), Duration::from_secs(60))
+                .await
         });
 
         let handle2 = task::spawn(async move {
-            store2.put(id2, "data2".to_string(), Duration::from_secs(60)).await
+            store2
+                .put(id2, "data2".to_string(), Duration::from_secs(60))
+                .await
         });
 
         let result1 = handle1.await.unwrap();
@@ -150,10 +202,13 @@ mod tests {
         let id = Uuid::new_v4();
         let data = "test_data".to_string();
 
-        store.put(id, data.clone(), Duration::from_millis(1)).await.unwrap();
-        
+        store
+            .put(id, data.clone(), Duration::from_millis(1))
+            .await
+            .unwrap();
+
         tokio::time::sleep(Duration::from_millis(10)).await;
-        
+
         let result = store.get(id).await.unwrap();
         assert_eq!(result, Some(data));
     }

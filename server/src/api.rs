@@ -9,6 +9,10 @@ struct AppData {
     data_store: Box<dyn DataStore>,
 }
 
+/// Configures the Actix Web services for the application.
+///
+/// This function registers the API routes and sets up the application data,
+/// including the data store that will be shared across all handlers.
 pub fn configure(cfg: &mut web::ServiceConfig, data_store: Box<dyn DataStore>) {
     let app_data = AppData {
         data_store: data_store,
@@ -71,10 +75,10 @@ async fn post_secret(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use actix_web::{test, App};
-    use std::sync::{Arc, Mutex};
+    use actix_web::{App, test};
     use async_trait::async_trait;
     use std::io::{Error, ErrorKind};
+    use std::sync::{Arc, Mutex};
     use uuid::Uuid;
 
     struct MockDataStore {
@@ -133,12 +137,11 @@ mod tests {
 
     #[actix_web::test]
     async fn test_get_secret_found() {
-        let mock_store = MockDataStore::new()
-            .with_get_result(Some("test_secret".to_string()));
+        let mock_store = MockDataStore::new().with_get_result(Some("test_secret".to_string()));
 
-        let app = test::init_service(
-            App::new().configure(|cfg| configure(cfg, Box::new(mock_store)))
-        ).await;
+        let app =
+            test::init_service(App::new().configure(|cfg| configure(cfg, Box::new(mock_store))))
+                .await;
 
         let req = test::TestRequest::get()
             .uri(&format!("/secret/{}", uuid::Uuid::new_v4()))
@@ -153,12 +156,11 @@ mod tests {
 
     #[actix_web::test]
     async fn test_get_secret_not_found() {
-        let mock_store = MockDataStore::new()
-            .with_get_result(None);
+        let mock_store = MockDataStore::new().with_get_result(None);
 
-        let app = test::init_service(
-            App::new().configure(|cfg| configure(cfg, Box::new(mock_store)))
-        ).await;
+        let app =
+            test::init_service(App::new().configure(|cfg| configure(cfg, Box::new(mock_store))))
+                .await;
 
         let req = test::TestRequest::get()
             .uri(&format!("/secret/{}", uuid::Uuid::new_v4()))
@@ -170,12 +172,11 @@ mod tests {
 
     #[actix_web::test]
     async fn test_get_secret_error() {
-        let mock_store = MockDataStore::new()
-            .with_get_error();
+        let mock_store = MockDataStore::new().with_get_error();
 
-        let app = test::init_service(
-            App::new().configure(|cfg| configure(cfg, Box::new(mock_store)))
-        ).await;
+        let app =
+            test::init_service(App::new().configure(|cfg| configure(cfg, Box::new(mock_store))))
+                .await;
 
         let req = test::TestRequest::get()
             .uri(&format!("/secret/{}", uuid::Uuid::new_v4()))
@@ -190,9 +191,9 @@ mod tests {
         let mock_store = MockDataStore::new();
         let stored_data = mock_store.stored_data.clone();
 
-        let app = test::init_service(
-            App::new().configure(|cfg| configure(cfg, Box::new(mock_store)))
-        ).await;
+        let app =
+            test::init_service(App::new().configure(|cfg| configure(cfg, Box::new(mock_store))))
+                .await;
 
         let payload = PostSecretRequest {
             data: "test_secret".to_string(),
@@ -218,12 +219,11 @@ mod tests {
 
     #[actix_web::test]
     async fn test_post_secret_error() {
-        let mock_store = MockDataStore::new()
-            .with_put_error();
+        let mock_store = MockDataStore::new().with_put_error();
 
-        let app = test::init_service(
-            App::new().configure(|cfg| configure(cfg, Box::new(mock_store)))
-        ).await;
+        let app =
+            test::init_service(App::new().configure(|cfg| configure(cfg, Box::new(mock_store))))
+                .await;
 
         let payload = PostSecretRequest {
             data: "test_secret".to_string(),
