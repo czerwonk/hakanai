@@ -22,7 +22,7 @@ pub enum Command {
     Get { link: Url },
 
     /// Send a secret to the server.
-    /// Content is read from stdin.
+    /// Content is either read from stdin or from file (if --file is secified).
     Send {
         #[arg(
             short,
@@ -50,6 +50,14 @@ pub enum Command {
             help = "Token for authorization."
         )]
         token: String,
+
+        #[arg(
+            short,
+            long,
+            help = "File to read the secret from. If not specified, reads from stdin.",
+            value_name = "FILE"
+        )]
+        file: Option<String>,
     },
 }
 
@@ -77,7 +85,12 @@ mod tests {
         let args = Args::try_parse_from(&["hakanai", "send"]).unwrap();
 
         match args.command {
-            Command::Send { server, ttl, token } => {
+            Command::Send {
+                server,
+                ttl,
+                token,
+                file: None,
+            } => {
                 assert_eq!(server.as_str(), "http://localhost:8080/");
                 assert_eq!(ttl, Duration::from_secs(24 * 60 * 60)); // 24 hours
                 assert_eq!(token, ""); // Default empty token
@@ -101,6 +114,7 @@ mod tests {
                 server,
                 ttl: _,
                 token: _,
+                file: None,
             } => {
                 assert_eq!(server.as_str(), "https://hakanai.routing.rocks/");
             }
@@ -117,6 +131,7 @@ mod tests {
                 server: _,
                 ttl,
                 token: _,
+                file: None,
             } => {
                 assert_eq!(ttl, Duration::from_secs(12 * 60 * 60)); // 12 hours
             }
@@ -134,6 +149,7 @@ mod tests {
                 server,
                 ttl: _,
                 token: _,
+                file: None,
             } => {
                 assert_eq!(server.as_str(), "https://custom.server.com/");
             }
@@ -173,6 +189,7 @@ mod tests {
                     server: _,
                     ttl,
                     token: _,
+                    file: None,
                 } => {
                     assert_eq!(ttl, expected_duration, "Failed for TTL: {}", ttl_str);
                 }
@@ -213,6 +230,7 @@ mod tests {
                 server: _,
                 ttl: _,
                 token,
+                file: None,
             } => {
                 assert_eq!(token, "my-secret-token");
             }
@@ -229,6 +247,7 @@ mod tests {
                 server: _,
                 ttl: _,
                 token,
+                file: None,
             } => {
                 assert_eq!(token, "short-token");
             }
@@ -251,7 +270,12 @@ mod tests {
         .unwrap();
 
         match args.command {
-            Command::Send { server, ttl, token } => {
+            Command::Send {
+                server,
+                ttl,
+                token,
+                file: None,
+            } => {
                 assert_eq!(server.as_str(), "https://example.com/");
                 assert_eq!(ttl, Duration::from_secs(30 * 60));
                 assert_eq!(token, "test-token");
