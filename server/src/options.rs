@@ -10,7 +10,13 @@ use clap::Parser;
 )]
 pub struct Args {
     /// The port on which the server will listen for incoming connections.
-    #[arg(short, long, value_name = "PORT", env = "PORT", default_value = "8080")]
+    #[arg(
+        short,
+        long,
+        value_name = "PORT",
+        env = "HAKANAI_PORT",
+        default_value = "8080"
+    )]
     pub port: u16,
 
     /// The network address on which the server will listen.
@@ -18,7 +24,7 @@ pub struct Args {
         short,
         long,
         value_name = "LISTEN_ADDRESS",
-        env = "LISTEN_ADDRESS",
+        env = "HAKANAI_LISTEN_ADDRESS",
         default_value = "127.0.0.1"
     )]
     pub listen_address: String,
@@ -28,12 +34,18 @@ pub struct Args {
         short,
         long,
         value_name = "REDIS_DSN",
-        env = "REDIS_DSN",
+        env = "HAKANAI_REDIS_DSN",
         default_value = "redis://127.0.0.1:6379/"
     )]
     pub redis_dsn: String,
 
     /// List of tokens allowed to create new secrets. If empty, no tokens are required.
-    #[arg(short, long, value_name = "TOKENS", env = "TOKENS", default_value = "")]
+    #[arg(
+        short,
+        long,
+        value_name = "TOKENS",
+        env = "HAKANAI_TOKENS",
+        default_value = ""
+    )]
     pub tokens: Vec<String>,
 }
