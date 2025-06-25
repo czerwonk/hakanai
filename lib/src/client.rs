@@ -62,6 +62,12 @@ pub enum ClientError {
 
     #[error("Client error: {0}")]
     Custom(String),
+
+    #[error("Encryption error: {0}")]
+    EncryptionError(String),
+
+    #[error("Decryption error: {0}")]
+    DecryptionError(String),
 }
 
 /// Creates a new client instance.

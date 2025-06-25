@@ -208,15 +208,11 @@ For production deployments:
 3. Set appropriate Redis memory limits and eviction policies
 4. Configure your reverse proxy to strip sensitive headers
 
-## Security Considerations
-
-> ⚠️ **Important**: Client-side encryption is not yet implemented. The current version stores secrets in plaintext on the server. Do not use for sensitive data until encryption is complete.
-
 ### Current Status
 - ✅ One-time access enforcement
 - ✅ Automatic expiration
 - ✅ No user tracking or accounts
-- ❌ Client-side encryption (TODO)
+- ✅ Client-side encryption
 
 ### Future Security Enhancements
 - Implementation of AES-256-GCM encryption in `hakanai-lib`
