@@ -28,10 +28,12 @@ impl Client for CryptoClient {
         data: String,
         ttl: Duration,
     ) -> Result<Url, ClientError> {
+        // TODO: enrypt before sending
         self.inner_client.send_secret(base_url, data, ttl).await
     }
 
     async fn receive_secret(&self, url: Url) -> Result<String, ClientError> {
         self.inner_client.receive_secret(url).await
+        // TODO: decrypt after receiving
     }
 }
