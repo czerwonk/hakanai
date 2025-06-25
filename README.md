@@ -20,9 +20,11 @@ Hakanai embodies the Japanese concept of transience - secrets that exist only fo
 3. You share the link with the decryption key
 4. Recipient views once, then it's gone forever
 
-## Security Opinion
+## Security Model
 
-We chose true client-side encryption over convenience. This means client (Browser with JS, CLI) is required to perform the crypto operations, but your secrets remain yours alone. The server is just a temporary dead drop that forgets everything.
+We implement true client-side encryption - your secrets are encrypted before leaving your device and decrypted only after retrieval. The server is just a temporary dead drop that forgets everything.
+
+**Note**: This project focuses on the application-layer encryption. Transport security (HTTPS/TLS) should be handled by a reverse proxy or load balancer in front of the server.
 
 Built for those who believe privacy isn't about having something to hide - it's about having something to protect.
 
@@ -170,6 +172,14 @@ Hakanai implements a zero-knowledge architecture:
 - **hakanai-lib**: Core functionality including crypto operations and HTTP client
 - **hakanai** (CLI): User-friendly command-line interface
 - **hakanai-server**: RESTful API server with Redis backend
+
+### Deployment Notes
+
+The server is designed to run behind a reverse proxy (nginx, Caddy, etc.) which handles:
+- TLS termination
+- HTTPS enforcement
+- Rate limiting
+- DDoS protection
 
 ## Security Considerations
 
