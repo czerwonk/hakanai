@@ -28,7 +28,7 @@ impl Client for CryptoClient {
         data: String,
         ttl: Duration,
     ) -> Result<Url, ClientError> {
-        // TODO: enrypt before sending
+        // TODO: encrypt before sending
         self.inner_client.send_secret(base_url, data, ttl).await
     }
 
