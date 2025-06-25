@@ -5,6 +5,10 @@ use reqwest::Url;
 
 use crate::client::{Client, ClientError};
 
+/// A client that wraps another `Client` to provide cryptographic functionalities.
+///
+/// This struct is responsible for encrypting data before sending and decrypting
+/// it upon reception, ensuring that secrets are transmitted securely.
 pub struct CryptoClient {
     inner_client: Box<dyn Client>,
 }
