@@ -28,11 +28,7 @@ async fn main() -> Result<()> {
         }
     };
 
-    let tokens = match args.tokens {
-        Some(tokens) => tokens,
-        None => Vec::new(),
-    };
-
+    let tokens = args.tokens.unwrap_or_default();
     if tokens.is_empty() {
         warn!("No tokens provided, anyone can create secrets.");
     }
