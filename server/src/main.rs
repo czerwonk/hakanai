@@ -38,9 +38,9 @@ async fn main() -> Result<()> {
         App::new()
             .wrap(Logger::default())
             .wrap(Compat::new(TracingLogger::default()))
+            .route("/", web::get().to(serve_get_secret_html))
             .route("/healthz", web::get().to(healthz))
             .route("/scripts/hakanai-client.js", web::get().to(serve_js_client))
-            .route("/get-secret", web::get().to(serve_get_secret_html))
             .service(
                 web::scope("/api").configure(|cfg| {
                     api::configure(cfg, Box::new(data_store.clone()), tokens.clone())
