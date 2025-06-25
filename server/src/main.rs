@@ -28,8 +28,13 @@ async fn main() -> Result<()> {
         }
     };
 
-    if args.tokens.is_empty() {
-        warn!("No tokens provided. This may lead to unauthorized creation of secrets.");
+    let tokens = match args.tokens {
+        Some(tokens) => tokens,
+        None => Vec::new(),
+    };
+
+    if tokens.is_empty() {
+        warn!("No tokens provided, anyone can create secrets.");
     }
 
     info!("Starting server on {}:{}", args.listen_address, args.port);
@@ -38,9 +43,11 @@ async fn main() -> Result<()> {
             .wrap(Logger::default())
             .wrap(Compat::new(TracingLogger::default()))
             .route("/healthz", web::get().to(healthz))
-            .service(web::scope("/api").configure(|cfg| {
-                api::configure(cfg, Box::new(data_store.clone()), args.tokens.clone())
-            }))
+            .service(
+                web::scope("/api").configure(|cfg| {
+                    api::configure(cfg, Box::new(data_store.clone()), tokens.clone())
+                }),
+            )
     })
     .bind((args.listen_address, args.port))?
     .run()

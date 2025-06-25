@@ -22,3 +22,5 @@ target/
 
 **/.claude
 CLAUDE.md
+
+docker-compose.override.yml

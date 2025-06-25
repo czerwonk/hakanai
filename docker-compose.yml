@@ -1,0 +1,15 @@
+services:
+  hakanai:
+    build: .
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      HAKANAI_LISTEN_ADDRESS: "0.0.0.0"
+      HAKANAI_REDIS_DSN: "redis://valkey:6379"
+    volumes:
+      - VALKEY_DATA:/data
+  valkey:
+    image: "valkey/valkey:alpine"
+
+volumes:
+  VALKEY_DATA:

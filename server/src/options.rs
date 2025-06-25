@@ -39,13 +39,7 @@ pub struct Args {
     )]
     pub redis_dsn: String,
 
-    /// List of tokens allowed to create new secrets. If empty, no tokens are required.
-    #[arg(
-        short,
-        long,
-        value_name = "TOKENS",
-        env = "HAKANAI_TOKENS",
-        default_value = ""
-    )]
-    pub tokens: Vec<String>,
+    /// List of tokens allowed to create new secrets. If empty anyone can create secrets.
+    #[arg(short, long, value_name = "TOKENS", env = "HAKANAI_TOKENS")]
+    pub tokens: Option<Vec<String>>,
 }
