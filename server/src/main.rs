@@ -40,6 +40,7 @@ async fn main() -> Result<()> {
             .wrap(Compat::new(TracingLogger::default()))
             .route("/healthz", web::get().to(healthz))
             .route("/scripts/hakanai-client.js", web::get().to(serve_js_client))
+            .route("/get-secret", web::get().to(serve_get_secret_html))
             .service(
                 web::scope("/api").configure(|cfg| {
                     api::configure(cfg, Box::new(data_store.clone()), tokens.clone())
@@ -56,8 +57,13 @@ async fn healthz() -> impl Responder {
 }
 
 async fn serve_js_client() -> impl Responder {
-    const JS_CLIENT: &str = include_str!("hakanai-client.js");
+    const JS_CLIENT: &str = include_str!("includes/hakanai-client.js");
     HttpResponse::Ok()
         .content_type("application/javascript")
         .body(JS_CLIENT)
+}
+
+async fn serve_get_secret_html() -> impl Responder {
+    const HTML_CONTENT: &str = include_str!("includes/get-secret.html");
+    HttpResponse::Ok().body(HTML_CONTENT)
 }
