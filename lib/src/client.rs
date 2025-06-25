@@ -17,6 +17,7 @@ pub trait Client: Send + Sync {
     /// * `base_url` - The base URL of the service.
     /// * `data` - The secret data to be sent.
     /// * `ttl` - The time-to-live for the secret.
+    /// * `token` - The authentication token.
     ///
     /// # Returns
     ///
@@ -28,6 +29,7 @@ pub trait Client: Send + Sync {
         base_url: Url,
         data: String,
         ttl: Duration,
+        token: String,
     ) -> Result<Url, ClientError>;
 
     /// Retrieves a secret from the store using its URL.

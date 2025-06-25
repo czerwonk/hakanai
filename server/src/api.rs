@@ -1,4 +1,4 @@
-use actix_web::{Result, error, get, post, web};
+use actix_web::{HttpRequest, Result, error, get, post, web};
 use uuid::Uuid;
 
 use hakanai_lib::models::{PostSecretRequest, PostSecretResponse};
@@ -7,14 +7,19 @@ use crate::data_store::DataStore;
 
 struct AppData {
     data_store: Box<dyn DataStore>,
+    tokens: Vec<String>,
 }
 
 /// Configures the Actix Web services for the application.
 ///
 /// This function registers the API routes and sets up the application data,
 /// including the data store that will be shared across all handlers.
-pub fn configure(cfg: &mut web::ServiceConfig, data_store: Box<dyn DataStore>) {
-    let app_data = AppData { data_store };
+pub fn configure(
+    cfg: &mut web::ServiceConfig,
+    data_store: Box<dyn DataStore>,
+    tokens: Vec<String>,
+) {
+    let app_data = AppData { data_store, tokens };
 
     cfg.service(get_secret)
         .service(post_secret)
@@ -37,9 +42,15 @@ async fn get_secret(req: web::Path<String>, app_data: web::Data<AppData>) -> Res
 
 #[post("/secret")]
 async fn post_secret(
+    http_req: HttpRequest,
     req: web::Json<PostSecretRequest>,
     app_data: web::Data<AppData>,
 ) -> Result<web::Json<PostSecretResponse>> {
+    match ensure_is_authorized(&http_req, &app_data.tokens) {
+        Ok(_) => {}
+        Err(e) => return Err(e),
+    }
+
     let id = uuid::Uuid::new_v4();
 
     app_data
@@ -49,6 +60,28 @@ async fn post_secret(
         .map_err(error::ErrorInternalServerError)?;
 
     Ok(web::Json(PostSecretResponse { id }))
+}
+
+fn ensure_is_authorized(req: &HttpRequest, tokens: &[String]) -> Result<()> {
+    if tokens.is_empty() {
+        // no tokens required
+        return Ok(());
+    }
+
+    let mut token = match req.headers().get("Authorization") {
+        None => return Err(error::ErrorUnauthorized("Unauthorized: No token provided")),
+        Some(token) => token
+            .to_str()
+            .map_err(|_| error::ErrorUnauthorized("Unauthorized: Invalid token format"))?,
+    };
+
+    token = token.trim_start_matches("Bearer ").trim();
+
+    if tokens.contains(&token.to_string()) {
+        Ok(())
+    } else {
+        Err(error::ErrorForbidden("Forbidden: Invalid token"))
+    }
 }
 
 #[cfg(test)]
@@ -125,9 +158,10 @@ mod tests {
     async fn test_get_secret_found() {
         let mock_store = MockDataStore::new().with_get_result(Some("test_secret".to_string()));
 
-        let app =
-            test::init_service(App::new().configure(|cfg| configure(cfg, Box::new(mock_store))))
-                .await;
+        let app = test::init_service(
+            App::new().configure(|cfg| configure(cfg, Box::new(mock_store), vec![])),
+        )
+        .await;
 
         let req = test::TestRequest::get()
             .uri(&format!("/secret/{}", uuid::Uuid::new_v4()))
@@ -144,9 +178,10 @@ mod tests {
     async fn test_get_secret_not_found() {
         let mock_store = MockDataStore::new().with_get_result(None);
 
-        let app =
-            test::init_service(App::new().configure(|cfg| configure(cfg, Box::new(mock_store))))
-                .await;
+        let app = test::init_service(
+            App::new().configure(|cfg| configure(cfg, Box::new(mock_store), vec![])),
+        )
+        .await;
 
         let req = test::TestRequest::get()
             .uri(&format!("/secret/{}", uuid::Uuid::new_v4()))
@@ -160,9 +195,10 @@ mod tests {
     async fn test_get_secret_error() {
         let mock_store = MockDataStore::new().with_get_error();
 
-        let app =
-            test::init_service(App::new().configure(|cfg| configure(cfg, Box::new(mock_store))))
-                .await;
+        let app = test::init_service(
+            App::new().configure(|cfg| configure(cfg, Box::new(mock_store), vec![])),
+        )
+        .await;
 
         let req = test::TestRequest::get()
             .uri(&format!("/secret/{}", uuid::Uuid::new_v4()))
@@ -177,9 +213,10 @@ mod tests {
         let mock_store = MockDataStore::new();
         let stored_data = mock_store.stored_data.clone();
 
-        let app =
-            test::init_service(App::new().configure(|cfg| configure(cfg, Box::new(mock_store))))
-                .await;
+        let app = test::init_service(
+            App::new().configure(|cfg| configure(cfg, Box::new(mock_store), vec![])),
+        )
+        .await;
 
         let payload = PostSecretRequest {
             data: "test_secret".to_string(),
@@ -207,9 +244,10 @@ mod tests {
     async fn test_post_secret_error() {
         let mock_store = MockDataStore::new().with_put_error();
 
-        let app =
-            test::init_service(App::new().configure(|cfg| configure(cfg, Box::new(mock_store))))
-                .await;
+        let app = test::init_service(
+            App::new().configure(|cfg| configure(cfg, Box::new(mock_store), vec![])),
+        )
+        .await;
 
         let payload = PostSecretRequest {
             data: "test_secret".to_string(),
@@ -223,5 +261,86 @@ mod tests {
 
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), 500);
+    }
+
+    #[actix_web::test]
+    async fn test_post_secret_with_valid_token() {
+        let mock_store = MockDataStore::new();
+        let stored_data = mock_store.stored_data.clone();
+        let tokens = vec!["valid_token_123".to_string()];
+
+        let app = test::init_service(
+            App::new().configure(|cfg| configure(cfg, Box::new(mock_store), tokens)),
+        )
+        .await;
+
+        let payload = PostSecretRequest {
+            data: "test_secret".to_string(),
+            expires_in: Duration::from_secs(3600),
+        };
+
+        let req = test::TestRequest::post()
+            .uri("/secret")
+            .insert_header(("Authorization", "Bearer valid_token_123"))
+            .set_json(&payload)
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 200);
+
+        let body: PostSecretResponse = test::read_body_json(resp).await;
+        assert!(!body.id.is_nil());
+
+        let stored = stored_data.lock().unwrap();
+        assert_eq!(stored.len(), 1);
+    }
+
+    #[actix_web::test]
+    async fn test_post_secret_missing_auth_header() {
+        let mock_store = MockDataStore::new();
+        let tokens = vec!["valid_token_123".to_string()];
+
+        let app = test::init_service(
+            App::new().configure(|cfg| configure(cfg, Box::new(mock_store), tokens)),
+        )
+        .await;
+
+        let payload = PostSecretRequest {
+            data: "test_secret".to_string(),
+            expires_in: Duration::from_secs(3600),
+        };
+
+        let req = test::TestRequest::post()
+            .uri("/secret")
+            .set_json(&payload)
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 401);
+    }
+
+    #[actix_web::test]
+    async fn test_post_secret_invalid_token() {
+        let mock_store = MockDataStore::new();
+        let tokens = vec!["valid_token_123".to_string()];
+
+        let app = test::init_service(
+            App::new().configure(|cfg| configure(cfg, Box::new(mock_store), tokens)),
+        )
+        .await;
+
+        let payload = PostSecretRequest {
+            data: "test_secret".to_string(),
+            expires_in: Duration::from_secs(3600),
+        };
+
+        let req = test::TestRequest::post()
+            .uri("/secret")
+            .insert_header(("Authorization", "Bearer invalid_token"))
+            .set_json(&payload)
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 403);
     }
 }

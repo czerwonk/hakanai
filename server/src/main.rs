@@ -6,6 +6,7 @@ use std::io::Result;
 
 use actix_web::{App, HttpResponse, HttpServer, Responder, web};
 use clap::Parser;
+use tracing::{info, warn};
 
 use crate::data_store::RedisDataStore;
 use crate::options::Args;
@@ -14,6 +15,9 @@ use crate::options::Args;
 async fn main() -> Result<()> {
     let args = Args::parse();
 
+    tracing_subscriber::fmt().init();
+
+    info!("Connecting to Redis at {}", args.redis_dsn);
     let data_store: RedisDataStore = match RedisDataStore::new(&args.redis_dsn).await {
         Ok(store) => store,
         Err(e) => {
@@ -22,13 +26,17 @@ async fn main() -> Result<()> {
         }
     };
 
+    if args.tokens.is_empty() {
+        warn!("No tokens provided. This may lead to unauthorized creation of secrets.");
+    }
+
+    info!("Starting server on {}:{}", args.listen_address, args.port);
     HttpServer::new(move || {
         App::new()
             .route("/healthz", web::get().to(healthz))
-            .service(
-                web::scope("/api")
-                    .configure(|cfg| api::configure(cfg, Box::new(data_store.clone()))),
-            )
+            .service(web::scope("/api").configure(|cfg| {
+                api::configure(cfg, Box::new(data_store.clone()), args.tokens.clone())
+            }))
     })
     .bind((args.listen_address, args.port))?
     .run()

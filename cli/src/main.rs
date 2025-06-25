@@ -27,6 +27,6 @@ async fn main() -> ExitCode {
 async fn process_command(args: Args) -> Result<()> {
     match args.command {
         cli::Command::Get { link } => get(link).await,
-        cli::Command::Send { server, ttl } => send(server, ttl).await,
+        cli::Command::Send { server, ttl, token } => send(server, ttl, token).await,
     }
 }

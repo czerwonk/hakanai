@@ -30,6 +30,7 @@ impl Client for WebClient {
         base_url: Url,
         data: String,
         ttl: Duration,
+        token: String,
     ) -> Result<Url, ClientError> {
         let url = base_url.join(API_SECRET_PATH)?;
         let req = PostSecretRequest::new(data, ttl);
@@ -37,6 +38,7 @@ impl Client for WebClient {
         let resp = self
             .web_client
             .post(url.to_string())
+            .header("Authorization", format!("Bearer {}", token))
             .timeout(REQUEST_TIMEOUT)
             .json(&req)
             .send()
@@ -111,6 +113,7 @@ mod tests {
                 base_url.clone(),
                 "test_secret".to_string(),
                 Duration::from_secs(3600),
+                "".to_string(),
             )
             .await;
 
@@ -142,6 +145,7 @@ mod tests {
                 base_url,
                 "test_secret".to_string(),
                 Duration::from_secs(3600),
+                "".to_string(),
             )
             .await;
 
@@ -213,6 +217,7 @@ mod tests {
                 base_url,
                 "test_secret".to_string(),
                 Duration::from_secs(3600),
+                "".to_string(),
             )
             .await;
 

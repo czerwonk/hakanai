@@ -27,9 +27,12 @@ impl Client for CryptoClient {
         base_url: Url,
         data: String,
         ttl: Duration,
+        token: String,
     ) -> Result<Url, ClientError> {
         // TODO: encrypt before sending
-        self.inner_client.send_secret(base_url, data, ttl).await
+        self.inner_client
+            .send_secret(base_url, data, ttl, token)
+            .await
     }
 
     async fn receive_secret(&self, url: Url) -> Result<String, ClientError> {

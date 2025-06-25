@@ -33,13 +33,15 @@ pub enum Command {
         server: Url,
 
         #[arg(
-            short,
             long,
             default_value = "24h",
             help = "Time after the secret vanishes.",
             value_parser = humantime::parse_duration,
         )]
         ttl: Duration,
+
+        #[arg(short, long, default_value = "", help = "Token for authorization.")]
+        token: String,
     },
 }
 
@@ -51,11 +53,8 @@ mod tests {
 
     #[test]
     fn test_get_command_parsing() {
-        let args = Args::try_parse_from(&[
-            "hakanai",
-            "get",
-            "https://example.com/secret/abc123"
-        ]).unwrap();
+        let args =
+            Args::try_parse_from(&["hakanai", "get", "https://example.com/secret/abc123"]).unwrap();
 
         match args.command {
             Command::Get { link } => {
@@ -67,15 +66,13 @@ mod tests {
 
     #[test]
     fn test_send_command_with_defaults() {
-        let args = Args::try_parse_from(&[
-            "hakanai",
-            "send"
-        ]).unwrap();
+        let args = Args::try_parse_from(&["hakanai", "send"]).unwrap();
 
         match args.command {
-            Command::Send { server, ttl } => {
+            Command::Send { server, ttl, token } => {
                 assert_eq!(server.as_str(), "http://localhost:8080/");
                 assert_eq!(ttl, Duration::from_secs(24 * 60 * 60)); // 24 hours
+                assert_eq!(token, ""); // Default empty token
             }
             _ => panic!("Expected Send command"),
         }
@@ -86,11 +83,17 @@ mod tests {
         let args = Args::try_parse_from(&[
             "hakanai",
             "send",
-            "--server", "https://hakanai.routing.rocks"
-        ]).unwrap();
+            "--server",
+            "https://hakanai.routing.rocks",
+        ])
+        .unwrap();
 
         match args.command {
-            Command::Send { server, ttl: _ } => {
+            Command::Send {
+                server,
+                ttl: _,
+                token: _,
+            } => {
                 assert_eq!(server.as_str(), "https://hakanai.routing.rocks/");
             }
             _ => panic!("Expected Send command"),
@@ -99,14 +102,14 @@ mod tests {
 
     #[test]
     fn test_send_command_with_custom_ttl() {
-        let args = Args::try_parse_from(&[
-            "hakanai",
-            "send",
-            "--ttl", "12h"
-        ]).unwrap();
+        let args = Args::try_parse_from(&["hakanai", "send", "--ttl", "12h"]).unwrap();
 
         match args.command {
-            Command::Send { server: _, ttl } => {
+            Command::Send {
+                server: _,
+                ttl,
+                token: _,
+            } => {
                 assert_eq!(ttl, Duration::from_secs(12 * 60 * 60)); // 12 hours
             }
             _ => panic!("Expected Send command"),
@@ -115,17 +118,16 @@ mod tests {
 
     #[test]
     fn test_send_command_with_short_flags() {
-        let args = Args::try_parse_from(&[
-            "hakanai",
-            "send",
-            "-s", "https://custom.server.com",
-            "-t", "30m"
-        ]).unwrap();
+        let args =
+            Args::try_parse_from(&["hakanai", "send", "-s", "https://custom.server.com"]).unwrap();
 
         match args.command {
-            Command::Send { server, ttl } => {
+            Command::Send {
+                server,
+                ttl: _,
+                token: _,
+            } => {
                 assert_eq!(server.as_str(), "https://custom.server.com/");
-                assert_eq!(ttl, Duration::from_secs(30 * 60)); // 30 minutes
             }
             _ => panic!("Expected Send command"),
         }
@@ -133,22 +135,14 @@ mod tests {
 
     #[test]
     fn test_invalid_url_parsing() {
-        let result = Args::try_parse_from(&[
-            "hakanai",
-            "get",
-            "not-a-valid-url"
-        ]);
+        let result = Args::try_parse_from(&["hakanai", "get", "not-a-valid-url"]);
 
         assert!(result.is_err());
     }
 
     #[test]
     fn test_invalid_ttl_parsing() {
-        let result = Args::try_parse_from(&[
-            "hakanai",
-            "send",
-            "--ttl", "invalid-duration"
-        ]);
+        let result = Args::try_parse_from(&["hakanai", "send", "--ttl", "invalid-duration"]);
 
         assert!(result.is_err());
     }
@@ -164,14 +158,14 @@ mod tests {
         ];
 
         for (ttl_str, expected_duration) in test_cases {
-            let args = Args::try_parse_from(&[
-                "hakanai",
-                "send",
-                "--ttl", ttl_str
-            ]).unwrap();
+            let args = Args::try_parse_from(&["hakanai", "send", "--ttl", ttl_str]).unwrap();
 
             match args.command {
-                Command::Send { server: _, ttl } => {
+                Command::Send {
+                    server: _,
+                    ttl,
+                    token: _,
+                } => {
                     assert_eq!(ttl, expected_duration, "Failed for TTL: {}", ttl_str);
                 }
                 _ => panic!("Expected Send command for TTL: {}", ttl_str),
@@ -193,14 +187,68 @@ mod tests {
 
     #[test]
     fn test_command_debug_trait() {
-        let args = Args::try_parse_from(&[
-            "hakanai",
-            "send",
-            "--server", "https://example.com"
-        ]).unwrap();
+        let args =
+            Args::try_parse_from(&["hakanai", "send", "--server", "https://example.com"]).unwrap();
 
         let debug_output = format!("{:?}", args.command);
         assert!(debug_output.contains("Send"));
         assert!(debug_output.contains("example.com"));
+    }
+
+    #[test]
+    fn test_send_command_with_custom_token() {
+        let args =
+            Args::try_parse_from(&["hakanai", "send", "--token", "my-secret-token"]).unwrap();
+
+        match args.command {
+            Command::Send {
+                server: _,
+                ttl: _,
+                token,
+            } => {
+                assert_eq!(token, "my-secret-token");
+            }
+            _ => panic!("Expected Send command"),
+        }
+    }
+
+    #[test]
+    fn test_send_command_with_short_token_flag() {
+        let args = Args::try_parse_from(&["hakanai", "send", "-t", "short-token"]).unwrap();
+
+        match args.command {
+            Command::Send {
+                server: _,
+                ttl: _,
+                token,
+            } => {
+                assert_eq!(token, "short-token");
+            }
+            _ => panic!("Expected Send command"),
+        }
+    }
+
+    #[test]
+    fn test_send_command_with_all_flags() {
+        let args = Args::try_parse_from(&[
+            "hakanai",
+            "send",
+            "--server",
+            "https://example.com",
+            "--ttl",
+            "30m",
+            "--token",
+            "test-token",
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Send { server, ttl, token } => {
+                assert_eq!(server.as_str(), "https://example.com/");
+                assert_eq!(ttl, Duration::from_secs(30 * 60));
+                assert_eq!(token, "test-token");
+            }
+            _ => panic!("Expected Send command"),
+        }
     }
 }

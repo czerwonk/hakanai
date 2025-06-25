@@ -30,4 +30,8 @@ pub struct Args {
         default_value = "redis://127.0.0.1:6379/"
     )]
     pub redis_dsn: String,
+
+    /// List of tokens allowed to create new secrets. If empty, no tokens are required.
+    #[arg(short, long, value_name = "TOKENS")]
+    pub tokens: Vec<String>,
 }
