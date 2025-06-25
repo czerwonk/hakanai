@@ -21,11 +21,12 @@ pub enum DataStoreError {
 /// thread-safe.
 #[async_trait]
 pub trait DataStore: Send + Sync {
-    /// Retrieves a value from the data store based on its `Uuid`.
+    /// Atomically retrieves and removes a value from the data store based on its
+    /// `Uuid`.
     ///
     /// # Arguments
     ///
-    /// * `id` - The `Uuid` of the item to retrieve.
+    /// * `id` - The `Uuid` of the item to retrieve and remove.
     ///
     /// # Returns
     ///
