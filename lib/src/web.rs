@@ -7,6 +7,7 @@ use crate::client::{Client, ClientError};
 use crate::models::{PostSecretRequest, PostSecretResponse};
 
 const API_SECRET_PATH: &str = "api/secret";
+const REQUEST_TIMEOUT: Duration = Duration::from_secs(10);
 
 #[derive(Debug)]
 pub struct WebClient {
@@ -36,6 +37,7 @@ impl Client for WebClient {
         let resp = self
             .web_client
             .post(url.to_string())
+            .timeout(REQUEST_TIMEOUT)
             .json(&req)
             .send()
             .await?;
@@ -60,7 +62,12 @@ impl Client for WebClient {
             return Err(ClientError::Custom("Invalid API path".to_string()));
         }
 
-        let resp = self.web_client.get(url).send().await?;
+        let resp = self
+            .web_client
+            .get(url)
+            .timeout(REQUEST_TIMEOUT)
+            .send()
+            .await?;
         if resp.status() != reqwest::StatusCode::OK {
             let mut err_msg = format!("HTTP error: {}", resp.status());
 
