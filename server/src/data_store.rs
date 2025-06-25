@@ -32,7 +32,7 @@ pub trait DataStore: Send + Sync {
     /// A `Result` which is `Ok(Some(String))` if the item is found, `Ok(None)`
     /// if the item is not found, or an `Err` if an error occurs during the
     /// operation.
-    async fn get(&self, id: Uuid) -> Result<Option<String>, DataStoreError>;
+    async fn pop(&self, id: Uuid) -> Result<Option<String>, DataStoreError>;
 
     /// Stores a value in the data store with a given `Uuid` and an expiration
     /// duration.
@@ -71,8 +71,8 @@ impl RedisDataStore {
 
 #[async_trait]
 impl DataStore for RedisDataStore {
-    async fn get(&self, id: Uuid) -> Result<Option<String>, DataStoreError> {
-        let value = self.con.clone().get(id.to_string()).await?;
+    async fn pop(&self, id: Uuid) -> Result<Option<String>, DataStoreError> {
+        let value = self.con.clone().get_del(id.to_string()).await?;
         Ok(value)
     }
 

@@ -27,7 +27,7 @@ pub fn configure(cfg: &mut web::ServiceConfig, data_store: Box<dyn DataStore>) {
 async fn get_secret(req: web::Path<Uuid>, app_data: web::Data<AppData>) -> Result<String> {
     let id = req.into_inner();
 
-    match app_data.data_store.get(id).await {
+    match app_data.data_store.pop(id).await {
         Ok(data) => match data {
             Some(secret) => Ok(secret),
             None => Err(error::ErrorNotFound("Secret not found")),
@@ -98,7 +98,7 @@ mod tests {
 
     #[async_trait]
     impl DataStore for MockDataStore {
-        async fn get(&self, _id: Uuid) -> Result<Option<String>, DataStoreError> {
+        async fn pop(&self, _id: Uuid) -> Result<Option<String>, DataStoreError> {
             if self.get_error {
                 Err(DataStoreError::InternalError("mock error".to_string()))
             } else {
