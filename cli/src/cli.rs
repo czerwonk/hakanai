@@ -28,6 +28,7 @@ pub enum Command {
             short,
             long,
             default_value = "http://localhost:8080",
+            env = "HAKANAI_SERVER",
             help = "Hakanai Server URL to send the secret to (eg. https://hakanai.routing.rocks)."
         )]
         server: Url,
@@ -35,12 +36,19 @@ pub enum Command {
         #[arg(
             long,
             default_value = "24h",
+            env = "HAKANAI_TTL",
             help = "Time after the secret vanishes.",
             value_parser = humantime::parse_duration,
         )]
         ttl: Duration,
 
-        #[arg(short, long, default_value = "", help = "Token for authorization.")]
+        #[arg(
+            short,
+            long,
+            default_value = "",
+            env = "HAKANAI_TOKEN",
+            help = "Token for authorization."
+        )]
         token: String,
     },
 }
