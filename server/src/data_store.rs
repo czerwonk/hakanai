@@ -32,7 +32,7 @@ pub trait DataStore: Send + Sync {
     /// A `Result` which is `Ok(Some(String))` if the item is found, `Ok(None)`
     /// if the item is not found, or an `Err` if an error occurs during the
     /// operation.
-    async fn get(&mut self, id: Uuid) -> Result<Option<String>, DataStoreError>;
+    async fn get(&self, id: Uuid) -> Result<Option<String>, DataStoreError>;
 
     /// Stores a value in the data store with a given `Uuid` and an expiration
     /// duration.
@@ -49,12 +49,8 @@ pub trait DataStore: Send + Sync {
     ///
     /// A `Result` which is `Ok(())` on successful insertion, or an `Err` if an
     /// error occurs.
-    async fn put(
-        &mut self,
-        id: Uuid,
-        data: String,
-        expires_in: Duration,
-    ) -> Result<(), DataStoreError>;
+    async fn put(&self, id: Uuid, data: String, expires_in: Duration)
+    -> Result<(), DataStoreError>;
 }
 
 /// An implementation of the `DataStore` trait that uses Redis as its backend.
@@ -75,19 +71,20 @@ impl RedisDataStore {
 
 #[async_trait]
 impl DataStore for RedisDataStore {
-    async fn get(&mut self, id: Uuid) -> Result<Option<String>, DataStoreError> {
-        let value = self.con.get(id.to_string()).await?;
+    async fn get(&self, id: Uuid) -> Result<Option<String>, DataStoreError> {
+        let value = self.con.clone().get(id.to_string()).await?;
         Ok(value)
     }
 
     async fn put(
-        &mut self,
+        &self,
         id: Uuid,
         data: String,
         expires_in: Duration,
     ) -> Result<(), DataStoreError> {
         let _: () = self
             .con
+            .clone()
             .set_ex(id.to_string(), data, expires_in.as_secs())
             .await?;
         Ok(())

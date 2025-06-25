@@ -1,5 +1,4 @@
 use actix_web::{Result, error, get, post, web};
-use tokio::sync::Mutex;
 use uuid::Uuid;
 
 use hakanai_lib::models::{PostSecretRequest, PostSecretResponse};
@@ -7,7 +6,7 @@ use hakanai_lib::models::{PostSecretRequest, PostSecretResponse};
 use crate::data_store::DataStore;
 
 struct AppData {
-    data_store: Mutex<Box<dyn DataStore>>,
+    data_store: Box<dyn DataStore>,
 }
 
 /// Configures the Actix Web services for the application.
@@ -16,7 +15,7 @@ struct AppData {
 /// including the data store that will be shared across all handlers.
 pub fn configure(cfg: &mut web::ServiceConfig, data_store: Box<dyn DataStore>) {
     let app_data = AppData {
-        data_store: Mutex::new(data_store),
+        data_store: data_store,
     };
 
     cfg.service(get_secret)
@@ -27,9 +26,8 @@ pub fn configure(cfg: &mut web::ServiceConfig, data_store: Box<dyn DataStore>) {
 #[get("/secret/{id}")]
 async fn get_secret(req: web::Path<Uuid>, app_data: web::Data<AppData>) -> Result<String> {
     let id = req.into_inner();
-    let mut data_store = app_data.data_store.lock().await;
 
-    match data_store.get(id).await {
+    match app_data.data_store.get(id).await {
         Ok(data) => match data {
             Some(secret) => Ok(secret),
             None => Err(error::ErrorNotFound("Secret not found")),
@@ -45,8 +43,8 @@ async fn post_secret(
 ) -> Result<web::Json<PostSecretResponse>> {
     let id = uuid::Uuid::new_v4();
 
-    let mut data_store = app_data.data_store.lock().await;
-    data_store
+    app_data
+        .data_store
         .put(id, req.data.clone(), req.expires_in)
         .await
         .map_err(error::ErrorInternalServerError)?;
@@ -100,7 +98,7 @@ mod tests {
 
     #[async_trait]
     impl DataStore for MockDataStore {
-        async fn get(&mut self, _id: Uuid) -> Result<Option<String>, DataStoreError> {
+        async fn get(&self, _id: Uuid) -> Result<Option<String>, DataStoreError> {
             if self.get_error {
                 Err(DataStoreError::InternalError("mock error".to_string()))
             } else {
@@ -109,7 +107,7 @@ mod tests {
         }
 
         async fn put(
-            &mut self,
+            &self,
             id: Uuid,
             data: String,
             expires_in: Duration,
