@@ -50,6 +50,35 @@ cargo build --release --workspace
 # - ./target/release/hakanai-server (Server)
 ```
 
+### Using Docker Compose
+
+The easiest way to run Hakanai is with Docker Compose, which includes both the server and a Valkey (Redis-compatible) database:
+
+```bash
+# Start the services
+docker-compose up -d
+
+# The server will be available at http://localhost:8080
+
+# View logs
+docker-compose logs -f
+
+# Stop the services
+docker-compose down
+
+# Stop and remove volumes (clears all stored secrets)
+docker-compose down -v
+```
+
+For production deployment, create your own `docker-compose.override.yml`:
+
+```yaml
+services:
+  hakanai:
+    environment:
+      HAKANAI_TOKENS: "your-secret-token-here"
+```
+
 ## Usage
 
 ### Server
@@ -212,10 +241,17 @@ For production deployments:
 - ✅ One-time access enforcement
 - ✅ Automatic expiration
 - ✅ No user tracking or accounts
-- ✅ Client-side encryption
+- ✅ Client-side AES-256-GCM encryption
+- ✅ Token-based authentication
+- ✅ Redis backend storage
 
-### Future Security Enhancements
-- Implementation of AES-256-GCM encryption in `hakanai-lib`
+### Security Implementation
+- ✅ AES-256-GCM encryption implemented in `hakanai-lib`
+- ✅ Secure random nonce generation with OsRng
+- ✅ Base64 encoding for transport
+- ✅ Client-side key generation and management
+
+### Future Enhancements
 - Key derivation from URL fragment (never sent to server)
 - Optional password protection with Argon2
 
