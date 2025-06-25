@@ -60,6 +60,11 @@ hakanai-server
 
 # Or with custom configuration
 hakanai-server --port 3000 --listen 0.0.0.0 --redis-dsn redis://redis.example.com:6379/
+
+# Start with authentication tokens (recommended for production)
+hakanai-server --tokens secret-token-1 --tokens secret-token-2
+
+# Note: If no tokens are provided, anyone can create secrets (not recommended for production)
 ```
 
 ### CLI
@@ -75,6 +80,9 @@ echo "temporary password" | hakanai send --ttl 30m
 
 # Send to custom server
 echo "secret" | hakanai send --server https://hakanai.example.com
+
+# Send with authentication token (required if server has token whitelist)
+echo "secret" | hakanai send --token my-auth-token
 
 # Send from file
 cat secret.txt | hakanai send
@@ -94,6 +102,9 @@ hakanai get https://hakanai.example.com/secret/550e8400-e29b-41d4-a716-446655440
 ### POST /secret
 Create a new secret.
 
+**Headers:**
+- `Authorization: Bearer {token}` (required if server has token whitelist)
+
 **Request:**
 ```json
 {
@@ -109,12 +120,22 @@ Create a new secret.
 }
 ```
 
+**Error Responses:**
+- `401 Unauthorized`: Invalid or missing token when server requires authentication
+- `400 Bad Request`: Invalid request body
+
 ### GET /secret/{id}
 Retrieve a secret (one-time access).
 
 **Response:**
 - `200 OK`: Plain text secret data
 - `404 Not Found`: Secret doesn't exist or already accessed
+
+### GET /healthz
+Health check endpoint.
+
+**Response:**
+- `200 OK`: Server is healthy
 
 ## Development
 
@@ -181,6 +202,12 @@ The server is designed to run behind a reverse proxy (nginx, Caddy, etc.) which 
 - Rate limiting
 - DDoS protection
 
+For production deployments:
+1. Always use authentication tokens to prevent unauthorized secret creation
+2. Monitor server logs (structured logging with tracing middleware included)
+3. Set appropriate Redis memory limits and eviction policies
+4. Configure your reverse proxy to strip sensitive headers
+
 ## Security Considerations
 
 > ⚠️ **Important**: Client-side encryption is not yet implemented. The current version stores secrets in plaintext on the server. Do not use for sensitive data until encryption is complete.
@@ -203,6 +230,19 @@ The server is designed to run behind a reverse proxy (nginx, Caddy, etc.) which 
 - `PORT`: Server port (default: 8080)
 - `LISTEN_ADDRESS`: Bind address (default: 127.0.0.1)
 - `REDIS_DSN`: Redis connection string (default: redis://127.0.0.1:6379/)
+
+### Server Command-line Options
+
+- `--port`: Override the port number
+- `--listen`: Override the listen address
+- `--redis-dsn`: Override the Redis connection string
+- `--tokens`: Add authentication tokens (can be specified multiple times)
+
+### Security Features
+
+- **Authentication Token Whitelist**: When tokens are provided via `--tokens`, only requests with valid Bearer tokens can create secrets
+- **Request Logging**: Built-in request logging middleware for monitoring and debugging
+- **One-time Access**: Secrets are automatically deleted after first retrieval
 
 ## Contributing
 
