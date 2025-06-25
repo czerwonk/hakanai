@@ -1,5 +1,7 @@
 # Hakanai (儚い)
 
+![Logo](logo.svg)
+
 A minimalist one-time secret sharing service built on zero-knowledge principles.
 
 ## Philosophy
