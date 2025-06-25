@@ -4,9 +4,11 @@ mod options;
 
 use std::io::Result;
 
+use actix_web::middleware::Compat;
 use actix_web::{App, HttpResponse, HttpServer, Responder, web};
 use clap::Parser;
 use tracing::{info, warn};
+use tracing_actix_web::TracingLogger;
 
 use crate::data_store::RedisDataStore;
 use crate::options::Args;
@@ -33,6 +35,7 @@ async fn main() -> Result<()> {
     info!("Starting server on {}:{}", args.listen_address, args.port);
     HttpServer::new(move || {
         App::new()
+            .wrap(Compat::new(TracingLogger::default()))
             .route("/healthz", web::get().to(healthz))
             .service(web::scope("/api").configure(|cfg| {
                 api::configure(cfg, Box::new(data_store.clone()), args.tokens.clone())
