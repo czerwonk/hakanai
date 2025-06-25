@@ -14,9 +14,7 @@ struct AppData {
 /// This function registers the API routes and sets up the application data,
 /// including the data store that will be shared across all handlers.
 pub fn configure(cfg: &mut web::ServiceConfig, data_store: Box<dyn DataStore>) {
-    let app_data = AppData {
-        data_store: data_store,
-    };
+    let app_data = AppData { data_store };
 
     cfg.service(get_secret)
         .service(post_secret)
