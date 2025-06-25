@@ -4,6 +4,7 @@ use async_trait::async_trait;
 use thiserror::Error;
 use url::Url;
 
+use crate::crypto::CryptoClient;
 use crate::web::WebClient;
 
 /// Defines the asynchronous interface for a client that can send and receive secrets.
@@ -61,9 +62,10 @@ pub enum ClientError {
     Custom(String),
 }
 
-/// Creates a new web client.
+/// Creates a new client instance.
 ///
-/// This function returns a new instance of `WebClient` that implements the `Client` trait.
+/// This function constructs a default client implementation, which is a `CryptoClient`
+/// wrapping a `WebClient`. This setup provides end-to-end encryption for secrets.
 pub fn new() -> impl Client {
-    WebClient::new()
+    CryptoClient::new(Box::new(WebClient::new()))
 }

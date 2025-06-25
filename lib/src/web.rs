@@ -1,7 +1,8 @@
+use std::time::Duration;
+
 use async_trait::async_trait;
 use reqwest;
 use reqwest::Url;
-use std::time::Duration;
 
 use crate::client::{Client, ClientError};
 use crate::models::{PostSecretRequest, PostSecretResponse};
@@ -82,6 +83,7 @@ impl Client for WebClient {
         Ok(secret)
     }
 }
+
 #[cfg(test)]
 mod tests {
     use super::*;
