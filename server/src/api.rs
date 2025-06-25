@@ -24,8 +24,9 @@ pub fn configure(cfg: &mut web::ServiceConfig, data_store: Box<dyn DataStore>) {
 }
 
 #[get("/secret/{id}")]
-async fn get_secret(req: web::Path<Uuid>, app_data: web::Data<AppData>) -> Result<String> {
-    let id = req.into_inner();
+async fn get_secret(req: web::Path<String>, app_data: web::Data<AppData>) -> Result<String> {
+    let id = Uuid::parse_str(&req.into_inner())
+        .map_err(|_| error::ErrorBadRequest("Invalid link format"))?;
 
     match app_data.data_store.pop(id).await {
         Ok(data) => match data {
