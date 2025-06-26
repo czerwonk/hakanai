@@ -4,6 +4,7 @@ use crate::data_store::DataStore;
 pub struct AppData {
     /// The data store for persisting application data.
     pub data_store: Box<dyn DataStore>,
+
     /// A list of valid authentication tokens.
     pub tokens: Vec<String>,
 }
