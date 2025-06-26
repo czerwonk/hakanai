@@ -9,7 +9,7 @@
 
 rustPlatform.buildRustPackage {
   pname = "hakanai-server";
-  version = "0.1.1";
+  version = "0.2.0";
 
   src = lib.cleanSource ../.;
 
