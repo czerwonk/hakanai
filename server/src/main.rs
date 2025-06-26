@@ -45,7 +45,9 @@ async fn main() -> Result<()> {
         };
         App::new()
             .app_data(web::Data::new(app_data))
-            .wrap(Logger::default())
+            .wrap(Logger::new(
+                "%a %{X-Forwarded-For}i %t \"%r\" %s %b \"%{User-Agent}i\" %Ts",
+            ))
             .wrap(Compat::new(TracingLogger::default()))
             .route("/", web::get().to(serve_get_secret_html))
             .route("/s/{id}", web::get().to(get_secret_short))
