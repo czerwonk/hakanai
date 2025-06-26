@@ -15,7 +15,7 @@ rustPlatform.buildRustPackage {
 
   cargoBuildCommand = "cargo build --release --package server";
   cargoTestCommand = "cargo test --release --package server";
-  cargoHash = "sha256-GTYO/LusabUvpbFrCVPmvU43J57qlLj9wEnw2sZ3umQ=";
+  cargoHash = "sha256-qLitA3R1AW+FCoiEwaAafPz52yFITpRLt9S2QN87wVw=";
 
   nativeBuildInputs = [
     pkg-config
