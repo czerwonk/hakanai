@@ -49,6 +49,7 @@ async fn main() -> Result<()> {
             .wrap(Compat::new(TracingLogger::default()))
             .route("/", web::get().to(serve_get_secret_html))
             .route("/s/{id}", web::get().to(get_secret_short))
+            .route("/create", web::get().to(serve_create_secret_html))
             .route("/scripts/hakanai-client.js", web::get().to(serve_js_client))
             .route("/style.css", web::get().to(serve_css))
             .route("/icon.svg", web::get().to(serve_icon))
@@ -82,10 +83,7 @@ async fn get_secret_short(
 
     match api::get_secret_from_request(req, app_data).await {
         Ok(secret) => HttpResponse::Ok().body(secret),
-        Err(e) => {
-            // Let actix handle the error response automatically
-            e.error_response()
-        }
+        Err(e) => e.error_response(),
     }
 }
 
@@ -119,4 +117,9 @@ async fn serve_get_secret_html() -> impl Responder {
     HttpResponse::Ok()
         .content_type("text/html")
         .body(SECRET_HTML_CONTENT)
+}
+
+async fn serve_create_secret_html() -> impl Responder {
+    const CONTENT: &str = include_str!("includes/create-secret.html");
+    HttpResponse::Ok().content_type("text/html").body(CONTENT)
 }

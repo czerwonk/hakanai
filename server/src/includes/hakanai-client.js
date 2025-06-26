@@ -62,6 +62,104 @@ class HakanaiClient {
   }
 
   /**
+   * Generate a random 256-bit AES key
+   * @returns {Promise<Uint8Array>} The generated key
+   */
+  async generateKey() {
+    const key = new Uint8Array(32);
+    crypto.getRandomValues(key);
+    return key;
+  }
+
+  /**
+   * Encrypt a message with AES-GCM
+   * @param {string} plaintext - The message to encrypt
+   * @param {Uint8Array} key - The encryption key
+   * @returns {Promise<string>} Base64-encoded encrypted data (nonce + ciphertext)
+   */
+  async encrypt(plaintext, key) {
+    const encoder = new TextEncoder();
+    const plaintextBytes = encoder.encode(plaintext);
+
+    // Generate random nonce
+    const nonce = new Uint8Array(12);
+    crypto.getRandomValues(nonce);
+
+    const cryptoKey = await this.importKey(key);
+
+    const ciphertext = await crypto.subtle.encrypt(
+      { name: "AES-GCM", iv: nonce },
+      cryptoKey,
+      plaintextBytes,
+    );
+
+    // Combine nonce and ciphertext
+    const combined = new Uint8Array(nonce.length + ciphertext.byteLength);
+    combined.set(nonce);
+    combined.set(new Uint8Array(ciphertext), nonce.length);
+
+    // Encode to standard base64
+    return btoa(String.fromCharCode(...combined));
+  }
+
+  /**
+   * Send a secret to the server
+   * @param {string} secret - The secret text to encrypt and send
+   * @param {number} ttl - Time to live in seconds (optional)
+   * @param {string} authToken - Authentication token (optional)
+   * @returns {Promise<string>} The shareable URL with the key fragment
+   */
+  async sendSecret(secret, ttl = 3600, authToken = null) {
+    if (!secret || secret.trim().length === 0) {
+      throw new Error("Secret cannot be empty");
+    }
+
+    // Generate encryption key
+    const key = await this.generateKey();
+
+    // Encrypt the secret
+    const encryptedData = await this.encrypt(secret, key);
+
+    // Prepare headers
+    const headers = {
+      "Content-Type": "application/json",
+    };
+
+    // Add authorization header if token is provided
+    if (authToken && authToken.length > 0) {
+      headers["Authorization"] = `Bearer ${authToken}`;
+    }
+
+    // Send to server
+    const response = await fetch(`${this.baseUrl}/api/secret`, {
+      method: "POST",
+      headers: headers,
+      body: JSON.stringify({
+        data: encryptedData,
+        expires_in: ttl,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to send secret: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    const result = await response.json();
+    const secretId = result.id;
+
+    // Encode key to URL-safe base64
+    const keyBase64 = btoa(String.fromCharCode(...key))
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=/g, "");
+
+    // Return the shareable URL
+    return `${this.baseUrl}/s/${secretId}#${keyBase64}`;
+  }
+
+  /**
    * Receive a secret from the server
    * @param {string} url - The full secret URL including the key fragment
    * @returns {Promise<string>} The decrypted secret
@@ -118,6 +216,10 @@ if (typeof module !== "undefined" && module.exports) {
 /*
 // Browser or Node.js with fetch available
 const client = new HakanaiClient('https://hakanai.example.com');
+
+// Send a secret
+const url = await client.sendSecret('My secret message', 3600);
+console.log('Secret URL:', url);
 
 // Receive a secret
 const retrievedSecret = await client.receiveSecret(url);

@@ -51,12 +51,8 @@ impl Client for CryptoClient {
         let res = self
             .inner_client
             .send_secret(base_url, encoded_data, ttl, token)
-            .await;
-
-        match res {
-            Ok(url) => Ok(append_key_to_link(url, &key)),
-            Err(e) => Err(e),
-        }
+            .await?;
+        Ok(append_key_to_link(res, &key))
     }
 
     async fn receive_secret(&self, url: Url) -> Result<String, ClientError> {
@@ -65,15 +61,9 @@ impl Client for CryptoClient {
             .ok_or(ClientError::Custom("No key in URL".to_string()))?
             .to_string();
 
-        let res = self.inner_client.receive_secret(url).await;
-
-        match res {
-            Ok(encoded_data) => {
-                let decrypted_data = decrypt(encoded_data, key_base64)?;
-                Ok(decrypted_data)
-            }
-            Err(e) => Err(e),
-        }
+        let encoded_data = self.inner_client.receive_secret(url).await?;
+        let decrypted_data: String = decrypt(encoded_data, key_base64)?;
+        Ok(decrypted_data)
     }
 }
 

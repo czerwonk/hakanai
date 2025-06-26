@@ -39,10 +39,8 @@ pub async fn get_secret_from_request(
         .map_err(|_| error::ErrorBadRequest("Invalid link format"))?;
 
     match app_data.data_store.pop(id).await {
-        Ok(data) => match data {
-            Some(secret) => Ok(secret),
-            None => Err(error::ErrorNotFound("Secret not found")),
-        },
+        Ok(Some(secret)) => Ok(secret),
+        Ok(None) => Err(error::ErrorNotFound("Secret not found")),
         Err(e) => Err(error::ErrorInternalServerError(e)),
     }
 }
@@ -58,10 +56,7 @@ async fn post_secret(
     req: web::Json<PostSecretRequest>,
     app_data: web::Data<AppData>,
 ) -> Result<web::Json<PostSecretResponse>> {
-    match ensure_is_authorized(&http_req, &app_data.tokens) {
-        Ok(_) => {}
-        Err(e) => return Err(e),
-    }
+    ensure_is_authorized(&http_req, &app_data.tokens)?;
 
     let id = uuid::Uuid::new_v4();
 
@@ -80,14 +75,13 @@ fn ensure_is_authorized(req: &HttpRequest, tokens: &[String]) -> Result<()> {
         return Ok(());
     }
 
-    let mut token = match req.headers().get("Authorization") {
-        None => return Err(error::ErrorUnauthorized("Unauthorized: No token provided")),
-        Some(token) => token
-            .to_str()
-            .map_err(|_| error::ErrorUnauthorized("Unauthorized: Invalid token format"))?,
-    };
-
-    token = token.trim_start_matches("Bearer ").trim();
+    let token = req
+        .headers()
+        .get("Authorization")
+        .and_then(|h| h.to_str().ok())
+        .ok_or_else(|| error::ErrorUnauthorized("Unauthorized: No token provided"))?
+        .trim_start_matches("Bearer ")
+        .trim();
 
     if tokens.contains(&token.to_string()) {
         Ok(())
@@ -174,11 +168,11 @@ mod tests {
             tokens: vec![],
         };
 
-        let app = test::init_service(
-            App::new()
-                .app_data(web::Data::new(app_data))
-                .configure(|cfg| { configure(cfg); }),
-        )
+        let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
+            |cfg| {
+                configure(cfg);
+            },
+        ))
         .await;
 
         let req = test::TestRequest::get()
@@ -200,11 +194,11 @@ mod tests {
             tokens: vec![],
         };
 
-        let app = test::init_service(
-            App::new()
-                .app_data(web::Data::new(app_data))
-                .configure(|cfg| { configure(cfg); }),
-        )
+        let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
+            |cfg| {
+                configure(cfg);
+            },
+        ))
         .await;
 
         let req = test::TestRequest::get()
@@ -223,11 +217,11 @@ mod tests {
             tokens: vec![],
         };
 
-        let app = test::init_service(
-            App::new()
-                .app_data(web::Data::new(app_data))
-                .configure(|cfg| { configure(cfg); }),
-        )
+        let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
+            |cfg| {
+                configure(cfg);
+            },
+        ))
         .await;
 
         let req = test::TestRequest::get()
@@ -247,11 +241,11 @@ mod tests {
             tokens: vec![],
         };
 
-        let app = test::init_service(
-            App::new()
-                .app_data(web::Data::new(app_data))
-                .configure(|cfg| { configure(cfg); }),
-        )
+        let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
+            |cfg| {
+                configure(cfg);
+            },
+        ))
         .await;
 
         let payload = PostSecretRequest {
@@ -284,11 +278,11 @@ mod tests {
             tokens: vec![],
         };
 
-        let app = test::init_service(
-            App::new()
-                .app_data(web::Data::new(app_data))
-                .configure(|cfg| { configure(cfg); }),
-        )
+        let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
+            |cfg| {
+                configure(cfg);
+            },
+        ))
         .await;
 
         let payload = PostSecretRequest {
@@ -314,11 +308,11 @@ mod tests {
             tokens: vec!["valid_token_123".to_string()],
         };
 
-        let app = test::init_service(
-            App::new()
-                .app_data(web::Data::new(app_data))
-                .configure(|cfg| { configure(cfg); }),
-        )
+        let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
+            |cfg| {
+                configure(cfg);
+            },
+        ))
         .await;
 
         let payload = PostSecretRequest {
@@ -350,11 +344,11 @@ mod tests {
             tokens: vec!["valid_token_123".to_string()],
         };
 
-        let app = test::init_service(
-            App::new()
-                .app_data(web::Data::new(app_data))
-                .configure(|cfg| { configure(cfg); }),
-        )
+        let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
+            |cfg| {
+                configure(cfg);
+            },
+        ))
         .await;
 
         let payload = PostSecretRequest {
@@ -379,11 +373,11 @@ mod tests {
             tokens: vec!["valid_token_123".to_string()],
         };
 
-        let app = test::init_service(
-            App::new()
-                .app_data(web::Data::new(app_data))
-                .configure(|cfg| { configure(cfg); }),
-        )
+        let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
+            |cfg| {
+                configure(cfg);
+            },
+        ))
         .await;
 
         let payload = PostSecretRequest {

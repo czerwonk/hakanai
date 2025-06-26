@@ -1,14 +1,17 @@
 use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
+use serde_with::serde_as;
 
 /// Represents the request to create a new secret.
+#[serde_as]
 #[derive(Deserialize, Serialize)]
 pub struct PostSecretRequest {
     /// The secret data to be stored.
     pub data: String,
 
     /// The duration until the secret expires.
+    #[serde_as(as = "serde_with::DurationSeconds<u64>")]
     pub expires_in: Duration,
 }
 

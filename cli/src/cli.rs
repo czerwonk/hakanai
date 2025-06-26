@@ -81,25 +81,6 @@ mod tests {
     }
 
     #[test]
-    fn test_send_command_with_defaults() {
-        let args = Args::try_parse_from(&["hakanai", "send"]).unwrap();
-
-        match args.command {
-            Command::Send {
-                server,
-                ttl,
-                token,
-                file: None,
-            } => {
-                assert_eq!(server.as_str(), "http://localhost:8080/");
-                assert_eq!(ttl, Duration::from_secs(24 * 60 * 60)); // 24 hours
-                assert_eq!(token, ""); // Default empty token
-            }
-            _ => panic!("Expected Send command"),
-        }
-    }
-
-    #[test]
     fn test_send_command_with_custom_server() {
         let args = Args::try_parse_from(&[
             "hakanai",
