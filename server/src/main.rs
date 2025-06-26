@@ -39,8 +39,9 @@ async fn main() -> Result<()> {
             .wrap(Logger::default())
             .wrap(Compat::new(TracingLogger::default()))
             .route("/", web::get().to(serve_get_secret_html))
-            .route("/healthz", web::get().to(healthz))
             .route("/scripts/hakanai-client.js", web::get().to(serve_js_client))
+            .route("/logo.svg", web::get().to(serve_logo))
+            .route("/icon.svg", web::get().to(serve_icon))
             .service(
                 web::scope("/api").configure(|cfg| {
                     api::configure(cfg, Box::new(data_store.clone()), tokens.clone())
@@ -52,18 +53,28 @@ async fn main() -> Result<()> {
     .await
 }
 
-async fn healthz() -> impl Responder {
-    HttpResponse::Ok().body("healthy")
-}
-
 async fn serve_js_client() -> impl Responder {
-    const JS_CLIENT: &str = include_str!("includes/hakanai-client.js");
+    const CONTENT: &str = include_str!("includes/hakanai-client.js");
     HttpResponse::Ok()
         .content_type("application/javascript")
-        .body(JS_CLIENT)
+        .body(CONTENT)
+}
+
+async fn serve_logo() -> impl Responder {
+    const CONTENT: &str = include_str!("../../logo.svg");
+    HttpResponse::Ok()
+        .content_type("image/svg+xml")
+        .body(CONTENT)
+}
+
+async fn serve_icon() -> impl Responder {
+    const CONTENT: &str = include_str!("../../icon.svg");
+    HttpResponse::Ok()
+        .content_type("image/svg+xml")
+        .body(CONTENT)
 }
 
 async fn serve_get_secret_html() -> impl Responder {
-    const HTML_CONTENT: &str = include_str!("includes/get-secret.html");
-    HttpResponse::Ok().body(HTML_CONTENT)
+    const CONTENT: &str = include_str!("includes/get-secret.html");
+    HttpResponse::Ok().body(CONTENT)
 }
