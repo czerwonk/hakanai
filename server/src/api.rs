@@ -3,31 +3,38 @@ use uuid::Uuid;
 
 use hakanai_lib::models::{PostSecretRequest, PostSecretResponse};
 
-use crate::data_store::DataStore;
-
-struct AppData {
-    data_store: Box<dyn DataStore>,
-    tokens: Vec<String>,
-}
+use crate::app_data::AppData;
 
 /// Configures the Actix Web services for the application.
 ///
 /// This function registers the API routes and sets up the application data,
 /// including the data store that will be shared across all handlers.
-pub fn configure(
-    cfg: &mut web::ServiceConfig,
-    data_store: Box<dyn DataStore>,
-    tokens: Vec<String>,
-) {
-    let app_data = AppData { data_store, tokens };
-
-    cfg.service(get_secret)
-        .service(post_secret)
-        .app_data(web::Data::new(app_data));
+pub fn configure(cfg: &mut web::ServiceConfig) -> &mut web::ServiceConfig {
+    cfg.service(get_secret).service(post_secret)
 }
 
-#[get("/secret/{id}")]
-async fn get_secret(req: web::Path<String>, app_data: web::Data<AppData>) -> Result<String> {
+/// Retrieves and consumes a secret from the data store.
+///
+/// This function handles the core logic for the `GET /secret/{id}` endpoint.
+/// It parses the UUID from the request path, retrieves the corresponding secret
+/// from the data store, and returns it. Upon successful retrieval, the secret
+/// is consumed and can no longer be accessed.
+///
+/// # Arguments
+///
+/// * `req` - The request path containing the secret's ID.
+/// * `app_data` - The application's shared data, including the data store.
+///
+/// # Errors
+///
+/// This function will return an error if:
+/// - The provided ID is not a valid UUID (`ErrorBadRequest`).
+/// - The secret is not found in the data store (`ErrorNotFound`).
+/// - An internal error occurs while accessing the data store (`ErrorInternalServerError`).
+pub async fn get_secret_from_request(
+    req: web::Path<String>,
+    app_data: web::Data<AppData>,
+) -> Result<String> {
     let id = Uuid::parse_str(&req.into_inner())
         .map_err(|_| error::ErrorBadRequest("Invalid link format"))?;
 
@@ -38,6 +45,11 @@ async fn get_secret(req: web::Path<String>, app_data: web::Data<AppData>) -> Res
         },
         Err(e) => Err(error::ErrorInternalServerError(e)),
     }
+}
+
+#[get("/secret/{id}")]
+async fn get_secret(req: web::Path<String>, app_data: web::Data<AppData>) -> Result<String> {
+    get_secret_from_request(req, app_data).await
 }
 
 #[post("/secret")]
@@ -157,9 +169,15 @@ mod tests {
     #[actix_web::test]
     async fn test_get_secret_found() {
         let mock_store = MockDataStore::new().with_get_result(Some("test_secret".to_string()));
+        let app_data = AppData {
+            data_store: Box::new(mock_store),
+            tokens: vec![],
+        };
 
         let app = test::init_service(
-            App::new().configure(|cfg| configure(cfg, Box::new(mock_store), vec![])),
+            App::new()
+                .app_data(web::Data::new(app_data))
+                .configure(|cfg| { configure(cfg); }),
         )
         .await;
 
@@ -177,9 +195,15 @@ mod tests {
     #[actix_web::test]
     async fn test_get_secret_not_found() {
         let mock_store = MockDataStore::new().with_get_result(None);
+        let app_data = AppData {
+            data_store: Box::new(mock_store),
+            tokens: vec![],
+        };
 
         let app = test::init_service(
-            App::new().configure(|cfg| configure(cfg, Box::new(mock_store), vec![])),
+            App::new()
+                .app_data(web::Data::new(app_data))
+                .configure(|cfg| { configure(cfg); }),
         )
         .await;
 
@@ -194,9 +218,15 @@ mod tests {
     #[actix_web::test]
     async fn test_get_secret_error() {
         let mock_store = MockDataStore::new().with_get_error();
+        let app_data = AppData {
+            data_store: Box::new(mock_store),
+            tokens: vec![],
+        };
 
         let app = test::init_service(
-            App::new().configure(|cfg| configure(cfg, Box::new(mock_store), vec![])),
+            App::new()
+                .app_data(web::Data::new(app_data))
+                .configure(|cfg| { configure(cfg); }),
         )
         .await;
 
@@ -212,9 +242,15 @@ mod tests {
     async fn test_post_secret_success() {
         let mock_store = MockDataStore::new();
         let stored_data = mock_store.stored_data.clone();
+        let app_data = AppData {
+            data_store: Box::new(mock_store),
+            tokens: vec![],
+        };
 
         let app = test::init_service(
-            App::new().configure(|cfg| configure(cfg, Box::new(mock_store), vec![])),
+            App::new()
+                .app_data(web::Data::new(app_data))
+                .configure(|cfg| { configure(cfg); }),
         )
         .await;
 
@@ -243,9 +279,15 @@ mod tests {
     #[actix_web::test]
     async fn test_post_secret_error() {
         let mock_store = MockDataStore::new().with_put_error();
+        let app_data = AppData {
+            data_store: Box::new(mock_store),
+            tokens: vec![],
+        };
 
         let app = test::init_service(
-            App::new().configure(|cfg| configure(cfg, Box::new(mock_store), vec![])),
+            App::new()
+                .app_data(web::Data::new(app_data))
+                .configure(|cfg| { configure(cfg); }),
         )
         .await;
 
@@ -267,10 +309,15 @@ mod tests {
     async fn test_post_secret_with_valid_token() {
         let mock_store = MockDataStore::new();
         let stored_data = mock_store.stored_data.clone();
-        let tokens = vec!["valid_token_123".to_string()];
+        let app_data = AppData {
+            data_store: Box::new(mock_store),
+            tokens: vec!["valid_token_123".to_string()],
+        };
 
         let app = test::init_service(
-            App::new().configure(|cfg| configure(cfg, Box::new(mock_store), tokens)),
+            App::new()
+                .app_data(web::Data::new(app_data))
+                .configure(|cfg| { configure(cfg); }),
         )
         .await;
 
@@ -298,10 +345,15 @@ mod tests {
     #[actix_web::test]
     async fn test_post_secret_missing_auth_header() {
         let mock_store = MockDataStore::new();
-        let tokens = vec!["valid_token_123".to_string()];
+        let app_data = AppData {
+            data_store: Box::new(mock_store),
+            tokens: vec!["valid_token_123".to_string()],
+        };
 
         let app = test::init_service(
-            App::new().configure(|cfg| configure(cfg, Box::new(mock_store), tokens)),
+            App::new()
+                .app_data(web::Data::new(app_data))
+                .configure(|cfg| { configure(cfg); }),
         )
         .await;
 
@@ -322,10 +374,15 @@ mod tests {
     #[actix_web::test]
     async fn test_post_secret_invalid_token() {
         let mock_store = MockDataStore::new();
-        let tokens = vec!["valid_token_123".to_string()];
+        let app_data = AppData {
+            data_store: Box::new(mock_store),
+            tokens: vec!["valid_token_123".to_string()],
+        };
 
         let app = test::init_service(
-            App::new().configure(|cfg| configure(cfg, Box::new(mock_store), tokens)),
+            App::new()
+                .app_data(web::Data::new(app_data))
+                .configure(|cfg| { configure(cfg); }),
         )
         .await;
 

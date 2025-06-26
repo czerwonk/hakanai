@@ -1,4 +1,5 @@
 mod api;
+mod app_data;
 mod data_store;
 mod options;
 
@@ -10,8 +11,11 @@ use clap::Parser;
 use tracing::{info, warn};
 use tracing_actix_web::TracingLogger;
 
+use crate::app_data::AppData;
 use crate::data_store::RedisDataStore;
 use crate::options::Args;
+
+const SECRET_HTML_CONTENT: &str = include_str!("includes/get-secret.html");
 
 #[actix_web::main]
 async fn main() -> Result<()> {
@@ -35,22 +39,53 @@ async fn main() -> Result<()> {
 
     info!("Starting server on {}:{}", args.listen_address, args.port);
     HttpServer::new(move || {
+        let app_data = AppData {
+            data_store: Box::new(data_store.clone()),
+            tokens: tokens.clone(),
+        };
         App::new()
+            .app_data(web::Data::new(app_data))
             .wrap(Logger::default())
             .wrap(Compat::new(TracingLogger::default()))
             .route("/", web::get().to(serve_get_secret_html))
+            .route("/s/{id}", web::get().to(get_secret_short))
             .route("/scripts/hakanai-client.js", web::get().to(serve_js_client))
             .route("/logo.svg", web::get().to(serve_logo))
             .route("/icon.svg", web::get().to(serve_icon))
-            .service(
-                web::scope("/api").configure(|cfg| {
-                    api::configure(cfg, Box::new(data_store.clone()), tokens.clone())
-                }),
-            )
+            .service(web::scope("/api").configure(|c| {
+                api::configure(c);
+            }))
     })
     .bind((args.listen_address, args.port))?
     .run()
     .await
+}
+
+async fn get_secret_short(
+    http_req: actix_web::HttpRequest,
+    req: web::Path<String>,
+    app_data: web::Data<AppData>,
+) -> impl Responder {
+    let user_agent = http_req
+        .headers()
+        .get("User-Agent")
+        .and_then(|h| h.to_str().ok())
+        .unwrap_or_default();
+    info!("Received request for secret: {}", req);
+
+    if !user_agent.starts_with("hakanai-client") {
+        return HttpResponse::Ok()
+            .content_type("text/html")
+            .body(SECRET_HTML_CONTENT);
+    }
+
+    match api::get_secret_from_request(req, app_data).await {
+        Ok(secret) => HttpResponse::Ok().body(secret),
+        Err(e) => {
+            // Let actix handle the error response automatically
+            e.error_response()
+        }
+    }
 }
 
 async fn serve_js_client() -> impl Responder {
@@ -75,6 +110,7 @@ async fn serve_icon() -> impl Responder {
 }
 
 async fn serve_get_secret_html() -> impl Responder {
-    const CONTENT: &str = include_str!("includes/get-secret.html");
-    HttpResponse::Ok().body(CONTENT)
+    HttpResponse::Ok()
+        .content_type("text/html")
+        .body(SECRET_HTML_CONTENT)
 }

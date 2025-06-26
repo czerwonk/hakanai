@@ -6,8 +6,10 @@ use reqwest::Url;
 use crate::client::{Client, ClientError};
 use crate::models::{PostSecretRequest, PostSecretResponse};
 
+const SHORT_SECRET_PATH: &str = "s";
 const API_SECRET_PATH: &str = "api/secret";
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(10);
+const USER_AGENT: &str = "hakanai-client";
 
 #[derive(Debug)]
 pub struct WebClient {
@@ -39,6 +41,7 @@ impl Client for WebClient {
             .web_client
             .post(url.to_string())
             .header("Authorization", format!("Bearer {}", token))
+            .header("User-Agent", USER_AGENT)
             .timeout(REQUEST_TIMEOUT)
             .json(&req)
             .send()
@@ -55,18 +58,21 @@ impl Client for WebClient {
 
         let res = resp.json::<PostSecretResponse>().await?;
 
-        let secret_url = base_url.join(&format!("{}/{}", API_SECRET_PATH, res.id))?;
+        let secret_url = base_url.join(&format!("{}/{}", SHORT_SECRET_PATH, res.id))?;
         Ok(secret_url)
     }
 
     async fn receive_secret(&self, url: Url) -> Result<String, ClientError> {
-        if !url.path().starts_with(&format!("/{}", API_SECRET_PATH)) {
+        if !url.path().starts_with(&format!("/{}/", SHORT_SECRET_PATH))
+            && !url.path().starts_with(&format!("/{}/", API_SECRET_PATH))
+        {
             return Err(ClientError::Custom("Invalid API path".to_string()));
         }
 
         let resp = self
             .web_client
             .get(url)
+            .header("User-Agent", USER_AGENT)
             .timeout(REQUEST_TIMEOUT)
             .send()
             .await?;
@@ -122,10 +128,7 @@ mod tests {
         }
         assert!(result.is_ok());
         let url = result.unwrap();
-        assert_eq!(
-            url.as_str(),
-            format!("{}api/secret/{}", base_url, secret_id)
-        );
+        assert_eq!(url.as_str(), format!("{}s/{}", base_url, secret_id));
     }
 
     #[tokio::test]
@@ -161,16 +164,14 @@ mod tests {
         let secret_data = "my_secret_data";
 
         let _m = server
-            .mock("GET", format!("/api/secret/{}", secret_id).as_str())
+            .mock("GET", format!("/s/{}", secret_id).as_str())
             .with_status(200)
             .with_body(secret_data)
             .create_async()
             .await;
 
         let base_url = Url::parse(&server.url()).unwrap();
-        let url = base_url
-            .join(&format!("/api/secret/{}", secret_id))
-            .unwrap();
+        let url = base_url.join(&format!("/s/{}", secret_id)).unwrap();
         let result = client.receive_secret(url).await;
 
         assert!(result.is_ok());
@@ -185,15 +186,13 @@ mod tests {
         let secret_id = Uuid::new_v4();
 
         let _m = server
-            .mock("GET", format!("/api/secret/{}", secret_id).as_str())
+            .mock("GET", format!("/s/{}", secret_id).as_str())
             .with_status(404)
             .create_async()
             .await;
 
         let base_url = Url::parse(&server.url()).unwrap();
-        let url = base_url
-            .join(&format!("/api/secret/{}", secret_id))
-            .unwrap();
+        let url = base_url.join(&format!("/s/{}", secret_id)).unwrap();
         let result = client.receive_secret(url).await;
         assert!(result.is_err());
     }
