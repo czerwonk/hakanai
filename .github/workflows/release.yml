@@ -14,11 +14,39 @@ jobs:
     strategy:
       matrix:
         platform:
+          - release_for: Windows-x86_64
+            os: windows-latest
+            target: x86_64-pc-windows-msvc
+            bin: hakanai.exe
+            name: hakanai-windows-x86_64.zip
+            command: build
+
+          - release_for: macOS-x86_64
+            os: macOS-latest
+            target: x86_64-apple-darwin
+            bin: hakanai
+            name: hakanai-darwin-x86_64.tar.gz
+            command: build
+
+          - release_for: macOS-aarch64
+            os: macOS-latest
+            target: aarch64-apple-darwin
+            bin: hakanai
+            name: hakanai-darwin-aarch64.tar.gz
+            command: build
+
           - release_for: Linux-x86_64
             os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             bin: hakanai
             name: hakanai-linux-x86_64.tar.gz
+            command: build
+
+          - release_for: Linux-aarch64
+            os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            bin: hakanai
+            name: hakanai-linux-aarch64.tar.gz
             command: build
 
     runs-on: ${{ matrix.platform.os }}
@@ -36,8 +64,30 @@ jobs:
         with:
           key: ${{ matrix.platform.target }}
 
+      # Linux ARM64 specific setup
+      - name: Install aarch64 cross-compilation tools
+        if: matrix.platform.target == 'aarch64-unknown-linux-gnu'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu libssl-dev
+          echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
+
       - name: Build
         run: cargo build --release --workspace --target ${{ matrix.platform.target }}
+
+      - name: Prepare artifacts [Windows]
+        if: matrix.platform.os == 'windows-latest'
+        run: |
+          cd target/${{ matrix.platform.target }}/release
+          7z a ../../../${{ matrix.platform.name }} ${{ matrix.platform.bin }}
+          cd -
+
+      - name: Prepare artifacts [macOS/Linux]
+        if: matrix.platform.os != 'windows-latest'
+        run: |
+          cd target/${{ matrix.platform.target }}/release
+          tar czvf ../../../${{ matrix.platform.name }} ${{ matrix.platform.bin }}
+          cd -
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
