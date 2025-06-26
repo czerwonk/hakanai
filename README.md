@@ -106,6 +106,10 @@ hakanai-server --tokens secret-token-1 --tokens secret-token-2
 # Send from stdin (default: 24 hour expiration)
 echo "my secret data" | hakanai send
 
+# Send from a file
+hakanai send --file secret.txt
+hakanai send -f /path/to/secret.dat
+
 # Send with custom TTL
 echo "temporary password" | hakanai send --ttl 30m
 
@@ -115,8 +119,8 @@ echo "secret" | hakanai send --server https://hakanai.example.com
 # Send with authentication token (required if server has token whitelist)
 echo "secret" | hakanai send --token my-auth-token
 
-# Send from file
-cat secret.txt | hakanai send
+# Combine options
+hakanai send -f secret.txt -s https://hakanai.example.com --ttl 1h -t my-token
 ```
 
 #### Retrieving a Secret
@@ -125,8 +129,21 @@ cat secret.txt | hakanai send
 # Get using the full URL returned by send
 hakanai get https://hakanai.example.com/secret/550e8400-e29b-41d4-a716-446655440000
 
+# Get using the short link format
+hakanai get https://hakanai.example.com/s/550e8400-e29b-41d4-a716-446655440000
+
 # Secret is displayed and immediately destroyed on server
 ```
+
+**Note**: You can also retrieve secrets using a web browser by visiting the server URL and pasting the secret link.
+
+## Web Interface
+
+Hakanai now includes a web interface for users who prefer not to use the CLI:
+- Visit the server root (e.g., `https://hakanai.example.com/`) to access the web interface
+- Paste a hakanai URL to retrieve secrets directly in your browser
+- The same zero-knowledge encryption is maintained - decryption happens in your browser
+- Mobile-friendly responsive design
 
 ## API Reference
 
@@ -162,11 +179,28 @@ Retrieve a secret (one-time access).
 - `200 OK`: Plain text secret data
 - `404 Not Found`: Secret doesn't exist or already accessed
 
+### GET /s/{id}
+Short link for secret retrieval.
+
+**Response:**
+- For CLI clients: Plain text secret data
+- For browsers: HTML page for secret retrieval
+- `404 Not Found`: Secret doesn't exist or already accessed
+
 ### GET /healthz
 Health check endpoint.
 
 **Response:**
 - `200 OK`: Server is healthy
+
+### GET /logo.svg
+Serves the hakanai logo.
+
+### GET /icon.svg
+Serves the hakanai icon.
+
+### GET /scripts/hakanai-client.js
+Serves the JavaScript client library for browser-based decryption.
 
 ## Development
 
@@ -246,6 +280,9 @@ For production deployments:
 - ✅ Client-side AES-256-GCM encryption
 - ✅ Token-based authentication
 - ✅ Redis backend storage
+- ✅ Web interface for browser-based retrieval
+- ✅ File input support in CLI
+- ✅ Short link format (`/s/{id}`) for easier sharing
 
 ### Security Implementation
 - ✅ AES-256-GCM encryption implemented in `hakanai-lib`
