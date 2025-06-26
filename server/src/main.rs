@@ -50,8 +50,9 @@ async fn main() -> Result<()> {
             .route("/", web::get().to(serve_get_secret_html))
             .route("/s/{id}", web::get().to(get_secret_short))
             .route("/scripts/hakanai-client.js", web::get().to(serve_js_client))
-            .route("/logo.svg", web::get().to(serve_logo))
+            .route("/style.css", web::get().to(serve_css))
             .route("/icon.svg", web::get().to(serve_icon))
+            .route("/logo.svg", web::get().to(serve_logo))
             .service(web::scope("/api").configure(|c| {
                 api::configure(c);
             }))
@@ -93,6 +94,11 @@ async fn serve_js_client() -> impl Responder {
     HttpResponse::Ok()
         .content_type("application/javascript")
         .body(CONTENT)
+}
+
+async fn serve_css() -> impl Responder {
+    const CONTENT: &str = include_str!("includes/style.css");
+    HttpResponse::Ok().content_type("text/css").body(CONTENT)
 }
 
 async fn serve_logo() -> impl Responder {
