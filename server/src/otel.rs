@@ -77,8 +77,7 @@ fn init_logger_provider() -> Result<()> {
         .logging()
         .with_exporter(opentelemetry_otlp::new_exporter().tonic())
         .with_resource(get_resource())
-        .install_batch(runtime::Tokio)
-        .expect("Failed to initialise logger provider");
+        .install_batch(runtime::Tokio)?;
 
     let otel_log_appender = OpenTelemetryLogBridge::new(&logger_provider);
     log::set_boxed_logger(Box::new(otel_log_appender))?;
