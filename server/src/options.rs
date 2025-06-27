@@ -42,4 +42,14 @@ pub struct Args {
     /// List of tokens allowed to create new secrets. If empty anyone can create secrets.
     #[arg(short, long, value_name = "TOKENS", env = "HAKANAI_TOKENS")]
     pub tokens: Option<Vec<String>>,
+
+    #[arg(
+        short,
+        long,
+        value_name = "UPLOAD_SIZE_LIMIT",
+        env = "HAKANAI_UPLOAD_SIZE_LIMIT",
+        default_value = "10",
+        help = "Upload size limit in megabytes. Defaults to 10 MB."
+    )]
+    pub upload_size_limit: u64,
 }

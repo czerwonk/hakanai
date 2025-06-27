@@ -46,7 +46,9 @@ async fn main() -> Result<()> {
         };
         App::new()
             .app_data(web::Data::new(app_data))
-            .app_data(web::PayloadConfig::new(10 * 1024 * 1024)) // 10 MB limit
+            .app_data(web::PayloadConfig::new(
+                args.upload_size_limit as usize * 1024 * 1024,
+            ))
             .wrap(Logger::new(
                 "%a %{X-Forwarded-For}i %t \"%r\" %s %b \"%{User-Agent}i\" %Ts",
             ))
