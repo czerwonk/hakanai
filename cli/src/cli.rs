@@ -22,7 +22,7 @@ pub enum Command {
     Get { link: Url },
 
     /// Send a secret to the server.
-    /// Content is either read from stdin or from file (if --file is secified).
+    /// Content is either read from stdin or from file (if --file is specified).
     Send {
         #[arg(
             short,
