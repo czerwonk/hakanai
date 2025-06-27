@@ -2,12 +2,14 @@ mod api;
 mod app_data;
 mod data_store;
 mod options;
+mod otel;
 
 use std::io::Result;
 
 use actix_cors::Cors;
 use actix_web::middleware::{Compat, Logger};
 use actix_web::{App, HttpResponse, HttpServer, Responder, http, web};
+use actix_web_opentelemetry::RequestTracing;
 use clap::Parser;
 use tracing::{info, warn};
 use tracing_actix_web::TracingLogger;
@@ -23,6 +25,10 @@ async fn main() -> Result<()> {
     let args = Args::parse();
 
     tracing_subscriber::fmt().init();
+    if let Err(err) = otel::init_otel() {
+        eprintln!("Failed to initialize OpenTelemetry: {}", err);
+        return Err(std::io::Error::other(err));
+    }
 
     info!("Connecting to Redis at {}", args.redis_dsn);
     let data_store: RedisDataStore = match RedisDataStore::new(&args.redis_dsn).await {
@@ -52,6 +58,7 @@ async fn main() -> Result<()> {
             .wrap(Logger::new(
                 "%a %{X-Forwarded-For}i %t \"%r\" %s %b \"%{User-Agent}i\" %Ts",
             ))
+            .wrap(RequestTracing::new())
             .wrap(Compat::new(TracingLogger::default()))
             .wrap(cors_config(args.cors_allowed_origins.clone()))
             .route("/", web::get().to(serve_get_secret_html))
