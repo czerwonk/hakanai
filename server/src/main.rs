@@ -53,7 +53,11 @@ async fn main() -> Result<()> {
                 "%a %{X-Forwarded-For}i %t \"%r\" %s %b \"%{User-Agent}i\" %Ts",
             ))
             .wrap(Compat::new(TracingLogger::default()))
-            .wrap(Cors::default())
+            .wrap(
+                Cors::default()
+                    .allowed_methods(vec!["GET", "POST"])
+                    .allowed_headers(vec!["Authorization", "Content-Type"]),
+            )
             .route("/", web::get().to(serve_get_secret_html))
             .route("/s/{id}", web::get().to(get_secret_short))
             .route("/create", web::get().to(serve_create_secret_html))
