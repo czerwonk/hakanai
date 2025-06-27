@@ -99,6 +99,7 @@ h1 {
   margin-bottom: var(--spacing-xl);
   font-size: var(--font-size-2xl);
   font-weight: 600;
+  text-align: center;
 }
 .input-group {
   margin-bottom: var(--spacing-lg);
@@ -237,8 +238,14 @@ button:disabled {
   background-color: var(--color-primary);
   color: var(--color-bg-main);
 }
-.copy-button {
+.buttons-container {
+  display: flex;
+  gap: var(--spacing-sm);
   margin-top: var(--spacing-sm);
+}
+
+.copy-button,
+.download-button {
   padding: var(--spacing-xs) var(--spacing-lg);
   background-color: var(--color-primary);
   color: var(--color-bg-main);
@@ -251,12 +258,14 @@ button:disabled {
   font-weight: 600;
 }
 
-.copy-button:hover:not(.copied) {
+.copy-button:hover:not(.copied),
+.download-button:hover {
   background-color: var(--color-primary-hover);
   transform: translateY(-1px);
 }
 
-.copy-button:focus-visible {
+.copy-button:focus-visible,
+.download-button:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
@@ -364,16 +373,15 @@ button:disabled {
   border: 0;
 }
 
-textarea:focus-visible, 
+textarea:focus-visible,
 select:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
   border-color: var(--color-primary);
 }
 
-select:disabled, 
+select:disabled,
 textarea:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
-
