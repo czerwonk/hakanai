@@ -27,7 +27,7 @@ async fn main() -> Result<()> {
     tracing_subscriber::fmt().init();
     if let Err(err) = otel::init_otel() {
         eprintln!("Failed to initialize OpenTelemetry: {}", err);
-        return Err(std::io::Error::new(std::io::ErrorKind::Other, err));
+        return Err(std::io::Error::other(err));
     }
 
     info!("Connecting to Redis at {}", args.redis_dsn);
