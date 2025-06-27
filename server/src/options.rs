@@ -52,4 +52,13 @@ pub struct Args {
         help = "Upload size limit in megabytes. Defaults to 10 MB."
     )]
     pub upload_size_limit: u64,
+
+    #[arg(
+        short,
+        long,
+        value_name = "CORS_ALLOWED_ORIGINS",
+        env = "HAKANAI_CORS_ALLOWED_ORIGINS",
+        help = "Allowed origins for CORS requests. If not set, CORS is disabled."
+    )]
+    pub cors_allowed_origins: Option<Vec<String>>,
 }

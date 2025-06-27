@@ -7,7 +7,7 @@ use std::io::Result;
 
 use actix_cors::Cors;
 use actix_web::middleware::{Compat, Logger};
-use actix_web::{App, HttpResponse, HttpServer, Responder, web};
+use actix_web::{App, HttpResponse, HttpServer, Responder, http, web};
 use clap::Parser;
 use tracing::{info, warn};
 use tracing_actix_web::TracingLogger;
@@ -53,11 +53,7 @@ async fn main() -> Result<()> {
                 "%a %{X-Forwarded-For}i %t \"%r\" %s %b \"%{User-Agent}i\" %Ts",
             ))
             .wrap(Compat::new(TracingLogger::default()))
-            .wrap(
-                Cors::default()
-                    .allowed_methods(vec!["GET", "POST"])
-                    .allowed_headers(vec!["Authorization", "Content-Type"]),
-            )
+            .wrap(cors_config(args.cors_allowed_origins.clone()))
             .route("/", web::get().to(serve_get_secret_html))
             .route("/s/{id}", web::get().to(get_secret_short))
             .route("/create", web::get().to(serve_create_secret_html))
@@ -73,6 +69,20 @@ async fn main() -> Result<()> {
     .bind((args.listen_address, args.port))?
     .run()
     .await
+}
+
+fn cors_config(allowed_origins: Option<Vec<String>>) -> Cors {
+    let mut cors = Cors::default()
+        .allowed_methods(vec![http::Method::GET, http::Method::POST])
+        .allowed_headers(vec![http::header::CONTENT_TYPE, http::header::ACCEPT]);
+
+    if let Some(allowed_origins) = &allowed_origins {
+        for origin in allowed_origins {
+            cors = cors.allowed_origin(origin);
+        }
+    }
+
+    cors
 }
 
 async fn get_secret_short(
