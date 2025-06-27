@@ -5,6 +5,7 @@ mod options;
 
 use std::io::Result;
 
+use actix_cors::Cors;
 use actix_web::middleware::{Compat, Logger};
 use actix_web::{App, HttpResponse, HttpServer, Responder, web};
 use clap::Parser;
@@ -45,10 +46,12 @@ async fn main() -> Result<()> {
         };
         App::new()
             .app_data(web::Data::new(app_data))
+            .app_data(web::PayloadConfig::new(10 * 1024 * 1024)) // 10 MB limit
             .wrap(Logger::new(
                 "%a %{X-Forwarded-For}i %t \"%r\" %s %b \"%{User-Agent}i\" %Ts",
             ))
             .wrap(Compat::new(TracingLogger::default()))
+            .wrap(Cors::default())
             .route("/", web::get().to(serve_get_secret_html))
             .route("/s/{id}", web::get().to(get_secret_short))
             .route("/create", web::get().to(serve_create_secret_html))
