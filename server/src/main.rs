@@ -53,6 +53,7 @@ async fn main() -> Result<()> {
             .route("/s/{id}", web::get().to(get_secret_short))
             .route("/create", web::get().to(serve_create_secret_html))
             .route("/scripts/hakanai-client.js", web::get().to(serve_js_client))
+            .route("/i18n.js", web::get().to(serve_i18n_js))
             .route("/style.css", web::get().to(serve_css))
             .route("/icon.svg", web::get().to(serve_icon))
             .route("/logo.svg", web::get().to(serve_logo))
@@ -91,6 +92,13 @@ async fn get_secret_short(
 
 async fn serve_js_client() -> impl Responder {
     const CONTENT: &str = include_str!("includes/hakanai-client.js");
+    HttpResponse::Ok()
+        .content_type("application/javascript")
+        .body(CONTENT)
+}
+
+async fn serve_i18n_js() -> impl Responder {
+    const CONTENT: &str = include_str!("includes/i18n.js");
     HttpResponse::Ok()
         .content_type("application/javascript")
         .body(CONTENT)
