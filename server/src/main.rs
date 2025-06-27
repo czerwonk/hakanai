@@ -5,8 +5,9 @@ mod options;
 
 use std::io::Result;
 
+use actix_cors::Cors;
 use actix_web::middleware::{Compat, Logger};
-use actix_web::{App, HttpResponse, HttpServer, Responder, web};
+use actix_web::{App, HttpResponse, HttpServer, Responder, http, web};
 use clap::Parser;
 use tracing::{info, warn};
 use tracing_actix_web::TracingLogger;
@@ -45,12 +46,19 @@ async fn main() -> Result<()> {
         };
         App::new()
             .app_data(web::Data::new(app_data))
-            .wrap(Logger::default())
+            .app_data(web::PayloadConfig::new(
+                args.upload_size_limit as usize * 1024 * 1024,
+            ))
+            .wrap(Logger::new(
+                "%a %{X-Forwarded-For}i %t \"%r\" %s %b \"%{User-Agent}i\" %Ts",
+            ))
             .wrap(Compat::new(TracingLogger::default()))
+            .wrap(cors_config(args.cors_allowed_origins.clone()))
             .route("/", web::get().to(serve_get_secret_html))
             .route("/s/{id}", web::get().to(get_secret_short))
             .route("/create", web::get().to(serve_create_secret_html))
             .route("/scripts/hakanai-client.js", web::get().to(serve_js_client))
+            .route("/i18n.js", web::get().to(serve_i18n_js))
             .route("/style.css", web::get().to(serve_css))
             .route("/icon.svg", web::get().to(serve_icon))
             .route("/logo.svg", web::get().to(serve_logo))
@@ -61,6 +69,25 @@ async fn main() -> Result<()> {
     .bind((args.listen_address, args.port))?
     .run()
     .await
+}
+
+fn cors_config(allowed_origins: Option<Vec<String>>) -> Cors {
+    let mut cors = Cors::default()
+        .allowed_methods(vec![http::Method::GET, http::Method::POST])
+        .allowed_headers(vec![
+            http::header::CONTENT_TYPE,
+            http::header::ACCEPT,
+            http::header::AUTHORIZATION,
+        ])
+        .supports_credentials();
+
+    if let Some(allowed_origins) = &allowed_origins {
+        for origin in allowed_origins {
+            cors = cors.allowed_origin(origin);
+        }
+    }
+
+    cors
 }
 
 async fn get_secret_short(
@@ -89,6 +116,13 @@ async fn get_secret_short(
 
 async fn serve_js_client() -> impl Responder {
     const CONTENT: &str = include_str!("includes/hakanai-client.js");
+    HttpResponse::Ok()
+        .content_type("application/javascript")
+        .body(CONTENT)
+}
+
+async fn serve_i18n_js() -> impl Responder {
+    const CONTENT: &str = include_str!("includes/i18n.js");
     HttpResponse::Ok()
         .content_type("application/javascript")
         .body(CONTENT)
