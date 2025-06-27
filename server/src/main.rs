@@ -74,7 +74,12 @@ async fn main() -> Result<()> {
 fn cors_config(allowed_origins: Option<Vec<String>>) -> Cors {
     let mut cors = Cors::default()
         .allowed_methods(vec![http::Method::GET, http::Method::POST])
-        .allowed_headers(vec![http::header::CONTENT_TYPE, http::header::ACCEPT]);
+        .allowed_headers(vec![
+            http::header::CONTENT_TYPE,
+            http::header::ACCEPT,
+            http::header::AUTHORIZATION,
+        ])
+        .supports_credentials();
 
     if let Some(allowed_origins) = &allowed_origins {
         for origin in allowed_origins {
