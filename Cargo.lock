@@ -1095,7 +1095,7 @@ dependencies = [
 
 [[package]]
 name = "hakanai-server"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "actix-cors",
  "actix-web",

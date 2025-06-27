@@ -9,13 +9,13 @@
 
 rustPlatform.buildRustPackage {
   pname = "hakanai-server";
-  version = "0.2.2";
+  version = "0.3.0";
 
   src = lib.cleanSource ../.;
 
   cargoBuildCommand = "cargo build --release --package server";
   cargoTestCommand = "cargo test --release --package server";
-  cargoHash = "sha256-aNdmfkUdmHS+A4K/qyCflTRwsg6cbE7Eid5HFTI9jkQ=";
+  cargoHash = "sha256-YzdIB+rKBpLYTzcl5ep5l45DsOANEXC7Cc2F6JHrubI=";
 
   nativeBuildInputs = [
     pkg-config
