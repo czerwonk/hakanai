@@ -31,8 +31,11 @@ pub fn init_otel() -> Result<()> {
 }
 
 fn get_resource() -> Resource {
+    let service_name =
+        std::env::var("OTEL_SERVICE_NAME").unwrap_or_else(|_| "hakanai-server".to_string());
+
     let cargo_resource = Resource::new(vec![
-        KeyValue::new("service.name", "hakanai-server"),
+        KeyValue::new("service.name", service_name),
         KeyValue::new("service.version", env!("CARGO_PKG_VERSION")),
     ]);
     let os_resource = OsResourceDetector.detect(Duration::from_secs(0));
@@ -41,12 +44,12 @@ fn get_resource() -> Resource {
     let env_resource = EnvResourceDetector::new().detect(Duration::from_secs(0));
     let telemetry_resource = TelemetryResourceDetector.detect(Duration::from_secs(0));
 
-    cargo_resource
-        .merge(&os_resource)
+    os_resource
         .merge(&process_resource)
         .merge(&sdk_resource)
         .merge(&env_resource)
         .merge(&telemetry_resource)
+        .merge(&cargo_resource)
 }
 
 fn init_otel_tracing() -> Result<()> {
