@@ -144,6 +144,7 @@ Hakanai now includes a web interface for users who prefer not to use the CLI:
 - Paste a hakanai URL to retrieve secrets directly in your browser
 - The same zero-knowledge encryption is maintained - decryption happens in your browser
 - Mobile-friendly responsive design
+- Multi-language support (English and German) with automatic browser language detection
 
 ## API Reference
 
@@ -283,6 +284,8 @@ For production deployments:
 - ✅ Web interface for browser-based retrieval
 - ✅ File input support in CLI
 - ✅ Short link format (`/s/{id}`) for easier sharing
+- ✅ Internationalization support (English and German)
+- ✅ OpenTelemetry integration for observability
 
 ### Security Implementation
 - ✅ AES-256-GCM encryption implemented in `hakanai-lib`
@@ -301,6 +304,7 @@ For production deployments:
 - `PORT`: Server port (default: 8080)
 - `LISTEN_ADDRESS`: Bind address (default: 127.0.0.1)
 - `REDIS_DSN`: Redis connection string (default: redis://127.0.0.1:6379/)
+- `OTEL_EXPORTER_OTLP_ENDPOINT`: OpenTelemetry collector endpoint (optional, enables OTEL when set)
 
 ### Server Command-line Options
 
@@ -314,6 +318,15 @@ For production deployments:
 - **Authentication Token Whitelist**: When tokens are provided via `--tokens`, only requests with valid Bearer tokens can create secrets
 - **Request Logging**: Built-in request logging middleware for monitoring and debugging
 - **One-time Access**: Secrets are automatically deleted after first retrieval
+
+### Observability
+
+When `OTEL_EXPORTER_OTLP_ENDPOINT` is set, Hakanai exports:
+- **Traces**: Distributed tracing for all HTTP requests
+- **Metrics**: Application performance and usage metrics
+- **Logs**: Structured logs with trace correlation
+
+The server automatically detects service name and version from Cargo metadata and includes resource information about the OS, process, and runtime environment.
 
 ## Contributing
 
