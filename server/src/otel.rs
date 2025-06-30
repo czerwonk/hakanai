@@ -52,11 +52,10 @@ fn init_otel_tracing() -> Result<()> {
 }
 
 fn init_otel_logging() -> Result<()> {
-    let filter = EnvFilter::new("info");
-
+    let fmt_filter = EnvFilter::new("info");
     let fmt_layer = tracing_subscriber::fmt::layer()
         .with_thread_names(true)
-        .with_filter(filter);
+        .with_filter(fmt_filter);
 
     let builder = tracing_subscriber::registry().with(fmt_layer);
 
@@ -68,7 +67,8 @@ fn init_otel_logging() -> Result<()> {
             .with_resource(get_resource())
             .with_batch_exporter(exporter)
             .build();
-        let otel_layer = layer::OpenTelemetryTracingBridge::new(&provider).with_filter(filter);
+        let otel_filter = EnvFilter::new("info");
+        let otel_layer = layer::OpenTelemetryTracingBridge::new(&provider).with_filter(otel_filter);
 
         builder.with(otel_layer).init();
     } else {
