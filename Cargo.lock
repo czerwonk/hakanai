@@ -1140,6 +1140,7 @@ dependencies = [
  "redis",
  "serde",
  "serde_json",
+ "subtle",
  "thiserror 2.0.12",
  "tokio",
  "tracing",
