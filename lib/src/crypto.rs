@@ -94,13 +94,14 @@ fn decrypt(encoded_data: String, key_base64: String) -> Result<String, ClientErr
 
     let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(&key));
 
-    if payload.len() < 12 {
+    let nonce_len = aes_gcm::Nonce::<<Aes256Gcm as AeadCore>::NonceSize>::default().len();
+    if payload.len() < nonce_len {
         return Err(ClientError::DecryptionError(
             "Payload too short".to_string(),
         ));
     }
 
-    let (nonce_bytes, ciphertext) = payload.split_at(12);
+    let (nonce_bytes, ciphertext) = payload.split_at(nonce_len);
     let nonce = Nonce::from_slice(nonce_bytes);
 
     let plaintext = cipher
@@ -217,7 +218,7 @@ mod tests {
     #[tokio::test]
     async fn test_receive_secret_invalid_encrypted_data() {
         let key = generate_key();
-        let key_base64 = base64::prelude::BASE64_URL_SAFE.encode(&key);
+        let key_base64 = base64::prelude::BASE64_URL_SAFE.encode(key);
 
         let mock_client = MockClient::new().with_response_data("invalid_base64!@#$".to_string());
         let crypto_client = CryptoClient::new(Box::new(mock_client));
@@ -234,7 +235,7 @@ mod tests {
     #[tokio::test]
     async fn test_receive_secret_payload_too_short() {
         let key = generate_key();
-        let key_base64 = base64::prelude::BASE64_URL_SAFE.encode(&key);
+        let key_base64 = base64::prelude::BASE64_URL_SAFE.encode(key);
 
         // Create a payload that's too short (less than 12 bytes for nonce)
         let short_payload = vec![1, 2, 3, 4, 5];
@@ -273,7 +274,7 @@ mod tests {
             result
                 .fragment()
                 .expect("URL should have a fragment")
-                .contains(&base64::prelude::BASE64_URL_SAFE.encode(&key))
+                .contains(&base64::prelude::BASE64_URL_SAFE.encode(key))
         );
         assert_eq!(result.host_str(), url.host_str());
     }

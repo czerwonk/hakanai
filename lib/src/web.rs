@@ -94,7 +94,7 @@ impl Client for WebClient {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use mockito;
+
     use std::time::Duration;
     use url::Url;
     use uuid::Uuid;

@@ -70,7 +70,7 @@ mod tests {
     #[test]
     fn test_get_command_parsing() {
         let args =
-            Args::try_parse_from(&["hakanai", "get", "https://example.com/secret/abc123"]).unwrap();
+            Args::try_parse_from(["hakanai", "get", "https://example.com/secret/abc123"]).unwrap();
 
         match args.command {
             Command::Get { link } => {
@@ -82,7 +82,7 @@ mod tests {
 
     #[test]
     fn test_send_command_with_custom_server() {
-        let args = Args::try_parse_from(&[
+        let args = Args::try_parse_from([
             "hakanai",
             "send",
             "--server",
@@ -105,7 +105,7 @@ mod tests {
 
     #[test]
     fn test_send_command_with_custom_ttl() {
-        let args = Args::try_parse_from(&["hakanai", "send", "--ttl", "12h"]).unwrap();
+        let args = Args::try_parse_from(["hakanai", "send", "--ttl", "12h"]).unwrap();
 
         match args.command {
             Command::Send {
@@ -123,7 +123,7 @@ mod tests {
     #[test]
     fn test_send_command_with_short_flags() {
         let args =
-            Args::try_parse_from(&["hakanai", "send", "-s", "https://custom.server.com"]).unwrap();
+            Args::try_parse_from(["hakanai", "send", "-s", "https://custom.server.com"]).unwrap();
 
         match args.command {
             Command::Send {
@@ -140,14 +140,14 @@ mod tests {
 
     #[test]
     fn test_invalid_url_parsing() {
-        let result = Args::try_parse_from(&["hakanai", "get", "not-a-valid-url"]);
+        let result = Args::try_parse_from(["hakanai", "get", "not-a-valid-url"]);
 
         assert!(result.is_err());
     }
 
     #[test]
     fn test_invalid_ttl_parsing() {
-        let result = Args::try_parse_from(&["hakanai", "send", "--ttl", "invalid-duration"]);
+        let result = Args::try_parse_from(["hakanai", "send", "--ttl", "invalid-duration"]);
 
         assert!(result.is_err());
     }
@@ -163,7 +163,7 @@ mod tests {
         ];
 
         for (ttl_str, expected_duration) in test_cases {
-            let args = Args::try_parse_from(&["hakanai", "send", "--ttl", ttl_str]).unwrap();
+            let args = Args::try_parse_from(["hakanai", "send", "--ttl", ttl_str]).unwrap();
 
             match args.command {
                 Command::Send {
@@ -181,20 +181,20 @@ mod tests {
 
     #[test]
     fn test_missing_subcommand() {
-        let result = Args::try_parse_from(&["hakanai"]);
+        let result = Args::try_parse_from(["hakanai"]);
         assert!(result.is_err());
     }
 
     #[test]
     fn test_get_command_missing_link() {
-        let result = Args::try_parse_from(&["hakanai", "get"]);
+        let result = Args::try_parse_from(["hakanai", "get"]);
         assert!(result.is_err());
     }
 
     #[test]
     fn test_command_debug_trait() {
         let args =
-            Args::try_parse_from(&["hakanai", "send", "--server", "https://example.com"]).unwrap();
+            Args::try_parse_from(["hakanai", "send", "--server", "https://example.com"]).unwrap();
 
         let debug_output = format!("{:?}", args.command);
         assert!(debug_output.contains("Send"));
@@ -203,8 +203,7 @@ mod tests {
 
     #[test]
     fn test_send_command_with_custom_token() {
-        let args =
-            Args::try_parse_from(&["hakanai", "send", "--token", "my-secret-token"]).unwrap();
+        let args = Args::try_parse_from(["hakanai", "send", "--token", "my-secret-token"]).unwrap();
 
         match args.command {
             Command::Send {
@@ -221,7 +220,7 @@ mod tests {
 
     #[test]
     fn test_send_command_with_short_token_flag() {
-        let args = Args::try_parse_from(&["hakanai", "send", "-t", "short-token"]).unwrap();
+        let args = Args::try_parse_from(["hakanai", "send", "-t", "short-token"]).unwrap();
 
         match args.command {
             Command::Send {
@@ -238,7 +237,7 @@ mod tests {
 
     #[test]
     fn test_send_command_with_all_flags() {
-        let args = Args::try_parse_from(&[
+        let args = Args::try_parse_from([
             "hakanai",
             "send",
             "--server",
