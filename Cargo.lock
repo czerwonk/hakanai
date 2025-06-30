@@ -1130,7 +1130,7 @@ dependencies = [
  "hakanai-lib",
  "log",
  "multi_log",
- "opentelemetry 0.24.0",
+ "opentelemetry 0.30.0",
  "opentelemetry-appender-log",
  "opentelemetry-appender-tracing",
  "opentelemetry-otlp",
