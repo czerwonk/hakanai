@@ -81,6 +81,7 @@ body {
   font-family: var(--font-system);
   cursor: pointer;
   transition: all var(--transition-fast);
+  width: auto;
 }
 
 #language-switcher:hover {
