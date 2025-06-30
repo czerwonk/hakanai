@@ -336,10 +336,19 @@ button:disabled {
 
   .container {
     padding: var(--spacing-lg);
+    margin-top: 3rem; /* Add space for language selector on mobile */
   }
 
   h1 {
     font-size: var(--font-size-xl);
+  }
+
+  /* Adjust language selector position on mobile */
+  #language-switcher {
+    top: 0.5rem !important;
+    right: 0.5rem !important;
+    font-size: 0.875rem;
+    padding: 0.25rem 0.375rem !important;
   }
 }
 
