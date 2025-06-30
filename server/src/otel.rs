@@ -32,7 +32,7 @@ pub fn init_otel() -> Result<()> {
 
 fn get_resource() -> Resource {
     let cargo_resource = Resource::new(vec![
-        KeyValue::new("service.name", env!("CARGO_PKG_NAME")),
+        KeyValue::new("service.name", "hakanai-server"),
         KeyValue::new("service.version", env!("CARGO_PKG_VERSION")),
     ]);
     let os_resource = OsResourceDetector.detect(Duration::from_secs(0));
