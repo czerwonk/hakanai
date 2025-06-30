@@ -25,8 +25,7 @@ async fn main() -> Result<()> {
     let args = Args::parse();
 
     if let Err(err) = otel::init_otel() {
-        eprintln!("Failed to initialize OpenTelemetry: {}", err);
-        return Err(std::io::Error::other(err));
+        warn!("Failed to initialize OpenTelemetry: {}", err);
     }
 
     info!("Connecting to Redis at {}", args.redis_dsn);
