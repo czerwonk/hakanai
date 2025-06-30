@@ -12,7 +12,7 @@ use actix_web::{App, HttpResponse, HttpServer, Responder, http, web};
 use actix_web_opentelemetry::RequestTracing;
 
 use clap::Parser;
-use log::{info, warn};
+use tracing::{info, warn};
 use tracing_actix_web::TracingLogger;
 
 use crate::app_data::AppData;
@@ -25,7 +25,7 @@ const SECRET_HTML_CONTENT: &str = include_str!("includes/get-secret.html");
 async fn main() -> Result<()> {
     let args = Args::parse();
 
-    if let Err(err) = otel::init_otel() {
+    if let Err(err) = otel::init() {
         warn!("Failed to initialize OpenTelemetry: {}", err);
     }
 

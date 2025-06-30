@@ -1,6 +1,6 @@
 [package]
 name = "hakanai-lib"
-version = "0.3.2"
+version = "0.4.0"
 edition = "2024"
 
 [dependencies]
@@ -18,7 +18,7 @@ uuid = { version = "1.17.0", features = ["serde", "v4"] }
 
 [dev-dependencies]
 mockito = "1.7.0"
-tokio = { version = "1.43.0", features = ["rt-multi-thread", "macros"] }
+tokio = { version = "1.45.1", features = ["rt-multi-thread", "macros"] }
 
 [features]
 default = ["reqwest", "serde_json", "url"]

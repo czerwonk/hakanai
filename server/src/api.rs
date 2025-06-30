@@ -1,8 +1,8 @@
 use std::time::Duration;
 
 use actix_web::{HttpRequest, Result, error, get, post, web};
-use log::error;
 use subtle::ConstantTimeEq;
+use tracing::error;
 use uuid::Uuid;
 
 use hakanai_lib::models::{PostSecretRequest, PostSecretResponse};
