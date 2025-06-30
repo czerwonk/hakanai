@@ -14,9 +14,9 @@
       "header.get": "One Time Secret Retrieval",
 
       // Labels and placeholders
-      "label.secret": "Enter your secret:",
+      "label.secret": "Secret message:",
       "placeholder.secret": "Enter your secret message here...",
-      "label.token": "Authentication Token:",
+      "label.token": "Token:",
       "placeholder.token":
         "Enter authentication token (leave empty if none required)",
       "label.expires": "Expires after:",
@@ -93,9 +93,9 @@
       "header.get": "Einmal-Secret abrufen",
 
       // Labels and placeholders
-      "label.secret": "Geben Sie Ihr Secret ein:",
-      "placeholder.secret": "Geben Sie hier Ihre geheime Nachricht ein...",
-      "label.token": "Authentifizierungs-Token:",
+      "label.secret": "Text:",
+      "placeholder.secret": "Hier wird gen geheime Text eingegeben...",
+      "label.token": "Token:",
       "placeholder.token":
         "Authentifizierungs-Token eingeben (leer lassen, falls nicht erforderlich)",
       "label.expires": "Läuft ab nach:",
