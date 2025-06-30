@@ -3,7 +3,7 @@ use std::time::Duration;
 use anyhow::Result;
 use log::info;
 
-use opentelemetry::global;
+use opentelemetry::{KeyValue, global};
 use opentelemetry_appender_log::OpenTelemetryLogBridge;
 use opentelemetry_resource_detectors::{OsResourceDetector, ProcessResourceDetector};
 use opentelemetry_sdk::{
@@ -31,13 +31,18 @@ pub fn init_otel() -> Result<()> {
 }
 
 fn get_resource() -> Resource {
+    let cargo_resource = Resource::new(vec![
+        KeyValue::new("service.name", env!("CARGO_PKG_NAME")),
+        KeyValue::new("service.version", env!("CARGO_PKG_VERSION")),
+    ]);
     let os_resource = OsResourceDetector.detect(Duration::from_secs(0));
     let process_resource = ProcessResourceDetector.detect(Duration::from_secs(0));
     let sdk_resource = SdkProvidedResourceDetector.detect(Duration::from_secs(0));
     let env_resource = EnvResourceDetector::new().detect(Duration::from_secs(0));
     let telemetry_resource = TelemetryResourceDetector.detect(Duration::from_secs(0));
 
-    os_resource
+    cargo_resource
+        .merge(&os_resource)
         .merge(&process_resource)
         .merge(&sdk_resource)
         .merge(&env_resource)
