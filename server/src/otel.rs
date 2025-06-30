@@ -68,7 +68,7 @@ fn init_otel_logging() -> Result<()> {
             .with_resource(get_resource())
             .with_batch_exporter(exporter)
             .build();
-        let otel_layer = layer::OpenTelemetryTracingBridge::new(&provider);
+        let otel_layer = layer::OpenTelemetryTracingBridge::new(&provider).with_filter(filter);
 
         builder.with(otel_layer).init();
     } else {
