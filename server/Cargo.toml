@@ -21,7 +21,7 @@ actix-cors = "0.7.1"
 opentelemetry = "0.24.0"
 opentelemetry-appender-log = "0.5.0"
 opentelemetry-otlp = { version = "0.17.0", features = ["grpc-tonic", "trace", "metrics", "logs"] }
-opentelemetry-resource-detectors = "0.3.0"
+opentelemetry-resource-detectors = "0.9.0"
 opentelemetry_sdk = { version = "0.24.1", features = ["rt-tokio"] }
 actix-web-opentelemetry = "0.22.0"
 anyhow = "1.0.98"
