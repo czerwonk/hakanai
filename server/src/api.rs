@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use actix_web::{HttpRequest, Result, error, get, post, web};
+use log::error;
 use uuid::Uuid;
 
 use hakanai_lib::models::{PostSecretRequest, PostSecretResponse};
@@ -43,7 +44,10 @@ pub async fn get_secret_from_request(
     match app_data.data_store.pop(id).await {
         Ok(Some(secret)) => Ok(secret),
         Ok(None) => Err(error::ErrorNotFound("Secret not found")),
-        Err(e) => Err(error::ErrorInternalServerError(e)),
+        Err(e) => {
+            error!("Error retrieving secret: {}", e);
+            Err(error::ErrorInternalServerError("Operation failed"))
+        }
     }
 }
 
