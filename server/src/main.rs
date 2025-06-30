@@ -7,9 +7,10 @@ mod otel;
 use std::io::Result;
 
 use actix_cors::Cors;
-use actix_web::middleware::{Compat, Logger};
+use actix_web::middleware::{Compat, DefaultHeaders, Logger};
 use actix_web::{App, HttpResponse, HttpServer, Responder, http, web};
 use actix_web_opentelemetry::RequestTracing;
+
 use clap::Parser;
 use log::{info, warn};
 use tracing_actix_web::TracingLogger;
@@ -60,6 +61,15 @@ async fn main() -> Result<()> {
             .wrap(RequestTracing::new())
             .wrap(Compat::new(TracingLogger::default()))
             .wrap(cors_config(args.cors_allowed_origins.clone()))
+            .wrap(
+                DefaultHeaders::new()
+                    .add(("X-Frame-Options", "DENY"))
+                    .add(("X-Content-Type-Options", "nosniff"))
+                    .add((
+                        "Strict-Transport-Security",
+                        "max-age=31536000; includeSubDomains",
+                    )),
+            )
             .route("/", web::get().to(serve_get_secret_html))
             .route("/s/{id}", web::get().to(get_secret_short))
             .route("/create", web::get().to(serve_create_secret_html))
