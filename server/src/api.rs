@@ -2,6 +2,7 @@ use std::time::Duration;
 
 use actix_web::{HttpRequest, Result, error, get, post, web};
 use log::error;
+use subtle::ConstantTimeEq;
 use uuid::Uuid;
 
 use hakanai_lib::models::{PostSecretRequest, PostSecretResponse};
@@ -101,11 +102,13 @@ fn ensure_is_authorized(req: &HttpRequest, tokens: &[String]) -> Result<()> {
         .trim_start_matches("Bearer ")
         .trim();
 
-    if tokens.contains(&token.to_string()) {
-        Ok(())
-    } else {
-        Err(error::ErrorForbidden("Forbidden: Invalid token"))
+    for valid_token in tokens {
+        if valid_token.as_bytes().ct_eq(token.as_bytes()).into() {
+            return Ok(());
+        }
     }
+
+    Err(error::ErrorForbidden("Forbidden: Invalid token"))
 }
 
 #[cfg(test)]
