@@ -141,7 +141,8 @@ label {
   font-size: var(--font-size-sm);
 }
 input[type="text"],
-input[type="password"] {
+input[type="password"],
+textarea {
   width: 100%;
   padding: var(--spacing-sm) var(--spacing-md);
   border: 1px solid var(--color-border);
@@ -150,19 +151,27 @@ input[type="password"] {
   background-color: var(--color-bg-main);
   color: var(--color-text);
   transition: border-color var(--transition-fast);
+  font-family: var(--font-system);
 }
 
 input[type="text"]:focus-visible,
-input[type="password"]:focus-visible {
+input[type="password"]:focus-visible,
+textarea:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
   border-color: var(--color-primary);
 }
 
 input[type="text"]:disabled,
-input[type="password"]:disabled {
+input[type="password"]:disabled,
+textarea:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+textarea {
+  min-height: 100px;
+  resize: vertical;
 }
 button {
   background-color: var(--color-primary);
@@ -430,15 +439,13 @@ button:disabled {
   border: 0;
 }
 
-textarea:focus-visible,
 select:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
   border-color: var(--color-primary);
 }
 
-select:disabled,
-textarea:disabled {
+select:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
