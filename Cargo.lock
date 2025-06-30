@@ -1128,6 +1128,7 @@ dependencies = [
  "clap",
  "env_logger",
  "hakanai-lib",
+ "humantime",
  "log",
  "multi_log",
  "opentelemetry 0.24.0",

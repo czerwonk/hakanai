@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use clap::Parser;
 
 /// Represents the command-line arguments for the server.
@@ -61,4 +63,13 @@ pub struct Args {
         help = "Allowed origins for CORS requests. If not set, CORS is disabled."
     )]
     pub cors_allowed_origins: Option<Vec<String>>,
+
+    #[arg(
+        long,
+        default_value = "7d",
+        env = "HAKANAI_MAX_TTL",
+        help = "Maximum allowed TTL for secrets.",
+        value_parser = humantime::parse_duration,
+    )]
+    pub max_ttl: Duration,
 }

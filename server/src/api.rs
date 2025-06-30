@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use actix_web::{HttpRequest, Result, error, get, post, web};
 use uuid::Uuid;
 
@@ -57,6 +59,7 @@ async fn post_secret(
     app_data: web::Data<AppData>,
 ) -> Result<web::Json<PostSecretResponse>> {
     ensure_is_authorized(&http_req, &app_data.tokens)?;
+    ensure_ttl_is_valid(req.expires_in, app_data.max_ttl)?;
 
     let id = uuid::Uuid::new_v4();
 
@@ -67,6 +70,17 @@ async fn post_secret(
         .map_err(error::ErrorInternalServerError)?;
 
     Ok(web::Json(PostSecretResponse { id }))
+}
+
+fn ensure_ttl_is_valid(expires_in: Duration, max_ttl: Duration) -> Result<()> {
+    if expires_in > max_ttl {
+        Err(error::ErrorBadRequest(format!(
+            "TTL exceeds maximum allowed duration of {} seconds",
+            max_ttl.as_secs()
+        )))
+    } else {
+        Ok(())
+    }
 }
 
 fn ensure_is_authorized(req: &HttpRequest, tokens: &[String]) -> Result<()> {
@@ -166,6 +180,7 @@ mod tests {
         let app_data = AppData {
             data_store: Box::new(mock_store),
             tokens: vec![],
+            max_ttl: Duration::from_secs(7200),
         };
 
         let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
@@ -192,6 +207,7 @@ mod tests {
         let app_data = AppData {
             data_store: Box::new(mock_store),
             tokens: vec![],
+            max_ttl: Duration::from_secs(7200),
         };
 
         let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
@@ -215,6 +231,7 @@ mod tests {
         let app_data = AppData {
             data_store: Box::new(mock_store),
             tokens: vec![],
+            max_ttl: Duration::from_secs(7200),
         };
 
         let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
@@ -239,6 +256,7 @@ mod tests {
         let app_data = AppData {
             data_store: Box::new(mock_store),
             tokens: vec![],
+            max_ttl: Duration::from_secs(7200),
         };
 
         let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
@@ -276,6 +294,7 @@ mod tests {
         let app_data = AppData {
             data_store: Box::new(mock_store),
             tokens: vec![],
+            max_ttl: Duration::from_secs(7200),
         };
 
         let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
@@ -306,6 +325,7 @@ mod tests {
         let app_data = AppData {
             data_store: Box::new(mock_store),
             tokens: vec!["valid_token_123".to_string()],
+            max_ttl: Duration::from_secs(7200),
         };
 
         let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
@@ -342,6 +362,7 @@ mod tests {
         let app_data = AppData {
             data_store: Box::new(mock_store),
             tokens: vec!["valid_token_123".to_string()],
+            max_ttl: Duration::from_secs(7200),
         };
 
         let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
@@ -371,6 +392,7 @@ mod tests {
         let app_data = AppData {
             data_store: Box::new(mock_store),
             tokens: vec!["valid_token_123".to_string()],
+            max_ttl: Duration::from_secs(7200),
         };
 
         let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
@@ -393,5 +415,37 @@ mod tests {
 
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), 403);
+    }
+
+    #[actix_web::test]
+    async fn test_post_secret_invalid_ttl() {
+        let mock_store = MockDataStore::new();
+
+        let max_ttl = Duration::from_secs(30);
+        let app_data = AppData {
+            data_store: Box::new(mock_store),
+            tokens: vec![],
+            max_ttl,
+        };
+
+        let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
+            |cfg| {
+                configure(cfg);
+            },
+        ))
+        .await;
+
+        let payload = PostSecretRequest {
+            data: "test_secret".to_string(),
+            expires_in: Duration::from_secs(max_ttl.as_secs() + 1),
+        };
+
+        let req = test::TestRequest::post()
+            .uri("/secret")
+            .set_json(&payload)
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 400);
     }
 }

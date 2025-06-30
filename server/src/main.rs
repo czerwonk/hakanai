@@ -47,6 +47,7 @@ async fn main() -> Result<()> {
         let app_data = AppData {
             data_store: Box::new(data_store.clone()),
             tokens: tokens.clone(),
+            max_ttl: args.max_ttl,
         };
         App::new()
             .app_data(web::Data::new(app_data))
