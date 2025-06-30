@@ -123,9 +123,9 @@
       "msg.jsRequired": "JavaScript erforderlich",
       "msg.jsRequiredDetail":
         "Diese Anwendung benötigt JavaScript, um Secrets sicher in Ihrem Browser zu verschlüsseln.",
-      "msg.emptySecret": "Bitte geben Sie ein Secret zum Teilen ein",
+      "msg.emptySecret": "Bitte den Text für das Secret eingeben",
       "msg.createFailed": "Fehler beim Erstellen des Secrets",
-      "msg.emptyUrl": "Bitte geben Sie eine gültige Secret-URL ein",
+      "msg.emptyUrl": "Bitte eine gültige Secret-URL eingeben",
       "msg.invalidUrl":
         "Ungültiges URL-Format. Bitte geben Sie die vollständige URL einschließlich des Teils nach dem # ein",
       "msg.retrieveFailed": "Fehler beim Abrufen des Secrets",
@@ -134,11 +134,11 @@
       "msg.copyFailed":
         "Kopieren fehlgeschlagen. Bitte manuell auswählen und kopieren.",
       "msg.createNote":
-        "Hinweis: Teilen Sie diese URL vorsichtig. Das Secret wird nach dem ersten Zugriff oder bei Ablauf gelöscht.",
+        "Hinweis: Das Secret wird nach dem ersten Zugriff oder bei Ablauf gelöscht.",
       "msg.createNoteText":
         "Teilen Sie diese URL vorsichtig. Das Secret wird nach dem ersten Zugriff oder bei Ablauf gelöscht.",
       "msg.shareInstructions":
-        "Teilen Sie diese URL mit dem vorgesehenen Empfänger. Das Secret ist verschlüsselt und kann nur einmal abgerufen werden.",
+        "Diese URL kann nun mit dem vorgesehenen Empfänger geteilt werden. Das Secret ist verschlüsselt und kann nur einmal abgerufen werden.",
       "msg.retrieveNote":
         "Hinweis: Dieses Secret wurde vom Server gelöscht und kann nicht erneut abgerufen werden.",
       "msg.retrieveNoteText":
@@ -147,13 +147,13 @@
 
       // Aria labels
       "aria.secretInput":
-        "Geben Sie die geheime Nachricht ein, die Sie sicher teilen möchten",
+        "Bitte die geheime Nachricht eingeben, die sicher geteult werden soll",
       "aria.tokenInput":
-        "Geben Sie das Authentifizierungs-Token ein, falls vom Server erforderlich",
+        "Bitte den Authentifizierungs-Token eingeben, falls vom Server erforderlich",
       "aria.expiresSelect":
-        "Wählen Sie aus, wie lange das Secret verfügbar sein soll, bevor es abläuft",
+        "Bitte die Zeit auswählen, nach der das Secret abläuft",
       "aria.urlInput":
-        "Geben Sie die vollständige Secret-URL einschließlich des Teils nach dem Hash ein",
+        "Bitte die vollständige URL einschließlich des Secret-Schlüssels nach dem Hash eingeben",
 
       // Links
       "link.github": "Auf GitHub ansehen",
