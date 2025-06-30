@@ -1907,12 +1907,12 @@ dependencies = [
 
 [[package]]
 name = "opentelemetry-appender-log"
-version = "0.5.0"
+version = "0.30.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7e139b74640947f5c06112e87e636bce9cf98cd559a3279bed2c06bbddfabf0e"
+checksum = "e688026e48f4603494f619583e0aa0b0edd9c0b9430e1c46804df2ff32bc8798"
 dependencies = [
  "log",
- "opentelemetry 0.24.0",
+ "opentelemetry 0.30.0",
 ]
 
 [[package]]
