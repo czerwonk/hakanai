@@ -983,7 +983,7 @@ dependencies = [
 
 [[package]]
 name = "hakanai"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "anyhow",
  "clap",
@@ -996,7 +996,7 @@ dependencies = [
 
 [[package]]
 name = "hakanai-lib"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "aes-gcm",
  "async-trait",
@@ -1015,7 +1015,7 @@ dependencies = [
 
 [[package]]
 name = "hakanai-server"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "actix-cors",
  "actix-web",
@@ -1025,8 +1025,8 @@ dependencies = [
  "hakanai-lib",
  "humantime",
  "opentelemetry",
- "opentelemetry-appender-log",
  "opentelemetry-appender-tracing",
+ "opentelemetry-instrumentation-actix-web",
  "opentelemetry-otlp",
  "opentelemetry-resource-detectors",
  "opentelemetry_sdk",
@@ -1734,16 +1734,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "opentelemetry-appender-log"
-version = "0.30.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e688026e48f4603494f619583e0aa0b0edd9c0b9430e1c46804df2ff32bc8798"
-dependencies = [
- "log",
- "opentelemetry",
-]
-
-[[package]]
 name = "opentelemetry-appender-tracing"
 version = "0.30.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1766,6 +1756,20 @@ dependencies = [
  "http 1.3.1",
  "opentelemetry",
  "reqwest",
+]
+
+[[package]]
+name = "opentelemetry-instrumentation-actix-web"
+version = "0.22.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ad90191e6fce611d4128f2c4cbe51f261c72aaff4a0ae248d5f7a003c374c42d"
+dependencies = [
+ "actix-http",
+ "actix-web",
+ "futures-util",
+ "opentelemetry",
+ "opentelemetry-semantic-conventions",
+ "serde",
 ]
 
 [[package]]
