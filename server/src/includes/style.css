@@ -239,9 +239,9 @@ button:disabled {
 }
 
 .result.error {
-  background-color: rgba(244, 67, 54, 0.1);
+  background-color: rgba(0, 0, 0, 0.3);
   border: 1px solid var(--color-error);
-  color: var(--color-error-light);
+  color: var(--color-text);
 }
 
 .result h3 {
