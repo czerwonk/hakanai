@@ -93,9 +93,7 @@ async fn main() -> Result<()> {
     .await;
 
     if let Some(handler) = otel_handler {
-        if let Err(err) = handler.shutdown() {
-            warn!("Failed to gracefully shutdown OpenTelemetry: {}", err);
-        }
+        handler.shutdown()
     }
 
     res

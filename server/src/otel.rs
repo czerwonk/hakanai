@@ -8,6 +8,7 @@ use opentelemetry_sdk::{
     metrics::SdkMeterProvider, propagation::TraceContextPropagator, trace::SdkTracerProvider,
 };
 
+use tracing::warn;
 use tracing_subscriber::{EnvFilter, prelude::*};
 
 /// A handler for OpenTelemetry providers.
@@ -24,10 +25,13 @@ impl Handler {
     ///
     /// This function should be called before the application exits to ensure
     /// that all telemetry data is exported.
-    pub fn shutdown(&self) -> Result<()> {
-        self.tracing.shutdown()?;
-        self.metrics.shutdown()?;
-        Ok(())
+    pub fn shutdown(&self) {
+        if let Err(err) = self.tracing.shutdown() {
+            warn!("Failed to shutdown tracing provider: {}", err);
+        }
+        if let Err(err) = self.metrics.shutdown() {
+            warn!("Failed to shutdown metrics provider: {}", err);
+        }
     }
 }
 
