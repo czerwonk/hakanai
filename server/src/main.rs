@@ -7,9 +7,8 @@ mod otel;
 use std::io::Result;
 
 use actix_cors::Cors;
-use actix_web::middleware::{Compat, DefaultHeaders, Logger};
+use actix_web::middleware::{DefaultHeaders, Logger};
 use actix_web::{App, HttpResponse, HttpServer, Responder, http, web};
-use actix_web_opentelemetry::RequestTracing;
 
 use clap::Parser;
 use tracing::{info, warn};
@@ -62,8 +61,7 @@ async fn main() -> Result<()> {
             .wrap(Logger::new(
                 "%a %{X-Forwarded-For}i %t \"%r\" %s %b \"%{User-Agent}i\" %Ts",
             ))
-            .wrap(RequestTracing::new())
-            .wrap(Compat::new(TracingLogger::default()))
+            .wrap(TracingLogger::default())
             .wrap(cors_config(args.cors_allowed_origins.clone()))
             .wrap(
                 DefaultHeaders::new()
