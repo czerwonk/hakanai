@@ -25,9 +25,13 @@ const SECRET_HTML_CONTENT: &str = include_str!("includes/get-secret.html");
 async fn main() -> Result<()> {
     let args = Args::parse();
 
-    if let Err(err) = otel::init() {
-        warn!("Failed to initialize OpenTelemetry: {}", err);
-    }
+    let otel_handler = match otel::init() {
+        Ok(handler) => handler,
+        Err(err) => {
+            warn!("Failed to initialize OpenTelemetry: {}", err);
+            None
+        }
+    };
 
     info!("Connecting to Redis at {}", args.redis_dsn);
     let data_store: RedisDataStore = match RedisDataStore::new(&args.redis_dsn).await {
@@ -44,7 +48,7 @@ async fn main() -> Result<()> {
     }
 
     info!("Starting server on {}:{}", args.listen_address, args.port);
-    HttpServer::new(move || {
+    let res = HttpServer::new(move || {
         let app_data = AppData {
             data_store: Box::new(data_store.clone()),
             tokens: tokens.clone(),
@@ -86,7 +90,15 @@ async fn main() -> Result<()> {
     })
     .bind((args.listen_address, args.port))?
     .run()
-    .await
+    .await;
+
+    if let Some(handler) = otel_handler {
+        if let Err(err) = handler.shutdown() {
+            warn!("Failed to gracefully shutdown OpenTelemetry: {}", err);
+        }
+    }
+
+    res
 }
 
 fn cors_config(allowed_origins: Option<Vec<String>>) -> Cors {

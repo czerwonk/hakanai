@@ -4,15 +4,64 @@ use opentelemetry::{KeyValue, global};
 use opentelemetry_appender_tracing::layer;
 use opentelemetry_sdk::Resource;
 use opentelemetry_sdk::logs::SdkLoggerProvider;
-use opentelemetry_sdk::{propagation::TraceContextPropagator, trace::SdkTracerProvider};
+use opentelemetry_sdk::{
+    metrics::SdkMeterProvider, propagation::TraceContextPropagator, trace::SdkTracerProvider,
+};
 
 use tracing_subscriber::{EnvFilter, prelude::*};
 
-pub fn init() -> Result<()> {
-    init_otel_logging()?;
-    init_otel_tracing()?;
+/// A handler for OpenTelemetry providers.
+///
+/// This struct holds the tracer and meter providers. When `shutdown` is called,
+/// the providers will be shut down gracefully.
+pub struct Handler {
+    tracing: SdkTracerProvider,
+    metrics: SdkMeterProvider,
+}
 
-    Ok(())
+impl Handler {
+    /// Shuts down the OpenTelemetry providers.
+    ///
+    /// This function should be called before the application exits to ensure
+    /// that all telemetry data is exported.
+    pub fn shutdown(&self) -> Result<()> {
+        self.tracing.shutdown()?;
+        self.metrics.shutdown()?;
+        Ok(())
+    }
+}
+
+/// Initializes OpenTelemetry tracing, metrics, and logging.
+///
+/// This function sets up the global tracer, meter, and logger providers.
+/// It configures the OTLP exporter to send data to the endpoint specified
+/// by the `OTEL_EXPORTER_OTLP_ENDPOINT` environment variable.
+///
+/// If the `OTEL_EXPORTER_OTLP_ENDPOINT` variable is not set, OpenTelemetry
+/// will not be initialized, and this function will return `Ok(None)`.
+///
+/// # Returns
+///
+/// * `Ok(Some(OtelHandler))` - If OpenTelemetry was initialized successfully. The handler can be used to gracefully shut down the providers.
+/// * `Ok(None)` - If the OTLP endpoint is not configured.
+/// * `Err(anyhow::Error)` - If there was an error during initialization.
+pub fn init() -> Result<Option<Handler>> {
+    init_logging()?;
+
+    if !is_otel_endpoint_set() {
+        tracing::warn!(
+            "OTEL_EXPORTER_OTLP_ENDPOINT is not set, OpenTelemetry traces and metrics will not be exported."
+        );
+        return Ok(None);
+    }
+
+    let tracer_provider = init_tracing()?;
+    let meter_provider = init_metrics()?;
+
+    Ok(Some(Handler {
+        tracing: tracer_provider,
+        metrics: meter_provider,
+    }))
 }
 
 fn is_otel_endpoint_set() -> bool {
@@ -28,30 +77,7 @@ fn get_resource() -> Resource {
         .build()
 }
 
-fn init_otel_tracing() -> Result<()> {
-    global::set_text_map_propagator(TraceContextPropagator::new());
-
-    if !is_otel_endpoint_set() {
-        tracing::warn!(
-            "OTEL_EXPORTER_OTLP_ENDPOINT is not set, OpenTelemetry tracing will not be exported."
-        );
-        return Ok(());
-    }
-
-    let exporter = opentelemetry_otlp::SpanExporter::builder()
-        .with_tonic()
-        .build()?;
-    let provider = SdkTracerProvider::builder()
-        .with_resource(get_resource())
-        .with_batch_exporter(exporter)
-        .build();
-
-    global::set_tracer_provider(provider.clone());
-
-    Ok(())
-}
-
-fn init_otel_logging() -> Result<()> {
+fn init_logging() -> Result<()> {
     let fmt_filter = EnvFilter::new("info");
     let fmt_layer = tracing_subscriber::fmt::layer()
         .with_thread_names(true)
@@ -76,4 +102,34 @@ fn init_otel_logging() -> Result<()> {
     }
 
     Ok(())
+}
+
+fn init_tracing() -> Result<SdkTracerProvider> {
+    global::set_text_map_propagator(TraceContextPropagator::new());
+
+    let exporter = opentelemetry_otlp::SpanExporter::builder()
+        .with_tonic()
+        .build()?;
+    let provider = SdkTracerProvider::builder()
+        .with_resource(get_resource())
+        .with_batch_exporter(exporter)
+        .build();
+
+    global::set_tracer_provider(provider.clone());
+
+    Ok(provider)
+}
+
+fn init_metrics() -> Result<SdkMeterProvider> {
+    let exporter = opentelemetry_otlp::MetricExporter::builder()
+        .with_tonic()
+        .build()?;
+    let provider = SdkMeterProvider::builder()
+        .with_resource(get_resource())
+        .with_periodic_exporter(exporter)
+        .build();
+
+    global::set_meter_provider(provider.clone());
+
+    Ok(provider)
 }
