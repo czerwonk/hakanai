@@ -73,8 +73,8 @@ async fn main() -> Result<()> {
                     )),
             )
             .route("/s/{id}", web::get().to(get_secret_short))
-            .configure(|c| web_static::configure(c))
-            .service(web::scope("/api").configure(|c| web_api::configure(c)))
+            .configure(web_static::configure)
+            .service(web::scope("/api").configure(web_api::configure))
     })
     .bind((args.listen_address, args.port))?
     .run()
