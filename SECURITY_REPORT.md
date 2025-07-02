@@ -1,8 +1,8 @@
 # Hakanai Security Audit Report
 
-**Date:** 2025-06-30
-**Auditor:** Claude Code
-**Version:** 0.3.1
+**Date:** 2025-07-02
+**Auditor:** Claude Code Security Analysis
+**Version:** 0.4.x
 **Scope:** Complete codebase security review
 
 ## Executive Summary
@@ -49,34 +49,56 @@ Hakanai is a minimalist one-time secret sharing service that implements zero-kno
 - **Proper logging:** Internal errors logged without exposing details
 - **HTTP status codes:** Appropriate response codes (401, 403, 404, 500)
 
-### 🟡 Areas for Improvement
+### 🟡 Medium Severity Issues
 
-#### 1. JavaScript Client Security ✅
-**Location:** `server/src/includes/hakanai-client.js` (detailed audit completed)
+#### 1. Version Information Disclosure
+**Location:** `server/src/web_static.rs:60,71`, `server/src/otel.rs:97`
+- **Issue:** Application version exposed in web interface and OpenTelemetry telemetry
+- **Risk:** Attackers can identify exact version and potentially target known vulnerabilities
+- **Recommendation:** Remove version display from public interfaces or implement version obfuscation
+
+#### 2. HTTP Response Body Exposure in Client
+**Location:** `lib/src/web.rs:49-56,79-86`
+- **Issue:** Client includes full HTTP response body in error messages
+- **Code:** `err_msg += &format!("\n{}", body);`
+- **Risk:** Server error responses could leak sensitive information to CLI users
+- **Recommendation:** Sanitize or limit error message content from server responses
+
+#### 3. Redis Connection Details in Logs
+**Location:** `server/src/main.rs:34`
+- **Issue:** Redis DSN logged at info level: `info!("Connecting to Redis at {}", args.redis_dsn);`
+- **Risk:** Database connection strings could be exposed in logs, potentially including credentials
+- **Recommendation:** Sanitize connection strings before logging (remove credentials, show only host/port)
+
+### 🟢 Low Severity Issues
+
+#### 4. File System Error Exposure
+**Location:** `cli/src/send.rs:46`
+- **Issue:** File system errors are directly propagated to users
+- **Risk:** Could reveal file system structure or permissions information
+- **Recommendation:** Add specific error handling for file operations
+
+#### 5. OpenTelemetry Information Exposure
+**Location:** `server/src/otel.rs:94-98`
+- **Issue:** Service metadata sent to telemetry systems includes version and system information
+- **Risk:** Telemetry data could expose application details to monitoring systems
+- **Recommendation:** Review what information is necessary for telemetry and sanitize if needed
+
+### 🟢 Previously Reviewed Areas
+
+#### JavaScript Client Security ✅
+**Location:** `server/src/includes/hakanai-client.js`
 - **Assessment:** Excellent security implementation with proper WebCrypto API usage
 - **Cryptography:** AES-256-GCM correctly implemented with secure random generation
 - **Architecture:** Maintains zero-knowledge principles with client-side only operations
-- **Minor Issue:** Base64 encoding could be more robust for very large secrets
-- **Recommendation:** Add chunked base64 encoding and WebCrypto feature detection
 
-#### 2. CORS Configuration ✅
+#### CORS Configuration ✅
 **Location:** `server/src/main.rs:93-110`
-- **Current:** Secure default using `Cors::default()` (same-origin only)
-- **Security:** Only allows cross-origin requests when explicitly configured
-- **Assessment:** Properly implements principle of least privilege
+- **Assessment:** Properly implements principle of least privilege with secure defaults
 
-#### 3. Redis Security
-**Location:** `server/src/data_store.rs`
-- **Current:** Basic Redis connection with connection manager
-- **Zero-Knowledge Context:** Redis only stores encrypted blobs, reducing security impact
-- **Note:** TLS support available via Redis connection string if needed
-- **Assessment:** Minor concern due to zero-knowledge architecture
-
-#### 4. Rate Limiting
+#### Rate Limiting ✅
 **Status:** Intentionally not implemented (proxy-layer responsibility)
 - **Architecture Decision:** Rate limiting handled by reverse proxy as documented in README
-- **Current Documentation:** README mentions reverse proxy deployment but could be more explicit about rate limiting
-- **Recommendation:** Clarify rate limiting expectations in deployment documentation
 
 ### 🔴 Security Vulnerabilities
 
@@ -112,27 +134,35 @@ Hakanai is a minimalist one-time secret sharing service that implements zero-kno
 ## Dependency Analysis
 
 ### Core Dependencies Security Status
-- **aes-gcm 0.10.3:** ✅ Current and secure
-- **reqwest 0.12.20:** ✅ Modern HTTP client
-- **actix-web 4.11.0:** ✅ Mature web framework
-- **redis 0.32.2:** ✅ Current Redis client
-- **opentelemetry:** ✅ Observability stack
+- **aes-gcm 0.10.3:** ✅ Secure (patched vulnerability from versions prior to 0.10.3)
+- **reqwest 0.12.22:** ✅ No known vulnerabilities
+- **actix-web 4.11.0:** ✅ No known vulnerabilities  
+- **redis 0.32.3:** ✅ No known vulnerabilities
+- **serde 1.0.219:** ✅ No known vulnerabilities
+- **opentelemetry:** ✅ Observability stack - secure
 
-**Note:** Cargo audit check failed due to lock file issues, but manual review of dependencies shows current versions.
+### Supply Chain Security
+- **Manual vulnerability research conducted** - No critical security issues identified
+- **AES-GCM vulnerability note:** Version 0.10.3 contains fix for decrypt_in_place_detached issue
+- **Recommendation:** Continue monitoring dependencies with `cargo audit`
 
 ## Recommendations
 
-### High Priority
-1. **Monitoring:** Add security-relevant metrics and alerts
+### 🔴 High Priority
+1. **Sanitize Redis connection logs** - Remove credentials from log output
+2. **Remove version display** - Hide version information from public interfaces  
+3. **Sanitize HTTP client errors** - Limit/filter server response content in CLI errors
 
-### Medium Priority
-1. **JavaScript Improvements:** Add chunked base64 encoding and WebCrypto feature detection
-2. **Content Security Policy:** Consider stricter CSP for web interface
+### 🟡 Medium Priority
+4. **File error handling** - Add specific error handling for file operations
+5. **Review OpenTelemetry data** - Ensure no sensitive information in telemetry
+6. **Content Security Policy** - Consider stricter CSP for web interface
 
-### Low Priority
-1. **Documentation:** Add security considerations to README
-2. **Penetration Testing:** Consider external security testing
-3. **Dependency Scanning:** Set up automated vulnerability scanning
+### 🟢 Low Priority  
+7. **Replace eprintln! with structured logging** - Use tracing instead of direct stderr
+8. **Documentation** - Add security considerations to README
+9. **Penetration Testing** - Consider external security testing
+10. **Dependency Scanning** - Set up automated vulnerability scanning
 
 ## Compliance & Standards
 
@@ -154,7 +184,7 @@ The primary recommendations focus on operational security (rate limiting, Redis 
 
 **Overall Security Rating:** ⭐⭐⭐⭐⭐ (5/5 stars)
 
-**Rating Justification:** With the comprehensive JavaScript client audit completed, all major security components have been thoroughly reviewed and found to implement excellent security practices. The zero-knowledge architecture is properly maintained across both Rust and JavaScript implementations.
+**Rating Justification:** Comprehensive security audit completed covering cryptographic implementation, authentication, input validation, information disclosure, dependency analysis, and error handling. The codebase demonstrates excellent security practices with proper zero-knowledge architecture implementation. Identified issues are primarily low-to-medium severity information disclosure concerns that can be addressed with minor code changes.
 
 ---
 *This audit was performed using static code analysis. Consider supplementing with dynamic testing and external security review for production deployments.*
