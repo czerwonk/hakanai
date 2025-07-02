@@ -983,7 +983,7 @@ dependencies = [
 
 [[package]]
 name = "hakanai"
-version = "0.4.1"
+version = "0.4.3"
 dependencies = [
  "anyhow",
  "clap",
@@ -1015,7 +1015,7 @@ dependencies = [
 
 [[package]]
 name = "hakanai-server"
-version = "0.4.2"
+version = "0.4.3"
 dependencies = [
  "actix-cors",
  "actix-web",
