@@ -79,9 +79,6 @@
         "Create and share one-time secrets securely with Hakanai - zero-knowledge secret sharing",
       "meta.get":
         "Retrieve your one-time secret securely with Hakanai - zero-knowledge secret sharing",
-
-      // Footer
-      "footer.builtWith": "Built with ❤️ by",
     },
     de: {
       // Page titles
@@ -158,9 +155,6 @@
       // Meta descriptions
       "meta.create": "One-Time-Secrets sicher erstellen und teilen mit Hakanai",
       "meta.get": "One-Time-Secrets sicher teilen mit Hakanai",
-
-      // Footer
-      "footer.builtWith": "Erstellt mit ❤️ von",
     },
   };
 

@@ -415,19 +415,6 @@ button:disabled {
   font-size: 12px;
 }
 
-.heart {
-  color: #ef4444;
-  display: inline-block;
-  transform: scale(1.1);
-}
-
-/* Accessibility improvement */
-.heart::before {
-  content: attr(aria-label);
-  position: absolute;
-  left: -9999px;
-}
-
 /* Mobile responsiveness */
 @media (max-width: 480px) {
   .site-footer {
