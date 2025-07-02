@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use actix_web::{HttpRequest, Result, error, get, post, web};
 use subtle::ConstantTimeEq;
-use tracing::{Instrument, Span, error, instrument};
+use tracing::{Span, error, instrument};
 use uuid::Uuid;
 
 use hakanai_lib::models::{PostSecretRequest, PostSecretResponse};
@@ -44,8 +44,7 @@ pub async fn get_secret_from_request(
         .map_err(|_| error::ErrorBadRequest("Invalid link format"))?;
     Span::current().record("id", id.to_string());
 
-    let span = tracing::Span::current();
-    match app_data.data_store.pop(id).instrument(span.clone()).await {
+    match app_data.data_store.pop(id).await {
         Ok(Some(secret)) => Ok(secret),
         Ok(None) => Err(error::ErrorNotFound("Secret not found")),
         Err(e) => {
@@ -57,10 +56,7 @@ pub async fn get_secret_from_request(
 
 #[get("/secret/{id}")]
 async fn get_secret(req: web::Path<String>, app_data: web::Data<AppData>) -> Result<String> {
-    let span = tracing::Span::current();
-    get_secret_from_request(req, app_data)
-        .instrument(span.clone())
-        .await
+    get_secret_from_request(req, app_data).await
 }
 
 #[post("/secret")]

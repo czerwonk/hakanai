@@ -11,7 +11,6 @@ use actix_cors::Cors;
 use actix_web::middleware::{DefaultHeaders, Logger};
 use actix_web::{App, HttpResponse, HttpServer, Responder, http, web};
 use opentelemetry_instrumentation_actix_web::{RequestMetrics, RequestTracing};
-use tracing::Instrument;
 
 use clap::Parser;
 use tracing::{info, instrument, warn};
@@ -126,11 +125,7 @@ async fn get_secret_short(
             .body(web_static::SECRET_HTML_CONTENT);
     }
 
-    let span = tracing::Span::current();
-    match web_api::get_secret_from_request(req, app_data)
-        .instrument(span.clone())
-        .await
-    {
+    match web_api::get_secret_from_request(req, app_data).await {
         Ok(secret) => HttpResponse::Ok().body(secret),
         Err(e) => e.error_response(),
     }
