@@ -58,10 +58,10 @@ async fn main() -> Result<()> {
             .app_data(web::PayloadConfig::new(
                 args.upload_size_limit as usize * 1024 * 1024,
             ))
+            .wrap(TracingLogger::default())
             .wrap(Logger::new(
                 "%a %{X-Forwarded-For}i %t \"%r\" %s %b \"%{User-Agent}i\" %Ts",
             ))
-            .wrap(TracingLogger::default())
             .wrap(RequestMetrics::default())
             .wrap(cors_config(args.cors_allowed_origins.clone()))
             .wrap(
