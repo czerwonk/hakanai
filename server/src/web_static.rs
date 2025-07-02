@@ -1,5 +1,4 @@
 use actix_web::{HttpResponse, Responder, web};
-use tracing::instrument;
 
 pub const SECRET_HTML_CONTENT: &str = include_str!("includes/get-secret.html");
 
@@ -19,7 +18,6 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
         .route("/logo.svg", web::get().to(serve_logo));
 }
 
-#[instrument]
 async fn serve_js_client() -> impl Responder {
     const CONTENT: &str = include_str!("includes/hakanai-client.js");
     HttpResponse::Ok()
@@ -27,7 +25,6 @@ async fn serve_js_client() -> impl Responder {
         .body(CONTENT)
 }
 
-#[instrument]
 async fn serve_i18n_js() -> impl Responder {
     const CONTENT: &str = include_str!("includes/i18n.js");
     HttpResponse::Ok()
@@ -35,13 +32,11 @@ async fn serve_i18n_js() -> impl Responder {
         .body(CONTENT)
 }
 
-#[instrument]
 async fn serve_css() -> impl Responder {
     const CONTENT: &str = include_str!("includes/style.css");
     HttpResponse::Ok().content_type("text/css").body(CONTENT)
 }
 
-#[instrument]
 async fn serve_logo() -> impl Responder {
     const CONTENT: &str = include_str!("../../logo.svg");
     HttpResponse::Ok()
@@ -49,7 +44,6 @@ async fn serve_logo() -> impl Responder {
         .body(CONTENT)
 }
 
-#[instrument]
 async fn serve_icon() -> impl Responder {
     const CONTENT: &str = include_str!("../../icon.svg");
     HttpResponse::Ok()
@@ -57,20 +51,17 @@ async fn serve_icon() -> impl Responder {
         .body(CONTENT)
 }
 
-#[instrument]
 async fn serve_get_secret_html() -> impl Responder {
     HttpResponse::Ok()
         .content_type("text/html")
         .body(SECRET_HTML_CONTENT)
 }
 
-#[instrument]
 async fn serve_create_secret_html() -> impl Responder {
     const CONTENT: &str = include_str!("includes/create-secret.html");
     HttpResponse::Ok().content_type("text/html").body(CONTENT)
 }
 
-#[instrument]
 async fn serve_get_secret_js() -> impl Responder {
     const CONTENT: &str = include_str!("includes/get-secret.js");
     HttpResponse::Ok()
@@ -78,7 +69,6 @@ async fn serve_get_secret_js() -> impl Responder {
         .body(CONTENT)
 }
 
-#[instrument]
 async fn serve_create_secret_js() -> impl Responder {
     const CONTENT: &str = include_str!("includes/create-secret.js");
     HttpResponse::Ok()
