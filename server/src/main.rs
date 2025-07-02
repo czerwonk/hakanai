@@ -10,8 +10,7 @@ use std::io::Result;
 use actix_cors::Cors;
 use actix_web::middleware::{DefaultHeaders, Logger};
 use actix_web::{App, HttpResponse, HttpServer, Responder, http, web};
-use opentelemetry_instrumentation_actix_web::RequestMetrics;
-use tracing_actix_web::TracingLogger;
+use opentelemetry_instrumentation_actix_web::{RequestMetrics, RequestTracing};
 
 use clap::Parser;
 use tracing::{info, instrument, warn};
@@ -61,7 +60,7 @@ async fn main() -> Result<()> {
             .wrap(Logger::new(
                 "%a %{X-Forwarded-For}i %t \"%r\" %s %b \"%{User-Agent}i\" %Ts",
             ))
-            .wrap(TracingLogger::default())
+            .wrap(RequestTracing::new())
             .wrap(RequestMetrics::default())
             .wrap(cors_config(args.cors_allowed_origins.clone()))
             .wrap(
