@@ -13,8 +13,8 @@ use crate::app_data::AppData;
 ///
 /// This function registers the API routes and sets up the application data,
 /// including the data store that will be shared across all handlers.
-pub fn configure(cfg: &mut web::ServiceConfig) -> &mut web::ServiceConfig {
-    cfg.service(get_secret).service(post_secret)
+pub fn configure(cfg: &mut web::ServiceConfig) {
+    cfg.service(get_secret).service(post_secret);
 }
 
 /// Retrieves and consumes a secret from the data store.
