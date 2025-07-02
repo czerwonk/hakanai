@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use actix_web::{HttpRequest, Result, error, get, post, web};
+use opentelemetry::trace::FutureExt;
 use subtle::ConstantTimeEq;
 use tracing::{Span, error, instrument};
 use uuid::Uuid;
@@ -44,7 +45,7 @@ pub async fn get_secret_from_request(
         .map_err(|_| error::ErrorBadRequest("Invalid link format"))?;
     Span::current().record("id", id.to_string());
 
-    match app_data.data_store.pop(id).await {
+    match app_data.data_store.pop(id).with_current_context().await {
         Ok(Some(secret)) => Ok(secret),
         Ok(None) => Err(error::ErrorNotFound("Secret not found")),
         Err(e) => {
@@ -56,7 +57,9 @@ pub async fn get_secret_from_request(
 
 #[get("/secret/{id}")]
 async fn get_secret(req: web::Path<String>, app_data: web::Data<AppData>) -> Result<String> {
-    get_secret_from_request(req, app_data).await
+    get_secret_from_request(req, app_data)
+        .with_current_context()
+        .await
 }
 
 #[post("/secret")]
