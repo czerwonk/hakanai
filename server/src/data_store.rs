@@ -4,6 +4,7 @@ use async_trait::async_trait;
 use redis::AsyncCommands;
 use redis::aio::ConnectionManager;
 use thiserror::Error;
+use tracing::{error, instrument};
 use uuid::Uuid;
 
 #[derive(Debug, Error)]
@@ -72,11 +73,13 @@ impl RedisDataStore {
 
 #[async_trait]
 impl DataStore for RedisDataStore {
+    #[instrument(skip(self), err)]
     async fn pop(&self, id: Uuid) -> Result<Option<String>, DataStoreError> {
         let value = self.con.clone().get_del(id.to_string()).await?;
         Ok(value)
     }
 
+    #[instrument(skip(self, data), err)]
     async fn put(
         &self,
         id: Uuid,

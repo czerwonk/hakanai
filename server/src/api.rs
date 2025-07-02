@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use actix_web::{HttpRequest, Result, error, get, post, web};
 use subtle::ConstantTimeEq;
-use tracing::error;
+use tracing::{Span, error, instrument};
 use uuid::Uuid;
 
 use hakanai_lib::models::{PostSecretRequest, PostSecretResponse};
@@ -35,12 +35,14 @@ pub fn configure(cfg: &mut web::ServiceConfig) -> &mut web::ServiceConfig {
 /// - The provided ID is not a valid UUID (`ErrorBadRequest`).
 /// - The secret is not found in the data store (`ErrorNotFound`).
 /// - An internal error occurs while accessing the data store (`ErrorInternalServerError`).
+#[instrument(skip(app_data), fields(id = tracing::field::Empty), err)]
 pub async fn get_secret_from_request(
     req: web::Path<String>,
     app_data: web::Data<AppData>,
 ) -> Result<String> {
     let id = Uuid::parse_str(&req.into_inner())
         .map_err(|_| error::ErrorBadRequest("Invalid link format"))?;
+    Span::current().record("id", id.to_string());
 
     match app_data.data_store.pop(id).await {
         Ok(Some(secret)) => Ok(secret),
@@ -58,6 +60,7 @@ async fn get_secret(req: web::Path<String>, app_data: web::Data<AppData>) -> Res
 }
 
 #[post("/secret")]
+#[instrument(skip(req, app_data, http_req), err)]
 async fn post_secret(
     http_req: HttpRequest,
     req: web::Json<PostSecretRequest>,
@@ -77,6 +80,7 @@ async fn post_secret(
     Ok(web::Json(PostSecretResponse { id }))
 }
 
+#[instrument]
 fn ensure_ttl_is_valid(expires_in: Duration, max_ttl: Duration) -> Result<()> {
     if expires_in > max_ttl {
         Err(error::ErrorBadRequest(format!(
@@ -88,6 +92,7 @@ fn ensure_ttl_is_valid(expires_in: Duration, max_ttl: Duration) -> Result<()> {
     }
 }
 
+#[instrument(skip(req, tokens))]
 fn ensure_is_authorized(req: &HttpRequest, tokens: &[String]) -> Result<()> {
     if tokens.is_empty() {
         // no tokens required

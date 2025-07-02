@@ -12,7 +12,7 @@ use actix_web::{App, HttpResponse, HttpServer, Responder, http, web};
 use opentelemetry_instrumentation_actix_web::{RequestMetrics, RequestTracing};
 
 use clap::Parser;
-use tracing::{info, warn};
+use tracing::{info, instrument, warn};
 
 use crate::app_data::AppData;
 use crate::data_store::RedisDataStore;
@@ -117,6 +117,7 @@ fn cors_config(allowed_origins: Option<Vec<String>>) -> Cors {
     cors
 }
 
+#[instrument(skip_all)]
 async fn get_secret_short(
     http_req: actix_web::HttpRequest,
     req: web::Path<String>,
@@ -141,6 +142,7 @@ async fn get_secret_short(
     }
 }
 
+#[instrument]
 async fn serve_js_client() -> impl Responder {
     const CONTENT: &str = include_str!("includes/hakanai-client.js");
     HttpResponse::Ok()
@@ -148,6 +150,7 @@ async fn serve_js_client() -> impl Responder {
         .body(CONTENT)
 }
 
+#[instrument]
 async fn serve_i18n_js() -> impl Responder {
     const CONTENT: &str = include_str!("includes/i18n.js");
     HttpResponse::Ok()
@@ -155,11 +158,13 @@ async fn serve_i18n_js() -> impl Responder {
         .body(CONTENT)
 }
 
+#[instrument]
 async fn serve_css() -> impl Responder {
     const CONTENT: &str = include_str!("includes/style.css");
     HttpResponse::Ok().content_type("text/css").body(CONTENT)
 }
 
+#[instrument]
 async fn serve_logo() -> impl Responder {
     const CONTENT: &str = include_str!("../../logo.svg");
     HttpResponse::Ok()
@@ -167,6 +172,7 @@ async fn serve_logo() -> impl Responder {
         .body(CONTENT)
 }
 
+#[instrument]
 async fn serve_icon() -> impl Responder {
     const CONTENT: &str = include_str!("../../icon.svg");
     HttpResponse::Ok()
@@ -174,17 +180,20 @@ async fn serve_icon() -> impl Responder {
         .body(CONTENT)
 }
 
+#[instrument]
 async fn serve_get_secret_html() -> impl Responder {
     HttpResponse::Ok()
         .content_type("text/html")
         .body(SECRET_HTML_CONTENT)
 }
 
+#[instrument]
 async fn serve_create_secret_html() -> impl Responder {
     const CONTENT: &str = include_str!("includes/create-secret.html");
     HttpResponse::Ok().content_type("text/html").body(CONTENT)
 }
 
+#[instrument]
 async fn serve_get_secret_js() -> impl Responder {
     const CONTENT: &str = include_str!("includes/get-secret.js");
     HttpResponse::Ok()
@@ -192,6 +201,7 @@ async fn serve_get_secret_js() -> impl Responder {
         .body(CONTENT)
 }
 
+#[instrument]
 async fn serve_create_secret_js() -> impl Responder {
     const CONTENT: &str = include_str!("includes/create-secret.js");
     HttpResponse::Ok()
