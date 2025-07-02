@@ -1,48 +1,20 @@
-<svg width="320" height="220" viewBox="0 0 320 220" xmlns="http://www.w3.org/2000/svg">
-  <!-- Geometric Logo Symbol -->
-  <g transform="translate(0,0)">
-    <!-- Background geometric shapes -->
-    <polygon fill="none" stroke="#666" stroke-width="1" opacity="0.4" points="50,30 150,30 170,80 130,150 70,150 30,80" />
-    <circle fill="none" stroke="#666" stroke-width="1" opacity="0.4" cx="100" cy="100" r="60" />
+<svg width="140" height="110" viewBox="0 0 140 110" xmlns="http://www.w3.org/2000/svg">
+    <g transform="translate(70,45)">
+        <!-- Circular flow -->
+        <circle fill="none" stroke="#00d4ff" stroke-width="2.5" cx="0" cy="0" r="35" />
 
-```
-<!-- Main interconnected lines forming abstract pattern -->
-<path stroke="#00d4ff" stroke-width="2" fill="none" opacity="0.9" d="M30,50 Q100,30 170,50 Q150,100 170,150 Q100,170 30,150 Q50,100 30,50" />
-<path stroke="#00d4ff" stroke-width="2" fill="none" opacity="0.9" d="M60,40 L140,40 L160,100 L140,160 L60,160 L40,100 Z" />
-<path stroke="#00d4ff" stroke-width="2" fill="none" opacity="0.9" d="M50,70 Q100,50 150,70 Q130,100 150,130 Q100,150 50,130 Q70,100 50,70" />
+        <!-- Hiragana arranged in circle -->
+        <text x="0" y="-18" fill="#00d4ff" font-family="'Noto Sans JP', 'Segoe UI', sans-serif" font-size="16" font-weight="300" text-anchor="middle">は</text>
+        <text x="18" y="5" fill="#00d4ff" font-family="'Noto Sans JP', 'Segoe UI', sans-serif" font-size="16" font-weight="300" text-anchor="middle">か</text>
+        <text x="0" y="23" fill="#00d4ff" font-family="'Noto Sans JP', 'Segoe UI', sans-serif" font-size="16" font-weight="300" text-anchor="middle">な</text>
+        <text x="-18" y="5" fill="#00d4ff" font-family="'Noto Sans JP', 'Segoe UI', sans-serif" font-size="16" font-weight="300" text-anchor="middle">い</text>
 
-<!-- Central connecting lines -->
-<line stroke="#00d4ff" stroke-width="2" opacity="0.9" x1="100" y1="30" x2="100" y2="170" />
-<line stroke="#00d4ff" stroke-width="2" opacity="0.9" x1="30" y1="100" x2="170" y2="100" />
-<line stroke="#00d4ff" stroke-width="2" opacity="0.9" x1="50" y1="50" x2="150" y2="150" />
-<line stroke="#00d4ff" stroke-width="2" opacity="0.9" x1="150" y1="50" x2="50" y2="150" />
+        <!-- Center node -->
+        <circle fill="#00d4ff" cx="0" cy="0" r="4" />
 
-<!-- Connection nodes -->
-<circle fill="#00d4ff" opacity="0.8" cx="100" cy="50" r="4" />
-<circle fill="#00d4ff" opacity="0.8" cx="100" cy="150" r="4" />
-<circle fill="#00d4ff" opacity="0.8" cx="50" cy="100" r="4" />
-<circle fill="#00d4ff" opacity="0.8" cx="150" cy="100" r="4" />
-<circle fill="#00d4ff" opacity="0.8" cx="70" cy="70" r="3" />
-<circle fill="#00d4ff" opacity="0.8" cx="130" cy="70" r="3" />
-<circle fill="#00d4ff" opacity="0.8" cx="70" cy="130" r="3" />
-<circle fill="#00d4ff" opacity="0.8" cx="130" cy="130" r="3" />
-
-<!-- Central focal point -->
-<circle fill="#00d4ff" opacity="0.8" cx="100" cy="100" r="6" />
-```
-
-  </g>
-
-  <!-- Vertical Japanese Text -->
-
-  <g transform="translate(240,0)">
-    <text x="0" y="55" fill="#00d4ff" font-family="'Segoe UI', sans-serif" font-size="24" font-weight="300" text-anchor="middle" opacity="0.9">は</text>
-    <text x="0" y="85" fill="#00d4ff" font-family="'Segoe UI', sans-serif" font-size="24" font-weight="300" text-anchor="middle" opacity="0.9">か</text>
-    <text x="0" y="115" fill="#00d4ff" font-family="'Segoe UI', sans-serif" font-size="24" font-weight="300" text-anchor="middle" opacity="0.9">な</text>
-    <text x="0" y="145" fill="#00d4ff" font-family="'Segoe UI', sans-serif" font-size="24" font-weight="300" text-anchor="middle" opacity="0.9">い</text>
-  </g>
-
-  <!-- Small "hakanai" text under logo -->
-
-<text x="160" y="195" fill="#00d4ff" font-family="'Segoe UI', sans-serif" font-size="16" font-weight="300" text-anchor="middle" letter-spacing="2px" opacity="0.8">hakanai</text>
+        <!-- Connection lines -->
+        <line stroke="#00d4ff" stroke-width="1.2" opacity="0.4" x1="0" y1="-35" x2="0" y2="35" />
+        <line stroke="#00d4ff" stroke-width="1.2" opacity="0.4" x1="-35" y1="0" x2="35" y2="0" />
+    </g>
+    <text x="70" y="95" fill="#00d4ff" font-family="'Segoe UI', sans-serif" font-size="16" font-weight="300" text-anchor="middle" letter-spacing="2px" opacity="0.8">hakanai</text>
 </svg>
