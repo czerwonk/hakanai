@@ -122,7 +122,7 @@ async fn get_secret_short(
     if !user_agent.starts_with("hakanai-client") {
         return HttpResponse::Ok()
             .content_type("text/html")
-            .body(web_static::SECRET_HTML_CONTENT);
+            .body(web_static::get_secret_html_content());
     }
 
     match web_api::get_secret_from_request(req, app_data).await {

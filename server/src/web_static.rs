@@ -51,15 +51,25 @@ async fn serve_icon() -> impl Responder {
         .body(CONTENT)
 }
 
+/// Returns the HTML content for the "get secret" page with the version placeholder replaced.
+///
+/// This function takes the static HTML content for the "get secret" page,
+/// finds the `{{ VERSION }}` placeholder, and replaces it with the current
+/// application version from the `CARGO_PKG_VERSION` environment variable.
+pub fn get_secret_html_content() -> String {
+    SECRET_HTML_CONTENT.replace("{{ VERSION }}", env!("CARGO_PKG_VERSION"))
+}
+
 async fn serve_get_secret_html() -> impl Responder {
     HttpResponse::Ok()
         .content_type("text/html")
-        .body(SECRET_HTML_CONTENT)
+        .body(get_secret_html_content())
 }
 
 async fn serve_create_secret_html() -> impl Responder {
     const CONTENT: &str = include_str!("includes/create-secret.html");
-    HttpResponse::Ok().content_type("text/html").body(CONTENT)
+    let content = CONTENT.replace("{{ VERSION }}", env!("CARGO_PKG_VERSION"));
+    HttpResponse::Ok().content_type("text/html").body(content)
 }
 
 async fn serve_get_secret_js() -> impl Responder {
