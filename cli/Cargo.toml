@@ -5,7 +5,7 @@ edition = "2024"
 
 [dependencies]
 hakanai-lib = { path = "../lib" }
-tokio = { version = "1.45.1", features = ["full"] }
+tokio = { version = "1.46.0", features = ["full"] }
 clap = { version = "4.5.40", features = ["derive", "env"] }
 url = "2.5.4"
 anyhow = "1.0.98"
