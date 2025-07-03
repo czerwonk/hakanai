@@ -1,14 +1,14 @@
 :root {
   /* Colors - Kanagawa Theme */
-  --color-primary: #7FB4CA;        /* Crystal Blue (was cyan) */
-  --color-primary-hover: #7AA89F;  /* Wave Blue (darker shade) */
-  --color-bg-main: #1F1F28;        /* Sumi Ink Black (background) */
-  --color-bg-container: #2A2A37;   /* Sumi Ink Black +1 (container) */
-  --color-text: #DCD7BA;           /* Fuji White (main text) */
-  --color-text-muted: #727169;     /* Sumi Ink Gray (muted text) */
-  --color-border: #54546D;         /* Sumi Ink Gray +1 (borders) */
-  --color-error: #E82424;          /* Samurai Red (errors) */
-  --color-error-light: #FF5D62;    /* Light Samurai Red */
+  --color-primary: #7fb4ca; /* Crystal Blue (was cyan) */
+  --color-primary-hover: #7aa89f; /* Wave Blue (darker shade) */
+  --color-bg-main: #1f1f28; /* Sumi Ink Black (background) */
+  --color-bg-container: #2a2a37; /* Sumi Ink Black +1 (container) */
+  --color-text: #dcd7ba; /* Fuji White (main text) */
+  --color-text-muted: #727169; /* Sumi Ink Gray (muted text) */
+  --color-border: #54546d; /* Sumi Ink Gray +1 (borders) */
+  --color-error: #e82424; /* Samurai Red (errors) */
+  --color-error-light: #ff5d62; /* Light Samurai Red */
 
   /* Spacing */
   --spacing-xs: 0.5rem;
@@ -153,7 +153,7 @@ select {
   background-color: var(--color-bg-main);
   color: var(--color-text);
   transition: border-color var(--transition-fast);
-  font-family: var(--font-system);
+  font-family: var(--font-mono);
 }
 
 input[type="text"]:focus-visible,
@@ -468,8 +468,8 @@ button:disabled {
 /* High contrast mode support */
 @media (prefers-contrast: high) {
   :root {
-    --color-primary: #7FB4CA;
-    --color-border: #DCD7BA;
+    --color-primary: #7fb4ca;
+    --color-border: #dcd7ba;
   }
 }
 
