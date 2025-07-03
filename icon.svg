@@ -1,19 +1,19 @@
 <svg width="80" height="80" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
     <g transform="translate(40,40)">
         <!-- Circular flow -->
-        <circle fill="none" stroke="#00d4ff" stroke-width="2.5" cx="0" cy="0" r="35" />
+        <circle fill="none" stroke="#7FB4CA" stroke-width="2.5" cx="0" cy="0" r="35" />
 
         <!-- Hiragana arranged in circle -->
-        <text x="0" y="-18" fill="#00d4ff" font-family="'Noto Sans JP', 'Segoe UI', sans-serif" font-size="16" font-weight="300" text-anchor="middle">は</text>
-        <text x="18" y="5" fill="#00d4ff" font-family="'Noto Sans JP', 'Segoe UI', sans-serif" font-size="16" font-weight="300" text-anchor="middle">か</text>
-        <text x="0" y="23" fill="#00d4ff" font-family="'Noto Sans JP', 'Segoe UI', sans-serif" font-size="16" font-weight="300" text-anchor="middle">な</text>
-        <text x="-18" y="5" fill="#00d4ff" font-family="'Noto Sans JP', 'Segoe UI', sans-serif" font-size="16" font-weight="300" text-anchor="middle">い</text>
+        <text x="0" y="-18" fill="#7FB4CA" font-family="'Noto Sans JP', 'Segoe UI', sans-serif" font-size="16" font-weight="300" text-anchor="middle">は</text>
+        <text x="18" y="5" fill="#7FB4CA" font-family="'Noto Sans JP', 'Segoe UI', sans-serif" font-size="16" font-weight="300" text-anchor="middle">か</text>
+        <text x="0" y="23" fill="#7FB4CA" font-family="'Noto Sans JP', 'Segoe UI', sans-serif" font-size="16" font-weight="300" text-anchor="middle">な</text>
+        <text x="-18" y="5" fill="#7FB4CA" font-family="'Noto Sans JP', 'Segoe UI', sans-serif" font-size="16" font-weight="300" text-anchor="middle">い</text>
 
         <!-- Center node -->
-        <circle fill="#00d4ff" cx="0" cy="0" r="4" />
+        <circle fill="#7FB4CA" cx="0" cy="0" r="4" />
 
         <!-- Connection lines -->
-        <line stroke="#00d4ff" stroke-width="1.2" opacity="0.4" x1="0" y1="-35" x2="0" y2="35" />
-        <line stroke="#00d4ff" stroke-width="1.2" opacity="0.4" x1="-35" y1="0" x2="35" y2="0" />
+        <line stroke="#7FB4CA" stroke-width="1.2" opacity="0.4" x1="0" y1="-35" x2="0" y2="35" />
+        <line stroke="#7FB4CA" stroke-width="1.2" opacity="0.4" x1="-35" y1="0" x2="35" y2="0" />
     </g>
 </svg>

@@ -1,14 +1,14 @@
 :root {
-  /* Colors */
-  --color-primary: #00d4ff;
-  --color-primary-hover: #00a8cc;
-  --color-bg-main: #1a1a1a;
-  --color-bg-container: #2d2d2d;
-  --color-text: #ffffff;
-  --color-text-muted: #888888;
-  --color-border: #666666;
-  --color-error: #f44336;
-  --color-error-light: #ff8a80;
+  /* Colors - Kanagawa Theme */
+  --color-primary: #7FB4CA;        /* Crystal Blue (was cyan) */
+  --color-primary-hover: #7AA89F;  /* Wave Blue (darker shade) */
+  --color-bg-main: #1F1F28;        /* Sumi Ink Black (background) */
+  --color-bg-container: #2A2A37;   /* Sumi Ink Black +1 (container) */
+  --color-text: #DCD7BA;           /* Fuji White (main text) */
+  --color-text-muted: #727169;     /* Sumi Ink Gray (muted text) */
+  --color-border: #54546D;         /* Sumi Ink Gray +1 (borders) */
+  --color-error: #E82424;          /* Samurai Red (errors) */
+  --color-error-light: #FF5D62;    /* Light Samurai Red */
 
   /* Spacing */
   --spacing-xs: 0.5rem;
@@ -86,7 +86,7 @@ body {
 
 #language-switcher:hover {
   border-color: var(--color-primary);
-  background-color: rgba(0, 212, 255, 0.1);
+  background-color: rgba(127, 180, 202, 0.1);
 }
 
 #language-switcher:focus-visible {
@@ -195,7 +195,7 @@ button {
 button:hover:not(:disabled) {
   background-color: var(--color-primary-hover);
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 212, 255, 0.2);
+  box-shadow: 0 2px 4px rgba(127, 180, 202, 0.2);
 }
 
 button:active:not(:disabled) {
@@ -233,7 +233,7 @@ button:disabled {
 }
 
 .result.success {
-  background-color: rgba(0, 212, 255, 0.1);
+  background-color: rgba(127, 180, 202, 0.1);
   border: 1px solid var(--color-primary);
   color: var(--color-text);
 }
@@ -394,7 +394,7 @@ button:disabled {
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--color-text-muted);
   line-height: 1.6;
 }
 
@@ -468,8 +468,8 @@ button:disabled {
 /* High contrast mode support */
 @media (prefers-contrast: high) {
   :root {
-    --color-primary: #00ffff;
-    --color-border: #ffffff;
+    --color-primary: #7FB4CA;
+    --color-border: #DCD7BA;
   }
 }
 
