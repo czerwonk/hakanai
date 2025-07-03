@@ -32,7 +32,7 @@ async fn main() -> Result<()> {
     };
 
     info!("Connecting to Redis at {}", args.redis_dsn);
-    let data_store: RedisDataStore = match RedisDataStore::new(&args.redis_dsn).await {
+    let data_store = match RedisDataStore::new(&args.redis_dsn).await {
         Ok(store) => store,
         Err(e) => {
             eprintln!("Failed to create Redis data store: {e}");
@@ -40,13 +40,24 @@ async fn main() -> Result<()> {
         }
     };
 
-    let tokens = args.tokens.unwrap_or_default();
+    let tokens = args.tokens.clone().unwrap_or_default();
     if tokens.is_empty() {
         warn!("No tokens provided, anyone can create secrets.");
     }
 
+    let res = run_webserver(data_store, tokens, args).await;
+
+    if let Some(handler) = otel_handler {
+        handler.shutdown()
+    }
+
+    res
+}
+
+async fn run_webserver(data_store: RedisDataStore, tokens: Vec<String>, args: Args) -> Result<()> {
     info!("Starting server on {}:{}", args.listen_address, args.port);
-    let res = HttpServer::new(move || {
+
+    HttpServer::new(move || {
         let app_data = AppData {
             data_store: Box::new(data_store.clone()),
             tokens: tokens.clone(),
@@ -78,13 +89,7 @@ async fn main() -> Result<()> {
     })
     .bind((args.listen_address, args.port))?
     .run()
-    .await;
-
-    if let Some(handler) = otel_handler {
-        handler.shutdown()
-    }
-
-    res
+    .await
 }
 
 fn cors_config(allowed_origins: Option<Vec<String>>) -> Cors {
