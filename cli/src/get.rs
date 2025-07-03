@@ -8,7 +8,7 @@ pub async fn get(link: url::Url) -> Result<()> {
         .receive_secret(link.clone())
         .await
         .map_err(|e| anyhow!(e))?;
-    println!("{}", data);
+    println!("{data}");
 
     Ok(())
 }

@@ -40,7 +40,7 @@ impl Client for WebClient {
         let resp = self
             .web_client
             .post(url.to_string())
-            .header("Authorization", format!("Bearer {}", token))
+            .header("Authorization", format!("Bearer {token}"))
             .header("User-Agent", USER_AGENT)
             .timeout(REQUEST_TIMEOUT)
             .json(&req)
@@ -50,7 +50,7 @@ impl Client for WebClient {
             let mut err_msg = format!("HTTP error: {}", resp.status());
 
             if let Ok(body) = resp.text().await {
-                err_msg += &format!("\n{}", body);
+                err_msg += &format!("\n{body}");
             }
 
             return Err(ClientError::Http(err_msg));
@@ -63,8 +63,8 @@ impl Client for WebClient {
     }
 
     async fn receive_secret(&self, url: Url) -> Result<String, ClientError> {
-        if !url.path().starts_with(&format!("/{}/", SHORT_SECRET_PATH))
-            && !url.path().starts_with(&format!("/{}/", API_SECRET_PATH))
+        if !url.path().starts_with(&format!("/{SHORT_SECRET_PATH}/"))
+            && !url.path().starts_with(&format!("/{API_SECRET_PATH}/"))
         {
             return Err(ClientError::Custom("Invalid API path".to_string()));
         }
@@ -80,7 +80,7 @@ impl Client for WebClient {
             let mut err_msg = format!("HTTP error: {}", resp.status());
 
             if let Ok(body) = resp.text().await {
-                err_msg += &format!("\n{}", body);
+                err_msg += &format!("\n{body}");
             }
 
             return Err(ClientError::Http(err_msg));
@@ -109,7 +109,7 @@ mod tests {
             .mock("POST", "/api/secret")
             .with_status(200)
             .with_header("content-type", "application/json")
-            .with_body(format!(r#"{{"id":"{}"}}"#, secret_id))
+            .with_body(format!(r#"{{"id":"{secret_id}"}}"#))
             .create_async()
             .await;
 
@@ -124,11 +124,11 @@ mod tests {
             .await;
 
         if let Err(e) = &result {
-            eprintln!("Error in test_send_secret_success: {:?}", e);
+            eprintln!("Error in test_send_secret_success: {e:?}");
         }
         assert!(result.is_ok());
         let url = result.unwrap();
-        assert_eq!(url.as_str(), format!("{}s/{}", base_url, secret_id));
+        assert_eq!(url.as_str(), format!("{base_url}s/{secret_id}"));
     }
 
     #[tokio::test]
@@ -164,14 +164,14 @@ mod tests {
         let secret_data = "my_secret_data";
 
         let _m = server
-            .mock("GET", format!("/s/{}", secret_id).as_str())
+            .mock("GET", format!("/s/{secret_id}").as_str())
             .with_status(200)
             .with_body(secret_data)
             .create_async()
             .await;
 
         let base_url = Url::parse(&server.url()).unwrap();
-        let url = base_url.join(&format!("/s/{}", secret_id)).unwrap();
+        let url = base_url.join(&format!("/s/{secret_id}")).unwrap();
         let result = client.receive_secret(url).await;
 
         assert!(result.is_ok());
@@ -186,13 +186,13 @@ mod tests {
         let secret_id = Uuid::new_v4();
 
         let _m = server
-            .mock("GET", format!("/s/{}", secret_id).as_str())
+            .mock("GET", format!("/s/{secret_id}").as_str())
             .with_status(404)
             .create_async()
             .await;
 
         let base_url = Url::parse(&server.url()).unwrap();
-        let url = base_url.join(&format!("/s/{}", secret_id)).unwrap();
+        let url = base_url.join(&format!("/s/{secret_id}")).unwrap();
         let result = client.receive_secret(url).await;
         assert!(result.is_err());
     }

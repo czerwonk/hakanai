@@ -35,7 +35,7 @@ async fn main() -> Result<()> {
     let data_store: RedisDataStore = match RedisDataStore::new(&args.redis_dsn).await {
         Ok(store) => store,
         Err(e) => {
-            eprintln!("Failed to create Redis data store: {}", e);
+            eprintln!("Failed to create Redis data store: {e}");
             return Err(std::io::Error::other(e));
         }
     };

@@ -172,9 +172,9 @@ mod tests {
                     token: _,
                     file: None,
                 } => {
-                    assert_eq!(ttl, expected_duration, "Failed for TTL: {}", ttl_str);
+                    assert_eq!(ttl, expected_duration, "Failed for TTL: {ttl_str}");
                 }
-                _ => panic!("Expected Send command for TTL: {}", ttl_str),
+                _ => panic!("Expected Send command for TTL: {ttl_str}"),
             }
         }
     }

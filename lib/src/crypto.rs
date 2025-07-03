@@ -86,11 +86,11 @@ fn append_key_to_link(url: Url, key: &[u8; 32]) -> Url {
 fn decrypt(encoded_data: String, key_base64: String) -> Result<String, ClientError> {
     let key = base64::prelude::BASE64_URL_SAFE
         .decode(key_base64)
-        .map_err(|e| ClientError::DecryptionError(format!("failed to decode key: {}", e)))?;
+        .map_err(|e| ClientError::DecryptionError(format!("failed to decode key: {e}")))?;
 
     let payload = base64::prelude::BASE64_STANDARD
         .decode(encoded_data)
-        .map_err(|e| ClientError::DecryptionError(format!("failed to decode data: {}", e)))?;
+        .map_err(|e| ClientError::DecryptionError(format!("failed to decode data: {e}")))?;
 
     let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(&key));
 
@@ -106,10 +106,10 @@ fn decrypt(encoded_data: String, key_base64: String) -> Result<String, ClientErr
 
     let plaintext = cipher
         .decrypt(nonce, ciphertext)
-        .map_err(|e| ClientError::DecryptionError(format!("decryption failed: {}", e)))?;
+        .map_err(|e| ClientError::DecryptionError(format!("decryption failed: {e}")))?;
 
     let data = String::from_utf8(plaintext)
-        .map_err(|e| ClientError::DecryptionError(format!("failed to convert to string: {}", e)))?;
+        .map_err(|e| ClientError::DecryptionError(format!("failed to convert to string: {e}")))?;
 
     Ok(data)
 }
