@@ -22,5 +22,6 @@ target/
 
 **/.claude
 CLAUDE.md
+AGENTS.md
 
 docker-compose.override.yml
