@@ -188,12 +188,6 @@ Short link for secret retrieval.
 - For browsers: HTML page for secret retrieval
 - `404 Not Found`: Secret doesn't exist or already accessed
 
-### GET /healthz
-Health check endpoint.
-
-**Response:**
-- `200 OK`: Server is healthy
-
 ### GET /logo.svg
 Serves the hakanai logo.
 
