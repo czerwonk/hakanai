@@ -404,7 +404,7 @@ button.loading::after {
 .buttons-container {
   display: flex;
   gap: var(--spacing-sm);
-  margin-top: var(--spacing-sm);
+  margin-top: var(--spacing-xs);
 }
 
 .copy-button,

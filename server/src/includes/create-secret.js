@@ -142,9 +142,7 @@ function showSuccess(secretUrl) {
   note.appendChild(strong);
 
   // Add the rest of the text
-  note.appendChild(
-    document.createTextNode(" " + i18n.t("msg.createNoteText")),
-  );
+  note.appendChild(document.createTextNode(" " + i18n.t("msg.createNoteText")));
   resultDiv.appendChild(note);
 
   // Announce to screen readers
@@ -259,3 +257,4 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 });
+

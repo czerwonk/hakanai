@@ -32,7 +32,8 @@ const UI_STRINGS = {
   DOWNLOAD_TEXT: "Download",
   NOTE_TEXT:
     "Note: This secret has been deleted from the server and cannot be accessed again.",
-  BINARY_DETECTED: "Binary file detected. Content hidden for security. Use download button to save the file.",
+  BINARY_DETECTED:
+    "Binary file detected. Content hidden for security. Use download button to save the file.",
   COPY_ARIA: "Copy secret to clipboard",
   DOWNLOAD_ARIA: "Download secret as file",
 };
@@ -138,7 +139,8 @@ function showSuccess(payload) {
   container.className = "secret-container";
 
   // Check if this is a binary file (has filename)
-  const isBinaryFile = payload.filename !== null && payload.filename !== undefined;
+  const isBinaryFile =
+    payload.filename !== null && payload.filename !== undefined;
 
   if (!isBinaryFile) {
     // Only show content for text secrets (no filename)
@@ -410,4 +412,3 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 });
-
