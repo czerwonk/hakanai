@@ -15,18 +15,18 @@ use crate::client::{Client, ClientError};
 /// This struct is responsible for encrypting data before sending and decrypting
 /// it upon reception, ensuring that secrets are transmitted securely.
 pub struct CryptoClient {
-    inner_client: Box<dyn Client>,
+    inner_client: Box<dyn Client<String>>,
 }
 
 impl CryptoClient {
     /// Creates a new instance of `CryptoClient`.
-    pub fn new(inner_client: Box<dyn Client>) -> Self {
+    pub fn new(inner_client: Box<dyn Client<String>>) -> Self {
         CryptoClient { inner_client }
     }
 }
 
 #[async_trait]
-impl Client for CryptoClient {
+impl Client<String> for CryptoClient {
     async fn send_secret(
         &self,
         base_url: Url,
@@ -158,7 +158,7 @@ mod tests {
     }
 
     #[async_trait]
-    impl Client for MockClient {
+    impl Client<String> for MockClient {
         async fn send_secret(
             &self,
             _base_url: Url,

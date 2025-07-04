@@ -9,7 +9,7 @@ use crate::web::WebClient;
 
 /// Defines the asynchronous interface for a client that can send and receive secrets.
 #[async_trait]
-pub trait Client: Send + Sync {
+pub trait Client<T>: Send + Sync {
     /// Sends a secret to be stored.
     ///
     /// # Arguments
@@ -27,7 +27,7 @@ pub trait Client: Send + Sync {
     async fn send_secret(
         &self,
         base_url: Url,
-        data: String,
+        payload: T,
         ttl: Duration,
         token: String,
     ) -> Result<Url, ClientError>;
@@ -43,7 +43,7 @@ pub trait Client: Send + Sync {
     /// A `Result` which is:
     /// - `Ok(String)` containing the secret data.
     /// - `Err(ClientError)` with an error message if the secret is not found or another error occurs.
-    async fn receive_secret(&self, url: Url) -> Result<String, ClientError>;
+    async fn receive_secret(&self, url: Url) -> Result<T, ClientError>;
 }
 
 #[derive(Debug, Error)]
@@ -74,6 +74,6 @@ pub enum ClientError {
 ///
 /// This function constructs a default client implementation, which is a `CryptoClient`
 /// wrapping a `WebClient`. This setup provides end-to-end encryption for secrets.
-pub fn new() -> impl Client {
+pub fn new() -> impl Client<String> {
     CryptoClient::new(Box::new(WebClient::new()))
 }

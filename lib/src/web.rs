@@ -26,7 +26,7 @@ impl WebClient {
 }
 
 #[async_trait]
-impl Client for WebClient {
+impl Client<String> for WebClient {
     async fn send_secret(
         &self,
         base_url: Url,
