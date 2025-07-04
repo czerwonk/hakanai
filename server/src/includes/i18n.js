@@ -13,14 +13,23 @@
       "header.create": "Create One-Time Secret",
       "header.get": "One-Time Secret",
 
-      // Labels and placeholders
+      // Labels
       "label.secret": "Secret message:",
-      "placeholder.secret": "Enter your secret message here...",
       "label.token": "Token:",
-      "placeholder.token":
-        "Enter authentication token (leave empty if none required)",
       "label.expires": "Expires after:",
-      "label.url": "Enter URL:",
+      "label.url": "Secret URL:",
+
+      // Placeholders
+      "placeholder.secret": "Enter your secret message here...",
+      "placeholder.token": "Enter authentication token here...",
+
+      // Helper texts
+      "helper.url": "The decryption key after # is never sent to the server",
+      "helper.secret":
+        "Your message will be encrypted before leaving your browser",
+      "helper.token": "Leave empty if no authentication is required",
+      "helper.expires":
+        "Secret will self-destruct after this time or first view",
 
       // Time options
       "time.5min": "5 minutes",
@@ -89,14 +98,25 @@
       "header.create": "Einmal-Secret erstellen",
       "header.get": "Einmal-Secret",
 
-      // Labels and placeholders
+      // Labels
       "label.secret": "Text:",
-      "placeholder.secret": "Hier wird gen geheime Text eingegeben...",
       "label.token": "Token:",
-      "placeholder.token":
-        "Authentifizierungs-Token eingeben (leer lassen, falls nicht erforderlich)",
       "label.expires": "Läuft ab nach:",
-      "label.url": "URL eingeben:",
+      "label.url": "Secret-URL:",
+
+      // Placeholders
+      "placeholder.secret": "Hier wird gen geheime Text eingegeben...",
+      "placeholder.token": "Authentifizierungs-Token eingeben",
+
+      // Helper texts
+      "helper.url":
+        "Der geheime Schlüssel nach dem # wird niemals an den Server gesendet",
+      "helper.secret":
+        "Die Nachricht wird verschlüsselt, bevor sie Ihren Browser verlässt",
+      "helper.token":
+        "Kann leer gelassen werden, wenn keine Authentifizierung erforderlich ist",
+      "helper.expires":
+        "Das Secret wird nach dieser Zeit oder beim ersten Zugriff selbst zerstört",
 
       // Time options
       "time.5min": "5 Minuten",
