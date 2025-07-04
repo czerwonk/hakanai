@@ -568,7 +568,7 @@ button.loading::after {
   /* Ensure select elements have consistent sizing on mobile */
   select {
     font-size: var(--font-size-sm) !important;
-    min-height: 2.5rem;
+    min-height: 3rem;
   }
 
   /* Larger touch targets on mobile */
