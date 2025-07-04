@@ -12,29 +12,57 @@ pub struct Payload {
 
     /// The filename of the file, if not set data is assumed to be a text message.
     pub filename: Option<String>,
+
+    size_of: usize,
 }
 
 impl Payload {
-    /// Creates a new `Payload` instance.
+    /// Creates a new `Payload` instance from raw text data.
     ///
     /// # Arguments
     ///
-    /// * `data` - The base64-encoded data of the secret.
-    /// * `filename` - An optional filename for the file.
-    pub fn new(data: String, filename: Option<String>) -> Self {
-        Self { data, filename }
-    }
-
-    /// Creates a new `Payload` instance from data, assuming it's a text message.
-    ///
-    /// # Arguments
-    ///
-    /// * `data` - The base64-encoded data of the secret.
-    pub fn from_data(data: String) -> Self {
+    /// * `text` - The raw text data of the secret.
+    pub fn from_text(text: &str) -> Self {
+        use base64::Engine;
+        let data = base64::prelude::BASE64_STANDARD.encode(text.as_bytes());
         Self {
             data,
             filename: None,
+            size_of: text.len(),
         }
+    }
+
+    /// Creates a new `Payload` instance from raw binary data.
+    ///
+    /// # Arguments
+    ///
+    /// * `bytes` - The raw binary data of the secret.
+    /// * `filename` - An optional filename for the file.
+    pub fn from_bytes(bytes: &[u8], filename: Option<String>) -> Self {
+        use base64::Engine;
+        let data = base64::prelude::BASE64_STANDARD.encode(bytes);
+        Self {
+            data,
+            filename,
+            size_of: bytes.len(),
+        }
+    }
+
+    /// Decodes the base64 data and returns it as bytes.
+    pub fn decode_bytes(&self) -> Result<Vec<u8>, base64::DecodeError> {
+        use base64::Engine;
+        base64::prelude::BASE64_STANDARD.decode(&self.data)
+    }
+
+    /// Decodes the base64 data and returns it as a UTF-8 string.
+    pub fn decode_text(&self) -> Result<String, Box<dyn std::error::Error>> {
+        let bytes = self.decode_bytes()?;
+        Ok(String::from_utf8(bytes)?)
+    }
+
+    /// Checks if the payload is empty.
+    pub fn is_empty(&self) -> bool {
+        self.size_of == 0
     }
 }
 

@@ -97,9 +97,9 @@ const retrieveSecretDebounced = debounce(async function retrieveSecret() {
   resultDiv.innerHTML = "";
 
   try {
-    const secret = await client.receiveSecret(processedUrl);
+    const payload = await client.receivePayload(processedUrl);
 
-    showSuccess(secret);
+    showSuccess(payload);
 
     // Clear the input
     urlInput.value = "";
@@ -116,7 +116,7 @@ async function retrieveSecret() {
   retrieveSecretDebounced();
 }
 
-function showSuccess(secret) {
+function showSuccess(payload) {
   const resultDiv = document.getElementById("result");
   resultDiv.className = "result success";
   const secretId = "secret-" + Date.now();
@@ -131,43 +131,95 @@ function showSuccess(secret) {
   const container = document.createElement("div");
   container.className = "secret-container";
 
-  const textarea = document.createElement("textarea");
-  textarea.id = secretId;
-  textarea.className = "secret-display";
-  textarea.readOnly = true;
-  textarea.setAttribute("aria-label", "Retrieved secret content");
-  textarea.value = secret;
-  textarea.addEventListener("click", function () {
-    this.select();
-  });
-  container.appendChild(textarea);
+  // Check if this is a binary file (has filename)
+  const isBinaryFile = payload.filename !== null && payload.filename !== undefined;
 
-  const buttonsContainer = document.createElement("div");
-  buttonsContainer.className = "buttons-container";
+  if (!isBinaryFile) {
+    // Only show content for text secrets (no filename)
+    const textarea = document.createElement("textarea");
+    textarea.id = secretId;
+    textarea.className = "secret-display";
+    textarea.readOnly = true;
+    textarea.setAttribute("aria-label", "Retrieved secret content");
 
-  const copyBtn = document.createElement("button");
-  copyBtn.className = "copy-button";
-  copyBtn.type = "button";
-  copyBtn.textContent = UI_STRINGS.COPY_TEXT;
-  copyBtn.setAttribute("aria-label", "Copy secret to clipboard");
-  copyBtn.addEventListener("click", function () {
-    copySecret(secretId, this);
-  });
-  buttonsContainer.appendChild(copyBtn);
+    // Decode base64 data for display
+    let displayData;
+    try {
+      displayData = decodeURIComponent(escape(atob(payload.data)));
+    } catch (e) {
+      // If decode fails, show raw data
+      displayData = payload.data;
+    }
+    textarea.value = displayData;
 
-  const downloadBtn = document.createElement("button");
-  downloadBtn.className = "download-button";
-  downloadBtn.type = "button";
-  downloadBtn.textContent = UI_STRINGS.DOWNLOAD_TEXT;
-  downloadBtn.setAttribute("aria-label", "Download secret as text file");
-  downloadBtn.addEventListener("click", function () {
-    downloadSecret(secret);
-  });
-  buttonsContainer.appendChild(downloadBtn);
+    textarea.addEventListener("click", function () {
+      this.select();
+    });
+    container.appendChild(textarea);
 
-  container.appendChild(buttonsContainer);
+    const buttonsContainer = document.createElement("div");
+    buttonsContainer.className = "buttons-container";
+
+    const copyBtn = document.createElement("button");
+    copyBtn.className = "copy-button";
+    copyBtn.type = "button";
+    copyBtn.textContent = UI_STRINGS.COPY_TEXT;
+    copyBtn.setAttribute("aria-label", "Copy secret to clipboard");
+    copyBtn.addEventListener("click", function () {
+      copySecret(secretId, this);
+    });
+    buttonsContainer.appendChild(copyBtn);
+
+    const downloadBtn = document.createElement("button");
+    downloadBtn.className = "download-button";
+    downloadBtn.type = "button";
+    downloadBtn.textContent = UI_STRINGS.DOWNLOAD_TEXT;
+    downloadBtn.setAttribute("aria-label", "Download secret as file");
+    downloadBtn.addEventListener("click", function () {
+      downloadSecret(payload);
+    });
+    buttonsContainer.appendChild(downloadBtn);
+
+    container.appendChild(buttonsContainer);
+  } else {
+    // For binary files, only show download button and message
+    const message = document.createElement("p");
+    message.style.marginBottom = "var(--spacing-md, 1rem)";
+    message.style.color = "var(--color-text, #000000)";
+    message.textContent = "Binary file detected. Content hidden for security. Use download button to save the file.";
+    container.appendChild(message);
+
+    const buttonsContainer = document.createElement("div");
+    buttonsContainer.className = "buttons-container";
+
+    const downloadBtn = document.createElement("button");
+    downloadBtn.className = "download-button";
+    downloadBtn.type = "button";
+    downloadBtn.textContent = UI_STRINGS.DOWNLOAD_TEXT;
+    downloadBtn.setAttribute("aria-label", "Download secret as file");
+    downloadBtn.addEventListener("click", function () {
+      downloadSecret(payload);
+    });
+    buttonsContainer.appendChild(downloadBtn);
+
+    container.appendChild(buttonsContainer);
+  }
 
   resultDiv.appendChild(container);
+
+  // Show filename if available
+  if (payload.filename) {
+    const fileInfo = document.createElement("p");
+    fileInfo.style.marginTop = "var(--spacing-sm, 0.75rem)";
+    fileInfo.style.fontSize = "0.875rem";
+    fileInfo.style.color = "var(--color-text-muted, #888888)";
+
+    const fileLabel = document.createElement("strong");
+    fileLabel.textContent = "Filename: ";
+    fileInfo.appendChild(fileLabel);
+    fileInfo.appendChild(document.createTextNode(payload.filename));
+    resultDiv.appendChild(fileInfo);
+  }
 
   const note = document.createElement("p");
   note.style.marginTop = "var(--spacing-sm, 0.75rem)";
@@ -262,9 +314,36 @@ function fallbackCopy(text, button, originalText) {
   document.body.removeChild(textArea);
 }
 
-function downloadSecret(secret) {
-  // Create a blob from the secret text
-  const blob = new Blob([secret], { type: "text/plain;charset=utf-8" });
+function downloadSecret(payload) {
+  // Determine the filename
+  let filename;
+  if (payload.filename) {
+    filename = payload.filename;
+  } else {
+    filename = `hakanai-secret-${new Date().toISOString().replace(/[:.]/g, "-")}.txt`;
+  }
+
+  // Decode base64 data for download
+  let blobData;
+  try {
+    // Try to decode as base64 first
+    const binaryString = atob(payload.data);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    blobData = bytes;
+  } catch (e) {
+    // If decode fails, treat as text
+    blobData = new TextEncoder().encode(payload.data);
+  }
+
+  // Create a blob from the decoded data
+  const blob = new Blob([blobData], {
+    type: payload.filename
+      ? "application/octet-stream"
+      : "text/plain;charset=utf-8",
+  });
 
   // Create a temporary URL for the blob
   const url = window.URL.createObjectURL(blob);
@@ -273,7 +352,7 @@ function downloadSecret(secret) {
   const a = document.createElement("a");
   a.style.display = "none";
   a.href = url;
-  a.download = `hakanai-secret-${new Date().toISOString().replace(/[:.]/g, "-")}.txt`;
+  a.download = filename;
 
   document.body.appendChild(a);
   a.click();
@@ -316,12 +395,13 @@ function announceToScreenReader(message) {
 }
 
 // Add event listener for form submission
-document.addEventListener("DOMContentLoaded", function() {
-  const form = document.querySelector('form');
+document.addEventListener("DOMContentLoaded", function () {
+  const form = document.querySelector("form");
   if (form) {
-    form.addEventListener('submit', function(event) {
+    form.addEventListener("submit", function (event) {
       event.preventDefault();
       retrieveSecret();
     });
   }
 });
+

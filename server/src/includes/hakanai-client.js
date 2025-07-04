@@ -103,22 +103,23 @@ class HakanaiClient {
   }
 
   /**
-   * Send a secret to the server
-   * @param {string} secret - The secret text to encrypt and send
+   * Send a payload to the server
+   * @param {Object} payload - The payload object with data and optional filename
    * @param {number} ttl - Time to live in seconds (optional)
    * @param {string} authToken - Authentication token (optional)
    * @returns {Promise<string>} The shareable URL with the key fragment
    */
-  async sendSecret(secret, ttl = 3600, authToken = null) {
-    if (!secret || secret.trim().length === 0) {
-      throw new Error("Secret cannot be empty");
+  async sendPayload(payload, ttl = 3600, authToken = null) {
+    if (!payload || !payload.data || payload.data.trim().length === 0) {
+      throw new Error("Payload data cannot be empty");
     }
 
     // Generate encryption key
     const key = await this.generateKey();
 
-    // Encrypt the secret
-    const encryptedData = await this.encrypt(secret, key);
+    // Serialize payload to JSON and encrypt
+    const payloadJson = JSON.stringify(payload);
+    const encryptedData = await this.encrypt(payloadJson, key);
 
     // Prepare headers
     const headers = {
@@ -160,11 +161,11 @@ class HakanaiClient {
   }
 
   /**
-   * Receive a secret from the server
+   * Receive a payload from the server
    * @param {string} url - The full secret URL including the key fragment
-   * @returns {Promise<string>} The decrypted secret
+   * @returns {Promise<Object>} The decrypted payload object
    */
-  async receiveSecret(url) {
+  async receivePayload(url) {
     // Parse the URL
     const urlObj = new URL(url);
     const secretId = urlObj.pathname.split("/").pop();
@@ -202,8 +203,58 @@ class HakanaiClient {
 
     const encryptedData = await response.text();
 
-    // Decrypt and return
-    return this.decrypt(encryptedData, key);
+    // Decrypt and parse JSON
+    const payloadJson = await this.decrypt(encryptedData, key);
+    return JSON.parse(payloadJson);
+  }
+
+  /**
+   * Send a text secret to the server
+   * @param {string} secret - The secret text to encrypt and send
+   * @param {number} ttl - Time to live in seconds (optional)
+   * @param {string} authToken - Authentication token (optional)
+   * @returns {Promise<string>} The shareable URL with the key fragment
+   */
+  async sendSecret(secret, ttl = 3600, authToken = null) {
+    if (!secret || secret.trim().length === 0) {
+      throw new Error("Secret cannot be empty");
+    }
+
+    // Base64 encode the text
+    const base64Data = btoa(unescape(encodeURIComponent(secret)));
+    const payload = { data: base64Data };
+    return this.sendPayload(payload, ttl, authToken);
+  }
+
+  /**
+   * Receive a secret from the server and return just the decoded text
+   * @param {string} url - The full secret URL including the key fragment
+   * @returns {Promise<string>} The decrypted secret text
+   */
+  async receiveSecret(url) {
+    const payload = await this.receivePayload(url);
+    // Base64 decode the data
+    return decodeURIComponent(escape(atob(payload.data)));
+  }
+
+  /**
+   * Send a file to the server
+   * @param {string} base64Data - The base64-encoded file data
+   * @param {string} filename - The filename
+   * @param {number} ttl - Time to live in seconds (optional)
+   * @param {string} authToken - Authentication token (optional)
+   * @returns {Promise<string>} The shareable URL with the key fragment
+   */
+  async sendFile(base64Data, filename, ttl = 3600, authToken = null) {
+    if (!base64Data || base64Data.trim().length === 0) {
+      throw new Error("File data cannot be empty");
+    }
+    if (!filename || filename.trim().length === 0) {
+      throw new Error("Filename cannot be empty");
+    }
+
+    const payload = { data: base64Data, filename };
+    return this.sendPayload(payload, ttl, authToken);
   }
 }
 
@@ -217,11 +268,30 @@ if (typeof module !== "undefined" && module.exports) {
 // Browser or Node.js with fetch available
 const client = new HakanaiClient('https://hakanai.example.com');
 
-// Send a secret
+// Send a text secret
 const url = await client.sendSecret('My secret message', 3600);
 console.log('Secret URL:', url);
 
-// Receive a secret
+// Send a payload directly
+const payload = { data: 'My secret message' };
+const payloadUrl = await client.sendPayload(payload, 3600);
+console.log('Payload URL:', payloadUrl);
+
+// Send a file
+const fileUrl = await client.sendFile('SGVsbG8gV29ybGQ=', 'hello.txt', 3600);
+console.log('File URL:', fileUrl);
+
+// Receive a secret (returns just the data string)
 const retrievedSecret = await client.receiveSecret(url);
 console.log('Retrieved secret:', retrievedSecret);
+
+// Receive a payload (returns the full payload object)
+const retrievedPayload = await client.receivePayload(payloadUrl);
+console.log('Retrieved payload:', retrievedPayload);
+// retrievedPayload = { data: 'My secret message' }
+
+// Receive a file payload
+const retrievedFile = await client.receivePayload(fileUrl);
+console.log('Retrieved file:', retrievedFile);
+// retrievedFile = { data: 'SGVsbG8gV29ybGQ=', filename: 'hello.txt' }
 */

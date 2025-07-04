@@ -58,6 +58,15 @@ pub enum Command {
             value_name = "FILE"
         )]
         file: Option<String>,
+
+        #[arg(short, long, help = "Send the secret as a file.")]
+        as_file: bool,
+
+        #[arg(
+            long,
+            help = "Filename to use for the secret when sending as a file. Can be determined automatically from --file if provided."
+        )]
+        file_name: Option<String>,
     },
 }
 
@@ -91,12 +100,7 @@ mod tests {
         .unwrap();
 
         match args.command {
-            Command::Send {
-                server,
-                ttl: _,
-                token: _,
-                file: None,
-            } => {
+            Command::Send { server, .. } => {
                 assert_eq!(server.as_str(), "https://hakanai.routing.rocks/");
             }
             _ => panic!("Expected Send command"),
@@ -108,12 +112,7 @@ mod tests {
         let args = Args::try_parse_from(["hakanai", "send", "--ttl", "12h"]).unwrap();
 
         match args.command {
-            Command::Send {
-                server: _,
-                ttl,
-                token: _,
-                file: None,
-            } => {
+            Command::Send { server: _, ttl, .. } => {
                 assert_eq!(ttl, Duration::from_secs(12 * 60 * 60)); // 12 hours
             }
             _ => panic!("Expected Send command"),
@@ -130,7 +129,7 @@ mod tests {
                 server,
                 ttl: _,
                 token: _,
-                file: None,
+                ..
             } => {
                 assert_eq!(server.as_str(), "https://custom.server.com/");
             }
@@ -166,12 +165,7 @@ mod tests {
             let args = Args::try_parse_from(["hakanai", "send", "--ttl", ttl_str]).unwrap();
 
             match args.command {
-                Command::Send {
-                    server: _,
-                    ttl,
-                    token: _,
-                    file: None,
-                } => {
+                Command::Send { server: _, ttl, .. } => {
                     assert_eq!(ttl, expected_duration, "Failed for TTL: {ttl_str}");
                 }
                 _ => panic!("Expected Send command for TTL: {ttl_str}"),
@@ -210,7 +204,7 @@ mod tests {
                 server: _,
                 ttl: _,
                 token,
-                file: None,
+                ..
             } => {
                 assert_eq!(token, "my-secret-token");
             }
@@ -227,7 +221,7 @@ mod tests {
                 server: _,
                 ttl: _,
                 token,
-                file: None,
+                ..
             } => {
                 assert_eq!(token, "short-token");
             }
@@ -251,10 +245,7 @@ mod tests {
 
         match args.command {
             Command::Send {
-                server,
-                ttl,
-                token,
-                file: None,
+                server, ttl, token, ..
             } => {
                 assert_eq!(server.as_str(), "https://example.com/");
                 assert_eq!(ttl, Duration::from_secs(30 * 60));

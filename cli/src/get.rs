@@ -9,8 +9,10 @@ pub async fn get(link: url::Url) -> Result<()> {
         .await
         .map_err(|e| anyhow!(e))?;
 
-    let data = payload.data;
-    println!("{data}");
+    let text = payload
+        .decode_text()
+        .map_err(|e| anyhow!("Failed to decode text data: {e}"))?;
+    print!("{text}");
 
     Ok(())
 }
