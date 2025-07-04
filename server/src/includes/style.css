@@ -419,7 +419,6 @@ button.loading::after {
   transition: all var(--transition-normal);
   width: auto;
   font-weight: 600;
-  margin-top: var(--spacing-sm);
 }
 
 .copy-button:hover:not(.copied),
