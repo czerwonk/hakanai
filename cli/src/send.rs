@@ -6,6 +6,7 @@ use colored::Colorize;
 
 use hakanai_lib::client;
 use hakanai_lib::client::Client;
+use hakanai_lib::models::Payload;
 
 pub async fn send(
     server: url::Url,
@@ -28,8 +29,9 @@ pub async fn send(
         eprintln!("{}", "Warning: No token provided.".yellow());
     }
 
+    let payload = Payload::from_data(secret);
     let link = client::new()
-        .send_secret(server.clone(), secret, ttl, token)
+        .send_secret(server.clone(), payload, ttl, token)
         .await
         .map_err(|e| anyhow!(e))?;
 

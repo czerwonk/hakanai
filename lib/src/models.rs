@@ -14,6 +14,30 @@ pub struct Payload {
     pub filename: Option<String>,
 }
 
+impl Payload {
+    /// Creates a new `Payload` instance.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - The base64-encoded data of the secret.
+    /// * `filename` - An optional filename for the file.
+    pub fn new(data: String, filename: Option<String>) -> Self {
+        Self { data, filename }
+    }
+
+    /// Creates a new `Payload` instance from data, assuming it's a text message.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - The base64-encoded data of the secret.
+    pub fn from_data(data: String) -> Self {
+        Self {
+            data,
+            filename: None,
+        }
+    }
+}
+
 /// Represents the request to create a new secret.
 #[serde_as]
 #[derive(Deserialize, Serialize)]

@@ -5,6 +5,7 @@ use thiserror::Error;
 use url::Url;
 
 use crate::crypto::CryptoClient;
+use crate::models::Payload;
 use crate::web::WebClient;
 
 /// Defines the asynchronous interface for a client that can send and receive secrets.
@@ -70,10 +71,37 @@ pub enum ClientError {
     DecryptionError(String),
 }
 
+pub struct SecretClient {
+    client: Box<dyn Client<String>>,
+}
+
+#[async_trait]
+impl Client<Payload> for SecretClient {
+    async fn send_secret(
+        &self,
+        base_url: Url,
+        payload: Payload,
+        ttl: Duration,
+        token: String,
+    ) -> Result<Url, ClientError> {
+        let data = serde_json::to_string(&payload)?;
+        let url = self.client.send_secret(base_url, data, ttl, token).await?;
+        Ok(url)
+    }
+
+    async fn receive_secret(&self, url: Url) -> Result<Payload, ClientError> {
+        let data = self.client.receive_secret(url).await?;
+        let payload: Payload = serde_json::from_str(&data)?;
+        Ok(payload)
+    }
+}
+
 /// Creates a new client instance.
 ///
 /// This function constructs a default client implementation, which is a `CryptoClient`
 /// wrapping a `WebClient`. This setup provides end-to-end encryption for secrets.
-pub fn new() -> impl Client<String> {
-    CryptoClient::new(Box::new(WebClient::new()))
+pub fn new() -> impl Client<Payload> {
+    SecretClient {
+        client: Box::new(CryptoClient::new(Box::new(WebClient::new()))),
+    }
 }
