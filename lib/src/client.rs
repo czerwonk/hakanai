@@ -71,6 +71,10 @@ pub enum ClientError {
     DecryptionError(String),
 }
 
+/// A client for sending and receiving `Payload` objects.
+///
+/// This client acts as a layer over a `Client<String>`, handling the serialization
+/// and deserialization of `Payload` objects to and from JSON strings.
 pub struct SecretClient {
     client: Box<dyn Client<String>>,
 }

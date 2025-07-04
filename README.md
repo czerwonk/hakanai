@@ -250,7 +250,12 @@ Hakanai implements a zero-knowledge architecture:
 
 ### Components
 
-- **hakanai-lib**: Core functionality including crypto operations and HTTP client
+- **hakanai-lib**: Core functionality including:
+  - Generic `Client<T>` trait for flexible client implementations
+  - `SecretClient` for type-safe `Payload` handling with automatic serialization
+  - `CryptoClient` for AES-256-GCM encryption/decryption
+  - `WebClient` for HTTP transport
+  - Shared data models (`Payload`, `PostSecretRequest`, `PostSecretResponse`)
 - **hakanai** (CLI): User-friendly command-line interface
 - **hakanai-server**: RESTful API server with Redis backend
 
@@ -282,10 +287,12 @@ For production deployments:
 - ✅ OpenTelemetry integration for observability
 
 ### Security Implementation
+- ✅ Generic client architecture with type-safe payload handling
 - ✅ AES-256-GCM encryption implemented in `hakanai-lib`
 - ✅ Secure random nonce generation with OsRng
 - ✅ Base64 encoding for transport
 - ✅ Client-side key generation and management
+- ✅ Layered client design: `SecretClient` → `CryptoClient` → `WebClient`
 
 ### Future Enhancements
 - Key derivation from URL fragment (never sent to server)
