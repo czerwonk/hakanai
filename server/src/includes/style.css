@@ -561,14 +561,21 @@ button.loading::after {
   #language-switcher {
     top: var(--spacing-xs);
     right: var(--spacing-xs);
-    font-size: var(--font-size-sm);
+    font-size: 16px; /* Prevents zoom on iOS */
     padding: calc(var(--spacing-xs) / 2) calc(var(--spacing-sm) / 2);
+    min-height: 3rem; /* Match other form elements */
+    display: flex;
+    align-items: center;
   }
 
   /* Ensure select elements have consistent sizing on mobile */
-  select {
-    font-size: var(--font-size-sm) !important;
-    min-height: 3rem;
+  select,
+  #ttlSelect {
+    font-size: 16px !important; /* Prevents zoom on iOS */
+    min-height: 3rem !important;
+    padding: var(--spacing-sm) var(--spacing-md) !important;
+    box-sizing: border-box !important;
+    line-height: 1.5 !important;
   }
 
   /* Larger touch targets on mobile */
@@ -576,6 +583,7 @@ button.loading::after {
   input[type="password"],
   textarea,
   select,
+  #language-switcher,
   button {
     min-height: 3rem;
     font-size: 16px; /* Prevents zoom on iOS */
