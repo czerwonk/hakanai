@@ -12,8 +12,6 @@ pub struct Payload {
 
     /// The filename of the file, if not set data is assumed to be a text message.
     pub filename: Option<String>,
-
-    size_of: usize,
 }
 
 impl Payload {
@@ -28,7 +26,6 @@ impl Payload {
         Self {
             data,
             filename: None,
-            size_of: text.len(),
         }
     }
 
@@ -41,11 +38,7 @@ impl Payload {
     pub fn from_bytes(bytes: &[u8], filename: Option<String>) -> Self {
         use base64::Engine;
         let data = base64::prelude::BASE64_STANDARD.encode(bytes);
-        Self {
-            data,
-            filename,
-            size_of: bytes.len(),
-        }
+        Self { data, filename }
     }
 
     /// Decodes the base64 data and returns it as bytes.
@@ -58,11 +51,6 @@ impl Payload {
     pub fn decode_text(&self) -> Result<String, Box<dyn std::error::Error>> {
         let bytes = self.decode_bytes()?;
         Ok(String::from_utf8(bytes)?)
-    }
-
-    /// Checks if the payload is empty.
-    pub fn is_empty(&self) -> bool {
-        self.size_of == 0
     }
 }
 

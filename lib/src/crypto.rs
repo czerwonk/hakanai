@@ -75,7 +75,7 @@ fn generate_key() -> [u8; 32] {
 }
 
 fn append_key_to_link(url: Url, key: &[u8; 32]) -> Url {
-    let key_base64 = base64::prelude::BASE64_URL_SAFE.encode(key);
+    let key_base64 = base64::prelude::BASE64_URL_SAFE_NO_PAD.encode(key);
 
     let mut link = url.clone();
     link.set_fragment(Some(&key_base64));
@@ -84,7 +84,7 @@ fn append_key_to_link(url: Url, key: &[u8; 32]) -> Url {
 }
 
 fn decrypt(encoded_data: String, key_base64: String) -> Result<String, ClientError> {
-    let key = base64::prelude::BASE64_URL_SAFE
+    let key = base64::prelude::BASE64_URL_SAFE_NO_PAD
         .decode(key_base64)
         .map_err(|e| ClientError::DecryptionError(format!("failed to decode key: {e}")))?;
 
