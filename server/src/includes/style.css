@@ -84,6 +84,10 @@ body {
   cursor: pointer;
   transition: all var(--transition-fast);
   width: auto;
+  min-height: 2.5rem;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
 }
 
 #language-switcher:hover {
@@ -183,6 +187,8 @@ select {
   color: var(--color-text);
   transition: border-color var(--transition-fast);
   font-family: var(--font-mono);
+  min-height: 2.5rem; /* Consistent base height */
+  box-sizing: border-box;
 }
 
 input[type="text"]:focus-visible,
@@ -573,9 +579,12 @@ button.loading::after {
   #ttlSelect {
     font-size: 16px !important; /* Prevents zoom on iOS */
     min-height: 3rem !important;
+    height: 3rem !important; /* Force consistent height */
     padding: var(--spacing-sm) var(--spacing-md) !important;
     box-sizing: border-box !important;
     line-height: 1.5 !important;
+    display: flex !important;
+    align-items: center !important;
   }
 
   /* Larger touch targets on mobile */
