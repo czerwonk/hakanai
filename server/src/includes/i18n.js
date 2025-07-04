@@ -10,8 +10,8 @@
       "page.get.title": "Hakanai - Retrieve Secret",
 
       // Headers
-      "header.create": "Create Secret",
-      "header.get": "One Time Secret Retrieval",
+      "header.create": "Create One-Time Secret",
+      "header.get": "One-Time Secret",
 
       // Labels and placeholders
       "label.secret": "Secret message:",
@@ -87,7 +87,7 @@
 
       // Headers
       "header.create": "Einmal-Secret erstellen",
-      "header.get": "Einmal-Secret abrufen",
+      "header.get": "Einmal-Secret",
 
       // Labels and placeholders
       "label.secret": "Text:",
