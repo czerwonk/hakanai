@@ -73,8 +73,12 @@
       "msg.retrieveNoteText":
         "This secret has been deleted from the server and cannot be accessed again.",
       "msg.downloaded": "Secret downloaded as text file",
+      "msg.binaryDetected":
+        "Binary file detected. Content hidden for security. Use download button to save the file.",
 
       // Aria labels
+      "aria.copySecret": "Copy secret to clipboard",
+      "aria.downloadSecret": "Download secret as file",
       "aria.secretInput": "Enter the secret message you want to share securely",
       "aria.tokenInput":
         "Enter the authentication token if required by the server",
@@ -161,8 +165,12 @@
       "msg.retrieveNoteText":
         "Dieses Secret wurde vom Server gelöscht und kann nicht erneut abgerufen werden.",
       "msg.downloaded": "Secret als Textdatei heruntergeladen",
+      "msg.binaryDetected":
+        "Binärdatei erkannt. Inhalt aus Sicherheitsgründen versteckt. Bitte Download-Schaltfläche verwenden, um die Datei zu speichern.",
 
       // Aria labels
+      "aria.copySecret": "Secret in die Zwischenablage kopieren",
+      "aria.downloadSecret": "Secret als Datei herunterladen",
       "aria.secretInput":
         "Bitte die geheime Nachricht eingeben, die sicher geteult werden soll",
       "aria.tokenInput":

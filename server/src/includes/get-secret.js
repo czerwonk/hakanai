@@ -14,6 +14,9 @@ function updateUIStrings() {
   UI_STRINGS.COPY_FAILED = i18n.t("msg.copyFailed");
   UI_STRINGS.DOWNLOAD_TEXT = i18n.t("button.download");
   UI_STRINGS.NOTE_TEXT = i18n.t("msg.retrieveNote");
+  UI_STRINGS.BINARY_DETECTED = i18n.t("msg.binaryDetected");
+  UI_STRINGS.COPY_ARIA = i18n.t("aria.copySecret");
+  UI_STRINGS.DOWNLOAD_ARIA = i18n.t("aria.downloadSecret");
 }
 
 const UI_STRINGS = {
@@ -29,6 +32,9 @@ const UI_STRINGS = {
   DOWNLOAD_TEXT: "Download",
   NOTE_TEXT:
     "Note: This secret has been deleted from the server and cannot be accessed again.",
+  BINARY_DETECTED: "Binary file detected. Content hidden for security. Use download button to save the file.",
+  COPY_ARIA: "Copy secret to clipboard",
+  DOWNLOAD_ARIA: "Download secret as file",
 };
 
 const TIMEOUTS = {
@@ -164,7 +170,7 @@ function showSuccess(payload) {
     copyBtn.className = "copy-button";
     copyBtn.type = "button";
     copyBtn.textContent = UI_STRINGS.COPY_TEXT;
-    copyBtn.setAttribute("aria-label", "Copy secret to clipboard");
+    copyBtn.setAttribute("aria-label", UI_STRINGS.COPY_ARIA);
     copyBtn.addEventListener("click", function () {
       copySecret(secretId, this);
     });
@@ -174,7 +180,7 @@ function showSuccess(payload) {
     downloadBtn.className = "download-button";
     downloadBtn.type = "button";
     downloadBtn.textContent = UI_STRINGS.DOWNLOAD_TEXT;
-    downloadBtn.setAttribute("aria-label", "Download secret as file");
+    downloadBtn.setAttribute("aria-label", UI_STRINGS.DOWNLOAD_ARIA);
     downloadBtn.addEventListener("click", function () {
       downloadSecret(payload);
     });
@@ -186,7 +192,7 @@ function showSuccess(payload) {
     const message = document.createElement("p");
     message.style.marginBottom = "var(--spacing-md, 1rem)";
     message.style.color = "var(--color-text, #000000)";
-    message.textContent = "Binary file detected. Content hidden for security. Use download button to save the file.";
+    message.textContent = UI_STRINGS.BINARY_DETECTED;
     container.appendChild(message);
 
     const buttonsContainer = document.createElement("div");
@@ -196,7 +202,7 @@ function showSuccess(payload) {
     downloadBtn.className = "download-button";
     downloadBtn.type = "button";
     downloadBtn.textContent = UI_STRINGS.DOWNLOAD_TEXT;
-    downloadBtn.setAttribute("aria-label", "Download secret as file");
+    downloadBtn.setAttribute("aria-label", UI_STRINGS.DOWNLOAD_ARIA);
     downloadBtn.addEventListener("click", function () {
       downloadSecret(payload);
     });
