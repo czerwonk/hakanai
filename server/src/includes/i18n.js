@@ -15,6 +15,10 @@
 
       // Labels
       "label.secret": "Secret message:",
+      "label.secretType": "Secret Type:",
+      "label.text": "Text Message",
+      "label.file": "File",
+      "label.fileSelect": "Select file to share:",
       "label.token": "Token:",
       "label.expires": "Expires after:",
       "label.url": "Secret URL:",
@@ -27,6 +31,7 @@
       "helper.url": "The decryption key after # is never sent to the server",
       "helper.secret":
         "Your message will be encrypted before leaving your browser",
+      "helper.fileSelect": "Maximum file size: 10MB. File will be encrypted before upload.",
       "helper.token": "Leave empty if no authentication is required",
       "helper.expires":
         "Secret will self-destruct after this time or first view",
@@ -54,7 +59,11 @@
       "msg.jsRequiredDetail":
         "This application requires JavaScript to encrypt secrets securely in your browser.",
       "msg.emptySecret": "Please enter a secret to share",
+      "msg.emptyFile": "Please select a file to share",
       "msg.createFailed": "Failed to create secret",
+      "msg.fileTooLarge": "File size exceeds 10MB limit",
+      "msg.fileReadError": "Error reading file",
+      "msg.invalidFileType": "Invalid file type",
       "msg.emptyUrl": "Please enter a valid secret URL",
       "msg.invalidUrl":
         "Invalid URL format. Please include the full URL with the secret key after #",
@@ -80,6 +89,7 @@
       "aria.copySecret": "Copy secret to clipboard",
       "aria.downloadSecret": "Download secret as file",
       "aria.secretInput": "Enter the secret message you want to share securely",
+      "aria.fileInput": "Select a file to share securely. The file will be encrypted before being sent.",
       "aria.tokenInput":
         "Enter the authentication token if required by the server",
       "aria.expiresSelect":
