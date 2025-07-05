@@ -84,6 +84,7 @@ async fn run_webserver(data_store: RedisDataStore, tokens: Vec<String>, args: Ar
                     )),
             )
             .route("/s/{id}", web::get().to(get_secret_short))
+            .route("/ready", web::get().to(ready))
             .configure(web_static::configure)
             .service(web::scope("/api").configure(web_api::configure))
     })
@@ -134,4 +135,8 @@ async fn get_secret_short(
         Ok(secret) => HttpResponse::Ok().body(secret),
         Err(e) => e.error_response(),
     }
+}
+
+async fn ready() -> impl Responder {
+    HttpResponse::Ok().body("Ready")
 }
