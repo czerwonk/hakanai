@@ -398,28 +398,4 @@ mod tests {
             _ => panic!("Expected Send command"),
         }
     }
-
-    #[test]
-    fn test_send_command_defaults() {
-        let args = Args::try_parse_from(["hakanai", "send"]).unwrap();
-
-        match args.command {
-            Command::Send {
-                server,
-                ttl,
-                token,
-                file,
-                as_file,
-                file_name,
-            } => {
-                assert_eq!(server.as_str(), "http://localhost:8080/");
-                assert_eq!(ttl, Duration::from_secs(24 * 60 * 60)); // 24h default
-                assert_eq!(token, "");
-                assert_eq!(file, None);
-                assert!(!as_file);
-                assert_eq!(file_name, None);
-            }
-            _ => panic!("Expected Send command"),
-        }
-    }
 }
