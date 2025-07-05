@@ -94,7 +94,7 @@ fn ensure_ttl_is_valid(expires_in: Duration, max_ttl: Duration) -> Result<()> {
 }
 
 #[instrument(skip(req, tokens))]
-fn ensure_is_authorized(req: &HttpRequest, tokens: &HashMap<String, String>) -> Result<()> {
+fn ensure_is_authorized(req: &HttpRequest, tokens: &HashMap<String, ()>) -> Result<()> {
     if tokens.is_empty() {
         // no tokens required
         return Ok(());
@@ -338,7 +338,7 @@ mod tests {
             data_store: Box::new(mock_store),
             tokens: vec!["valid_token_123".to_string()]
                 .into_iter()
-                .map(|t| (hash_string(&t), t.to_string()))
+                .map(|t| (hash_string(&t), ()))
                 .collect(),
             max_ttl: Duration::from_secs(7200),
         };
@@ -378,7 +378,7 @@ mod tests {
             data_store: Box::new(mock_store),
             tokens: vec!["valid_token_123".to_string()]
                 .into_iter()
-                .map(|t| (hash_string(&t), t.to_string()))
+                .map(|t| (hash_string(&t), ()))
                 .collect(),
             max_ttl: Duration::from_secs(7200),
         };
@@ -411,7 +411,7 @@ mod tests {
             data_store: Box::new(mock_store),
             tokens: vec!["valid_token_123".to_string()]
                 .into_iter()
-                .map(|t| (hash_string(&t), t.to_string()))
+                .map(|t| (hash_string(&t), ()))
                 .collect(),
             max_ttl: Duration::from_secs(7200),
         };

@@ -61,10 +61,10 @@ async fn run_webserver(data_store: RedisDataStore, tokens: Vec<String>, args: Ar
     info!("Starting server on {}:{}", args.listen_address, args.port);
 
     HttpServer::new(move || {
-        let tokens_map: HashMap<String, String> = tokens
+        let tokens_map: HashMap<String, ()> = tokens
             .clone()
             .into_iter()
-            .map(|t| (hash_string(&t), t.to_string()))
+            .map(|t| (hash_string(&t), ()))
             .collect();
         let app_data = AppData {
             data_store: Box::new(data_store.clone()),

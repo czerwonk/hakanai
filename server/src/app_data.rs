@@ -10,7 +10,7 @@ pub struct AppData {
     pub data_store: Box<dyn DataStore>,
 
     /// A list of valid authentication tokens.
-    pub tokens: HashMap<String, String>,
+    pub tokens: HashMap<String, ()>,
 
     /// The maximum time-to-live (TTL) for secrets
     pub max_ttl: time::Duration,
