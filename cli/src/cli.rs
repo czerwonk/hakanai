@@ -99,8 +99,157 @@ mod tests {
             Args::try_parse_from(["hakanai", "get", "https://example.com/secret/abc123"]).unwrap();
 
         match args.command {
-            Command::Get { link, .. } => {
+            Command::Get { link, to_stdout, filename } => {
                 assert_eq!(link.as_str(), "https://example.com/secret/abc123");
+                assert!(!to_stdout);
+                assert_eq!(filename, None);
+            }
+            _ => panic!("Expected Get command"),
+        }
+    }
+
+    #[test]
+    fn test_get_command_with_to_stdout_flag() {
+        let args = Args::try_parse_from([
+            "hakanai",
+            "get",
+            "https://example.com/secret/abc123",
+            "--to-stdout",
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Get { link, to_stdout, filename } => {
+                assert_eq!(link.as_str(), "https://example.com/secret/abc123");
+                assert!(to_stdout);
+                assert_eq!(filename, None);
+            }
+            _ => panic!("Expected Get command"),
+        }
+    }
+
+    #[test]
+    fn test_get_command_with_short_to_stdout_flag() {
+        let args = Args::try_parse_from([
+            "hakanai",
+            "get",
+            "https://example.com/secret/abc123",
+            "-t",
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Get { link, to_stdout, filename } => {
+                assert_eq!(link.as_str(), "https://example.com/secret/abc123");
+                assert!(to_stdout);
+                assert_eq!(filename, None);
+            }
+            _ => panic!("Expected Get command"),
+        }
+    }
+
+    #[test]
+    fn test_get_command_with_filename() {
+        let args = Args::try_parse_from([
+            "hakanai",
+            "get",
+            "https://example.com/secret/abc123",
+            "--filename",
+            "downloaded_secret.txt",
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Get { link, to_stdout, filename } => {
+                assert_eq!(link.as_str(), "https://example.com/secret/abc123");
+                assert!(!to_stdout);
+                assert_eq!(filename, Some("downloaded_secret.txt".to_string()));
+            }
+            _ => panic!("Expected Get command"),
+        }
+    }
+
+    #[test]
+    fn test_get_command_with_short_filename_flag() {
+        let args = Args::try_parse_from([
+            "hakanai",
+            "get",
+            "https://example.com/secret/abc123",
+            "-f",
+            "output.bin",
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Get { link, to_stdout, filename } => {
+                assert_eq!(link.as_str(), "https://example.com/secret/abc123");
+                assert!(!to_stdout);
+                assert_eq!(filename, Some("output.bin".to_string()));
+            }
+            _ => panic!("Expected Get command"),
+        }
+    }
+
+    #[test]
+    fn test_get_command_with_to_stdout_and_filename() {
+        let args = Args::try_parse_from([
+            "hakanai",
+            "get",
+            "https://example.com/secret/abc123",
+            "--to-stdout",
+            "--filename",
+            "ignored.txt",
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Get { link, to_stdout, filename } => {
+                assert_eq!(link.as_str(), "https://example.com/secret/abc123");
+                assert!(to_stdout);
+                assert_eq!(filename, Some("ignored.txt".to_string()));
+            }
+            _ => panic!("Expected Get command"),
+        }
+    }
+
+    #[test]
+    fn test_get_command_with_all_short_flags() {
+        let args = Args::try_parse_from([
+            "hakanai",
+            "get",
+            "https://example.com/secret/abc123",
+            "-t",
+            "-f",
+            "file.dat",
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Get { link, to_stdout, filename } => {
+                assert_eq!(link.as_str(), "https://example.com/secret/abc123");
+                assert!(to_stdout);
+                assert_eq!(filename, Some("file.dat".to_string()));
+            }
+            _ => panic!("Expected Get command"),
+        }
+    }
+
+    #[test]
+    fn test_get_command_with_special_filename() {
+        let args = Args::try_parse_from([
+            "hakanai",
+            "get",
+            "https://example.com/secret/abc123",
+            "--filename",
+            "path/to/file with spaces.txt",
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Get { link, to_stdout, filename } => {
+                assert_eq!(link.as_str(), "https://example.com/secret/abc123");
+                assert!(!to_stdout);
+                assert_eq!(filename, Some("path/to/file with spaces.txt".to_string()));
             }
             _ => panic!("Expected Get command"),
         }

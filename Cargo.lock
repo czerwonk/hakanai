@@ -990,6 +990,7 @@ dependencies = [
  "colored",
  "hakanai-lib",
  "humantime",
+ "tempfile",
  "tokio",
  "url",
 ]
