@@ -5,6 +5,7 @@ document.addEventListener("languageChanged", function (e) {
 
 function updateUIStrings() {
   UI_STRINGS.EMPTY_SECRET = i18n.t("msg.emptySecret");
+  UI_STRINGS.EMPTY_FILE = i18n.t("msg.emptyFile");
   UI_STRINGS.CREATE_FAILED = i18n.t("msg.createFailed");
   UI_STRINGS.SUCCESS_TITLE = i18n.t("msg.successTitle");
   UI_STRINGS.ERROR_TITLE = i18n.t("msg.errorTitle");
@@ -13,10 +14,14 @@ function updateUIStrings() {
   UI_STRINGS.COPY_FAILED = i18n.t("msg.copyFailed");
   UI_STRINGS.NOTE_TEXT = i18n.t("msg.createNote");
   UI_STRINGS.SHARE_INSTRUCTIONS = i18n.t("msg.shareInstructions");
+  UI_STRINGS.FILE_TOO_LARGE = i18n.t("msg.fileTooLarge");
+  UI_STRINGS.FILE_READ_ERROR = i18n.t("msg.fileReadError");
+  UI_STRINGS.INVALID_FILE_TYPE = i18n.t("msg.invalidFileType");
 }
 
 const UI_STRINGS = {
   EMPTY_SECRET: "Please enter a secret to share",
+  EMPTY_FILE: "Please select a file to share",
   CREATE_FAILED: "Failed to create secret",
   SUCCESS_TITLE: "Secret Created Successfully",
   ERROR_TITLE: "Error",
@@ -27,10 +32,21 @@ const UI_STRINGS = {
     "Note: Share this URL carefully. The secret will be deleted after the first access or when it expires.",
   SHARE_INSTRUCTIONS:
     "Share this URL with the intended recipient. The secret is encrypted and can only be accessed once.",
+  FILE_TOO_LARGE: "File size exceeds 10MB limit",
+  FILE_READ_ERROR: "Error reading file",
+  INVALID_FILE_TYPE: "Invalid file type",
 };
 
 const TIMEOUTS = {
   COPY_FEEDBACK: 2000,
+};
+
+const FILE_LIMITS = {
+  MAX_SIZE: 10 * 1024 * 1024, // 10MB in bytes
+  ALLOWED_TYPES: [
+    // Allow all file types for maximum flexibility
+    // Security is handled by server-side validation and client-side encryption
+  ]
 };
 
 // Extract base URL from current location or use a default
@@ -42,45 +58,98 @@ const client = new HakanaiClient(baseUrl);
 
 async function createSecret() {
   const secretInput = document.getElementById("secretText");
+  const fileInput = document.getElementById("secretFile");
   const authTokenInput = document.getElementById("authToken");
   const ttlSelect = document.getElementById("ttlSelect");
   const resultDiv = document.getElementById("result");
   const loadingDiv = document.getElementById("loading");
   const button = document.getElementById("createBtn");
+  const textRadio = document.getElementById("textRadio");
+  const fileRadio = document.getElementById("fileRadio");
 
-  const secret = secretInput.value.trim();
   const authToken = authTokenInput.value.trim();
   const ttl = parseInt(ttlSelect.value);
+  const isFileMode = fileRadio.checked;
 
-  if (!secret) {
-    showError(UI_STRINGS.EMPTY_SECRET);
-    secretInput.focus();
-    return;
+  let payload;
+  let validationError = null;
+
+  if (isFileMode) {
+    // File mode validation and processing
+    const file = fileInput.files[0];
+    if (!file) {
+      showError(UI_STRINGS.EMPTY_FILE);
+      fileInput.focus();
+      return;
+    }
+
+    // Validate file size
+    if (file.size > FILE_LIMITS.MAX_SIZE) {
+      showError(UI_STRINGS.FILE_TOO_LARGE);
+      fileInput.focus();
+      return;
+    }
+
+    // Validate file name (basic sanitization)
+    const fileName = sanitizeFileName(file.name);
+    if (!fileName) {
+      showError(UI_STRINGS.INVALID_FILE_TYPE);
+      fileInput.focus();
+      return;
+    }
+
+    try {
+      const fileContent = await readFileAsBase64(file);
+      payload = {
+        data: fileContent,
+        filename: fileName
+      };
+    } catch (error) {
+      showError(UI_STRINGS.FILE_READ_ERROR);
+      return;
+    }
+  } else {
+    // Text mode validation
+    const secret = secretInput.value.trim();
+    if (!secret) {
+      showError(UI_STRINGS.EMPTY_SECRET);
+      secretInput.focus();
+      return;
+    }
+    payload = { data: secret };
   }
 
   // Show loading state
   loadingDiv.style.display = "block";
   button.disabled = true;
   secretInput.disabled = true;
+  fileInput.disabled = true;
   authTokenInput.disabled = true;
   ttlSelect.disabled = true;
+  textRadio.disabled = true;
+  fileRadio.disabled = true;
   resultDiv.innerHTML = "";
 
   try {
-    const secretUrl = await client.sendSecret(secret, ttl, authToken);
+    const secretUrl = await client.sendPayload(payload, ttl, authToken);
 
     showSuccess(secretUrl);
 
-    // Clear the input
+    // Clear the inputs
     secretInput.value = "";
+    fileInput.value = "";
+    updateFileInfo();
   } catch (error) {
     showError(error.message || UI_STRINGS.CREATE_FAILED);
   } finally {
     loadingDiv.style.display = "none";
     button.disabled = false;
     secretInput.disabled = false;
+    fileInput.disabled = false;
     authTokenInput.disabled = false;
     ttlSelect.disabled = false;
+    textRadio.disabled = false;
+    fileRadio.disabled = false;
   }
 }
 
@@ -247,6 +316,93 @@ function announceToScreenReader(message) {
   }, 1000);
 }
 
+// File handling utilities
+function sanitizeFileName(fileName) {
+  // Remove potentially dangerous characters and limit length
+  const sanitized = fileName
+    .replace(/[<>:"/\\|?*\x00-\x1f]/g, '_') // Replace dangerous chars
+    .replace(/^\.+/, '') // Remove leading dots
+    .substring(0, 255); // Limit length
+  
+  return sanitized.length > 0 ? sanitized : null;
+}
+
+function readFileAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        // Get base64 content without the data URL prefix
+        const base64Content = e.target.result.split(',')[1];
+        resolve(base64Content);
+      } catch (error) {
+        reject(error);
+      }
+    };
+    reader.onerror = function() {
+      reject(new Error('Failed to read file'));
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function formatFileSize(bytes) {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function updateFileInfo() {
+  const fileInput = document.getElementById("secretFile");
+  const fileInfoDiv = document.getElementById("fileInfo");
+  const fileNameSpan = document.getElementById("fileName");
+  const fileSizeSpan = document.getElementById("fileSize");
+
+  if (fileInput.files.length > 0) {
+    const file = fileInput.files[0];
+    const sanitizedName = sanitizeFileName(file.name);
+    
+    fileNameSpan.textContent = sanitizedName || 'Invalid filename';
+    fileSizeSpan.textContent = formatFileSize(file.size);
+    fileInfoDiv.style.display = "block";
+    
+    // Show warning if file is too large
+    if (file.size > FILE_LIMITS.MAX_SIZE) {
+      fileInfoDiv.className = "file-info error";
+      fileSizeSpan.textContent += " (Too large!)";
+    } else {
+      fileInfoDiv.className = "file-info";
+    }
+  } else {
+    fileInfoDiv.style.display = "none";
+  }
+}
+
+function toggleSecretType() {
+  const textRadio = document.getElementById("textRadio");
+  const fileRadio = document.getElementById("fileRadio");
+  const textInputGroup = document.getElementById("textInputGroup");
+  const fileInputGroup = document.getElementById("fileInputGroup");
+  const secretText = document.getElementById("secretText");
+  const secretFile = document.getElementById("secretFile");
+
+  if (textRadio.checked) {
+    textInputGroup.style.display = "block";
+    fileInputGroup.style.display = "none";
+    secretText.required = true;
+    secretFile.required = false;
+    secretText.focus();
+  } else {
+    textInputGroup.style.display = "none";
+    fileInputGroup.style.display = "block";
+    secretText.required = false;
+    secretFile.required = true;
+    secretFile.focus();
+  }
+}
+
 // Set up form submission handler
 document.addEventListener("DOMContentLoaded", function () {
   const form = document.querySelector("form");
@@ -255,6 +411,21 @@ document.addEventListener("DOMContentLoaded", function () {
       event.preventDefault();
       createSecret();
     });
+  }
+
+  // Set up radio button handlers
+  const textRadio = document.getElementById("textRadio");
+  const fileRadio = document.getElementById("fileRadio");
+  const fileInput = document.getElementById("secretFile");
+
+  if (textRadio && fileRadio) {
+    textRadio.addEventListener("change", toggleSecretType);
+    fileRadio.addEventListener("change", toggleSecretType);
+  }
+
+  // Set up file input handler
+  if (fileInput) {
+    fileInput.addEventListener("change", updateFileInfo);
   }
 });
 
