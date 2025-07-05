@@ -257,13 +257,8 @@ mod tests {
 
     #[test]
     fn test_send_command_with_file() {
-        let args = Args::try_parse_from([
-            "hakanai",
-            "send",
-            "--file",
-            "/path/to/secret.txt",
-        ])
-        .unwrap();
+        let args =
+            Args::try_parse_from(["hakanai", "send", "--file", "/path/to/secret.txt"]).unwrap();
 
         match args.command {
             Command::Send { file, .. } => {
@@ -275,13 +270,7 @@ mod tests {
 
     #[test]
     fn test_send_command_with_short_file_flag() {
-        let args = Args::try_parse_from([
-            "hakanai",
-            "send",
-            "-f",
-            "/tmp/data.bin",
-        ])
-        .unwrap();
+        let args = Args::try_parse_from(["hakanai", "send", "-f", "/tmp/data.bin"]).unwrap();
 
         match args.command {
             Command::Send { file, .. } => {
@@ -293,12 +282,7 @@ mod tests {
 
     #[test]
     fn test_send_command_with_as_file_flag() {
-        let args = Args::try_parse_from([
-            "hakanai",
-            "send",
-            "--as-file",
-        ])
-        .unwrap();
+        let args = Args::try_parse_from(["hakanai", "send", "--as-file"]).unwrap();
 
         match args.command {
             Command::Send { as_file, .. } => {
@@ -310,12 +294,7 @@ mod tests {
 
     #[test]
     fn test_send_command_with_short_as_file_flag() {
-        let args = Args::try_parse_from([
-            "hakanai",
-            "send",
-            "-a",
-        ])
-        .unwrap();
+        let args = Args::try_parse_from(["hakanai", "send", "-a"]).unwrap();
 
         match args.command {
             Command::Send { as_file, .. } => {
@@ -327,11 +306,7 @@ mod tests {
 
     #[test]
     fn test_send_command_without_as_file_flag() {
-        let args = Args::try_parse_from([
-            "hakanai",
-            "send",
-        ])
-        .unwrap();
+        let args = Args::try_parse_from(["hakanai", "send"]).unwrap();
 
         match args.command {
             Command::Send { as_file, .. } => {
@@ -343,13 +318,8 @@ mod tests {
 
     #[test]
     fn test_send_command_with_file_name() {
-        let args = Args::try_parse_from([
-            "hakanai",
-            "send",
-            "--file-name",
-            "custom_name.pdf",
-        ])
-        .unwrap();
+        let args =
+            Args::try_parse_from(["hakanai", "send", "--file-name", "custom_name.pdf"]).unwrap();
 
         match args.command {
             Command::Send { file_name, .. } => {
@@ -391,7 +361,9 @@ mod tests {
         .unwrap();
 
         match args.command {
-            Command::Send { as_file, file_name, .. } => {
+            Command::Send {
+                as_file, file_name, ..
+            } => {
                 assert!(as_file);
                 assert_eq!(file_name, Some("secret_document.txt".to_string()));
             }
@@ -413,7 +385,12 @@ mod tests {
         .unwrap();
 
         match args.command {
-            Command::Send { file, as_file, file_name, .. } => {
+            Command::Send {
+                file,
+                as_file,
+                file_name,
+                ..
+            } => {
                 assert_eq!(file, Some("/home/user/secret.bin".to_string()));
                 assert!(as_file);
                 assert_eq!(file_name, Some("renamed_secret.bin".to_string()));
@@ -424,20 +401,16 @@ mod tests {
 
     #[test]
     fn test_send_command_defaults() {
-        let args = Args::try_parse_from([
-            "hakanai",
-            "send",
-        ])
-        .unwrap();
+        let args = Args::try_parse_from(["hakanai", "send"]).unwrap();
 
         match args.command {
-            Command::Send { 
-                server, 
-                ttl, 
-                token, 
-                file, 
-                as_file, 
-                file_name 
+            Command::Send {
+                server,
+                ttl,
+                token,
+                file,
+                as_file,
+                file_name,
             } => {
                 assert_eq!(server.as_str(), "http://localhost:8080/");
                 assert_eq!(ttl, Duration::from_secs(24 * 60 * 60)); // 24h default

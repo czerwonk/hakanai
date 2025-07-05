@@ -5,7 +5,7 @@ use serde_with::serde_as;
 
 /// Represents the data payload of a secret, which can be either a text message
 /// or a file with optional metadata.
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Payload {
     /// The base64-encoded data of the secret.
     pub data: String,
