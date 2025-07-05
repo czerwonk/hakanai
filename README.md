@@ -148,7 +148,7 @@ Hakanai now includes a web interface for users who prefer not to use the CLI:
 
 ## API Reference
 
-### POST /secret
+### POST /api/v1/secret
 Create a new secret.
 
 **Headers:**
@@ -173,7 +173,7 @@ Create a new secret.
 - `401 Unauthorized`: Invalid or missing token when server requires authentication
 - `400 Bad Request`: Invalid request body
 
-### GET /secret/{id}
+### GET /api/v1/secret/{id}
 Retrieve a secret (one-time access).
 
 **Response:**
