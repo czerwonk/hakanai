@@ -7,7 +7,7 @@ use crate::client::{Client, ClientError};
 use crate::models::{PostSecretRequest, PostSecretResponse};
 
 const SHORT_SECRET_PATH: &str = "s";
-const API_SECRET_PATH: &str = "api/secret";
+const API_SECRET_PATH: &str = "api/v1/secret";
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(10);
 const USER_AGENT: &str = "hakanai-client";
 

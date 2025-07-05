@@ -132,7 +132,7 @@ class HakanaiClient {
     }
 
     // Send to server
-    const response = await fetch(`${this.baseUrl}/api/secret`, {
+    const response = await fetch(`${this.baseUrl}/api/v1/secret`, {
       method: "POST",
       headers: headers,
       body: JSON.stringify({
@@ -190,7 +190,7 @@ class HakanaiClient {
     }
 
     // Fetch the encrypted data
-    const response = await fetch(`${this.baseUrl}/api/secret/${secretId}`);
+    const response = await fetch(`${this.baseUrl}/api/v1/secret/${secretId}`);
 
     if (!response.ok) {
       if (response.status === 404) {

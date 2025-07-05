@@ -86,7 +86,7 @@ async fn run_webserver(data_store: RedisDataStore, tokens: Vec<String>, args: Ar
             .route("/s/{id}", web::get().to(get_secret_short))
             .route("/ready", web::get().to(ready))
             .configure(web_static::configure)
-            .service(web::scope("/api").configure(web_api::configure))
+            .service(web::scope("/api/v1").configure(web_api::configure))
     })
     .bind((args.listen_address, args.port))?
     .run()
