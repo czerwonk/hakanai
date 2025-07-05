@@ -16,7 +16,7 @@ function updateUIStrings() {
   UI_STRINGS.SHARE_INSTRUCTIONS = i18n.t("msg.shareInstructions");
   UI_STRINGS.FILE_TOO_LARGE = i18n.t("msg.fileTooLarge");
   UI_STRINGS.FILE_READ_ERROR = i18n.t("msg.fileReadError");
-  UI_STRINGS.INVALID_FILE_TYPE = i18n.t("msg.invalidFileType");
+  UI_STRINGS.INVALID_FILENAME = i18n.t("msg.invalidFilename");
 }
 
 const UI_STRINGS = {
@@ -34,7 +34,7 @@ const UI_STRINGS = {
     "Share this URL with the intended recipient. The secret is encrypted and can only be accessed once.",
   FILE_TOO_LARGE: "File size exceeds 10MB limit",
   FILE_READ_ERROR: "Error reading file",
-  INVALID_FILE_TYPE: "Invalid file type",
+  INVALID_FILENAME: "Invalid filename. Please select a file with a valid name.",
 };
 
 const TIMEOUTS = {
@@ -43,10 +43,6 @@ const TIMEOUTS = {
 
 const FILE_LIMITS = {
   MAX_SIZE: 10 * 1024 * 1024, // 10MB in bytes
-  ALLOWED_TYPES: [
-    // Allow all file types for maximum flexibility
-    // Security is handled by server-side validation and client-side encryption
-  ],
 };
 
 // Extract base URL from current location or use a default
@@ -93,7 +89,7 @@ async function createSecret() {
     // Validate file name (basic sanitization)
     const fileName = sanitizeFileName(file.name);
     if (!fileName) {
-      showError(UI_STRINGS.INVALID_FILE_TYPE);
+      showError(UI_STRINGS.INVALID_FILENAME);
       fileInput.focus();
       return;
     }

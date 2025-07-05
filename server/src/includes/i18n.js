@@ -65,7 +65,8 @@
       "msg.createFailed": "Failed to create secret",
       "msg.fileTooLarge": "File size exceeds 10MB limit",
       "msg.fileReadError": "Error reading file",
-      "msg.invalidFileType": "Invalid file type",
+      "msg.invalidFilename":
+        "Invalid filename. Please select a file with a valid name.",
       "msg.emptyUrl": "Please enter a valid secret URL",
       "msg.invalidUrl":
         "Invalid URL format. Please include the full URL with the secret key after #",
@@ -169,10 +170,11 @@
       "msg.createFailed": "Fehler beim Erstellen des Secrets",
       "msg.fileTooLarge": "Dateigröße überschreitet das 10MB Limit",
       "msg.fileReadError": "Fehler beim Lesen der Datei",
-      "msg.invalidFileType": "Ungültiger Dateityp",
+      "msg.invalidFilename":
+        "Ungültiger Dateiname. Bitte eine Datei mit einem gültigen Namen auswählen.",
       "msg.emptyUrl": "Bitte eine gültige Secret-URL eingeben",
       "msg.invalidUrl":
-        "Ungültiges URL-Format. Bitte geben Sie die vollständige URL einschließlich des Teils nach dem # ein",
+        "Ungültiges URL-Format. Bitte vollständige URL einschließlich des Teils nach dem # eingeben",
       "msg.retrieveFailed": "Fehler beim Abrufen des Secrets",
       "msg.successTitle": "Erfolg",
       "msg.errorTitle": "Fehler",
@@ -181,7 +183,7 @@
       "msg.createNote":
         "Hinweis: Das Secret wird nach dem ersten Zugriff oder bei Ablauf gelöscht.",
       "msg.createNoteText":
-        "Teilen Sie diese URL vorsichtig. Das Secret wird nach dem ersten Zugriff oder bei Ablauf gelöscht.",
+        "Bitte Vorsicht beim Teilen der URL. Das Secret wird nach dem ersten Zugriff oder bei Ablauf gelöscht.",
       "msg.shareInstructions":
         "Diese URL kann nun mit dem vorgesehenen Empfänger geteilt werden. Das Secret ist verschlüsselt und kann nur einmal abgerufen werden.",
       "msg.retrieveNote":
