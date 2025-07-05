@@ -160,22 +160,37 @@ mod tests {
     }
 
     #[test]
-    fn test_write_to_file_overwrites_existing() -> Result<()> {
+    fn test_write_to_file_prevents_overwriting() -> Result<()> {
         let temp_dir = TempDir::new()?;
         let file_path = temp_dir.path().join("overwrite.txt");
 
         // Write initial content
         fs::write(&file_path, "Initial content")?;
 
-        // Write new content
+        // Write new content - should create a new file with timestamp
         let new_content = "New content";
         write_to_file(
             file_path.to_string_lossy().to_string(),
             new_content.as_bytes().to_vec(),
         )?;
 
-        let read_content = fs::read_to_string(&file_path)?;
-        assert_eq!(read_content, new_content);
+        // Original file should still have initial content
+        let original_content = fs::read_to_string(&file_path)?;
+        assert_eq!(original_content, "Initial content");
+
+        // New file with timestamp should exist and contain new content
+        let files: Vec<_> = fs::read_dir(temp_dir.path())?
+            .filter_map(|entry| entry.ok())
+            .filter(|entry| {
+                entry.file_name().to_string_lossy().starts_with("overwrite.txt.")
+            })
+            .collect();
+        
+        assert_eq!(files.len(), 1, "Should have created one timestamped file");
+        
+        let timestamped_file = &files[0];
+        let timestamped_content = fs::read_to_string(timestamped_file.path())?;
+        assert_eq!(timestamped_content, new_content);
 
         Ok(())
     }
