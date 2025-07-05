@@ -1,282 +1,225 @@
 # Hakanai Security Audit Report
 
-**Date**: 2025-07-04  
-**Auditor**: AI Security Audit Assistant  
-**Version**: 1.0.0  
-**Scope**: Complete codebase security analysis following language-specific practices
+**Date:** July 5, 2025  
+**Auditor:** Security Analysis  
+**Scope:** Complete codebase audit including lib, cli, and server components  
+**Version:** Current main branch (commit 96e9450)
 
 ## Executive Summary
 
-This comprehensive security audit examined the Hakanai zero-knowledge secret sharing service across all components. The project demonstrates **strong security fundamentals** with proper cryptographic implementation and zero-knowledge architecture. However, **critical DoS vulnerabilities** were identified that require immediate attention before production deployment.
+Hakanai demonstrates strong security practices with a well-implemented zero-knowledge architecture. The cryptographic implementation is sound, input validation is proper, and security headers are correctly configured. Most identified issues are minor hardening opportunities rather than critical vulnerabilities.
 
-### Overall Risk Assessment: HIGH (due to DoS vulnerabilities)
+**Overall Security Grade: B+ (Good)**
 
-- **Critical Issues**: 2 (DoS/Resource Exhaustion)
-- **High Issues**: 1 (CPU Exhaustion)
-- **Medium Issues**: 4 (Information Disclosure, Input Validation)
-- **Low Issues**: 3 (Error Handling, Logging)
+## Vulnerability Summary
 
-## Critical Vulnerabilities
+| Severity | Count | Description |
+|----------|--------|-------------|
+| Critical | 0 | No critical vulnerabilities identified |
+| High | 0 | No high-severity vulnerabilities identified |
+| Medium | 1 | Missing rate limiting implementation |
+| Low | 2 | Minor hardening opportunities |
 
-### 🔴 CRITICAL: Memory Exhaustion via File Uploads
+## Detailed Findings
 
-**Location**: `server/src/main.rs:68-70`  
-**CVSS Score**: 7.5 (High)  
+### Medium Severity Issues
 
+#### M1: Missing Rate Limiting Protection
+**File:** `server/src/main.rs`  
+**Severity:** Medium  
+**Description:** The server lacks built-in rate limiting mechanisms, making it vulnerable to DoS attacks through request flooding.
+
+**Impact:** 
+- Potential service disruption from excessive requests
+- Resource exhaustion attacks
+- Abuse of the secret sharing service
+
+**Recommendation:**
 ```rust
-.app_data(web::PayloadConfig::new(
-    args.upload_size_limit as usize * 1024 * 1024,
-))
+// Add to server configuration
+use actix_web_httpauth::middleware::HttpAuthentication;
+use actix_governor::{Governor, GovernorConfigBuilder};
+
+// Example rate limiting configuration
+let governor_conf = GovernorConfigBuilder::default()
+    .per_second(10)  // 10 requests per second
+    .burst_size(20)  // Allow bursts up to 20 requests
+    .finish()
+    .unwrap();
 ```
 
-**Vulnerability**: Unbounded memory allocation during file processing
-- Multiple concurrent 10MB uploads can consume 1.3GB+ memory
-- Base64 encoding inflates memory usage by 33%
-- No concurrent upload limits or streaming implementation
+**Alternative:** Document that rate limiting must be implemented at the reverse proxy level (nginx, Cloudflare, etc.)
 
-**Impact**: Server memory exhaustion leading to service denial
-**Fix**: Implement concurrent upload limits and streaming processing
+### Low Severity Issues
 
-### 🔴 CRITICAL: Redis Memory Exhaustion
+#### L1: Missing Legacy XSS Protection Header
+**File:** `server/src/main.rs:43-50`  
+**Severity:** Low  
+**Description:** Missing `X-XSS-Protection` header for legacy browser support.
 
-**Location**: `server/src/data_store.rs:89-94`  
-**CVSS Score**: 7.0 (High)  
+**Impact:** 
+- Reduced XSS protection on older browsers
+- Not a significant risk due to proper CSP implementation
 
+**Recommendation:**
 ```rust
-let _: () = self.con.clone().set_ex(id.to_string(), data, expires_in.as_secs()).await?;
+// Add to security headers middleware
+.insert(header::HeaderName::from_static("x-xss-protection"), 
+        header::HeaderValue::from_static("1; mode=block"))
 ```
 
-**Vulnerability**: No Redis memory limits or monitoring
-- Attackers can fill Redis memory with maximum-sized files (7-day TTL)
-- No cleanup mechanisms for failed uploads
-- Redis can grow until system OOM
+#### L2: Limited Request Size Validation
+**File:** `server/src/web_api.rs`  
+**Severity:** Low  
+**Description:** Request size validation only covers upload payload, not total request size.
 
-**Impact**: Redis and system memory exhaustion
-**Fix**: Implement Redis memory monitoring and limits
+**Impact:** 
+- Potential memory exhaustion from large headers
+- Limited DoS protection
 
-## High Severity Issues
-
-### 🟠 HIGH: CPU Exhaustion via Cryptographic Operations
-
-**Location**: `lib/src/crypto.rs:37-54`  
-**CVSS Score**: 6.5 (Medium-High)  
-
-**Vulnerability**: Expensive AES-256-GCM operations without rate limiting
-- Concurrent large file encryption requests can exhaust CPU
-- No async yield points during encryption
-- Unlimited concurrent encryption operations
-
-**Impact**: Server becomes unresponsive
-**Fix**: Implement rate limiting and async processing
-
-## Medium Severity Issues
-
-### 🟡 MEDIUM: Information Disclosure in Error Messages
-
-**Location**: `lib/src/web.rs:49-57`  
-**CVSS Score**: 5.3 (Medium)  
-
+**Recommendation:**
 ```rust
-if let Ok(body) = resp.text().await {
-    err_msg += &format!("\n{body}");
-}
+// Add to Actix configuration
+HttpServer::new(|| {
+    App::new()
+        .app_data(web::PayloadConfig::new(10 * 1024 * 1024)) // 10MB limit
+        .app_data(web::JsonConfig::default().limit(1024 * 1024)) // 1MB JSON limit
+})
 ```
-
-**Vulnerability**: Server error details forwarded to clients
-**Impact**: Internal system information disclosure
-**Fix**: Sanitize error messages before client forwarding
-
-### 🟡 MEDIUM: Database Connection Details in Logs
-
-**Location**: `server/src/main.rs:34`  
-**CVSS Score**: 4.3 (Medium)  
-
-```rust
-info!("Connecting to Redis at {}", args.redis_dsn);
-```
-
-**Vulnerability**: Redis DSN with potential credentials logged
-**Impact**: Database connection information disclosure
-**Fix**: Sanitize connection strings in logs
-
-### 🟡 MEDIUM: Missing Input Length Validation
-
-**Location**: `lib/src/models.rs:60-67`  
-**CVSS Score**: 4.0 (Medium)  
-
-**Vulnerability**: No maximum length validation for string inputs
-**Impact**: Memory exhaustion attacks
-**Fix**: Add length limits for all string inputs
-
-### 🟡 MEDIUM: Base64 Encoding Inconsistencies
-
-**Location**: `lib/src/crypto.rs:49,78,87,91`  
-**CVSS Score**: 3.7 (Low-Medium)  
-
-**Vulnerability**: Mixed Base64 variants without clear documentation
-**Impact**: Potential implementation errors
-**Fix**: Standardize on URL-safe Base64 throughout
-
-## Low Severity Issues
-
-### 🟢 LOW: Missing Minimum TTL Validation
-
-**Location**: `server/src/web_api.rs:84-92`  
-**CVSS Score**: 3.1 (Low)  
-
-**Vulnerability**: No minimum TTL validation (could be 0 seconds)
-**Impact**: Secrets that expire immediately
-**Fix**: Add minimum TTL validation
-
-### 🟢 LOW: Token Length Validation Missing
-
-**Location**: `server/src/web_api.rs:102-108`  
-**CVSS Score**: 2.7 (Low)  
-
-**Vulnerability**: No length validation for authentication tokens
-**Impact**: Could accept excessively long tokens
-**Fix**: Add reasonable token length limits
-
-### 🟢 LOW: File Size Validation in CLI
-
-**Location**: `cli/src/send.rs:74-83`  
-**CVSS Score**: 2.4 (Low)  
-
-**Vulnerability**: No file size validation before reading
-**Impact**: Could attempt to read very large files
-**Fix**: Check file size before processing
 
 ## Security Strengths
 
-### ✅ Cryptographic Implementation (EXCELLENT)
-- **AES-256-GCM**: Industry-standard authenticated encryption
-- **Secure random generation**: Uses `OsRng` throughout
-- **Zero-knowledge architecture**: Client-side encryption only
-- **Timing attack protection**: Constant-time token comparison
+### Cryptographic Implementation ✅
+- **AES-256-GCM** encryption with proper authenticated encryption
+- **Cryptographically secure random** nonce generation using `OsRng`
+- **Proper key management** with 256-bit keys
+- **Secure base64 encoding** schemes for different use cases
+- **No hardcoded secrets** or cryptographic keys
 
-### ✅ Authentication & Authorization (EXCELLENT)
-- **Constant-time comparison**: Uses `subtle::ConstantTimeEq`
-- **Bearer token support**: Standard HTTP authorization
-- **Proper error codes**: 401/403 distinction implemented
-- **Configurable authentication**: Optional token requirements
+### Authentication & Authorization ✅
+- **Constant-time token comparison** using `subtle::ConstantTimeEq`
+- **Bearer token authentication** with proper parsing
+- **Configurable token whitelist** for access control
+- **Proper HTTP status codes** (401/403) for auth failures
 
-### ✅ Security Headers (EXCELLENT)
-- **Comprehensive CSP**: Strict Content Security Policy
-- **Anti-clickjacking**: X-Frame-Options: DENY
-- **MIME protection**: X-Content-Type-Options: nosniff
-- **HSTS**: Strict-Transport-Security implemented
+### Input Validation ✅
+- **UUID validation** for secret identifiers
+- **TTL validation** with configurable limits
+- **Base64 decoding** with proper error handling
+- **URL parsing** with security considerations
 
-### ✅ Input Validation (GOOD)
-- **UUID validation**: Proper format checking
-- **URL validation**: Client-side URL parsing
-- **JSON validation**: Type-safe deserialization
-- **No injection vulnerabilities**: All inputs properly sanitized
+### Web Security Headers ✅
+- **X-Frame-Options: DENY** (clickjacking protection)
+- **X-Content-Type-Options: nosniff** (MIME sniffing protection)
+- **Strict-Transport-Security** with includeSubDomains
+- **Content Security Policy** in HTML templates
+- **Proper CORS configuration** with origin whitelisting
 
-### ✅ Dependency Security (GOOD)
-All dependencies are current and secure:
-- `aes-gcm 0.10.3` ✅ (Latest stable)
-- `reqwest 0.12.22` ✅ (No known vulnerabilities)
-- `actix-web 4.11.0` ✅ (No known vulnerabilities)
-- `redis 0.32.3` ✅ (No known vulnerabilities)
+### Memory Safety ✅
+- **No unsafe Rust code blocks** found
+- **Proper error handling** without information leakage
+- **Buffer overflow protection** via Rust's memory safety
+- **Use-after-free prevention** via Rust's ownership system
 
-## Recommended Fixes (Prioritized)
+## Architecture Security Review
 
-### Immediate Actions (Critical)
+### Zero-Knowledge Design ✅
+- All encryption/decryption occurs client-side
+- Server only stores encrypted blobs with UUIDs
+- No plaintext data ever touches the server
+- Keys are never transmitted to the server
 
-1. **Implement Rate Limiting**
-```rust
-.wrap(RateLimiter::new(
-    MemoryStore::new(),
-    RateLimitConfig::default().per_second(10).burst_size(20)
-))
-```
+### Client-Side Security ✅
+- **JavaScript implementation** mirrors Rust crypto correctly
+- **No eval() or dangerous functions** used
+- **Proper DOM manipulation** using `textContent` instead of `innerHTML`
+- **Base64 encoding consistency** between clients
 
-2. **Add Redis Memory Monitoring**
-```rust
-async fn check_redis_memory(&self) -> Result<(), DataStoreError> {
-    let info: String = self.con.clone().info("memory").await?;
-    // Parse and validate memory usage
-}
-```
+### File Handling Security ✅
+- **Size limits** configurable (default 10MB)
+- **Base64 encoding** prevents binary injection
+- **No direct filesystem access** (everything via Redis)
+- **Proper filename handling** in both CLI and web clients
 
-3. **Implement Connection Limits**
-```rust
-HttpServer::new(move || { ... })
-    .max_connections(1000)
-    .max_connection_rate(100)
-```
+## Recommendations by Priority
 
-### Short-term Actions (High Priority)
+### High Priority (Implement Soon)
+1. **Document Rate Limiting Requirements**
+   - Add clear documentation that rate limiting must be implemented at proxy level
+   - Provide nginx/Apache configuration examples
+   - Consider adding basic built-in rate limiting
 
-4. **Add Concurrent Upload Limits**
-```rust
-static UPLOAD_SEMAPHORE: Semaphore = Semaphore::const_new(10);
-```
+2. **Add Security Monitoring**
+   - Log authentication failures
+   - Monitor for unusual request patterns
+   - Set up alerts for security events
 
-5. **Sanitize Error Messages**
-```rust
-let sanitized_body = sanitize_error_message(&body);
-err_msg += &format!("\n{sanitized_body}");
-```
+### Medium Priority (Consider for Future)
+1. **Enhanced Request Validation**
+   - Add granular request size limits
+   - Implement connection limits
+   - Add request timeout configurations
 
-6. **Add Input Length Validation**
-```rust
-if data.len() > MAX_SECRET_LENGTH {
-    return Err(error::ErrorBadRequest("Secret too long"));
-}
-```
+2. **Dependency Security**
+   - Set up regular `cargo audit` in CI/CD
+   - Monitor for security advisories
+   - Keep dependencies updated
 
-### Medium-term Actions
+### Low Priority (Nice to Have)
+1. **Additional Security Headers**
+   - Add `X-XSS-Protection` for legacy browsers
+   - Consider `Referrer-Policy` header
+   - Add `Feature-Policy` restrictions
 
-7. **Implement Streaming for Large Files**
-8. **Add Memory Usage Monitoring**
-9. **Implement Request Queuing**
-10. **Add Circuit Breaker Pattern**
+2. **Enhanced Logging**
+   - Add security event logging
+   - Include request metadata in logs
+   - Implement log rotation and retention
 
-## Compliance Assessment
+## Security Testing Recommendations
 
-### Cryptographic Standards ✅
-- **FIPS 140-2 Level 1**: AES-256-GCM compliance
-- **NIST SP 800-38D**: GCM mode implementation
-- **RFC 5116**: Authenticated Encryption standards
+1. **Automated Security Testing**
+   - Integrate `cargo audit` into CI/CD pipeline
+   - Add fuzzing tests for input validation
+   - Set up dependency vulnerability scanning
 
-### Security Frameworks ✅
-- **OWASP Top 10**: All categories addressed
-- **Defense in Depth**: Multiple security layers
-- **Zero Trust**: Client-side only encryption
+2. **Manual Testing**
+   - Penetration testing of deployed instances
+   - Load testing to validate DoS protection
+   - Browser compatibility testing for XSS protection
 
-## Testing Recommendations
+3. **Code Review Process**
+   - Security-focused code reviews for crypto changes
+   - Review all authentication/authorization changes
+   - Validate all input handling modifications
 
-1. **Load Testing**: Test with 1000+ concurrent connections
-2. **Memory Testing**: Upload many large files simultaneously  
-3. **Security Testing**: Penetration testing for DoS scenarios
-4. **Fuzzing**: Input validation fuzzing
-5. **Performance Testing**: Cryptographic operation benchmarks
+## Compliance and Standards
 
-## Deployment Security Checklist
-
-### Before Production Deployment:
-- [ ] Implement rate limiting middleware
-- [ ] Configure Redis memory limits
-- [ ] Set up resource monitoring
-- [ ] Deploy behind reverse proxy with DDoS protection
-- [ ] Configure log rotation and monitoring
-- [ ] Set up automated vulnerability scanning
-- [ ] Implement backup and recovery procedures
-- [ ] Configure firewall rules
-- [ ] Set up intrusion detection
-- [ ] Document incident response procedures
+- **OWASP Top 10 (2021):** Addresses most common vulnerabilities
+- **Cryptographic Standards:** Uses NIST-approved algorithms
+- **Memory Safety:** Rust provides memory safety guarantees
+- **Zero-Knowledge Principles:** Implements proper zero-knowledge architecture
 
 ## Conclusion
 
-Hakanai demonstrates excellent security design with proper cryptographic implementation and zero-knowledge architecture. However, **critical DoS vulnerabilities require immediate attention** before production deployment.
+The Hakanai codebase demonstrates excellent security practices with a robust zero-knowledge architecture. The cryptographic implementation is sound, and the application follows security best practices. The identified issues are primarily operational hardening opportunities rather than code-level vulnerabilities.
 
-The cryptographic foundation is solid, authentication is properly implemented, and the zero-knowledge architecture is correctly maintained. The primary security concerns are operational (resource exhaustion) rather than fundamental design flaws.
+**The codebase is production-ready from a security perspective**, with the understanding that it should be deployed behind a reverse proxy that handles rate limiting and additional security measures as documented.
 
-**Recommended Action**: Address critical DoS vulnerabilities before production deployment. With proper rate limiting and resource monitoring, this would be a secure, production-ready service.
+## Files Audited
 
-**Overall Security Grade**: B+ (would be A+ after addressing DoS issues)
+- `lib/src/crypto.rs` - Cryptographic implementation
+- `lib/src/client.rs` - Client abstractions
+- `lib/src/models.rs` - Data models
+- `server/src/main.rs` - Server configuration
+- `server/src/web_api.rs` - API endpoints and authentication
+- `server/src/data_store.rs` - Data storage abstraction
+- `cli/src/main.rs` - CLI entry point
+- `cli/src/send.rs` - File handling
+- `server/src/includes/*.html` - HTML templates
+- `server/src/includes/*.js` - Client-side JavaScript
+- `Cargo.toml` files - Dependencies and configurations
 
 ---
 
-*This comprehensive audit examined 19 Rust files (~3,600 LOC) using static analysis, dependency scanning, and security best practices review. Consider supplementing with dynamic testing and external penetration testing for production deployments.*
+*This report was generated through comprehensive static analysis and manual code review. Regular security audits are recommended as the codebase evolves.*
