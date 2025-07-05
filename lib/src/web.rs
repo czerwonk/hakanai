@@ -7,7 +7,7 @@ use crate::client::{Client, ClientError};
 use crate::models::{PostSecretRequest, PostSecretResponse};
 
 const SHORT_SECRET_PATH: &str = "s";
-const API_SECRET_PATH: &str = "api/secret";
+const API_SECRET_PATH: &str = "api/v1/secret";
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(10);
 const USER_AGENT: &str = "hakanai-client";
 
@@ -26,7 +26,7 @@ impl WebClient {
 }
 
 #[async_trait]
-impl Client for WebClient {
+impl Client<String> for WebClient {
     async fn send_secret(
         &self,
         base_url: Url,
@@ -106,7 +106,7 @@ mod tests {
 
         let secret_id = Uuid::new_v4();
         let _m = server
-            .mock("POST", "/api/secret")
+            .mock("POST", "/api/v1/secret")
             .with_status(200)
             .with_header("content-type", "application/json")
             .with_body(format!(r#"{{"id":"{secret_id}"}}"#))
@@ -137,7 +137,7 @@ mod tests {
         let client = WebClient::new();
 
         let _m = server
-            .mock("POST", "/api/secret")
+            .mock("POST", "/api/v1/secret")
             .with_status(500)
             .create_async()
             .await;
@@ -203,7 +203,7 @@ mod tests {
         let client = WebClient::new();
 
         let _m = server
-            .mock("POST", "/api/secret")
+            .mock("POST", "/api/v1/secret")
             .with_status(200)
             .with_header("content-type", "application/json")
             .with_body(r#"{"invalid": "json"}"#)

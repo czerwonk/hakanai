@@ -26,12 +26,18 @@ async fn main() -> ExitCode {
 
 async fn process_command(args: Args) -> Result<()> {
     match args.command {
-        cli::Command::Get { link } => get(link).await,
+        cli::Command::Get {
+            link,
+            to_stdout,
+            filename,
+        } => get(link, to_stdout, filename).await,
         cli::Command::Send {
             server,
             ttl,
             token,
             file,
-        } => send(server, ttl, token, file).await,
+            as_file,
+            file_name,
+        } => send(server, ttl, token, file, as_file, file_name).await,
     }
 }

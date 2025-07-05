@@ -3,6 +3,37 @@ use std::time::Duration;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 
+/// Represents the data payload of a secret, which can be either a text message
+/// or a file with optional metadata.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct Payload {
+    /// The base64-encoded data of the secret.
+    pub data: String,
+
+    /// The filename of the file, if not set data is assumed to be a text message.
+    pub filename: Option<String>,
+}
+
+impl Payload {
+    /// Creates a new `Payload` instance from raw binary data.
+    ///
+    /// # Arguments
+    ///
+    /// * `bytes` - The raw binary data of the secret.
+    /// * `filename` - An optional filename for the file.
+    pub fn from_bytes(bytes: &[u8], filename: Option<String>) -> Self {
+        use base64::Engine;
+        let data = base64::prelude::BASE64_STANDARD.encode(bytes);
+        Self { data, filename }
+    }
+
+    /// Decodes the base64 data and returns it as bytes.
+    pub fn decode_bytes(&self) -> Result<Vec<u8>, base64::DecodeError> {
+        use base64::Engine;
+        base64::prelude::BASE64_STANDARD.decode(&self.data)
+    }
+}
+
 /// Represents the request to create a new secret.
 #[serde_as]
 #[derive(Deserialize, Serialize)]

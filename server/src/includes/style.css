@@ -404,7 +404,7 @@ button.loading::after {
 .buttons-container {
   display: flex;
   gap: var(--spacing-sm);
-  margin-top: var(--spacing-sm);
+  margin-top: var(--spacing-xs);
 }
 
 .copy-button,
@@ -419,7 +419,6 @@ button.loading::after {
   transition: all var(--transition-normal);
   width: auto;
   font-weight: 600;
-  margin-top: var(--spacing-sm);
 }
 
 .copy-button:hover:not(.copied),
@@ -605,6 +604,18 @@ button.loading::after {
   .url-display {
     font-size: var(--font-size-xs);
   }
+
+  /* Mobile segmented control adjustments */
+  .radio-group {
+    flex-direction: row; /* Keep horizontal on mobile */
+    gap: 0;
+  }
+
+  .radio-group label {
+    padding: var(--spacing-sm);
+    min-height: 3rem;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
 }
 
 /* Reduced motion support */
@@ -644,6 +655,83 @@ button.loading::after {
   font-size: var(--font-size-xs);
   color: var(--color-text-muted);
   line-height: 1.4;
+}
+
+/* Modern segmented control styling */
+fieldset {
+  border: none;
+  padding: 0;
+  margin: 0;
+  background: none;
+}
+
+legend {
+  color: var(--color-text);
+  font-weight: 500;
+  font-size: var(--font-size-base);
+  margin-bottom: var(--spacing-xs);
+  padding: 0;
+}
+
+.radio-group {
+  display: flex;
+  background-color: var(--color-bg-input);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  padding: 0.125rem;
+  gap: 0;
+  overflow: hidden;
+}
+
+.radio-group label {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: calc(var(--border-radius) - 0.125rem);
+  transition: all var(--transition-fast);
+  margin-bottom: 0;
+  background-color: transparent;
+  border: none;
+  position: relative;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.radio-group label:hover {
+  color: var(--color-text);
+}
+
+.radio-group input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.radio-group input[type="radio"]:checked + span {
+  color: var(--color-bg-main);
+}
+
+.radio-group label:has(input[type="radio"]:checked) {
+  background-color: var(--color-primary);
+  color: var(--color-bg-main);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.radio-group label:has(input[type="radio"]:focus-visible) {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.radio-group span {
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  user-select: none;
+  pointer-events: none;
 }
 
 /* Optional: Required field indicator */

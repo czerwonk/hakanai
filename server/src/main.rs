@@ -1,10 +1,12 @@
 mod app_data;
 mod data_store;
+mod hash;
 mod options;
 mod otel;
 mod web_api;
 mod web_static;
 
+use std::collections::HashMap;
 use std::io::Result;
 
 use actix_cors::Cors;
@@ -17,6 +19,7 @@ use tracing::{info, instrument, warn};
 
 use crate::app_data::AppData;
 use crate::data_store::RedisDataStore;
+use crate::hash::hash_string;
 use crate::options::Args;
 
 #[actix_web::main]
@@ -31,7 +34,7 @@ async fn main() -> Result<()> {
         }
     };
 
-    info!("Connecting to Redis at {}", args.redis_dsn);
+    info!("Connecting to Redis");
     let data_store = match RedisDataStore::new(&args.redis_dsn).await {
         Ok(store) => store,
         Err(e) => {
@@ -58,9 +61,14 @@ async fn run_webserver(data_store: RedisDataStore, tokens: Vec<String>, args: Ar
     info!("Starting server on {}:{}", args.listen_address, args.port);
 
     HttpServer::new(move || {
+        let tokens_map: HashMap<String, ()> = tokens
+            .clone()
+            .into_iter()
+            .map(|t| (hash_string(&t), ()))
+            .collect();
         let app_data = AppData {
             data_store: Box::new(data_store.clone()),
-            tokens: tokens.clone(),
+            tokens: tokens_map,
             max_ttl: args.max_ttl,
         };
         App::new()
@@ -84,8 +92,9 @@ async fn run_webserver(data_store: RedisDataStore, tokens: Vec<String>, args: Ar
                     )),
             )
             .route("/s/{id}", web::get().to(get_secret_short))
+            .route("/ready", web::get().to(ready))
             .configure(web_static::configure)
-            .service(web::scope("/api").configure(web_api::configure))
+            .service(web::scope("/api/v1").configure(web_api::configure))
     })
     .bind((args.listen_address, args.port))?
     .run()
@@ -134,4 +143,8 @@ async fn get_secret_short(
         Ok(secret) => HttpResponse::Ok().body(secret),
         Err(e) => e.error_response(),
     }
+}
+
+async fn ready() -> impl Responder {
+    HttpResponse::Ok().body("Ready")
 }

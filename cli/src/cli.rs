@@ -19,7 +19,24 @@ pub struct Args {
 #[derive(Debug, Subcommand)]
 pub enum Command {
     /// Receives an ephemeral secret from the server.
-    Get { link: Url },
+    Get {
+        link: Url,
+
+        #[arg(
+            short,
+            long,
+            env = "HAKANAI_TO_STDOUT",
+            help = "Output the secret to stdout even if it is a file. This is useful for piping the output to other commands."
+        )]
+        to_stdout: bool,
+
+        #[arg(
+            short,
+            long,
+            help = "If set, the secret will be saved to a file. If the secret is a file this filename overrides the filename in the secret."
+        )]
+        filename: Option<String>,
+    },
 
     /// Send a secret to the server.
     /// Content is either read from stdin or from file (if --file is specified).
@@ -58,6 +75,15 @@ pub enum Command {
             value_name = "FILE"
         )]
         file: Option<String>,
+
+        #[arg(short, long, help = "Send the secret as a file.")]
+        as_file: bool,
+
+        #[arg(
+            long,
+            help = "Filename to use for the secret when sending as a file. Can be determined automatically from --file if provided."
+        )]
+        file_name: Option<String>,
     },
 }
 
@@ -73,8 +99,157 @@ mod tests {
             Args::try_parse_from(["hakanai", "get", "https://example.com/secret/abc123"]).unwrap();
 
         match args.command {
-            Command::Get { link } => {
+            Command::Get { link, to_stdout, filename } => {
                 assert_eq!(link.as_str(), "https://example.com/secret/abc123");
+                assert!(!to_stdout);
+                assert_eq!(filename, None);
+            }
+            _ => panic!("Expected Get command"),
+        }
+    }
+
+    #[test]
+    fn test_get_command_with_to_stdout_flag() {
+        let args = Args::try_parse_from([
+            "hakanai",
+            "get",
+            "https://example.com/secret/abc123",
+            "--to-stdout",
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Get { link, to_stdout, filename } => {
+                assert_eq!(link.as_str(), "https://example.com/secret/abc123");
+                assert!(to_stdout);
+                assert_eq!(filename, None);
+            }
+            _ => panic!("Expected Get command"),
+        }
+    }
+
+    #[test]
+    fn test_get_command_with_short_to_stdout_flag() {
+        let args = Args::try_parse_from([
+            "hakanai",
+            "get",
+            "https://example.com/secret/abc123",
+            "-t",
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Get { link, to_stdout, filename } => {
+                assert_eq!(link.as_str(), "https://example.com/secret/abc123");
+                assert!(to_stdout);
+                assert_eq!(filename, None);
+            }
+            _ => panic!("Expected Get command"),
+        }
+    }
+
+    #[test]
+    fn test_get_command_with_filename() {
+        let args = Args::try_parse_from([
+            "hakanai",
+            "get",
+            "https://example.com/secret/abc123",
+            "--filename",
+            "downloaded_secret.txt",
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Get { link, to_stdout, filename } => {
+                assert_eq!(link.as_str(), "https://example.com/secret/abc123");
+                assert!(!to_stdout);
+                assert_eq!(filename, Some("downloaded_secret.txt".to_string()));
+            }
+            _ => panic!("Expected Get command"),
+        }
+    }
+
+    #[test]
+    fn test_get_command_with_short_filename_flag() {
+        let args = Args::try_parse_from([
+            "hakanai",
+            "get",
+            "https://example.com/secret/abc123",
+            "-f",
+            "output.bin",
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Get { link, to_stdout, filename } => {
+                assert_eq!(link.as_str(), "https://example.com/secret/abc123");
+                assert!(!to_stdout);
+                assert_eq!(filename, Some("output.bin".to_string()));
+            }
+            _ => panic!("Expected Get command"),
+        }
+    }
+
+    #[test]
+    fn test_get_command_with_to_stdout_and_filename() {
+        let args = Args::try_parse_from([
+            "hakanai",
+            "get",
+            "https://example.com/secret/abc123",
+            "--to-stdout",
+            "--filename",
+            "ignored.txt",
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Get { link, to_stdout, filename } => {
+                assert_eq!(link.as_str(), "https://example.com/secret/abc123");
+                assert!(to_stdout);
+                assert_eq!(filename, Some("ignored.txt".to_string()));
+            }
+            _ => panic!("Expected Get command"),
+        }
+    }
+
+    #[test]
+    fn test_get_command_with_all_short_flags() {
+        let args = Args::try_parse_from([
+            "hakanai",
+            "get",
+            "https://example.com/secret/abc123",
+            "-t",
+            "-f",
+            "file.dat",
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Get { link, to_stdout, filename } => {
+                assert_eq!(link.as_str(), "https://example.com/secret/abc123");
+                assert!(to_stdout);
+                assert_eq!(filename, Some("file.dat".to_string()));
+            }
+            _ => panic!("Expected Get command"),
+        }
+    }
+
+    #[test]
+    fn test_get_command_with_special_filename() {
+        let args = Args::try_parse_from([
+            "hakanai",
+            "get",
+            "https://example.com/secret/abc123",
+            "--filename",
+            "path/to/file with spaces.txt",
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Get { link, to_stdout, filename } => {
+                assert_eq!(link.as_str(), "https://example.com/secret/abc123");
+                assert!(!to_stdout);
+                assert_eq!(filename, Some("path/to/file with spaces.txt".to_string()));
             }
             _ => panic!("Expected Get command"),
         }
@@ -91,12 +266,7 @@ mod tests {
         .unwrap();
 
         match args.command {
-            Command::Send {
-                server,
-                ttl: _,
-                token: _,
-                file: None,
-            } => {
+            Command::Send { server, .. } => {
                 assert_eq!(server.as_str(), "https://hakanai.routing.rocks/");
             }
             _ => panic!("Expected Send command"),
@@ -108,12 +278,7 @@ mod tests {
         let args = Args::try_parse_from(["hakanai", "send", "--ttl", "12h"]).unwrap();
 
         match args.command {
-            Command::Send {
-                server: _,
-                ttl,
-                token: _,
-                file: None,
-            } => {
+            Command::Send { server: _, ttl, .. } => {
                 assert_eq!(ttl, Duration::from_secs(12 * 60 * 60)); // 12 hours
             }
             _ => panic!("Expected Send command"),
@@ -130,7 +295,7 @@ mod tests {
                 server,
                 ttl: _,
                 token: _,
-                file: None,
+                ..
             } => {
                 assert_eq!(server.as_str(), "https://custom.server.com/");
             }
@@ -166,12 +331,7 @@ mod tests {
             let args = Args::try_parse_from(["hakanai", "send", "--ttl", ttl_str]).unwrap();
 
             match args.command {
-                Command::Send {
-                    server: _,
-                    ttl,
-                    token: _,
-                    file: None,
-                } => {
+                Command::Send { server: _, ttl, .. } => {
                     assert_eq!(ttl, expected_duration, "Failed for TTL: {ttl_str}");
                 }
                 _ => panic!("Expected Send command for TTL: {ttl_str}"),
@@ -210,7 +370,7 @@ mod tests {
                 server: _,
                 ttl: _,
                 token,
-                file: None,
+                ..
             } => {
                 assert_eq!(token, "my-secret-token");
             }
@@ -227,7 +387,7 @@ mod tests {
                 server: _,
                 ttl: _,
                 token,
-                file: None,
+                ..
             } => {
                 assert_eq!(token, "short-token");
             }
@@ -251,14 +411,155 @@ mod tests {
 
         match args.command {
             Command::Send {
-                server,
-                ttl,
-                token,
-                file: None,
+                server, ttl, token, ..
             } => {
                 assert_eq!(server.as_str(), "https://example.com/");
                 assert_eq!(ttl, Duration::from_secs(30 * 60));
                 assert_eq!(token, "test-token");
+            }
+            _ => panic!("Expected Send command"),
+        }
+    }
+
+    #[test]
+    fn test_send_command_with_file() {
+        let args =
+            Args::try_parse_from(["hakanai", "send", "--file", "/path/to/secret.txt"]).unwrap();
+
+        match args.command {
+            Command::Send { file, .. } => {
+                assert_eq!(file, Some("/path/to/secret.txt".to_string()));
+            }
+            _ => panic!("Expected Send command"),
+        }
+    }
+
+    #[test]
+    fn test_send_command_with_short_file_flag() {
+        let args = Args::try_parse_from(["hakanai", "send", "-f", "/tmp/data.bin"]).unwrap();
+
+        match args.command {
+            Command::Send { file, .. } => {
+                assert_eq!(file, Some("/tmp/data.bin".to_string()));
+            }
+            _ => panic!("Expected Send command"),
+        }
+    }
+
+    #[test]
+    fn test_send_command_with_as_file_flag() {
+        let args = Args::try_parse_from(["hakanai", "send", "--as-file"]).unwrap();
+
+        match args.command {
+            Command::Send { as_file, .. } => {
+                assert!(as_file);
+            }
+            _ => panic!("Expected Send command"),
+        }
+    }
+
+    #[test]
+    fn test_send_command_with_short_as_file_flag() {
+        let args = Args::try_parse_from(["hakanai", "send", "-a"]).unwrap();
+
+        match args.command {
+            Command::Send { as_file, .. } => {
+                assert!(as_file);
+            }
+            _ => panic!("Expected Send command"),
+        }
+    }
+
+    #[test]
+    fn test_send_command_without_as_file_flag() {
+        let args = Args::try_parse_from(["hakanai", "send"]).unwrap();
+
+        match args.command {
+            Command::Send { as_file, .. } => {
+                assert!(!as_file);
+            }
+            _ => panic!("Expected Send command"),
+        }
+    }
+
+    #[test]
+    fn test_send_command_with_file_name() {
+        let args =
+            Args::try_parse_from(["hakanai", "send", "--file-name", "custom_name.pdf"]).unwrap();
+
+        match args.command {
+            Command::Send { file_name, .. } => {
+                assert_eq!(file_name, Some("custom_name.pdf".to_string()));
+            }
+            _ => panic!("Expected Send command"),
+        }
+    }
+
+    #[test]
+    fn test_send_command_with_file_and_as_file() {
+        let args = Args::try_parse_from([
+            "hakanai",
+            "send",
+            "--file",
+            "/path/to/document.pdf",
+            "--as-file",
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Send { file, as_file, .. } => {
+                assert_eq!(file, Some("/path/to/document.pdf".to_string()));
+                assert!(as_file);
+            }
+            _ => panic!("Expected Send command"),
+        }
+    }
+
+    #[test]
+    fn test_send_command_with_as_file_and_custom_filename() {
+        let args = Args::try_parse_from([
+            "hakanai",
+            "send",
+            "--as-file",
+            "--file-name",
+            "secret_document.txt",
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Send {
+                as_file, file_name, ..
+            } => {
+                assert!(as_file);
+                assert_eq!(file_name, Some("secret_document.txt".to_string()));
+            }
+            _ => panic!("Expected Send command"),
+        }
+    }
+
+    #[test]
+    fn test_send_command_with_all_file_options() {
+        let args = Args::try_parse_from([
+            "hakanai",
+            "send",
+            "--file",
+            "/home/user/secret.bin",
+            "--as-file",
+            "--file-name",
+            "renamed_secret.bin",
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Send {
+                file,
+                as_file,
+                file_name,
+                ..
+            } => {
+                assert_eq!(file, Some("/home/user/secret.bin".to_string()));
+                assert!(as_file);
+                assert_eq!(file_name, Some("renamed_secret.bin".to_string()));
             }
             _ => panic!("Expected Send command"),
         }

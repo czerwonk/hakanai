@@ -15,18 +15,18 @@ use crate::client::{Client, ClientError};
 /// This struct is responsible for encrypting data before sending and decrypting
 /// it upon reception, ensuring that secrets are transmitted securely.
 pub struct CryptoClient {
-    inner_client: Box<dyn Client>,
+    inner_client: Box<dyn Client<String>>,
 }
 
 impl CryptoClient {
     /// Creates a new instance of `CryptoClient`.
-    pub fn new(inner_client: Box<dyn Client>) -> Self {
+    pub fn new(inner_client: Box<dyn Client<String>>) -> Self {
         CryptoClient { inner_client }
     }
 }
 
 #[async_trait]
-impl Client for CryptoClient {
+impl Client<String> for CryptoClient {
     async fn send_secret(
         &self,
         base_url: Url,
@@ -75,7 +75,7 @@ fn generate_key() -> [u8; 32] {
 }
 
 fn append_key_to_link(url: Url, key: &[u8; 32]) -> Url {
-    let key_base64 = base64::prelude::BASE64_URL_SAFE.encode(key);
+    let key_base64 = base64::prelude::BASE64_URL_SAFE_NO_PAD.encode(key);
 
     let mut link = url.clone();
     link.set_fragment(Some(&key_base64));
@@ -84,7 +84,7 @@ fn append_key_to_link(url: Url, key: &[u8; 32]) -> Url {
 }
 
 fn decrypt(encoded_data: String, key_base64: String) -> Result<String, ClientError> {
-    let key = base64::prelude::BASE64_URL_SAFE
+    let key = base64::prelude::BASE64_URL_SAFE_NO_PAD
         .decode(key_base64)
         .map_err(|e| ClientError::DecryptionError(format!("failed to decode key: {e}")))?;
 
@@ -158,7 +158,7 @@ mod tests {
     }
 
     #[async_trait]
-    impl Client for MockClient {
+    impl Client<String> for MockClient {
         async fn send_secret(
             &self,
             _base_url: Url,
@@ -218,7 +218,7 @@ mod tests {
     #[tokio::test]
     async fn test_receive_secret_invalid_encrypted_data() {
         let key = generate_key();
-        let key_base64 = base64::prelude::BASE64_URL_SAFE.encode(key);
+        let key_base64 = base64::prelude::BASE64_URL_SAFE_NO_PAD.encode(key);
 
         let mock_client = MockClient::new().with_response_data("invalid_base64!@#$".to_string());
         let crypto_client = CryptoClient::new(Box::new(mock_client));
@@ -235,7 +235,7 @@ mod tests {
     #[tokio::test]
     async fn test_receive_secret_payload_too_short() {
         let key = generate_key();
-        let key_base64 = base64::prelude::BASE64_URL_SAFE.encode(key);
+        let key_base64 = base64::prelude::BASE64_URL_SAFE_NO_PAD.encode(key);
 
         // Create a payload that's too short (less than 12 bytes for nonce)
         let short_payload = vec![1, 2, 3, 4, 5];
@@ -274,7 +274,7 @@ mod tests {
             result
                 .fragment()
                 .expect("URL should have a fragment")
-                .contains(&base64::prelude::BASE64_URL_SAFE.encode(key))
+                .contains(&base64::prelude::BASE64_URL_SAFE_NO_PAD.encode(key))
         );
         assert_eq!(result.host_str(), url.host_str());
     }
