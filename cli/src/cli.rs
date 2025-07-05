@@ -19,7 +19,24 @@ pub struct Args {
 #[derive(Debug, Subcommand)]
 pub enum Command {
     /// Receives an ephemeral secret from the server.
-    Get { link: Url },
+    Get {
+        link: Url,
+
+        #[arg(
+            short,
+            long,
+            env = "HAKANAI_TO_STDOUT",
+            help = "Output the secret to stdout even if it is a file. This is useful for piping the output to other commands."
+        )]
+        to_stdout: bool,
+
+        #[arg(
+            short,
+            long,
+            help = "If set, the secret will be saved to a file. If the secret is a file this filename overrides the filename in the secret."
+        )]
+        filename: Option<String>,
+    },
 
     /// Send a secret to the server.
     /// Content is either read from stdin or from file (if --file is specified).
@@ -82,7 +99,7 @@ mod tests {
             Args::try_parse_from(["hakanai", "get", "https://example.com/secret/abc123"]).unwrap();
 
         match args.command {
-            Command::Get { link } => {
+            Command::Get { link, .. } => {
                 assert_eq!(link.as_str(), "https://example.com/secret/abc123");
             }
             _ => panic!("Expected Get command"),
