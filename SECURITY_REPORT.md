@@ -1,225 +1,375 @@
 # Hakanai Security Audit Report
 
-**Date:** July 5, 2025  
-**Auditor:** Security Analysis  
-**Scope:** Complete codebase audit including lib, cli, and server components  
-**Version:** Current main branch (commit 96e9450)
+**Date:** 2025-07-05  
+**Auditor:** Claude Code Security Analysis  
+**Codebase Version:** Latest (feature/secure_file_sharing branch)  
+**Overall Risk Level:** MEDIUM
 
 ## Executive Summary
 
-Hakanai demonstrates strong security practices with a well-implemented zero-knowledge architecture. The cryptographic implementation is sound, input validation is proper, and security headers are correctly configured. Most identified issues are minor hardening opportunities rather than critical vulnerabilities.
+This security audit of the Hakanai one-time secret sharing service reveals a generally well-designed system with strong cryptographic foundations. The zero-knowledge architecture and client-side encryption approach demonstrate good security awareness. However, several implementation vulnerabilities require attention before production deployment.
 
-**Overall Security Grade: B+ (Good)**
+**Key Findings:**
+- 3 High severity vulnerabilities requiring immediate attention
+- 4 Medium severity issues that should be addressed soon
+- 4 Low severity improvements for enhanced security posture
+- Strong cryptographic implementation with AES-256-GCM
+- Good use of Rust's memory safety features
 
 ## Vulnerability Summary
 
-| Severity | Count | Description |
-|----------|--------|-------------|
-| Critical | 0 | No critical vulnerabilities identified |
-| High | 0 | No high-severity vulnerabilities identified |
-| Medium | 1 | Missing rate limiting implementation |
-| Low | 2 | Minor hardening opportunities |
-
-## Detailed Findings
-
-### Medium Severity Issues
-
-#### M1: Missing Rate Limiting Protection
-**File:** `server/src/main.rs`  
-**Severity:** Medium  
-**Description:** The server lacks built-in rate limiting mechanisms, making it vulnerable to DoS attacks through request flooding.
-
-**Impact:** 
-- Potential service disruption from excessive requests
-- Resource exhaustion attacks
-- Abuse of the secret sharing service
-
-**Recommendation:**
-```rust
-// Add to server configuration
-use actix_web_httpauth::middleware::HttpAuthentication;
-use actix_governor::{Governor, GovernorConfigBuilder};
-
-// Example rate limiting configuration
-let governor_conf = GovernorConfigBuilder::default()
-    .per_second(10)  // 10 requests per second
-    .burst_size(20)  // Allow bursts up to 20 requests
-    .finish()
-    .unwrap();
-```
-
-**Alternative:** Document that rate limiting must be implemented at the reverse proxy level (nginx, Cloudflare, etc.)
-
-### Low Severity Issues
-
-#### L1: Missing Legacy XSS Protection Header
-**File:** `server/src/main.rs:43-50`  
-**Severity:** Low  
-**Description:** Missing `X-XSS-Protection` header for legacy browser support.
-
-**Impact:** 
-- Reduced XSS protection on older browsers
-- Not a significant risk due to proper CSP implementation
-
-**Recommendation:**
-```rust
-// Add to security headers middleware
-.insert(header::HeaderName::from_static("x-xss-protection"), 
-        header::HeaderValue::from_static("1; mode=block"))
-```
-
-#### L2: Limited Request Size Validation
-**File:** `server/src/web_api.rs`  
-**Severity:** Low  
-**Description:** Request size validation only covers upload payload, not total request size.
-
-**Impact:** 
-- Potential memory exhaustion from large headers
-- Limited DoS protection
-
-**Recommendation:**
-```rust
-// Add to Actix configuration
-HttpServer::new(|| {
-    App::new()
-        .app_data(web::PayloadConfig::new(10 * 1024 * 1024)) // 10MB limit
-        .app_data(web::JsonConfig::default().limit(1024 * 1024)) // 1MB JSON limit
-})
-```
-
-## Security Strengths
-
-### Cryptographic Implementation ✅
-- **AES-256-GCM** encryption with proper authenticated encryption
-- **Cryptographically secure random** nonce generation using `OsRng`
-- **Proper key management** with 256-bit keys
-- **Secure base64 encoding** schemes for different use cases
-- **No hardcoded secrets** or cryptographic keys
-
-### Authentication & Authorization ✅
-- **Constant-time token comparison** using `subtle::ConstantTimeEq`
-- **Bearer token authentication** with proper parsing
-- **Configurable token whitelist** for access control
-- **Proper HTTP status codes** (401/403) for auth failures
-
-### Input Validation ✅
-- **UUID validation** for secret identifiers
-- **TTL validation** with configurable limits
-- **Base64 decoding** with proper error handling
-- **URL parsing** with security considerations
-
-### Web Security Headers ✅
-- **X-Frame-Options: DENY** (clickjacking protection)
-- **X-Content-Type-Options: nosniff** (MIME sniffing protection)
-- **Strict-Transport-Security** with includeSubDomains
-- **Content Security Policy** in HTML templates
-- **Proper CORS configuration** with origin whitelisting
-
-### Memory Safety ✅
-- **No unsafe Rust code blocks** found
-- **Proper error handling** without information leakage
-- **Buffer overflow protection** via Rust's memory safety
-- **Use-after-free prevention** via Rust's ownership system
-
-## Architecture Security Review
-
-### Zero-Knowledge Design ✅
-- All encryption/decryption occurs client-side
-- Server only stores encrypted blobs with UUIDs
-- No plaintext data ever touches the server
-- Keys are never transmitted to the server
-
-### Client-Side Security ✅
-- **JavaScript implementation** mirrors Rust crypto correctly
-- **No eval() or dangerous functions** used
-- **Proper DOM manipulation** using `textContent` instead of `innerHTML`
-- **Base64 encoding consistency** between clients
-
-### File Handling Security ✅
-- **Size limits** configurable (default 10MB)
-- **Base64 encoding** prevents binary injection
-- **No direct filesystem access** (everything via Redis)
-- **Proper filename handling** in both CLI and web clients
-
-## Recommendations by Priority
-
-### High Priority (Implement Soon)
-1. **Document Rate Limiting Requirements**
-   - Add clear documentation that rate limiting must be implemented at proxy level
-   - Provide nginx/Apache configuration examples
-   - Consider adding basic built-in rate limiting
-
-2. **Add Security Monitoring**
-   - Log authentication failures
-   - Monitor for unusual request patterns
-   - Set up alerts for security events
-
-### Medium Priority (Consider for Future)
-1. **Enhanced Request Validation**
-   - Add granular request size limits
-   - Implement connection limits
-   - Add request timeout configurations
-
-2. **Dependency Security**
-   - Set up regular `cargo audit` in CI/CD
-   - Monitor for security advisories
-   - Keep dependencies updated
-
-### Low Priority (Nice to Have)
-1. **Additional Security Headers**
-   - Add `X-XSS-Protection` for legacy browsers
-   - Consider `Referrer-Policy` header
-   - Add `Feature-Policy` restrictions
-
-2. **Enhanced Logging**
-   - Add security event logging
-   - Include request metadata in logs
-   - Implement log rotation and retention
-
-## Security Testing Recommendations
-
-1. **Automated Security Testing**
-   - Integrate `cargo audit` into CI/CD pipeline
-   - Add fuzzing tests for input validation
-   - Set up dependency vulnerability scanning
-
-2. **Manual Testing**
-   - Penetration testing of deployed instances
-   - Load testing to validate DoS protection
-   - Browser compatibility testing for XSS protection
-
-3. **Code Review Process**
-   - Security-focused code reviews for crypto changes
-   - Review all authentication/authorization changes
-   - Validate all input handling modifications
-
-## Compliance and Standards
-
-- **OWASP Top 10 (2021):** Addresses most common vulnerabilities
-- **Cryptographic Standards:** Uses NIST-approved algorithms
-- **Memory Safety:** Rust provides memory safety guarantees
-- **Zero-Knowledge Principles:** Implements proper zero-knowledge architecture
-
-## Conclusion
-
-The Hakanai codebase demonstrates excellent security practices with a robust zero-knowledge architecture. The cryptographic implementation is sound, and the application follows security best practices. The identified issues are primarily operational hardening opportunities rather than code-level vulnerabilities.
-
-**The codebase is production-ready from a security perspective**, with the understanding that it should be deployed behind a reverse proxy that handles rate limiting and additional security measures as documented.
-
-## Files Audited
-
-- `lib/src/crypto.rs` - Cryptographic implementation
-- `lib/src/client.rs` - Client abstractions
-- `lib/src/models.rs` - Data models
-- `server/src/main.rs` - Server configuration
-- `server/src/web_api.rs` - API endpoints and authentication
-- `server/src/data_store.rs` - Data storage abstraction
-- `cli/src/main.rs` - CLI entry point
-- `cli/src/send.rs` - File handling
-- `server/src/includes/*.html` - HTML templates
-- `server/src/includes/*.js` - Client-side JavaScript
-- `Cargo.toml` files - Dependencies and configurations
+| Severity | Count | Status |
+|----------|--------|--------|
+| Critical | 0 | ✅ None found |
+| High | 3 | ⚠️ Immediate action required |
+| Medium | 4 | 🔄 Address soon |
+| Low | 4 | 📋 Future improvements |
 
 ---
 
-*This report was generated through comprehensive static analysis and manual code review. Regular security audits are recommended as the codebase evolves.*
+## HIGH SEVERITY VULNERABILITIES
+
+### 1. Authentication Token Storage in Plain Text
+**Risk Level:** HIGH  
+**Location:** `server/src/web_api.rs:111`  
+**CWE:** CWE-256 (Unprotected Storage of Credentials)
+
+**Issue:**
+```rust
+let tokens_map: HashMap<String, String> = tokens
+    .clone()
+    .into_iter()
+    .map(|t| (hash_string(&t), t.to_string()))  // Original token stored!
+    .collect();
+```
+
+Tokens are hashed but the original tokens are stored alongside their hashes in the AppData struct, creating unnecessary exposure in memory.
+
+**Impact:** If memory is compromised through debugging, crash dumps, or memory attacks, plaintext tokens are exposed.
+
+**Fix:**
+```rust
+let tokens_map: HashMap<String, ()> = tokens
+    .clone()
+    .into_iter()
+    .map(|t| (hash_string(&t), ()))  // Only store hash
+    .collect();
+```
+
+**Priority:** IMMEDIATE
+
+---
+
+### 2. Missing Input Size Validation in Cryptographic Operations
+**Risk Level:** HIGH  
+**Location:** `lib/src/crypto.rs:86-115`  
+**CWE:** CWE-770 (Allocation of Resources Without Limits)
+
+**Issue:**
+The decrypt function doesn't validate the size of encrypted data before processing, potentially allowing resource exhaustion attacks.
+
+**Impact:** Large payloads could cause memory exhaustion, DoS, or system instability.
+
+**Fix:**
+```rust
+pub fn decrypt(encrypted_data: &str, key: &[u8]) -> Result<String, CryptoError> {
+    const MAX_PAYLOAD_SIZE: usize = 50 * 1024 * 1024; // 50MB limit
+    
+    if encrypted_data.len() > MAX_PAYLOAD_SIZE {
+        return Err(CryptoError::PayloadTooLarge);
+    }
+    
+    // ... rest of function
+}
+```
+
+**Priority:** IMMEDIATE
+
+---
+
+### 3. Client-Side File Type Restrictions Easily Bypassed
+**Risk Level:** HIGH  
+**Location:** `server/src/includes/create-secret.js:94-99`  
+**CWE:** CWE-434 (Unrestricted Upload of File with Dangerous Type)
+
+**Issue:**
+File validation is only client-side and can be bypassed by attackers with basic technical knowledge.
+
+**Impact:** Malicious files can be uploaded by bypassing client-side checks, potentially leading to stored XSS or other attacks.
+
+**Fix:**
+1. Implement server-side file type validation
+2. Add content-type sniffing protection
+3. Scan file contents for malicious patterns
+
+**Priority:** IMMEDIATE
+
+---
+
+## MEDIUM SEVERITY VULNERABILITIES
+
+### 4. Weak Content Security Policy
+**Risk Level:** MEDIUM  
+**Location:** `server/src/includes/get-secret.html:12-14`  
+**CWE:** CWE-1021 (Improper Restriction of Rendered UI Layers)
+
+**Issue:**
+CSP allows `upgrade-insecure-requests` but doesn't enforce `https-only` in strict contexts.
+
+**Impact:** Mixed content attacks in certain deployment scenarios.
+
+**Fix:**
+```html
+content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; block-all-mixed-content; upgrade-insecure-requests"
+```
+
+**Priority:** SHORT TERM
+
+---
+
+### 5. Path Traversal in File Download
+**Risk Level:** MEDIUM  
+**Location:** `cli/src/get.rs:41-62`  
+**CWE:** CWE-22 (Path Traversal)
+
+**Issue:**
+File path construction doesn't adequately validate against path traversal attacks.
+
+**Impact:** Potential file system traversal when downloading files.
+
+**Fix:**
+```rust
+// Sanitize filename to prevent path traversal
+let sanitized_filename = filename
+    .chars()
+    .filter(|c| c.is_alphanumeric() || *c == '.' || *c == '_' || *c == '-')
+    .collect::<String>();
+    
+let mut path = PathBuf::from("./downloads");
+path.push(sanitized_filename);
+```
+
+**Priority:** SHORT TERM
+
+---
+
+### 6. Timing Attack Vulnerability in Token Validation
+**Risk Level:** MEDIUM  
+**Location:** `server/src/web_api.rs:111-116`  
+**CWE:** CWE-208 (Observable Timing Discrepancy)
+
+**Issue:**
+Token comparison using `contains_key` may be vulnerable to timing attacks.
+
+**Impact:** Possible timing-based token enumeration.
+
+**Fix:**
+```rust
+use subtle::ConstantTimeEq;
+
+// Use constant-time comparison
+let token_hash = hash_string(token);
+let mut found = false;
+for stored_hash in tokens.keys() {
+    if token_hash.as_bytes().ct_eq(stored_hash.as_bytes()).into() {
+        found = true;
+        break;
+    }
+}
+```
+
+**Priority:** SHORT TERM
+
+---
+
+### 7. Information Disclosure in Error Messages
+**Risk Level:** MEDIUM  
+**Location:** `lib/src/web.rs:50-56`  
+**CWE:** CWE-209 (Information Exposure Through Error Messages)
+
+**Issue:**
+Error responses include detailed server information that could aid attackers.
+
+**Impact:** Potential information leakage about server internals.
+
+**Fix:**
+```rust
+// Sanitize error messages
+let sanitized_error = match resp.status() {
+    StatusCode::NOT_FOUND => "Resource not found".to_string(),
+    StatusCode::UNAUTHORIZED => "Authentication required".to_string(),
+    StatusCode::INTERNAL_SERVER_ERROR => "Server error".to_string(),
+    _ => "Request failed".to_string(),
+};
+```
+
+**Priority:** SHORT TERM
+
+---
+
+## LOW SEVERITY VULNERABILITIES
+
+### 8. Missing Rate Limiting
+**Risk Level:** LOW  
+**Location:** Throughout server endpoints  
+**CWE:** CWE-770 (Allocation of Resources Without Limits)
+
+**Issue:** No rate limiting implemented for secret creation/retrieval.
+
+**Impact:** Potential DoS through rapid requests.
+
+**Fix:** Implement rate limiting middleware using actix-web-rate-limit or similar.
+
+**Priority:** FUTURE
+
+---
+
+### 9. Predictable File Naming
+**Risk Level:** LOW  
+**Location:** `cli/src/get.rs:48-50`  
+**CWE:** CWE-330 (Use of Insufficiently Random Values)
+
+**Issue:** Timestamp-based file naming is predictable.
+
+**Impact:** Predictable file names could aid in attacks.
+
+**Fix:**
+```rust
+use rand::Rng;
+let random_suffix: String = rand::thread_rng()
+    .sample_iter(&Alphanumeric)
+    .take(8)
+    .map(char::from)
+    .collect();
+let filename = format!("{}.{}", base_filename, random_suffix);
+```
+
+**Priority:** FUTURE
+
+---
+
+### 10. JavaScript Prototype Pollution Risk
+**Risk Level:** LOW  
+**Location:** `server/src/includes/hakanai-client.js:207-208`  
+**CWE:** CWE-1321 (Improperly Controlled Modification of Object Prototype)
+
+**Issue:** JSON parsing without validation could allow prototype pollution.
+
+**Impact:** Potential prototype pollution if malicious JSON is crafted.
+
+**Fix:**
+```javascript
+const payloadJson = await this.decrypt(encryptedData, key);
+const parsed = JSON.parse(payloadJson);
+// Validate structure
+if (typeof parsed !== 'object' || parsed === null) {
+    throw new Error('Invalid payload structure');
+}
+return parsed;
+```
+
+**Priority:** FUTURE
+
+---
+
+### 11. Missing CSRF Protection
+**Risk Level:** LOW  
+**Location:** Server endpoints  
+**CWE:** CWE-352 (Cross-Site Request Forgery)
+
+**Issue:** No CSRF tokens implemented for state-changing operations.
+
+**Impact:** Cross-site request forgery attacks possible.
+
+**Fix:** Implement CSRF protection for POST endpoints.
+
+**Priority:** FUTURE
+
+---
+
+## CRYPTOGRAPHIC SECURITY ANALYSIS
+
+### ✅ Strengths
+- **AES-256-GCM:** Proper use of authenticated encryption
+- **Secure Random Generation:** Uses `OsRng` for nonce generation
+- **Zero-Knowledge Architecture:** Client-side encryption ensures server never sees plaintext
+- **Key Management:** Proper key derivation and URL fragment storage
+- **Base64 Encoding:** Correctly differentiated between standard and URL-safe variants
+
+### ⚠️ Areas for Improvement
+- **Key Stretching:** Consider PBKDF2/scrypt for user-provided passwords
+- **Forward Secrecy:** No mechanism for key rotation
+- **Nonce Reuse Protection:** Could be strengthened with additional checks
+
+---
+
+## DEPENDENCY SECURITY
+
+**Status:** GOOD  
+**Analysis:** Dependencies are generally secure and well-maintained:
+- `tokio`, `actix-web`, `serde` have good security records
+- Regular updates recommended
+- Consider integrating `cargo audit` in CI/CD pipeline
+
+---
+
+## RECOMMENDATIONS BY PRIORITY
+
+### 🚨 IMMEDIATE (High Priority)
+1. **Fix token storage** - Only store token hashes, not plaintext
+2. **Add server-side file validation** - Implement proper file type checking
+3. **Implement payload size limits** - Prevent resource exhaustion
+4. **Add constant-time token comparison** - Prevent timing attacks
+
+### 🔄 SHORT TERM (Medium Priority)
+1. **Implement rate limiting** - Prevent DoS attacks
+2. **Strengthen CSP policies** - Add `block-all-mixed-content`
+3. **Add file path traversal protection** - Sanitize file paths
+4. **Sanitize error messages** - Prevent information disclosure
+
+### 📋 LONG TERM (Low Priority)
+1. **Add CSRF protection** - Implement CSRF tokens
+2. **Implement audit logging** - Log security events
+3. **Add automated security testing** - Integrate security tests in CI/CD
+4. **Consider key rotation** - Implement forward secrecy mechanism
+
+---
+
+## TESTING RECOMMENDATIONS
+
+### Security Testing Checklist
+- [ ] Penetration testing for authentication bypass
+- [ ] Fuzzing for input validation vulnerabilities
+- [ ] Timing attack testing for token validation
+- [ ] File upload security testing
+- [ ] Client-side security testing for XSS
+- [ ] Network security testing for TLS configuration
+
+### Automated Security Integration
+- [ ] `cargo audit` in CI/CD pipeline
+- [ ] SAST (Static Application Security Testing) tools
+- [ ] Dependency vulnerability scanning
+- [ ] Regular security regression testing
+
+---
+
+## CONCLUSION
+
+The Hakanai codebase demonstrates strong security fundamentals with its zero-knowledge architecture and proper cryptographic implementation. The use of Rust provides additional memory safety guarantees. However, several implementation vulnerabilities require attention:
+
+**Immediate actions needed:**
+1. Fix token storage mechanism
+2. Implement server-side validation
+3. Add resource limits
+
+**Overall Assessment:** With the recommended fixes, Hakanai can achieve a strong security posture suitable for production deployment. The core cryptographic design is sound, making this a solid foundation for a secure secret sharing service.
+
+**Next Steps:**
+1. Address high severity vulnerabilities immediately
+2. Implement security testing pipeline
+3. Regular security reviews and updates
+4. Consider third-party security audit for production deployment
+
+---
+
+*This report was generated through automated code analysis. Manual penetration testing and expert review are recommended for production deployment.*
