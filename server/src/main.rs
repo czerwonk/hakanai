@@ -31,7 +31,7 @@ async fn main() -> Result<()> {
         }
     };
 
-    info!("Connecting to Redis at {}", args.redis_dsn);
+    info!("Connecting to Redis");
     let data_store = match RedisDataStore::new(&args.redis_dsn).await {
         Ok(store) => store,
         Err(e) => {
