@@ -106,7 +106,7 @@ mod tests {
 
         let secret_id = Uuid::new_v4();
         let _m = server
-            .mock("POST", "/api/secret")
+            .mock("POST", "/api/v1/secret")
             .with_status(200)
             .with_header("content-type", "application/json")
             .with_body(format!(r#"{{"id":"{secret_id}"}}"#))
@@ -137,7 +137,7 @@ mod tests {
         let client = WebClient::new();
 
         let _m = server
-            .mock("POST", "/api/secret")
+            .mock("POST", "/api/v1/secret")
             .with_status(500)
             .create_async()
             .await;
@@ -203,7 +203,7 @@ mod tests {
         let client = WebClient::new();
 
         let _m = server
-            .mock("POST", "/api/secret")
+            .mock("POST", "/api/v1/secret")
             .with_status(200)
             .with_header("content-type", "application/json")
             .with_body(r#"{"invalid": "json"}"#)
