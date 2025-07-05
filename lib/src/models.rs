@@ -15,20 +15,6 @@ pub struct Payload {
 }
 
 impl Payload {
-    /// Creates a new `Payload` instance from raw text data.
-    ///
-    /// # Arguments
-    ///
-    /// * `text` - The raw text data of the secret.
-    pub fn from_text(text: &str) -> Self {
-        use base64::Engine;
-        let data = base64::prelude::BASE64_STANDARD.encode(text.as_bytes());
-        Self {
-            data,
-            filename: None,
-        }
-    }
-
     /// Creates a new `Payload` instance from raw binary data.
     ///
     /// # Arguments
@@ -45,12 +31,6 @@ impl Payload {
     pub fn decode_bytes(&self) -> Result<Vec<u8>, base64::DecodeError> {
         use base64::Engine;
         base64::prelude::BASE64_STANDARD.decode(&self.data)
-    }
-
-    /// Decodes the base64 data and returns it as a UTF-8 string.
-    pub fn decode_text(&self) -> Result<String, Box<dyn std::error::Error>> {
-        let bytes = self.decode_bytes()?;
-        Ok(String::from_utf8(bytes)?)
     }
 }
 
