@@ -12,7 +12,7 @@ pub async fn get(link: url::Url) -> Result<()> {
         .map_err(|e| anyhow!(e))?;
 
     let bytes = payload.decode_bytes()?;
-    std::io::stdout().write(&bytes)?;
+    std::io::stdout().write_all(&bytes)?;
 
     Ok(())
 }
