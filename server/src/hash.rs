@@ -3,7 +3,7 @@ use sha2::{Digest, Sha256};
 /// Hashes a given string using SHA-256 and returns the hexadecimal representation.
 pub fn hash_string(input: &str) -> String {
     let token_hash = Sha256::digest(input.as_bytes());
-    format!("{:x}", token_hash)
+    format!("{token_hash:x}")
 }
 
 #[cfg(test)]
