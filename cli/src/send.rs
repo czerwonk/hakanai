@@ -8,6 +8,8 @@ use hakanai_lib::client;
 use hakanai_lib::client::Client;
 use hakanai_lib::models::Payload;
 
+const MAX_SECRET_SIZE_MB: usize = 10; // 10 MB
+
 pub async fn send(
     server: url::Url,
     ttl: Duration,
@@ -21,6 +23,12 @@ pub async fn send(
     if bytes.is_empty() {
         return Err(anyhow!(
             "No secret provided. Please input a secret to send."
+        ));
+    }
+
+    if bytes.len() > MAX_SECRET_SIZE_MB * 1024 * 1024 {
+        return Err(anyhow!(
+            "Secret size exceeds the maximum limit of {MAX_SECRET_SIZE_MB} megabytes."
         ));
     }
 
