@@ -1,13 +1,14 @@
+use std::collections::HashMap;
 use std::time::Duration;
 
 use actix_web::{HttpRequest, Result, error, get, post, web};
-use subtle::ConstantTimeEq;
 use tracing::{Span, error, instrument};
 use uuid::Uuid;
 
 use hakanai_lib::models::{PostSecretRequest, PostSecretResponse};
 
 use crate::app_data::AppData;
+use crate::hash::hash_string;
 
 /// Configures the Actix Web services for the application.
 ///
@@ -93,7 +94,7 @@ fn ensure_ttl_is_valid(expires_in: Duration, max_ttl: Duration) -> Result<()> {
 }
 
 #[instrument(skip(req, tokens))]
-fn ensure_is_authorized(req: &HttpRequest, tokens: &[String]) -> Result<()> {
+fn ensure_is_authorized(req: &HttpRequest, tokens: &HashMap<String, String>) -> Result<()> {
     if tokens.is_empty() {
         // no tokens required
         return Ok(());
@@ -107,10 +108,9 @@ fn ensure_is_authorized(req: &HttpRequest, tokens: &[String]) -> Result<()> {
         .trim_start_matches("Bearer ")
         .trim();
 
-    for valid_token in tokens {
-        if valid_token.as_bytes().ct_eq(token.as_bytes()).into() {
-            return Ok(());
-        }
+    let token_hash = hash_string(token);
+    if tokens.contains_key(&token_hash) {
+        return Ok(());
     }
 
     Err(error::ErrorForbidden("Forbidden: Invalid token"))
@@ -191,7 +191,7 @@ mod tests {
         let mock_store = MockDataStore::new().with_get_result(Some("test_secret".to_string()));
         let app_data = AppData {
             data_store: Box::new(mock_store),
-            tokens: vec![],
+            tokens: HashMap::new(),
             max_ttl: Duration::from_secs(7200),
         };
 
@@ -218,7 +218,7 @@ mod tests {
         let mock_store = MockDataStore::new().with_get_result(None);
         let app_data = AppData {
             data_store: Box::new(mock_store),
-            tokens: vec![],
+            tokens: HashMap::new(),
             max_ttl: Duration::from_secs(7200),
         };
 
@@ -242,7 +242,7 @@ mod tests {
         let mock_store = MockDataStore::new().with_get_error();
         let app_data = AppData {
             data_store: Box::new(mock_store),
-            tokens: vec![],
+            tokens: HashMap::new(),
             max_ttl: Duration::from_secs(7200),
         };
 
@@ -267,7 +267,7 @@ mod tests {
         let stored_data = mock_store.stored_data.clone();
         let app_data = AppData {
             data_store: Box::new(mock_store),
-            tokens: vec![],
+            tokens: HashMap::new(),
             max_ttl: Duration::from_secs(7200),
         };
 
@@ -305,7 +305,7 @@ mod tests {
         let mock_store = MockDataStore::new().with_put_error();
         let app_data = AppData {
             data_store: Box::new(mock_store),
-            tokens: vec![],
+            tokens: HashMap::new(),
             max_ttl: Duration::from_secs(7200),
         };
 
@@ -336,7 +336,10 @@ mod tests {
         let stored_data = mock_store.stored_data.clone();
         let app_data = AppData {
             data_store: Box::new(mock_store),
-            tokens: vec!["valid_token_123".to_string()],
+            tokens: vec!["valid_token_123".to_string()]
+                .into_iter()
+                .map(|t| (hash_string(&t), t.to_string()))
+                .collect(),
             max_ttl: Duration::from_secs(7200),
         };
 
@@ -373,7 +376,10 @@ mod tests {
         let mock_store = MockDataStore::new();
         let app_data = AppData {
             data_store: Box::new(mock_store),
-            tokens: vec!["valid_token_123".to_string()],
+            tokens: vec!["valid_token_123".to_string()]
+                .into_iter()
+                .map(|t| (hash_string(&t), t.to_string()))
+                .collect(),
             max_ttl: Duration::from_secs(7200),
         };
 
@@ -403,7 +409,10 @@ mod tests {
         let mock_store = MockDataStore::new();
         let app_data = AppData {
             data_store: Box::new(mock_store),
-            tokens: vec!["valid_token_123".to_string()],
+            tokens: vec!["valid_token_123".to_string()]
+                .into_iter()
+                .map(|t| (hash_string(&t), t.to_string()))
+                .collect(),
             max_ttl: Duration::from_secs(7200),
         };
 
@@ -436,7 +445,7 @@ mod tests {
         let max_ttl = Duration::from_secs(30);
         let app_data = AppData {
             data_store: Box::new(mock_store),
-            tokens: vec![],
+            tokens: HashMap::new(),
             max_ttl,
         };
 

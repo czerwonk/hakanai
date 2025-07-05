@@ -1,10 +1,12 @@
 mod app_data;
 mod data_store;
+mod hash;
 mod options;
 mod otel;
 mod web_api;
 mod web_static;
 
+use std::collections::HashMap;
 use std::io::Result;
 
 use actix_cors::Cors;
@@ -17,6 +19,7 @@ use tracing::{info, instrument, warn};
 
 use crate::app_data::AppData;
 use crate::data_store::RedisDataStore;
+use crate::hash::hash_string;
 use crate::options::Args;
 
 #[actix_web::main]
@@ -58,9 +61,14 @@ async fn run_webserver(data_store: RedisDataStore, tokens: Vec<String>, args: Ar
     info!("Starting server on {}:{}", args.listen_address, args.port);
 
     HttpServer::new(move || {
+        let tokens_map: HashMap<String, String> = tokens
+            .clone()
+            .into_iter()
+            .map(|t| (hash_string(&t), t.to_string()))
+            .collect();
         let app_data = AppData {
             data_store: Box::new(data_store.clone()),
-            tokens: tokens.clone(),
+            tokens: tokens_map,
             max_ttl: args.max_ttl,
         };
         App::new()
