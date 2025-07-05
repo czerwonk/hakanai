@@ -52,6 +52,7 @@
       "button.copy": "Copy",
       "button.copied": "Copied!",
       "button.download": "Download",
+      "button.createAnother": "Create Another",
 
       // Messages
       "msg.creating": "Creating secret...",
@@ -155,6 +156,7 @@
       "button.copy": "Kopieren",
       "button.copied": "Kopiert!",
       "button.download": "Herunterladen",
+      "button.createAnother": "Neues Secret erstellen",
 
       // Messages
       "msg.creating": "Secret wird erstellt...",

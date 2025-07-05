@@ -160,6 +160,12 @@ function showSuccess(secretUrl) {
 
   resultDiv.innerHTML = "";
 
+  // Hide the form elements after successful creation
+  const form = document.getElementById("create-secret-form");
+  if (form) {
+    form.style.display = "none";
+  }
+
   // Create elements programmatically to avoid XSS
   const title = document.createElement("h3");
   title.textContent = UI_STRINGS.SUCCESS_TITLE;
@@ -198,6 +204,33 @@ function showSuccess(secretUrl) {
   });
   buttonsContainer.appendChild(copyBtn);
 
+  const createAnotherBtn = document.createElement("button");
+  createAnotherBtn.className = "copy-button";
+  createAnotherBtn.type = "button";
+  createAnotherBtn.textContent =
+    i18n.t("button.createAnother") || "Create Another";
+  createAnotherBtn.setAttribute("aria-label", "Create another secret");
+  createAnotherBtn.addEventListener("click", function () {
+    // Show the form again and clear result
+    const form = document.getElementById("create-secret-form");
+    const resultDiv = document.getElementById("result");
+    if (form) {
+      form.style.display = "block";
+    }
+    resultDiv.innerHTML = "";
+    resultDiv.className = "";
+
+    // Focus on the first input
+    const textRadio = document.getElementById("textRadio");
+    const secretText = document.getElementById("secretText");
+    if (textRadio && secretText) {
+      textRadio.checked = true;
+      toggleSecretType();
+      secretText.focus();
+    }
+  });
+  buttonsContainer.appendChild(createAnotherBtn);
+
   container.appendChild(buttonsContainer);
 
   resultDiv.appendChild(container);
@@ -224,6 +257,12 @@ function showError(message) {
 
   // Clear existing content
   resultDiv.innerHTML = "";
+
+  // Ensure form is visible for retry
+  const form = document.getElementById("create-secret-form");
+  if (form) {
+    form.style.display = "block";
+  }
 
   // Create elements programmatically to avoid XSS
   const title = document.createElement("h3");
