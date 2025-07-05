@@ -46,7 +46,7 @@ const FILE_LIMITS = {
   ALLOWED_TYPES: [
     // Allow all file types for maximum flexibility
     // Security is handled by server-side validation and client-side encryption
-  ]
+  ],
 };
 
 // Extract base URL from current location or use a default
@@ -102,7 +102,7 @@ async function createSecret() {
       const fileContent = await readFileAsBase64(file);
       payload = {
         data: fileContent,
-        filename: fileName
+        filename: fileName,
       };
     } catch (error) {
       showError(UI_STRINGS.FILE_READ_ERROR);
@@ -320,38 +320,38 @@ function announceToScreenReader(message) {
 function sanitizeFileName(fileName) {
   // Remove potentially dangerous characters and limit length
   const sanitized = fileName
-    .replace(/[<>:"/\\|?*\x00-\x1f]/g, '_') // Replace dangerous chars
-    .replace(/^\.+/, '') // Remove leading dots
+    .replace(/[<>:"/\\|?*\x00-\x1f]/g, "_") // Replace dangerous chars
+    .replace(/^\.+/, "") // Remove leading dots
     .substring(0, 255); // Limit length
-  
+
   return sanitized.length > 0 ? sanitized : null;
 }
 
 function readFileAsBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = function (e) {
       try {
         // Get base64 content without the data URL prefix
-        const base64Content = e.target.result.split(',')[1];
+        const base64Content = e.target.result.split(",")[1];
         resolve(base64Content);
       } catch (error) {
         reject(error);
       }
     };
-    reader.onerror = function() {
-      reject(new Error('Failed to read file'));
+    reader.onerror = function () {
+      reject(new Error("Failed to read file"));
     };
     reader.readAsDataURL(file);
   });
 }
 
 function formatFileSize(bytes) {
-  if (bytes === 0) return '0 Bytes';
+  if (bytes === 0) return "0 Bytes";
   const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const sizes = ["Bytes", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 }
 
 function updateFileInfo() {
@@ -359,15 +359,19 @@ function updateFileInfo() {
   const fileInfoDiv = document.getElementById("fileInfo");
   const fileNameSpan = document.getElementById("fileName");
   const fileSizeSpan = document.getElementById("fileSize");
+  const radioGroup = document.querySelector(".input-group:first-child");
+  const textInputGroup = document.getElementById("textInputGroup");
+  const fileInputGroup = document.getElementById("fileInputGroup");
+  const fileRadio = document.getElementById("fileRadio");
 
   if (fileInput.files.length > 0) {
     const file = fileInput.files[0];
     const sanitizedName = sanitizeFileName(file.name);
-    
-    fileNameSpan.textContent = sanitizedName || 'Invalid filename';
+
+    fileNameSpan.textContent = sanitizedName || "Invalid filename";
     fileSizeSpan.textContent = formatFileSize(file.size);
     fileInfoDiv.style.display = "block";
-    
+
     // Show warning if file is too large
     if (file.size > FILE_LIMITS.MAX_SIZE) {
       fileInfoDiv.className = "file-info error";
@@ -375,8 +379,24 @@ function updateFileInfo() {
     } else {
       fileInfoDiv.className = "file-info";
     }
+
+    // Hide radio group and text input when file is selected
+    radioGroup.style.display = "none";
+    textInputGroup.style.display = "none";
+    fileInputGroup.style.display = "block";
+
+    // Select file radio button
+    fileRadio.checked = true;
   } else {
     fileInfoDiv.style.display = "none";
+
+    // Show radio group when no file is selected
+    radioGroup.style.display = "block";
+
+    // Reset to text mode when file is cleared
+    const textRadio = document.getElementById("textRadio");
+    textRadio.checked = true;
+    toggleSecretType();
   }
 }
 
@@ -421,6 +441,9 @@ document.addEventListener("DOMContentLoaded", function () {
   if (textRadio && fileRadio) {
     textRadio.addEventListener("change", toggleSecretType);
     fileRadio.addEventListener("change", toggleSecretType);
+
+    // Initialize with correct state - text mode by default
+    toggleSecretType();
   }
 
   // Set up file input handler
@@ -428,4 +451,3 @@ document.addEventListener("DOMContentLoaded", function () {
     fileInput.addEventListener("change", updateFileInfo);
   }
 });
-

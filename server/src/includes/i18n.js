@@ -31,7 +31,8 @@
       "helper.url": "The decryption key after # is never sent to the server",
       "helper.secret":
         "Your message will be encrypted before leaving your browser",
-      "helper.fileSelect": "Maximum file size: 10MB. File will be encrypted before upload.",
+      "helper.fileSelect":
+        "Maximum file size: 10MB. File will be encrypted before upload.",
       "helper.token": "Leave empty if no authentication is required",
       "helper.expires":
         "Secret will self-destruct after this time or first view",
@@ -89,7 +90,8 @@
       "aria.copySecret": "Copy secret to clipboard",
       "aria.downloadSecret": "Download secret as file",
       "aria.secretInput": "Enter the secret message you want to share securely",
-      "aria.fileInput": "Select a file to share securely. The file will be encrypted before being sent.",
+      "aria.fileInput":
+        "Select a file to share securely. The file will be encrypted before being sent.",
       "aria.tokenInput":
         "Enter the authentication token if required by the server",
       "aria.expiresSelect":
@@ -114,6 +116,10 @@
 
       // Labels
       "label.secret": "Text:",
+      "label.secretType": "Secret-Typ:",
+      "label.text": "Text-Nachricht",
+      "label.file": "Datei",
+      "label.fileSelect": "Datei zum Teilen auswählen:",
       "label.token": "Token:",
       "label.expires": "Läuft ab nach:",
       "label.url": "Secret-URL:",
@@ -127,6 +133,8 @@
         "Der geheime Schlüssel nach dem # wird niemals an den Server gesendet",
       "helper.secret":
         "Die Nachricht wird verschlüsselt, bevor sie Ihren Browser verlässt",
+      "helper.fileSelect":
+        "Maximale Dateigröße: 10MB. Die Datei wird vor dem Upload verschlüsselt.",
       "helper.token":
         "Kann leer gelassen werden, wenn keine Authentifizierung erforderlich ist",
       "helper.expires":
@@ -155,7 +163,11 @@
       "msg.jsRequiredDetail":
         "Diese Anwendung benötigt JavaScript, um Secrets sicher in Ihrem Browser zu verschlüsseln.",
       "msg.emptySecret": "Bitte den Text für das Secret eingeben",
+      "msg.emptyFile": "Bitte eine Datei zum Teilen auswählen",
       "msg.createFailed": "Fehler beim Erstellen des Secrets",
+      "msg.fileTooLarge": "Dateigröße überschreitet das 10MB Limit",
+      "msg.fileReadError": "Fehler beim Lesen der Datei",
+      "msg.invalidFileType": "Ungültiger Dateityp",
       "msg.emptyUrl": "Bitte eine gültige Secret-URL eingeben",
       "msg.invalidUrl":
         "Ungültiges URL-Format. Bitte geben Sie die vollständige URL einschließlich des Teils nach dem # ein",
@@ -183,6 +195,8 @@
       "aria.downloadSecret": "Secret als Datei herunterladen",
       "aria.secretInput":
         "Bitte die geheime Nachricht eingeben, die sicher geteult werden soll",
+      "aria.fileInput":
+        "Datei zum sicheren Teilen auswählen. Die Datei wird vor dem Versenden verschlüsselt.",
       "aria.tokenInput":
         "Bitte den Authentifizierungs-Token eingeben, falls vom Server erforderlich",
       "aria.expiresSelect":
