@@ -176,6 +176,7 @@ mod tests {
                 "test_secret".to_string(),
                 Duration::from_secs(3600),
                 "".to_string(),
+                None,
             )
             .await;
 
@@ -205,6 +206,7 @@ mod tests {
                 "test_secret".to_string(),
                 Duration::from_secs(3600),
                 "".to_string(),
+                None,
             )
             .await;
 
@@ -228,7 +230,7 @@ mod tests {
 
         let base_url = Url::parse(&server.url()).unwrap();
         let url = base_url.join(&format!("/s/{secret_id}")).unwrap();
-        let result = client.receive_secret(url).await;
+        let result = client.receive_secret(url, None).await;
 
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), secret_data);
@@ -249,7 +251,7 @@ mod tests {
 
         let base_url = Url::parse(&server.url()).unwrap();
         let url = base_url.join(&format!("/s/{secret_id}")).unwrap();
-        let result = client.receive_secret(url).await;
+        let result = client.receive_secret(url, None).await;
         assert!(result.is_err());
     }
 
@@ -273,6 +275,7 @@ mod tests {
                 "test_secret".to_string(),
                 Duration::from_secs(3600),
                 "".to_string(),
+                None,
             )
             .await;
 

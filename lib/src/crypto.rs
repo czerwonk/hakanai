@@ -171,6 +171,7 @@ mod tests {
             data: String,
             _ttl: Duration,
             _token: String,
+            _opts: Option<SecretSendOptions>,
         ) -> Result<Url, ClientError> {
             *self.sent_data.lock().unwrap() = Some(data);
 
@@ -184,7 +185,11 @@ mod tests {
                 .unwrap_or_else(|| Url::parse("https://example.com/secret/12345").unwrap()))
         }
 
-        async fn receive_secret(&self, _url: Url) -> Result<String, ClientError> {
+        async fn receive_secret(
+            &self,
+            _url: Url,
+            _opts: Option<SecretReceiveOptions>,
+        ) -> Result<String, ClientError> {
             if self.should_error {
                 return Err(ClientError::Custom(self.error_type.clone()));
             }
@@ -203,7 +208,7 @@ mod tests {
 
         let url = Url::parse("https://example.com/secret/abc123").unwrap();
 
-        let result = crypto_client.receive_secret(url).await;
+        let result = crypto_client.receive_secret(url, None).await;
         assert!(matches!(result, Err(ClientError::Custom(msg)) if msg == "No key in URL"));
     }
 
@@ -215,7 +220,7 @@ mod tests {
         let mut url = Url::parse("https://example.com/secret/abc123").unwrap();
         url.set_fragment(Some("invalid_base64!@#$"));
 
-        let result = crypto_client.receive_secret(url).await;
+        let result = crypto_client.receive_secret(url, None).await;
         assert!(
             matches!(result, Err(ClientError::DecryptionError(msg)) if msg.contains("failed to decode key"))
         );
@@ -232,7 +237,7 @@ mod tests {
         let mut url = Url::parse("https://example.com/secret/abc123").unwrap();
         url.set_fragment(Some(&key_base64));
 
-        let result = crypto_client.receive_secret(url).await;
+        let result = crypto_client.receive_secret(url, None).await;
         assert!(
             matches!(result, Err(ClientError::DecryptionError(msg)) if msg.contains("failed to decode data"))
         );
@@ -253,7 +258,7 @@ mod tests {
         let mut url = Url::parse("https://example.com/secret/abc123").unwrap();
         url.set_fragment(Some(&key_base64));
 
-        let result = crypto_client.receive_secret(url).await;
+        let result = crypto_client.receive_secret(url, None).await;
         assert!(
             matches!(result, Err(ClientError::DecryptionError(msg)) if msg == "Payload too short")
         );
@@ -298,7 +303,7 @@ mod tests {
 
         // Send the secret
         let send_result = crypto_client
-            .send_secret(base_url, secret_data.to_string(), ttl, token)
+            .send_secret(base_url, secret_data.to_string(), ttl, token, None)
             .await
             .unwrap();
 
@@ -311,7 +316,7 @@ mod tests {
 
         // Receive the secret using the URL with key
         let receive_result = crypto_client_receive
-            .receive_secret(send_result)
+            .receive_secret(send_result, None)
             .await
             .unwrap();
 
