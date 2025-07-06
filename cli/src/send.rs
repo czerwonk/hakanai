@@ -7,6 +7,9 @@ use colored::Colorize;
 use hakanai_lib::client;
 use hakanai_lib::client::Client;
 use hakanai_lib::models::Payload;
+use hakanai_lib::options::SecretSendOptions;
+
+use crate::helper::get_user_agent_name;
 
 const MAX_SECRET_SIZE_MB: usize = 10; // 10 MB
 
@@ -43,8 +46,10 @@ pub async fn send(
     let file_name = get_file_name(file, as_file, file_name)?;
     let payload = Payload::from_bytes(&bytes, file_name);
 
+    let user_agent = get_user_agent_name();
+    let opts = SecretSendOptions::new().with_user_agent(user_agent);
     let link = client::new()
-        .send_secret(server.clone(), payload, ttl, token, None)
+        .send_secret(server.clone(), payload, ttl, token, Some(opts))
         .await
         .map_err(|e| anyhow!(e))?;
 

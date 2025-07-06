@@ -13,7 +13,7 @@ use crate::options::{SecretReceiveOptions, SecretSendOptions};
 const SHORT_SECRET_PATH: &str = "s";
 const API_SECRET_PATH: &str = "api/v1/secret";
 const DEFAULT_REQUEST_TIMEOUT: Duration = Duration::from_secs(10);
-const USER_AGENT: &str = "hakanai-client";
+const DEFAULT_USER_AGENT: &str = "hakanai-client";
 const DEFAULT_CHUNK_SIZE: usize = 8192; // 8 KB
 
 pub struct WebClient {
@@ -49,12 +49,13 @@ impl Client<String> for WebClient {
         let (body, content_length) = self.post_secret_body_from_req(req, &opt)?;
 
         let timeout = opt.timeout.unwrap_or(DEFAULT_REQUEST_TIMEOUT);
+        let user_agent = opt.user_agent.unwrap_or(DEFAULT_USER_AGENT.to_string());
 
         let resp = self
             .web_client
             .post(url.to_string())
             .header("Authorization", format!("Bearer {token}"))
-            .header("User-Agent", USER_AGENT)
+            .header("User-Agent", user_agent)
             .header("Content-Type", "application/json")
             .header("Content-Length", content_length.to_string())
             .timeout(timeout)
@@ -94,7 +95,7 @@ impl Client<String> for WebClient {
         let resp = self
             .web_client
             .get(url)
-            .header("User-Agent", USER_AGENT)
+            .header("User-Agent", DEFAULT_USER_AGENT)
             .timeout(timeout)
             .send()
             .await?;

@@ -14,6 +14,9 @@ pub struct SecretSendOptions {
 
     /// An optional timeout for sending the secret.
     pub timeout: Option<Duration>,
+
+    /// An optional user agent string to identify the sender.
+    pub user_agent: Option<String>,
 }
 
 impl SecretSendOptions {
@@ -38,13 +41,22 @@ impl SecretSendOptions {
         self.timeout = Some(timeout);
         self
     }
+
+    /// Allows setting a custom user agent string
+    pub fn with_user_agent(mut self, user_agent: String) -> Self {
+        self.user_agent = Some(user_agent);
+        self
+    }
 }
 
 /// Options for receiving a secret.
 #[derive(Default, Clone)]
 pub struct SecretReceiveOptions {
-    pub chunk_size: Option<usize>,
+    /// An optional timeout for receiving the secret.
     pub timeout: Option<Duration>,
+
+    /// An optional user agent string to identify the sender.
+    pub user_agent: Option<String>,
 }
 
 impl SecretReceiveOptions {
@@ -55,6 +67,12 @@ impl SecretReceiveOptions {
     /// Allows setting a custom timeout for receiving a secret.
     pub fn with_timeout(mut self, timeout: Duration) -> Self {
         self.timeout = Some(timeout);
+        self
+    }
+
+    /// Allows setting a custom user agent string
+    pub fn with_user_agent(mut self, user_agent: String) -> Self {
+        self.user_agent = Some(user_agent);
         self
     }
 }
