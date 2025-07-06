@@ -5,8 +5,9 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use reqwest::{Body, Url};
 
-use crate::client::{Client, ClientError, DataTransferObserver};
+use crate::client::{Client, ClientError};
 use crate::models::{PostSecretRequest, PostSecretResponse};
+use crate::observer::DataTransferObserver;
 
 const SHORT_SECRET_PATH: &str = "s";
 const API_SECRET_PATH: &str = "api/v1/secret";

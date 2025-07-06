@@ -1,4 +1,3 @@
-use std::sync::Arc;
 use std::time::Duration;
 
 use async_trait::async_trait;
@@ -7,81 +6,8 @@ use url::Url;
 
 use crate::crypto::CryptoClient;
 use crate::models::Payload;
+use crate::options::{SecretGetOptions, SecretSendOptions};
 use crate::web::WebClient;
-
-/// A trait for observing the progress of upload operations.
-///
-/// Implementors of this trait can receive real-time notifications about upload progress,
-/// allowing for features like progress bars, bandwidth monitoring, or logging.
-///
-/// # Thread Safety
-///
-/// This trait requires `Send + Sync` to ensure it can be safely used across async tasks
-/// and shared between threads.
-#[async_trait::async_trait]
-pub trait DataTransferObserver: Send + Sync {
-    /// Called when data transfer progress is made.
-    ///
-    /// This method is invoked periodically during the data transfer process.
-    ///
-    /// # Arguments
-    ///
-    /// * `bytes_uploaded` - The total number of bytes transferred so far
-    /// * `total_bytes` - The total size of the transfer in bytes
-    ///
-    /// # Notes
-    ///
-    /// - This method is called asynchronously and should not block for extended periods
-    /// - The frequency of calls depends on the chunk size used
-    /// - `bytes_uploaded` will always be ≤ `total_bytes`
-    /// - The final call will have `bytes_uploaded == total_bytes`
-    async fn on_progress(&self, bytes_transferred: u64, total_bytes: u64);
-}
-
-#[derive(Default, Clone)]
-pub struct SendSecretOptions {
-    pub observer: Option<Arc<dyn DataTransferObserver>>,
-    pub chunk_size: Option<usize>,
-    pub timeout: Option<Duration>,
-}
-
-impl SendSecretOptions {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    pub fn with_observer(mut self, observer: Arc<dyn DataTransferObserver>) -> Self {
-        self.observer = Some(observer);
-        self
-    }
-
-    pub fn with_chunk_size(mut self, size: usize) -> Self {
-        self.chunk_size = Some(size);
-        self
-    }
-
-    pub fn with_timeout(mut self, timeout: Duration) -> Self {
-        self.timeout = Some(timeout);
-        self
-    }
-}
-
-#[derive(Default, Clone)]
-pub struct GetSecretOptions {
-    pub chunk_size: Option<usize>,
-    pub timeout: Option<Duration>,
-}
-
-impl GetSecretOptions {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    pub fn with_timeout(mut self, timeout: Duration) -> Self {
-        self.timeout = Some(timeout);
-        self
-    }
-}
 
 /// Defines the asynchronous interface for a client that can send and receive secrets.
 #[async_trait]
