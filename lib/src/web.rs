@@ -122,9 +122,6 @@ impl WebClient {
     ) -> Result<(Body, usize), ClientError> {
         let json_bytes = serde_json::to_vec(&req)?;
         let json_len = json_bytes.len();
-        let mut bytes_uploaded = 0u64;
-
-        let upload_observer = self.upload_observer.clone();
 
         let chunk_size = opts.chunk_size.unwrap_or(DEFAULT_CHUNK_SIZE);
         if chunk_size == 0 {
@@ -133,6 +130,8 @@ impl WebClient {
             ));
         }
 
+        let mut bytes_uploaded = 0u64;
+        let upload_observer = self.upload_observer.clone();
         let stream = async_stream::stream! {
             let mut offset = 0;
 
