@@ -13,7 +13,7 @@ use crate::helper::get_user_agent_name;
 
 pub async fn get(link: url::Url, to_stdout: bool, filename: Option<String>) -> Result<()> {
     let user_agent = get_user_agent_name();
-    let opts = SecretReceiveOptions::new().with_user_agent(user_agent);
+    let opts = SecretReceiveOptions::default().with_user_agent(user_agent);
     let payload = client::new()
         .receive_secret(link.clone(), Some(opts))
         .await

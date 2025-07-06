@@ -1,4 +1,5 @@
 use std::io::{self, Read};
+use std::sync::Arc;
 use std::time::Duration;
 
 use anyhow::{Result, anyhow};
@@ -10,6 +11,7 @@ use hakanai_lib::models::Payload;
 use hakanai_lib::options::SecretSendOptions;
 
 use crate::helper::get_user_agent_name;
+use crate::observer::ProgressObserver;
 
 const MAX_SECRET_SIZE_MB: usize = 10; // 10 MB
 
@@ -47,7 +49,11 @@ pub async fn send(
     let payload = Payload::from_bytes(&bytes, file_name);
 
     let user_agent = get_user_agent_name();
-    let opts = SecretSendOptions::new().with_user_agent(user_agent);
+    let observer = ProgressObserver::new("Sending secret...")?;
+    let opts = SecretSendOptions::default()
+        .with_user_agent(user_agent)
+        .with_observer(Arc::new(observer));
+
     let link = client::new()
         .send_secret(server.clone(), payload, ttl, token, Some(opts))
         .await
