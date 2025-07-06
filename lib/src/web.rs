@@ -62,6 +62,7 @@ impl Client<String> for WebClient {
             .body(body)
             .send()
             .await?;
+
         if resp.status() != reqwest::StatusCode::OK {
             let mut err_msg = format!("HTTP error: {}", resp.status());
 
@@ -90,15 +91,17 @@ impl Client<String> for WebClient {
         }
 
         let opt = opts.unwrap_or_default();
+        let user_agent = opt.user_agent.unwrap_or(DEFAULT_USER_AGENT.to_string());
         let timeout = opt.timeout.unwrap_or(DEFAULT_REQUEST_TIMEOUT);
 
-        let resp = self
+        let mut resp = self
             .web_client
             .get(url)
-            .header("User-Agent", DEFAULT_USER_AGENT)
+            .header("User-Agent", user_agent)
             .timeout(timeout)
             .send()
             .await?;
+
         if resp.status() != reqwest::StatusCode::OK {
             let mut err_msg = format!("HTTP error: {}", resp.status());
 
@@ -109,12 +112,44 @@ impl Client<String> for WebClient {
             return Err(ClientError::Http(err_msg));
         }
 
-        let secret = resp.text().await?;
+        let observer = opt.observer.clone();
+        let bytes = self.read_body_in_chunks(&mut resp, observer).await?;
+        let secret = String::from_utf8(bytes).map_err(|e| {
+            ClientError::Custom(format!("Failed to decode response body as UTF-8: {e}"))
+        })?;
+
         Ok(secret)
     }
 }
 
 impl WebClient {
+    async fn read_body_in_chunks(
+        &self,
+        resp: &mut reqwest::Response,
+        observer: Option<Arc<dyn DataTransferObserver>>,
+    ) -> Result<Vec<u8>, ClientError> {
+        let total_size = resp.content_length().unwrap_or(0);
+        if total_size == 0 {
+            return Err(ClientError::Custom(
+                "Response body is empty or content length is not set".to_string(),
+            ));
+        }
+
+        let mut result = Vec::with_capacity(total_size as usize);
+        let mut bytes_read = 0u64;
+
+        while let Some(chunk) = resp.chunk().await? {
+            result.extend_from_slice(&chunk);
+            bytes_read += chunk.len() as u64;
+
+            if let Some(ref obs) = observer {
+                obs.on_progress(bytes_read, total_size).await;
+            }
+        }
+
+        Ok(result)
+    }
+
     fn post_secret_body_from_req(
         &self,
         req: PostSecretRequest,
