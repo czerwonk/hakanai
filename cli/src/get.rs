@@ -10,7 +10,7 @@ use hakanai_lib::client::Client;
 
 pub async fn get(link: url::Url, to_stdout: bool, filename: Option<String>) -> Result<()> {
     let payload = client::new()
-        .receive_secret(link.clone())
+        .receive_secret(link.clone(), None)
         .await
         .map_err(|e| anyhow!(e))?;
 
@@ -182,12 +182,15 @@ mod tests {
         let files: Vec<_> = fs::read_dir(temp_dir.path())?
             .filter_map(|entry| entry.ok())
             .filter(|entry| {
-                entry.file_name().to_string_lossy().starts_with("overwrite.txt.")
+                entry
+                    .file_name()
+                    .to_string_lossy()
+                    .starts_with("overwrite.txt.")
             })
             .collect();
-        
+
         assert_eq!(files.len(), 1, "Should have created one timestamped file");
-        
+
         let timestamped_file = &files[0];
         let timestamped_content = fs::read_to_string(timestamped_file.path())?;
         assert_eq!(timestamped_content, new_content);

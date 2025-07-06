@@ -6,7 +6,7 @@ use url::Url;
 
 use crate::crypto::CryptoClient;
 use crate::models::Payload;
-use crate::options::{SecretGetOptions, SecretSendOptions};
+use crate::options::{SecretReceiveOptions, SecretSendOptions};
 use crate::web::WebClient;
 
 /// Defines the asynchronous interface for a client that can send and receive secrets.
@@ -20,6 +20,7 @@ pub trait Client<T>: Send + Sync {
     /// * `data` - The secret data to be sent.
     /// * `ttl` - The time-to-live for the secret.
     /// * `token` - The authentication token.
+    /// * `opts` - Optional options for sending the secret
     ///
     /// # Returns
     ///
@@ -32,6 +33,7 @@ pub trait Client<T>: Send + Sync {
         payload: T,
         ttl: Duration,
         token: String,
+        opts: Option<SecretSendOptions>,
     ) -> Result<Url, ClientError>;
 
     /// Retrieves a secret from the store using its URL.
@@ -39,13 +41,18 @@ pub trait Client<T>: Send + Sync {
     /// # Arguments
     ///
     /// * `url` - The URL of the secret to be retrieved.
+    /// * `opts` - Optional options for retrieving the secret
     ///
     /// # Returns
     ///
     /// A `Result` which is:
     /// - `Ok(String)` containing the secret data.
     /// - `Err(ClientError)` with an error message if the secret is not found or another error occurs.
-    async fn receive_secret(&self, url: Url) -> Result<T, ClientError>;
+    async fn receive_secret(
+        &self,
+        url: Url,
+        opts: Option<SecretReceiveOptions>,
+    ) -> Result<T, ClientError>;
 }
 
 #[derive(Debug, Error)]
@@ -88,14 +95,22 @@ impl Client<Payload> for SecretClient {
         payload: Payload,
         ttl: Duration,
         token: String,
+        options: Option<SecretSendOptions>,
     ) -> Result<Url, ClientError> {
         let data = serde_json::to_string(&payload)?;
-        let url = self.client.send_secret(base_url, data, ttl, token).await?;
+        let url = self
+            .client
+            .send_secret(base_url, data, ttl, token, options)
+            .await?;
         Ok(url)
     }
 
-    async fn receive_secret(&self, url: Url) -> Result<Payload, ClientError> {
-        let data = self.client.receive_secret(url).await?;
+    async fn receive_secret(
+        &self,
+        url: Url,
+        opts: Option<SecretReceiveOptions>,
+    ) -> Result<Payload, ClientError> {
+        let data = self.client.receive_secret(url, opts).await?;
         let payload: Payload = serde_json::from_str(&data)?;
         Ok(payload)
     }
@@ -165,6 +180,7 @@ mod tests {
             payload: String,
             _ttl: Duration,
             _token: String,
+            _opts: Option<SecretSendOptions>,
         ) -> Result<Url, ClientError> {
             if self.fail_send {
                 return Err(ClientError::Custom("Send failed".to_string()));
@@ -175,7 +191,11 @@ mod tests {
                 .ok_or(ClientError::Custom("No response URL".to_string()))
         }
 
-        async fn receive_secret(&self, _url: Url) -> Result<String, ClientError> {
+        async fn receive_secret(
+            &self,
+            _url: Url,
+            _opts: Option<SecretReceiveOptions>,
+        ) -> Result<String, ClientError> {
             if self.fail_receive {
                 return Err(ClientError::Custom("Receive failed".to_string()));
             }
@@ -203,7 +223,7 @@ mod tests {
         let token = "test_token".to_string();
 
         let result = secret_client
-            .send_secret(base_url, payload, ttl, token)
+            .send_secret(base_url, payload, ttl, token, None)
             .await;
 
         assert!(result.is_ok());
@@ -235,7 +255,7 @@ mod tests {
         let token = "test_token".to_string();
 
         let result = secret_client
-            .send_secret(base_url, payload, ttl, token)
+            .send_secret(base_url, payload, ttl, token, None)
             .await;
 
         assert!(result.is_ok());
@@ -259,7 +279,7 @@ mod tests {
         };
 
         let url = Url::parse("https://example.com/secret/123").unwrap();
-        let result = secret_client.receive_secret(url).await;
+        let result = secret_client.receive_secret(url, None).await;
 
         assert!(result.is_ok());
         let payload = result.unwrap();
@@ -276,7 +296,7 @@ mod tests {
         };
 
         let url = Url::parse("https://example.com/secret/123").unwrap();
-        let result = secret_client.receive_secret(url).await;
+        let result = secret_client.receive_secret(url, None).await;
 
         assert!(result.is_ok());
         let payload = result.unwrap();
@@ -305,7 +325,7 @@ mod tests {
         let token = "test_token".to_string();
 
         let result = secret_client
-            .send_secret(base_url, payload, ttl, token)
+            .send_secret(base_url, payload, ttl, token, None)
             .await;
 
         assert!(result.is_err());
@@ -323,7 +343,7 @@ mod tests {
         };
 
         let url = Url::parse("https://example.com/secret/123").unwrap();
-        let result = secret_client.receive_secret(url).await;
+        let result = secret_client.receive_secret(url, None).await;
 
         assert!(result.is_err());
         match result.unwrap_err() {
@@ -341,7 +361,7 @@ mod tests {
         };
 
         let url = Url::parse("https://example.com/secret/123").unwrap();
-        let result = secret_client.receive_secret(url).await;
+        let result = secret_client.receive_secret(url, None).await;
 
         assert!(result.is_err());
         match result.unwrap_err() {
@@ -365,7 +385,7 @@ mod tests {
         };
 
         let url = Url::parse("https://example.com/secret/123").unwrap();
-        let result = secret_client.receive_secret(url).await;
+        let result = secret_client.receive_secret(url, None).await;
 
         assert!(result.is_ok());
         let received_payload = result.unwrap();
@@ -394,7 +414,9 @@ mod tests {
         let ttl = Duration::from_secs(3600);
         let token = "test_token".to_string();
 
-        let result = client.send_secret(base_url, payload, ttl, token).await;
+        let result = client
+            .send_secret(base_url, payload, ttl, token, None)
+            .await;
 
         // We expect this to fail with a network error since there's no real server
         assert!(result.is_err());
@@ -417,7 +439,7 @@ mod tests {
         let token = "test_token".to_string();
 
         let result = secret_client
-            .send_secret(base_url, payload, ttl, token)
+            .send_secret(base_url, payload, ttl, token, None)
             .await;
 
         assert!(result.is_ok());
@@ -455,7 +477,7 @@ mod tests {
         let token = "test_token".to_string();
 
         let result = secret_client
-            .send_secret(base_url, payload, ttl, token)
+            .send_secret(base_url, payload, ttl, token, None)
             .await;
 
         assert!(result.is_ok());
@@ -488,7 +510,7 @@ mod tests {
         let token = "test_token".to_string();
 
         let result = secret_client
-            .send_secret(base_url, payload, ttl, token)
+            .send_secret(base_url, payload, ttl, token, None)
             .await;
 
         assert!(result.is_ok());
@@ -513,7 +535,7 @@ mod tests {
         let token = "test_token".to_string();
 
         let result = secret_client
-            .send_secret(base_url, payload, ttl, token)
+            .send_secret(base_url, payload, ttl, token, None)
             .await;
 
         assert!(result.is_ok());
@@ -544,7 +566,7 @@ mod tests {
         let token = "test_token".to_string();
 
         let result = secret_client
-            .send_secret(base_url, payload, ttl, token)
+            .send_secret(base_url, payload, ttl, token, None)
             .await;
 
         assert!(result.is_ok());

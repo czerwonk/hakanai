@@ -9,6 +9,7 @@ use base64::Engine;
 use reqwest::Url;
 
 use crate::client::{Client, ClientError};
+use crate::options::{SecretReceiveOptions, SecretSendOptions};
 
 /// A client that wraps another `Client` to provide cryptographic functionalities.
 ///
@@ -33,6 +34,7 @@ impl Client<String> for CryptoClient {
         data: String,
         ttl: Duration,
         token: String,
+        opts: Option<SecretSendOptions>,
     ) -> Result<Url, ClientError> {
         let key = generate_key();
         let nonce = Aes256Gcm::generate_nonce(&mut OsRng);
@@ -50,18 +52,22 @@ impl Client<String> for CryptoClient {
 
         let res = self
             .inner_client
-            .send_secret(base_url, encoded_data, ttl, token)
+            .send_secret(base_url, encoded_data, ttl, token, opts)
             .await?;
         Ok(append_key_to_link(res, &key))
     }
 
-    async fn receive_secret(&self, url: Url) -> Result<String, ClientError> {
+    async fn receive_secret(
+        &self,
+        url: Url,
+        opts: Option<SecretReceiveOptions>,
+    ) -> Result<String, ClientError> {
         let key_base64 = url
             .fragment()
             .ok_or(ClientError::Custom("No key in URL".to_string()))?
             .to_string();
 
-        let encoded_data = self.inner_client.receive_secret(url).await?;
+        let encoded_data = self.inner_client.receive_secret(url, opts).await?;
         let decrypted_data: String = decrypt(encoded_data, key_base64)?;
         Ok(decrypted_data)
     }

@@ -32,12 +32,12 @@ impl SecretSendOptions {
 }
 
 #[derive(Default, Clone)]
-pub struct SecretGetOptions {
+pub struct SecretReceiveOptions {
     pub chunk_size: Option<usize>,
     pub timeout: Option<Duration>,
 }
 
-impl SecretGetOptions {
+impl SecretReceiveOptions {
     pub fn new() -> Self {
         Self::default()
     }

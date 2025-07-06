@@ -44,7 +44,7 @@ pub async fn send(
     let payload = Payload::from_bytes(&bytes, file_name);
 
     let link = client::new()
-        .send_secret(server.clone(), payload, ttl, token)
+        .send_secret(server.clone(), payload, ttl, token, None)
         .await
         .map_err(|e| anyhow!(e))?;
 

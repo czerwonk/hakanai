@@ -8,12 +8,13 @@ use reqwest::{Body, Url};
 use crate::client::{Client, ClientError};
 use crate::models::{PostSecretRequest, PostSecretResponse};
 use crate::observer::DataTransferObserver;
+use crate::options::{SecretReceiveOptions, SecretSendOptions};
 
 const SHORT_SECRET_PATH: &str = "s";
 const API_SECRET_PATH: &str = "api/v1/secret";
-const REQUEST_TIMEOUT: Duration = Duration::from_secs(10);
+const DEFAULT_REQUEST_TIMEOUT: Duration = Duration::from_secs(10);
 const USER_AGENT: &str = "hakanai-client";
-const STREAM_CHUNK_SIZE: usize = 8192; // 8 KB
+const DEFAULT_CHUNK_SIZE: usize = 8192; // 8 KB
 
 pub struct WebClient {
     web_client: reqwest::Client,
@@ -38,10 +39,16 @@ impl Client<String> for WebClient {
         data: String,
         ttl: Duration,
         token: String,
+        opts: Option<SecretSendOptions>,
     ) -> Result<Url, ClientError> {
         let url = base_url.join(API_SECRET_PATH)?;
         let req = PostSecretRequest::new(data, ttl);
-        let (body, body_len) = self.post_secret_body_from_req(req)?;
+
+        let opt = opts.unwrap_or_default();
+
+        let (body, content_length) = self.post_secret_body_from_req(req, &opt)?;
+
+        let timeout = opt.timeout.unwrap_or(DEFAULT_REQUEST_TIMEOUT);
 
         let resp = self
             .web_client
@@ -49,8 +56,8 @@ impl Client<String> for WebClient {
             .header("Authorization", format!("Bearer {token}"))
             .header("User-Agent", USER_AGENT)
             .header("Content-Type", "application/json")
-            .header("Content-Length", body_len.to_string())
-            .timeout(REQUEST_TIMEOUT)
+            .header("Content-Length", content_length.to_string())
+            .timeout(timeout)
             .body(body)
             .send()
             .await?;
@@ -70,18 +77,25 @@ impl Client<String> for WebClient {
         Ok(secret_url)
     }
 
-    async fn receive_secret(&self, url: Url) -> Result<String, ClientError> {
+    async fn receive_secret(
+        &self,
+        url: Url,
+        opts: Option<SecretReceiveOptions>,
+    ) -> Result<String, ClientError> {
         if !url.path().starts_with(&format!("/{SHORT_SECRET_PATH}/"))
             && !url.path().starts_with(&format!("/{API_SECRET_PATH}/"))
         {
             return Err(ClientError::Custom("Invalid API path".to_string()));
         }
 
+        let opt = opts.unwrap_or_default();
+        let timeout = opt.timeout.unwrap_or(DEFAULT_REQUEST_TIMEOUT);
+
         let resp = self
             .web_client
             .get(url)
             .header("User-Agent", USER_AGENT)
-            .timeout(REQUEST_TIMEOUT)
+            .timeout(timeout)
             .send()
             .await?;
         if resp.status() != reqwest::StatusCode::OK {
@@ -103,6 +117,7 @@ impl WebClient {
     fn post_secret_body_from_req(
         &self,
         req: PostSecretRequest,
+        opts: &SecretSendOptions,
     ) -> Result<(Body, usize), ClientError> {
         let json_bytes = serde_json::to_vec(&req)?;
         let json_len = json_bytes.len();
@@ -110,11 +125,12 @@ impl WebClient {
 
         let upload_observer = self.upload_observer.clone();
 
+        let chunk_size = opts.chunk_size.unwrap_or(DEFAULT_CHUNK_SIZE);
         let stream = async_stream::stream! {
             let mut offset = 0;
 
             while offset < json_len {
-                let end = std::cmp::min(offset + STREAM_CHUNK_SIZE, json_bytes.len());
+                let end = std::cmp::min(offset + chunk_size, json_bytes.len());
                 let chunk = Bytes::copy_from_slice(&json_bytes[offset..end]);
                 bytes_uploaded += chunk.len() as u64;
 
