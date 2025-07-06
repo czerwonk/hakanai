@@ -52,6 +52,9 @@ impl SecretSendOptions {
 /// Options for receiving a secret.
 #[derive(Default, Clone)]
 pub struct SecretReceiveOptions {
+    /// An optional observer to monitor the data transfer.
+    pub observer: Option<Arc<dyn DataTransferObserver>>,
+
     /// An optional timeout for receiving the secret.
     pub timeout: Option<Duration>,
 
@@ -73,6 +76,12 @@ impl SecretReceiveOptions {
     /// Allows setting a custom user agent string
     pub fn with_user_agent(mut self, user_agent: String) -> Self {
         self.user_agent = Some(user_agent);
+        self
+    }
+    ///
+    /// Allows setting an observer to monitor the data transfer.
+    pub fn with_observer(mut self, observer: Arc<dyn DataTransferObserver>) -> Self {
+        self.observer = Some(observer);
         self
     }
 }

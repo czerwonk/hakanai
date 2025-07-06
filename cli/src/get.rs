@@ -1,5 +1,6 @@
 use std::io::Write;
 use std::path::PathBuf;
+use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use anyhow::{Result, anyhow};
@@ -10,10 +11,15 @@ use hakanai_lib::client::Client;
 use hakanai_lib::options::SecretReceiveOptions;
 
 use crate::helper::get_user_agent_name;
+use crate::observer::ProgressObserver;
 
 pub async fn get(link: url::Url, to_stdout: bool, filename: Option<String>) -> Result<()> {
     let user_agent = get_user_agent_name();
-    let opts = SecretReceiveOptions::default().with_user_agent(user_agent);
+    let observer = ProgressObserver::new("Receiving secret...")?;
+    let opts = SecretReceiveOptions::default()
+        .with_user_agent(user_agent)
+        .with_observer(Arc::new(observer));
+
     let payload = client::new()
         .receive_secret(link.clone(), Some(opts))
         .await

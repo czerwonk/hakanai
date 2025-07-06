@@ -14,10 +14,9 @@ impl ProgressObserver {
     pub fn new(label: &str) -> Result<Self> {
         let progress_bar = ProgressBar::new(0);
         progress_bar.set_style(
-            ProgressStyle::with_template(
-                "{msg} [{bar:40.cyan/blue}] {bytes}/{total_bytes} ({bytes_per_sec}, {eta})",
-            )?
-            .progress_chars("#>-"),
+            ProgressStyle::default_bar()
+            .template("{msg}\n{spinner:.green} [{elapsed_precise}] [{bar:40.white/gray}] {bytes}/{total_bytes} ({percent}%) {bytes_per_sec} ETA: {eta}")?
+            .progress_chars("██▓▒░  ")
         );
         progress_bar.set_message(label.to_string());
 
