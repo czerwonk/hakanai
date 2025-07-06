@@ -127,6 +127,12 @@ impl WebClient {
         let upload_observer = self.upload_observer.clone();
 
         let chunk_size = opts.chunk_size.unwrap_or(DEFAULT_CHUNK_SIZE);
+        if chunk_size == 0 {
+            return Err(ClientError::Custom(
+                "Chunk size must be greater than 0".to_string(),
+            ));
+        }
+
         let stream = async_stream::stream! {
             let mut offset = 0;
 
