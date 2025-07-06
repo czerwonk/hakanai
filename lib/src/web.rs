@@ -1,10 +1,11 @@
+use std::sync::Arc;
 use std::time::Duration;
 
 use async_trait::async_trait;
 use bytes::Bytes;
 use reqwest::{Body, Url};
 
-use crate::client::{Client, ClientError};
+use crate::client::{Client, ClientError, UploadObserver};
 use crate::models::{PostSecretRequest, PostSecretResponse};
 
 const SHORT_SECRET_PATH: &str = "s";
@@ -13,9 +14,9 @@ const REQUEST_TIMEOUT: Duration = Duration::from_secs(10);
 const USER_AGENT: &str = "hakanai-client";
 const STREAM_CHUNK_SIZE: usize = 8192; // 8 KB
 
-#[derive(Debug)]
 pub struct WebClient {
     web_client: reqwest::Client,
+    upload_observer: Option<Arc<dyn UploadObserver>>,
 }
 
 impl WebClient {
@@ -23,6 +24,7 @@ impl WebClient {
     pub fn new() -> Self {
         WebClient {
             web_client: reqwest::Client::new(),
+            upload_observer: None,
         }
     }
 }
@@ -38,7 +40,7 @@ impl Client<String> for WebClient {
     ) -> Result<Url, ClientError> {
         let url = base_url.join(API_SECRET_PATH)?;
         let req = PostSecretRequest::new(data, ttl);
-        let (body, body_len) = post_secret_body_from_req(req)?;
+        let (body, body_len) = self.post_secret_body_from_req(req)?;
 
         let resp = self
             .web_client
@@ -96,23 +98,36 @@ impl Client<String> for WebClient {
     }
 }
 
-fn post_secret_body_from_req(req: PostSecretRequest) -> Result<(Body, usize), ClientError> {
-    let json_bytes = serde_json::to_vec(&req)?;
-    let json_len = json_bytes.len();
+impl WebClient {
+    fn post_secret_body_from_req(
+        &self,
+        req: PostSecretRequest,
+    ) -> Result<(Body, usize), ClientError> {
+        let json_bytes = serde_json::to_vec(&req)?;
+        let json_len = json_bytes.len();
+        let mut bytes_uploaded = 0u64;
 
-    let stream = async_stream::stream! {
-        let mut offset = 0;
+        let upload_observer = self.upload_observer.clone();
 
-        while offset < json_len {
-            let end = std::cmp::min(offset + STREAM_CHUNK_SIZE, json_bytes.len());
-            let chunk = Bytes::copy_from_slice(&json_bytes[offset..end]);
+        let stream = async_stream::stream! {
+            let mut offset = 0;
 
-            yield Ok::<_, std::io::Error>(chunk);
-            offset = end;
-        }
-    };
+            while offset < json_len {
+                let end = std::cmp::min(offset + STREAM_CHUNK_SIZE, json_bytes.len());
+                let chunk = Bytes::copy_from_slice(&json_bytes[offset..end]);
+                bytes_uploaded += chunk.len() as u64;
 
-    Ok((Body::wrap_stream(stream), json_len))
+                if let Some(ref observer) = upload_observer {
+                    observer.on_progress(bytes_uploaded, json_len as u64).await;
+                }
+
+                yield Ok::<_, std::io::Error>(chunk);
+                offset = end;
+            }
+        };
+
+        Ok((Body::wrap_stream(stream), json_len))
+    }
 }
 
 #[cfg(test)]

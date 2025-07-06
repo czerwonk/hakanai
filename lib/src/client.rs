@@ -71,6 +71,36 @@ pub enum ClientError {
     DecryptionError(String),
 }
 
+/// A trait for observing the progress of upload operations.
+///
+/// Implementors of this trait can receive real-time notifications about upload progress,
+/// allowing for features like progress bars, bandwidth monitoring, or logging.
+///
+/// # Thread Safety
+///
+/// This trait requires `Send + Sync` to ensure it can be safely used across async tasks
+/// and shared between threads.
+#[async_trait::async_trait]
+pub trait UploadObserver: Send + Sync {
+    /// Called when upload progress is made.
+    ///
+    /// This method is invoked periodically during the upload process as data chunks
+    /// are successfully transmitted to the server.
+    ///
+    /// # Arguments
+    ///
+    /// * `bytes_uploaded` - The total number of bytes uploaded so far
+    /// * `total_bytes` - The total size of the upload in bytes
+    ///
+    /// # Notes
+    ///
+    /// - This method is called asynchronously and should not block for extended periods
+    /// - The frequency of calls depends on the chunk size used by the uploader
+    /// - `bytes_uploaded` will always be ≤ `total_bytes`
+    /// - The final call will have `bytes_uploaded == total_bytes`
+    async fn on_progress(&self, bytes_uploaded: u64, total_bytes: u64);
+}
+
 /// A client for sending and receiving `Payload` objects.
 ///
 /// This client acts as a layer over a `Client<String>`, handling the serialization
