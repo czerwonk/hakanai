@@ -1,6 +1,6 @@
 [package]
 name = "hakanai"
-version = "1.0.0"
+version = "1.1.0"
 edition = "2024"
 
 [dependencies]
@@ -11,6 +11,8 @@ url = "2.5.4"
 anyhow = "1.0.98"
 humantime = "2.2.0"
 colored = "3.0.0"
+indicatif = "0.18.0"
+async-trait = "0.1.88"
 
 [dev-dependencies]
 tempfile = "3.15.0"

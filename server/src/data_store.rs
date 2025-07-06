@@ -13,7 +13,7 @@ pub enum DataStoreError {
     Redis(#[from] redis::RedisError),
 
     #[error("internal error: {0}")]
-    #[allow(dead_code)]
+    #[cfg(test)]
     InternalError(String),
 }
 

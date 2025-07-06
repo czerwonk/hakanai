@@ -1,5 +1,6 @@
 use std::io::Write;
 use std::path::PathBuf;
+use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use anyhow::{Result, anyhow};
@@ -7,10 +8,20 @@ use colored::Colorize;
 
 use hakanai_lib::client;
 use hakanai_lib::client::Client;
+use hakanai_lib::options::SecretReceiveOptions;
+
+use crate::helper::get_user_agent_name;
+use crate::observer::ProgressObserver;
 
 pub async fn get(link: url::Url, to_stdout: bool, filename: Option<String>) -> Result<()> {
+    let user_agent = get_user_agent_name();
+    let observer = ProgressObserver::new("Receiving secret...")?;
+    let opts = SecretReceiveOptions::default()
+        .with_user_agent(user_agent)
+        .with_observer(Arc::new(observer));
+
     let payload = client::new()
-        .receive_secret(link.clone())
+        .receive_secret(link.clone(), Some(opts))
         .await
         .map_err(|e| anyhow!(e))?;
 
@@ -182,12 +193,15 @@ mod tests {
         let files: Vec<_> = fs::read_dir(temp_dir.path())?
             .filter_map(|entry| entry.ok())
             .filter(|entry| {
-                entry.file_name().to_string_lossy().starts_with("overwrite.txt.")
+                entry
+                    .file_name()
+                    .to_string_lossy()
+                    .starts_with("overwrite.txt.")
             })
             .collect();
-        
+
         assert_eq!(files.len(), 1, "Should have created one timestamped file");
-        
+
         let timestamped_file = &files[0];
         let timestamped_content = fs::read_to_string(timestamped_file.path())?;
         assert_eq!(timestamped_content, new_content);

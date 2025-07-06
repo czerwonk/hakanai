@@ -1,5 +1,7 @@
 mod cli;
 mod get;
+mod helper;
+mod observer;
 mod send;
 
 use std::process::ExitCode;

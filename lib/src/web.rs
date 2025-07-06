@@ -1,19 +1,24 @@
+use std::sync::Arc;
 use std::time::Duration;
 
 use async_trait::async_trait;
-use reqwest::Url;
+use bytes::Bytes;
+use reqwest::{Body, Url};
 
 use crate::client::{Client, ClientError};
 use crate::models::{PostSecretRequest, PostSecretResponse};
+use crate::observer::DataTransferObserver;
+use crate::options::{SecretReceiveOptions, SecretSendOptions};
 
 const SHORT_SECRET_PATH: &str = "s";
 const API_SECRET_PATH: &str = "api/v1/secret";
-const REQUEST_TIMEOUT: Duration = Duration::from_secs(10);
-const USER_AGENT: &str = "hakanai-client";
+const DEFAULT_REQUEST_TIMEOUT: Duration = Duration::from_secs(10);
+const DEFAULT_USER_AGENT: &str = "hakanai-client";
+const DEFAULT_CHUNK_SIZE: usize = 8192; // 8 KB
 
-#[derive(Debug)]
 pub struct WebClient {
     web_client: reqwest::Client,
+    upload_observer: Option<Arc<dyn DataTransferObserver>>,
 }
 
 impl WebClient {
@@ -21,6 +26,7 @@ impl WebClient {
     pub fn new() -> Self {
         WebClient {
             web_client: reqwest::Client::new(),
+            upload_observer: None,
         }
     }
 }
@@ -33,19 +39,30 @@ impl Client<String> for WebClient {
         data: String,
         ttl: Duration,
         token: String,
+        opts: Option<SecretSendOptions>,
     ) -> Result<Url, ClientError> {
         let url = base_url.join(API_SECRET_PATH)?;
         let req = PostSecretRequest::new(data, ttl);
+
+        let opt = opts.unwrap_or_default();
+
+        let (body, content_length) = self.post_secret_body_from_req(req, &opt)?;
+
+        let timeout = opt.timeout.unwrap_or(DEFAULT_REQUEST_TIMEOUT);
+        let user_agent = opt.user_agent.unwrap_or(DEFAULT_USER_AGENT.to_string());
 
         let resp = self
             .web_client
             .post(url.to_string())
             .header("Authorization", format!("Bearer {token}"))
-            .header("User-Agent", USER_AGENT)
-            .timeout(REQUEST_TIMEOUT)
-            .json(&req)
+            .header("User-Agent", user_agent)
+            .header("Content-Type", "application/json")
+            .header("Content-Length", content_length.to_string())
+            .timeout(timeout)
+            .body(body)
             .send()
             .await?;
+
         if resp.status() != reqwest::StatusCode::OK {
             let mut err_msg = format!("HTTP error: {}", resp.status());
 
@@ -62,20 +79,29 @@ impl Client<String> for WebClient {
         Ok(secret_url)
     }
 
-    async fn receive_secret(&self, url: Url) -> Result<String, ClientError> {
+    async fn receive_secret(
+        &self,
+        url: Url,
+        opts: Option<SecretReceiveOptions>,
+    ) -> Result<String, ClientError> {
         if !url.path().starts_with(&format!("/{SHORT_SECRET_PATH}/"))
             && !url.path().starts_with(&format!("/{API_SECRET_PATH}/"))
         {
             return Err(ClientError::Custom("Invalid API path".to_string()));
         }
 
-        let resp = self
+        let opt = opts.unwrap_or_default();
+        let user_agent = opt.user_agent.unwrap_or(DEFAULT_USER_AGENT.to_string());
+        let timeout = opt.timeout.unwrap_or(DEFAULT_REQUEST_TIMEOUT);
+
+        let mut resp = self
             .web_client
             .get(url)
-            .header("User-Agent", USER_AGENT)
-            .timeout(REQUEST_TIMEOUT)
+            .header("User-Agent", user_agent)
+            .timeout(timeout)
             .send()
             .await?;
+
         if resp.status() != reqwest::StatusCode::OK {
             let mut err_msg = format!("HTTP error: {}", resp.status());
 
@@ -86,8 +112,79 @@ impl Client<String> for WebClient {
             return Err(ClientError::Http(err_msg));
         }
 
-        let secret = resp.text().await?;
+        let observer = opt.observer.clone();
+        let bytes = self.read_body_in_chunks(&mut resp, observer).await?;
+        let secret = String::from_utf8(bytes).map_err(|e| {
+            ClientError::Custom(format!("Failed to decode response body as UTF-8: {e}"))
+        })?;
+
         Ok(secret)
+    }
+}
+
+impl WebClient {
+    async fn read_body_in_chunks(
+        &self,
+        resp: &mut reqwest::Response,
+        observer: Option<Arc<dyn DataTransferObserver>>,
+    ) -> Result<Vec<u8>, ClientError> {
+        let total_size = resp.content_length().unwrap_or(0);
+        if total_size == 0 {
+            return Err(ClientError::Custom(
+                "Response body is empty or content length is not set".to_string(),
+            ));
+        }
+
+        let mut result = Vec::with_capacity(total_size as usize);
+        let mut bytes_read = 0u64;
+
+        while let Some(chunk) = resp.chunk().await? {
+            result.extend_from_slice(&chunk);
+            bytes_read += chunk.len() as u64;
+
+            if let Some(ref obs) = observer {
+                obs.on_progress(bytes_read, total_size).await;
+            }
+        }
+
+        Ok(result)
+    }
+
+    fn post_secret_body_from_req(
+        &self,
+        req: PostSecretRequest,
+        opts: &SecretSendOptions,
+    ) -> Result<(Body, usize), ClientError> {
+        let json_bytes = serde_json::to_vec(&req)?;
+        let json_len = json_bytes.len();
+
+        let chunk_size = opts.chunk_size.unwrap_or(DEFAULT_CHUNK_SIZE);
+        if chunk_size == 0 {
+            return Err(ClientError::Custom(
+                "Chunk size must be greater than 0".to_string(),
+            ));
+        }
+
+        let mut bytes_uploaded = 0u64;
+        let upload_observer = self.upload_observer.clone();
+        let stream = async_stream::stream! {
+            let mut offset = 0;
+
+            while offset < json_len {
+                let end = std::cmp::min(offset + chunk_size, json_bytes.len());
+                let chunk = Bytes::copy_from_slice(&json_bytes[offset..end]);
+                bytes_uploaded += chunk.len() as u64;
+
+                if let Some(ref observer) = upload_observer {
+                    observer.on_progress(bytes_uploaded, json_len as u64).await;
+                }
+
+                yield Ok::<_, std::io::Error>(chunk);
+                offset = end;
+            }
+        };
+
+        Ok((Body::wrap_stream(stream), json_len))
     }
 }
 
@@ -120,6 +217,7 @@ mod tests {
                 "test_secret".to_string(),
                 Duration::from_secs(3600),
                 "".to_string(),
+                None,
             )
             .await;
 
@@ -149,6 +247,7 @@ mod tests {
                 "test_secret".to_string(),
                 Duration::from_secs(3600),
                 "".to_string(),
+                None,
             )
             .await;
 
@@ -172,7 +271,7 @@ mod tests {
 
         let base_url = Url::parse(&server.url()).unwrap();
         let url = base_url.join(&format!("/s/{secret_id}")).unwrap();
-        let result = client.receive_secret(url).await;
+        let result = client.receive_secret(url, None).await;
 
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), secret_data);
@@ -193,7 +292,7 @@ mod tests {
 
         let base_url = Url::parse(&server.url()).unwrap();
         let url = base_url.join(&format!("/s/{secret_id}")).unwrap();
-        let result = client.receive_secret(url).await;
+        let result = client.receive_secret(url, None).await;
         assert!(result.is_err());
     }
 
@@ -217,6 +316,7 @@ mod tests {
                 "test_secret".to_string(),
                 Duration::from_secs(3600),
                 "".to_string(),
+                None,
             )
             .await;
 
