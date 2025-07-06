@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use async_trait::async_trait;
+use bytes::Bytes;
 use reqwest::Url;
 
 use crate::client::{Client, ClientError};
@@ -10,6 +11,7 @@ const SHORT_SECRET_PATH: &str = "s";
 const API_SECRET_PATH: &str = "api/v1/secret";
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(10);
 const USER_AGENT: &str = "hakanai-client";
+const STREAM_CHUNK_SIZE: usize = 8192; // 8 KB
 
 #[derive(Debug)]
 pub struct WebClient {
@@ -36,14 +38,31 @@ impl Client<String> for WebClient {
     ) -> Result<Url, ClientError> {
         let url = base_url.join(API_SECRET_PATH)?;
         let req = PostSecretRequest::new(data, ttl);
+        let json_bytes = serde_json::to_vec(&req)?;
+        let json_len = json_bytes.len();
+
+        let stream = async_stream::stream! {
+            let mut offset = 0;
+
+            while offset < json_len {
+                let end = std::cmp::min(offset + STREAM_CHUNK_SIZE, json_bytes.len());
+                let chunk = Bytes::copy_from_slice(&json_bytes[offset..end]);
+
+                yield Ok::<_, std::io::Error>(chunk);
+                offset = end;
+            }
+        };
+        let body = reqwest::Body::wrap_stream(stream);
 
         let resp = self
             .web_client
             .post(url.to_string())
             .header("Authorization", format!("Bearer {token}"))
             .header("User-Agent", USER_AGENT)
+            .header("Content-Type", "application/json")
+            .header("Content-Length", json_len.to_string())
             .timeout(REQUEST_TIMEOUT)
-            .json(&req)
+            .body(body)
             .send()
             .await?;
         if resp.status() != reqwest::StatusCode::OK {
