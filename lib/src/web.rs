@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use async_trait::async_trait;
 use bytes::Bytes;
-use reqwest::Url;
+use reqwest::{Body, Url};
 
 use crate::client::{Client, ClientError};
 use crate::models::{PostSecretRequest, PostSecretResponse};
@@ -38,21 +38,7 @@ impl Client<String> for WebClient {
     ) -> Result<Url, ClientError> {
         let url = base_url.join(API_SECRET_PATH)?;
         let req = PostSecretRequest::new(data, ttl);
-        let json_bytes = serde_json::to_vec(&req)?;
-        let json_len = json_bytes.len();
-
-        let stream = async_stream::stream! {
-            let mut offset = 0;
-
-            while offset < json_len {
-                let end = std::cmp::min(offset + STREAM_CHUNK_SIZE, json_bytes.len());
-                let chunk = Bytes::copy_from_slice(&json_bytes[offset..end]);
-
-                yield Ok::<_, std::io::Error>(chunk);
-                offset = end;
-            }
-        };
-        let body = reqwest::Body::wrap_stream(stream);
+        let (body, body_len) = post_secret_body_from_req(req)?;
 
         let resp = self
             .web_client
@@ -60,7 +46,7 @@ impl Client<String> for WebClient {
             .header("Authorization", format!("Bearer {token}"))
             .header("User-Agent", USER_AGENT)
             .header("Content-Type", "application/json")
-            .header("Content-Length", json_len.to_string())
+            .header("Content-Length", body_len.to_string())
             .timeout(REQUEST_TIMEOUT)
             .body(body)
             .send()
@@ -108,6 +94,25 @@ impl Client<String> for WebClient {
         let secret = resp.text().await?;
         Ok(secret)
     }
+}
+
+fn post_secret_body_from_req(req: PostSecretRequest) -> Result<(Body, usize), ClientError> {
+    let json_bytes = serde_json::to_vec(&req)?;
+    let json_len = json_bytes.len();
+
+    let stream = async_stream::stream! {
+        let mut offset = 0;
+
+        while offset < json_len {
+            let end = std::cmp::min(offset + STREAM_CHUNK_SIZE, json_bytes.len());
+            let chunk = Bytes::copy_from_slice(&json_bytes[offset..end]);
+
+            yield Ok::<_, std::io::Error>(chunk);
+            offset = end;
+        }
+    };
+
+    Ok((Body::wrap_stream(stream), json_len))
 }
 
 #[cfg(test)]
