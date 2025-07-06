@@ -5,7 +5,7 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use reqwest::{Body, Url};
 
-use crate::client::{Client, ClientError, UploadObserver};
+use crate::client::{Client, ClientError, DataTransferObserver};
 use crate::models::{PostSecretRequest, PostSecretResponse};
 
 const SHORT_SECRET_PATH: &str = "s";
@@ -16,7 +16,7 @@ const STREAM_CHUNK_SIZE: usize = 8192; // 8 KB
 
 pub struct WebClient {
     web_client: reqwest::Client,
-    upload_observer: Option<Arc<dyn UploadObserver>>,
+    upload_observer: Option<Arc<dyn DataTransferObserver>>,
 }
 
 impl WebClient {

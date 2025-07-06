@@ -81,24 +81,23 @@ pub enum ClientError {
 /// This trait requires `Send + Sync` to ensure it can be safely used across async tasks
 /// and shared between threads.
 #[async_trait::async_trait]
-pub trait UploadObserver: Send + Sync {
-    /// Called when upload progress is made.
+pub trait DataTransferObserver: Send + Sync {
+    /// Called when data transfer progress is made.
     ///
-    /// This method is invoked periodically during the upload process as data chunks
-    /// are successfully transmitted to the server.
+    /// This method is invoked periodically during the data transfer process.
     ///
     /// # Arguments
     ///
-    /// * `bytes_uploaded` - The total number of bytes uploaded so far
-    /// * `total_bytes` - The total size of the upload in bytes
+    /// * `bytes_uploaded` - The total number of bytes transferred so far
+    /// * `total_bytes` - The total size of the transfer in bytes
     ///
     /// # Notes
     ///
     /// - This method is called asynchronously and should not block for extended periods
-    /// - The frequency of calls depends on the chunk size used by the uploader
+    /// - The frequency of calls depends on the chunk size used
     /// - `bytes_uploaded` will always be ≤ `total_bytes`
     /// - The final call will have `bytes_uploaded == total_bytes`
-    async fn on_progress(&self, bytes_uploaded: u64, total_bytes: u64);
+    async fn on_progress(&self, bytes_transferred: u64, total_bytes: u64);
 }
 
 /// A client for sending and receiving `Payload` objects.
