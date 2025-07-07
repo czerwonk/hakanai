@@ -23,7 +23,7 @@ pub enum Command {
         link: Url,
 
         #[arg(
-            short,
+            long,
             env = "HAKANAI_TO_STDOUT",
             help = "Output the secret to stdout even if it is a file. This is useful for piping the output to other commands."
         )]
@@ -136,26 +136,6 @@ mod tests {
     }
 
     #[test]
-    fn test_get_command_with_short_to_stdout_flag() {
-        let args =
-            Args::try_parse_from(["hakanai", "get", "https://example.com/secret/abc123", "-t"])
-                .unwrap();
-
-        match args.command {
-            Command::Get {
-                link,
-                to_stdout,
-                filename,
-            } => {
-                assert_eq!(link.as_str(), "https://example.com/secret/abc123");
-                assert!(to_stdout);
-                assert_eq!(filename, None);
-            }
-            _ => panic!("Expected Get command"),
-        }
-    }
-
-    #[test]
     fn test_get_command_with_filename() {
         let args = Args::try_parse_from([
             "hakanai",
@@ -237,20 +217,14 @@ mod tests {
             "hakanai",
             "get",
             "https://example.com/secret/abc123",
-            "-t",
             "-f",
             "file.dat",
         ])
         .unwrap();
 
         match args.command {
-            Command::Get {
-                link,
-                to_stdout,
-                filename,
-            } => {
+            Command::Get { link, filename, .. } => {
                 assert_eq!(link.as_str(), "https://example.com/secret/abc123");
-                assert!(to_stdout);
                 assert_eq!(filename, Some("file.dat".to_string()));
             }
             _ => panic!("Expected Get command"),
@@ -512,11 +486,11 @@ mod tests {
     #[test]
     fn test_send_command_with_file_name() {
         let args =
-            Args::try_parse_from(["hakanai", "send", "--file-name", "custom_name.pdf"]).unwrap();
+            Args::try_parse_from(["hakanai", "send", "--filename", "custom_name.pdf"]).unwrap();
 
         match args.command {
-            Command::Send { file_name, .. } => {
-                assert_eq!(file_name, Some("custom_name.pdf".to_string()));
+            Command::Send { filename, .. } => {
+                assert_eq!(filename, Some("custom_name.pdf".to_string()));
             }
             _ => panic!("Expected Send command"),
         }
@@ -548,17 +522,17 @@ mod tests {
             "hakanai",
             "send",
             "--as-file",
-            "--file-name",
+            "--filename",
             "secret_document.txt",
         ])
         .unwrap();
 
         match args.command {
             Command::Send {
-                as_file, file_name, ..
+                as_file, filename, ..
             } => {
                 assert!(as_file);
-                assert_eq!(file_name, Some("secret_document.txt".to_string()));
+                assert_eq!(filename, Some("secret_document.txt".to_string()));
             }
             _ => panic!("Expected Send command"),
         }
@@ -572,7 +546,7 @@ mod tests {
             "--file",
             "/home/user/secret.bin",
             "--as-file",
-            "--file-name",
+            "--filename",
             "renamed_secret.bin",
         ])
         .unwrap();
@@ -581,12 +555,12 @@ mod tests {
             Command::Send {
                 file,
                 as_file,
-                file_name,
+                filename,
                 ..
             } => {
                 assert_eq!(file, Some("/home/user/secret.bin".to_string()));
                 assert!(as_file);
-                assert_eq!(file_name, Some("renamed_secret.bin".to_string()));
+                assert_eq!(filename, Some("renamed_secret.bin".to_string()));
             }
             _ => panic!("Expected Send command"),
         }

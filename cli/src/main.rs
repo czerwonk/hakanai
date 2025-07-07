@@ -39,7 +39,7 @@ async fn process_command(args: Args) -> Result<()> {
             token,
             file,
             as_file,
-            file_name,
-        } => send(server, ttl, token, file, as_file, file_name).await,
+            filename,
+        } => send(server, ttl, token, file, as_file, filename).await,
     }
 }

@@ -21,7 +21,7 @@ pub async fn send(
     token: String,
     file: Option<String>,
     as_file: bool,
-    file_name: Option<String>,
+    filename: Option<String>,
 ) -> Result<()> {
     let bytes = read_secret(file.clone())?;
 
@@ -45,8 +45,8 @@ pub async fn send(
         eprintln!("{}", "Warning: No token provided.".yellow());
     }
 
-    let file_name = get_file_name(file, as_file, file_name)?;
-    let payload = Payload::from_bytes(&bytes, file_name);
+    let filename = get_filename(file, as_file, filename)?;
+    let payload = Payload::from_bytes(&bytes, filename);
 
     let user_agent = get_user_agent_name();
     let observer = ProgressObserver::new("Sending secret...")?;
@@ -67,16 +67,16 @@ pub async fn send(
     Ok(())
 }
 
-fn get_file_name(
+fn get_filename(
     file: Option<String>,
     as_file: bool,
-    file_name: Option<String>,
+    filename: Option<String>,
 ) -> Result<Option<String>> {
     if !as_file {
         return Ok(None);
     }
 
-    if let Some(name) = file_name {
+    if let Some(name) = filename {
         return Ok(Some(name));
     }
 
