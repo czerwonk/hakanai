@@ -268,7 +268,16 @@ class HakanaiClient {
             throw new Error("Auth token must be a string if provided");
         }
         const key = CryptoOperations.generateKey();
-        const payloadJson = JSON.stringify(payload);
+        // Convert PayloadData to Rust-compatible Payload format
+        // The data field must be base64-encoded to match Rust Payload::from_bytes behavior
+        const encoder = new TextEncoder();
+        const dataBytes = encoder.encode(payload.data);
+        const base64Data = btoa(String.fromCharCode(...dataBytes));
+        const rustPayload = {
+            data: base64Data,
+            filename: payload.filename || null
+        };
+        const payloadJson = JSON.stringify(rustPayload);
         const encryptedData = await CryptoOperations.encrypt(payloadJson, key);
         const headers = {
             "Content-Type": "application/json",
