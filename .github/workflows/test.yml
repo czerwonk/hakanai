@@ -27,11 +27,11 @@ jobs:
       - name: Setup TypeScript
         run: npm install -g typescript
 
-      - name: Install test dependencies
-        run: cd tests && npm ci
-
       - name: Build TypeScript client
         run: make build-ts
+
+      - name: Install test dependencies
+        run: cd tests && npm ci && npm i --save-dev @types/jest
 
       - name: Run Rust tests
         run: cargo test --verbose
