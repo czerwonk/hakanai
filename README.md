@@ -198,6 +198,31 @@ Serves the hakanai icon.
 ### GET /scripts/hakanai-client.js
 Serves the JavaScript client library for browser-based encryption/decryption. The client is implemented in TypeScript and compiled to JavaScript for browser compatibility.
 
+**TypeScript Client API:**
+```javascript
+// Create a client instance
+const client = new HakanaiClient('https://hakanai.example.com');
+
+// Create payload from text
+const encoder = new TextEncoder();
+const textBytes = encoder.encode("my secret text");
+const payload = client.createPayload(); // optional filename parameter
+payload.setFromBytes(textBytes);
+
+// Create payload from file bytes
+const fileBytes = new Uint8Array(fileData); // from FileReader
+const filePayload = client.createPayload("document.pdf");
+filePayload.setFromBytes(fileBytes);
+
+// Send payload
+const secretUrl = await client.sendPayload(payload, 3600); // TTL in seconds
+
+// Retrieve payload
+const retrievedPayload = await client.receivePayload(secretUrl);
+const originalText = retrievedPayload.decode(); // for text data
+const originalBytes = retrievedPayload.decodeBytes(); // for binary data
+```
+
 ### GET /
 Web interface for retrieving secrets - shows a form to paste hakanai URLs.
 
@@ -292,6 +317,11 @@ Hakanai implements a zero-knowledge architecture:
   - Written in TypeScript, compiled to JavaScript for browser compatibility
   - Maintains same zero-knowledge architecture as Rust client
   - Includes browser compatibility checks and chunked processing for large files
+  - **Bytes-based PayloadData Interface**: Unified approach for text and binary data
+    - `payload.setFromBytes(bytes)` - Sets data from raw bytes with automatic base64 encoding
+    - `payload.decode()` - Decodes to text with proper Unicode handling
+    - `payload.decodeBytes()` - Decodes to binary data as Uint8Array
+    - `payload.data` - Readonly base64-encoded data field
 
 ### Security & Deployment Notes
 
@@ -332,8 +362,10 @@ For production deployments:
 - ✅ Short link format (`/s/{id}`) for easier sharing
 - ✅ Internationalization support (English and German)
 - ✅ OpenTelemetry integration for comprehensive observability
-- ✅ Comprehensive test coverage (74+ tests)
+- ✅ Comprehensive test coverage (23+ TypeScript tests, 74+ total tests)
 - ✅ Docker deployment with Valkey/Redis included
+- ✅ **Enhanced TypeScript Client**: Bytes-based PayloadData interface with type safety
+- ✅ **Unified Data Handling**: Consistent approach for text and binary data across all clients
 
 ### Security Implementation
 - ✅ **Zero-knowledge architecture**: All encryption/decryption client-side
