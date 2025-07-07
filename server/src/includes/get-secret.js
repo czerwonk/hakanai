@@ -1,3 +1,5 @@
+import { HakanaiClient } from '/scripts/hakanai-client.js';
+
 // Listen for language changes to update dynamic content
 document.addEventListener("languageChanged", function (e) {
   updateUIStrings();
