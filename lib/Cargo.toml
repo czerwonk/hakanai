@@ -5,10 +5,10 @@ edition = "2024"
 
 [dependencies]
 aes-gcm = "0.10.3"
-async-stream = "0.3.6"
+async-stream = { version = "0.3.6", optional = true }
 async-trait = "0.1.88"
 base64 = "0.22.1"
-bytes = "1.10.1"
+bytes = { version = "1.10.1", optional = true }
 rand = "0.9.1"
 reqwest = { version = "0.12.22", optional = true, features = ["json", "stream"] }
 serde = { version = "1.0.219", features = ["derive"] }
@@ -23,5 +23,5 @@ mockito = "1.7.0"
 tokio = { version = "1.45.1", features = ["rt-multi-thread", "macros"] }
 
 [features]
-default = ["reqwest", "serde_json", "url"]
+default = ["reqwest", "serde_json", "url", "bytes", "async-stream"]
 minimal = []
