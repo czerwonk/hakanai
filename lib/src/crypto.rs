@@ -41,7 +41,6 @@ impl Client<String> for CryptoClient {
         let nonce = Aes256Gcm::generate_nonce(&mut OsRng);
 
         let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(&key));
-        key.zeroize();
 
         let ciphertext = cipher
             .encrypt(&nonce, data.as_bytes())
@@ -57,7 +56,11 @@ impl Client<String> for CryptoClient {
             .inner_client
             .send_secret(base_url, encoded_data, ttl, token, opts)
             .await?;
-        Ok(append_key_to_link(res, &key))
+
+        let url = append_key_to_link(res, &key);
+        key.zeroize();
+
+        Ok(url)
     }
 
     async fn receive_secret(
@@ -102,7 +105,6 @@ fn decrypt(encoded_data: String, key_base64: String) -> Result<String, ClientErr
         .map_err(|e| ClientError::DecryptionError(format!("failed to decode data: {e}")))?;
 
     let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(&key));
-    key.zeroize();
 
     let nonce_len = aes_gcm::Nonce::<<Aes256Gcm as AeadCore>::NonceSize>::default().len();
     if payload.len() < nonce_len {
@@ -117,6 +119,7 @@ fn decrypt(encoded_data: String, key_base64: String) -> Result<String, ClientErr
     let plaintext = cipher
         .decrypt(nonce, ciphertext)
         .map_err(|e| ClientError::DecryptionError(format!("decryption failed: {e}")))?;
+    key.zeroize();
 
     let data = String::from_utf8(plaintext)
         .map_err(|e| ClientError::DecryptionError(format!("failed to convert to string: {e}")))?;
