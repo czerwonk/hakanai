@@ -1,7 +1,7 @@
 import { HakanaiClient } from "/scripts/hakanai-client.js";
 
 // Listen for language changes to update dynamic content
-document.addEventListener("languageChanged", function (e) {
+document.addEventListener("languageChanged", function () {
   updateUIStrings();
 });
 
@@ -19,6 +19,7 @@ function updateUIStrings() {
   UI_STRINGS.BINARY_DETECTED = i18n.t("msg.binaryDetected");
   UI_STRINGS.COPY_ARIA = i18n.t("aria.copySecret");
   UI_STRINGS.DOWNLOAD_ARIA = i18n.t("aria.downloadSecret");
+  UI_STRINGS.FILENAME_LABEL = i18n.t("label.filename");
 }
 
 const UI_STRINGS = {
@@ -38,11 +39,14 @@ const UI_STRINGS = {
     "Binary file detected. Content hidden for security. Use download button to save the file.",
   COPY_ARIA: "Copy secret to clipboard",
   DOWNLOAD_ARIA: "Download secret as file",
+  FILENAME_LABEL: "Filename:",
 };
 
 const TIMEOUTS = {
   COPY_FEEDBACK: 2000,
   DEBOUNCE: 300,
+  CLEANUP_DELAY: 100,
+  SCREEN_READER_ANNOUNCEMENT: 1000,
 };
 
 // Extract base URL from current location or use a default
@@ -79,7 +83,6 @@ const retrieveSecretDebounced = debounce(async function retrieveSecret() {
     return;
   }
 
-  let urlObj;
   let processedUrl = url;
 
   if (!url.match(/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//)) {
@@ -89,11 +92,12 @@ const retrieveSecretDebounced = debounce(async function retrieveSecret() {
   }
 
   try {
-    urlObj = new URL(processedUrl);
+    const urlObj = new URL(processedUrl);
     if (!urlObj.hash || urlObj.hash.length <= 1) {
       throw new Error("Missing hash");
     }
-  } catch (e) {
+  } catch (error) {
+    // Since msg.invalidUrl already mentions missing hash, just use it
     showError(UI_STRINGS.INVALID_URL);
     urlInput.focus();
     return;
@@ -123,6 +127,24 @@ const retrieveSecretDebounced = debounce(async function retrieveSecret() {
 
 async function retrieveSecret() {
   retrieveSecretDebounced();
+}
+
+// Helper function to create buttons
+function createButton(className, text, ariaLabel, clickHandler) {
+  const button = document.createElement("button");
+  button.className = className;
+  button.type = "button";
+  button.textContent = text;
+  button.setAttribute("aria-label", ariaLabel);
+  button.addEventListener("click", clickHandler);
+  return button;
+}
+
+// Helper function to create button container
+function createButtonContainer() {
+  const container = document.createElement("div");
+  container.className = "buttons-container";
+  return container;
 }
 
 function showSuccess(payload) {
@@ -160,27 +182,26 @@ function showSuccess(payload) {
     });
     container.appendChild(textarea);
 
-    const buttonsContainer = document.createElement("div");
-    buttonsContainer.className = "buttons-container";
+    const buttonsContainer = createButtonContainer();
 
-    const copyBtn = document.createElement("button");
-    copyBtn.className = "copy-button";
-    copyBtn.type = "button";
-    copyBtn.textContent = UI_STRINGS.COPY_TEXT;
-    copyBtn.setAttribute("aria-label", UI_STRINGS.COPY_ARIA);
-    copyBtn.addEventListener("click", function () {
-      copySecret(secretId, this);
-    });
+    const copyBtn = createButton(
+      "copy-button",
+      UI_STRINGS.COPY_TEXT,
+      UI_STRINGS.COPY_ARIA,
+      function () {
+        copySecret(secretId, this);
+      },
+    );
     buttonsContainer.appendChild(copyBtn);
 
-    const downloadBtn = document.createElement("button");
-    downloadBtn.className = "download-button";
-    downloadBtn.type = "button";
-    downloadBtn.textContent = UI_STRINGS.DOWNLOAD_TEXT;
-    downloadBtn.setAttribute("aria-label", UI_STRINGS.DOWNLOAD_ARIA);
-    downloadBtn.addEventListener("click", function () {
-      downloadSecret(payload);
-    });
+    const downloadBtn = createButton(
+      "download-button",
+      UI_STRINGS.DOWNLOAD_TEXT,
+      UI_STRINGS.DOWNLOAD_ARIA,
+      function () {
+        downloadSecret(payload);
+      },
+    );
     buttonsContainer.appendChild(downloadBtn);
 
     container.appendChild(buttonsContainer);
@@ -192,17 +213,16 @@ function showSuccess(payload) {
     message.textContent = UI_STRINGS.BINARY_DETECTED;
     container.appendChild(message);
 
-    const buttonsContainer = document.createElement("div");
-    buttonsContainer.className = "buttons-container";
+    const buttonsContainer = createButtonContainer();
 
-    const downloadBtn = document.createElement("button");
-    downloadBtn.className = "download-button";
-    downloadBtn.type = "button";
-    downloadBtn.textContent = UI_STRINGS.DOWNLOAD_TEXT;
-    downloadBtn.setAttribute("aria-label", UI_STRINGS.DOWNLOAD_ARIA);
-    downloadBtn.addEventListener("click", function () {
-      downloadSecret(payload);
-    });
+    const downloadBtn = createButton(
+      "download-button",
+      UI_STRINGS.DOWNLOAD_TEXT,
+      UI_STRINGS.DOWNLOAD_ARIA,
+      function () {
+        downloadSecret(payload);
+      },
+    );
     buttonsContainer.appendChild(downloadBtn);
 
     container.appendChild(buttonsContainer);
@@ -218,7 +238,7 @@ function showSuccess(payload) {
     fileInfo.style.color = "var(--color-text-muted, #888888)";
 
     const fileLabel = document.createElement("strong");
-    fileLabel.textContent = "Filename: ";
+    fileLabel.textContent = UI_STRINGS.FILENAME_LABEL + " ";
     fileInfo.appendChild(fileLabel);
     fileInfo.appendChild(document.createTextNode(payload.filename));
     resultDiv.appendChild(fileInfo);
@@ -264,8 +284,12 @@ function showError(message) {
 
 function copySecret(secretId, button) {
   const secretElement = document.getElementById(secretId);
-  const originalText = button.textContent;
+  if (!secretElement) {
+    alert(UI_STRINGS.COPY_FAILED);
+    return;
+  }
 
+  const originalText = button.textContent;
   const secretText = secretElement.value;
 
   if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -281,7 +305,7 @@ function copySecret(secretId, button) {
           button.classList.remove("copied");
         }, TIMEOUTS.COPY_FEEDBACK);
       })
-      .catch((err) => {
+      .catch(() => {
         // Fallback to older method
         fallbackCopy(secretText, button, originalText);
       });
@@ -310,7 +334,7 @@ function fallbackCopy(text, button, originalText) {
       button.textContent = originalText;
       button.classList.remove("copied");
     }, TIMEOUTS.COPY_FEEDBACK);
-  } catch (err) {
+  } catch (error) {
     alert(UI_STRINGS.COPY_FAILED);
   }
 
@@ -352,17 +376,19 @@ function downloadSecret(payload) {
   setTimeout(() => {
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
-  }, 100);
+  }, TIMEOUTS.CLEANUP_DELAY);
 
   announceToScreenReader(i18n.t("msg.downloaded"));
 }
 
 const urlInput = document.getElementById("secretUrl");
-urlInput.placeholder = `${baseUrl}/s/uuid#key`;
+if (urlInput) {
+  urlInput.placeholder = `${baseUrl}/s/uuid#key`;
 
-// Check if current URL is a short link and prefill the input
-if (window.location.pathname.match(/^\/s\/[^\/]+$/)) {
-  urlInput.value = window.location.href;
+  // Check if current URL is a short link and prefill the input
+  if (window.location.pathname.match(/^\/s\/[^\/]+$/)) {
+    urlInput.value = window.location.href;
+  }
 }
 
 // Initialize UI strings after DOM is ready
@@ -382,7 +408,7 @@ function announceToScreenReader(message) {
   // Remove after announcement
   setTimeout(() => {
     document.body.removeChild(announcement);
-  }, 1000);
+  }, TIMEOUTS.SCREEN_READER_ANNOUNCEMENT);
 }
 
 // Add event listener for form submission

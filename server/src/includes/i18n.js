@@ -22,6 +22,7 @@
       "label.token": "Token:",
       "label.expires": "Expires after:",
       "label.url": "Secret URL:",
+      "label.filename": "Filename:",
 
       // Placeholders
       "placeholder.secret": "Enter your secret message here...",
@@ -125,6 +126,7 @@
       "label.token": "Token:",
       "label.expires": "Läuft ab nach:",
       "label.url": "Secret-URL:",
+      "label.filename": "Dateiname:",
 
       // Placeholders
       "placeholder.secret": "Hier wird gen geheime Text eingegeben...",
