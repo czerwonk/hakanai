@@ -40,7 +40,7 @@ Hakanai demonstrates **excellent architectural design** with a clean separation 
 **High Priority**:
 1. ~~**Missing `from_text` method on Payload**~~ ✅ FIXED - Not needed, text handled directly as strings
 2. ~~**Documentation inconsistencies**~~ ✅ FIXED - Documentation updated to match implementation
-3. **Potential information leakage** in error messages containing response bodies
+3. ~~**Potential information leakage**~~ ✅ NOT AN ISSUE - Server is responsible for sanitizing error messages before sending to clients
 
 **Medium Priority**:
 1. **Hardcoded API paths** should be configurable
