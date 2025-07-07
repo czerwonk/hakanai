@@ -7,7 +7,6 @@ import {
   HakanaiClient,
   Base64UrlSafe,
   CryptoOperations,
-  type PayloadData,
 } from "../server/src/includes/hakanai-client";
 
 // Helper function to ensure we get proper Uint8Array in tests

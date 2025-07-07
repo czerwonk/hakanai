@@ -157,10 +157,8 @@ class BrowserCompatibility {
   static getCompatibilityInfo(): CompatibilityCheck {
     const missingFeatures: string[] = [];
 
-    // Check for Web Crypto API (works in both browser and test environments)
-    const cryptoInstance =
-      (typeof window !== "undefined" && window.crypto) ||
-      (typeof global !== "undefined" && global.crypto);
+    // Check for Web Crypto API (browser environment)
+    const cryptoInstance = window?.crypto || crypto;
     if (!cryptoInstance || !cryptoInstance.subtle) {
       missingFeatures.push("Web Crypto API (crypto.subtle)");
     }
@@ -216,12 +214,10 @@ class BrowserCompatibility {
  */
 class CryptoOperations {
   /**
-   * Get crypto instance (works in both browser and test environments)
+   * Get crypto instance (browser environment)
    */
   private static getCrypto(): Crypto {
-    const cryptoInstance =
-      (typeof window !== "undefined" && window.crypto) ||
-      (typeof global !== "undefined" && global.crypto);
+    const cryptoInstance = window?.crypto || crypto;
     if (!cryptoInstance) {
       throw new Error("Crypto API not available");
     }
