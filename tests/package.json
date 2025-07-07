@@ -16,6 +16,7 @@
     "typescript": "^5.0.0"
   },
   "jest": {
+    "preset": "ts-jest",
     "testEnvironment": "jsdom",
     "setupFilesAfterEnv": [
       "<rootDir>/setup.js"
@@ -33,7 +34,11 @@
       "html"
     ],
     "transform": {
-      "^.+\\.ts$": "ts-jest"
+      "^.+\\.ts$": ["ts-jest", {
+        "tsconfig": {
+          "types": ["jest", "node"]
+        }
+      }]
     },
     "moduleFileExtensions": [
       "ts",
