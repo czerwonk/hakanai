@@ -346,6 +346,58 @@ class CryptoOperations {
 }
 
 /**
+ * PayloadData implementation class
+ */
+class PayloadDataImpl implements PayloadData {
+  private _data: string = "";
+  private _filename?: string;
+
+  constructor(data: string = "", filename?: string) {
+    this._data = data;
+    this._filename = filename;
+  }
+
+  get data(): string {
+    return this._data;
+  }
+
+  get filename(): string | undefined {
+    return this._filename;
+  }
+
+  setFromBytes(bytes: Uint8Array): void {
+    if (!(bytes instanceof Uint8Array)) {
+      throw new Error("Data must be a Uint8Array");
+    }
+
+    // Convert bytes to base64 for storage
+    let binaryString = "";
+    const chunkSize = 8192;
+
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      const chunk = bytes.subarray(i, i + chunkSize);
+      binaryString += String.fromCharCode(...chunk);
+    }
+
+    this._data = btoa(binaryString);
+  }
+
+  decode(): string {
+    const binaryString = atob(this._data);
+    return decodeURIComponent(escape(binaryString));
+  }
+
+  decodeBytes(): Uint8Array {
+    const binaryString = atob(this._data);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes;
+  }
+}
+
+/**
  * Main Hakanai client class
  */
 class HakanaiClient {
@@ -531,59 +583,14 @@ class HakanaiClient {
       throw new Error("Invalid payload structure");
     }
 
-    return this.createPayloadDataFromInternal(payload);
-  }
-
-  /**
-   * Create PayloadData from internal payload structure (shared implementation)
-   */
-  private createPayloadDataFromInternal(payload: {
-    data: string;
-    filename?: string | null;
-  }): PayloadData {
-    return {
-      get data(): string {
-        return payload.data;
-      },
-      filename: payload.filename || undefined,
-      setFromBytes(bytes: Uint8Array): void {
-        if (!(bytes instanceof Uint8Array)) {
-          throw new Error("Data must be a Uint8Array");
-        }
-
-        // Convert bytes to base64 for storage
-        let binaryString = "";
-        const chunkSize = 8192;
-
-        for (let i = 0; i < bytes.length; i += chunkSize) {
-          const chunk = bytes.subarray(i, i + chunkSize);
-          binaryString += String.fromCharCode(...chunk);
-        }
-
-        // Update the internal payload data
-        payload.data = btoa(binaryString);
-      },
-      decode(): string {
-        const binaryString = atob(payload.data);
-        return decodeURIComponent(escape(binaryString));
-      },
-      decodeBytes(): Uint8Array {
-        const binaryString = atob(payload.data);
-        const bytes = new Uint8Array(binaryString.length);
-        for (let i = 0; i < binaryString.length; i++) {
-          bytes[i] = binaryString.charCodeAt(i);
-        }
-        return bytes;
-      },
-    };
+    return new PayloadDataImpl(payload.data, payload.filename || undefined);
   }
 
   /**
    * Create a new PayloadData object
    */
   createPayload(filename?: string): PayloadData {
-    const payload = { data: "", filename: filename || null };
-    return this.createPayloadDataFromInternal(payload);
+    return new PayloadDataImpl("", filename);
   }
 
   /**
