@@ -133,7 +133,7 @@ async fn get_secret_short(
         .unwrap_or_default();
     info!("Received request for secret: {}", req);
 
-    if !user_agent.starts_with("hakanai-client") {
+    if !user_agent.starts_with("hakanai-") {
         return HttpResponse::Ok()
             .content_type("text/html")
             .body(web_static::get_secret_html_content());
