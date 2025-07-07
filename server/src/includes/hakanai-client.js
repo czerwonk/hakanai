@@ -306,12 +306,9 @@ class HakanaiClient {
     }
     const key = CryptoOperations.generateKey();
     // Convert PayloadData to Rust-compatible Payload format
-    // The data field must be base64-encoded to match Rust Payload::from_bytes behavior
-    const encoder = new TextEncoder();
-    const dataBytes = encoder.encode(payload.data);
-    const base64Data = btoa(String.fromCharCode(...dataBytes));
+    // The data field is already base64-encoded when using setFromBytes
     const rustPayload = {
-      data: base64Data,
+      data: payload.data,
       filename: payload.filename || null,
     };
     const payloadJson = JSON.stringify(rustPayload);
@@ -405,23 +402,29 @@ class HakanaiClient {
     ) {
       throw new Error("Invalid payload structure");
     }
-    // Decode the base64 data back to the original text
-    // The Rust Payload format stores data as base64, we need to decode it
-    let decodedData;
-    try {
-      const binaryString = atob(payload.data);
-      const decoder = new TextDecoder();
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-      decodedData = decoder.decode(bytes);
-    } catch (error) {
-      throw new Error("Failed to decode payload data");
-    }
+    return this.createPayloadDataFromInternal(payload);
+  }
+  /**
+   * Create PayloadData from internal payload structure (shared implementation)
+   */
+  createPayloadDataFromInternal(payload) {
     return {
-      data: decodedData,
+      data: payload.data,
       filename: payload.filename || undefined,
+      setFromBytes(bytes) {
+        if (!(bytes instanceof Uint8Array)) {
+          throw new Error("Data must be a Uint8Array");
+        }
+        // Convert bytes to base64 for storage
+        let binaryString = "";
+        const chunkSize = 8192;
+        for (let i = 0; i < bytes.length; i += chunkSize) {
+          const chunk = bytes.subarray(i, i + chunkSize);
+          binaryString += String.fromCharCode(...chunk);
+        }
+        // Update the internal payload data
+        payload.data = btoa(binaryString);
+      },
       decode() {
         const binaryString = atob(payload.data);
         return decodeURIComponent(escape(binaryString));
@@ -435,6 +438,13 @@ class HakanaiClient {
         return bytes;
       },
     };
+  }
+  /**
+   * Create a new PayloadData object
+   */
+  createPayload(filename) {
+    const payload = { data: "", filename: filename || null };
+    return this.createPayloadDataFromInternal(payload);
   }
   /**
    * Legacy methods for backward compatibility

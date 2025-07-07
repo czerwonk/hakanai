@@ -10,6 +10,13 @@ import {
   type PayloadData,
 } from "../server/src/includes/hakanai-client";
 
+// Helper function to ensure we get proper Uint8Array in tests
+function encodeText(text: string): Uint8Array {
+  const encoder = new TextEncoder();
+  const encoded = encoder.encode(text);
+  return new Uint8Array(encoded);
+}
+
 // Mock server responses only
 const createMockFetch = () => {
   const mockSecrets = new Map<string, string>();
@@ -172,9 +179,12 @@ describe("HakanaiClient Integration", () => {
   });
 
   test("complete roundtrip: send and receive text secret", async () => {
-    const originalPayload: PayloadData = {
-      data: "This is a secret message that should roundtrip correctly! 🔐",
-    };
+    const originalText =
+      "This is a secret message that should roundtrip correctly! 🔐";
+    const textBytes = encodeText(originalText);
+
+    const originalPayload = client.createPayload();
+    originalPayload.setFromBytes!(textBytes);
 
     // Send the secret
     const secretUrl = await client.sendPayload(originalPayload, 3600);
@@ -186,15 +196,17 @@ describe("HakanaiClient Integration", () => {
     // Receive the secret
     const retrievedPayload = await client.receivePayload(secretUrl);
 
-    expect(retrievedPayload.data).toBe(originalPayload.data);
+    expect(retrievedPayload.decode!()).toBe(originalText);
     expect(retrievedPayload.filename).toBeUndefined();
   });
 
   test("complete roundtrip: send and receive file secret", async () => {
-    const originalPayload: PayloadData = {
-      data: "Binary file content or any text treated as file",
-      filename: "test-document.txt",
-    };
+    const originalText = "Binary file content or any text treated as file";
+    const filename = "test-document.txt";
+    const textBytes = encodeText(originalText);
+
+    const originalPayload = client.createPayload(filename);
+    originalPayload.setFromBytes!(textBytes);
 
     // Send the secret
     const secretUrl = await client.sendPayload(originalPayload, 1800);
@@ -206,56 +218,64 @@ describe("HakanaiClient Integration", () => {
     // Receive the secret
     const retrievedPayload = await client.receivePayload(secretUrl);
 
-    expect(retrievedPayload.data).toBe(originalPayload.data);
-    expect(retrievedPayload.filename).toBe(originalPayload.filename);
+    expect(retrievedPayload.decode!()).toBe(originalText);
+    expect(retrievedPayload.filename).toBe(filename);
   });
 
   test("roundtrip with special characters and unicode", async () => {
-    const originalPayload: PayloadData = {
-      data: "Special chars: åëïöü 中文 🚀 \n\t\r\"'\\\x00\xFF",
-      filename: "unicode-file-名前.txt",
-    };
+    const originalText = "Special chars: åëïöü 中文 🚀 \n\t\r\"'\\\x00\xFF";
+    const filename = "unicode-file-名前.txt";
+    const textBytes = encodeText(originalText);
+
+    const originalPayload = client.createPayload(filename);
+    originalPayload.setFromBytes!(textBytes);
 
     const secretUrl = await client.sendPayload(originalPayload);
     const retrievedPayload = await client.receivePayload(secretUrl);
 
-    expect(retrievedPayload.data).toBe(originalPayload.data);
-    expect(retrievedPayload.filename).toBe(originalPayload.filename);
+    expect(retrievedPayload.decode!()).toBe(originalText);
+    expect(retrievedPayload.filename).toBe(filename);
   });
 
   test("roundtrip with empty filename (null handling)", async () => {
-    const originalPayload: PayloadData = {
-      data: "Secret without filename",
-    };
+    const originalText = "Secret without filename";
+    const textBytes = encodeText(originalText);
+
+    const originalPayload = client.createPayload();
+    originalPayload.setFromBytes!(textBytes);
 
     const secretUrl = await client.sendPayload(originalPayload);
     const retrievedPayload = await client.receivePayload(secretUrl);
 
-    expect(retrievedPayload.data).toBe(originalPayload.data);
+    expect(retrievedPayload.decode!()).toBe(originalText);
     expect(retrievedPayload.filename).toBeUndefined();
   });
 
   test("large payload roundtrip", async () => {
     // Create a larger payload to test chunked base64 processing
     const largeData = "x".repeat(10000) + " end marker";
-    const originalPayload: PayloadData = {
-      data: largeData,
-      filename: "large-file.txt",
-    };
+    const filename = "large-file.txt";
+    const textBytes = encodeText(largeData);
+
+    const originalPayload = client.createPayload(filename);
+    originalPayload.setFromBytes!(textBytes);
 
     const secretUrl = await client.sendPayload(originalPayload);
     const retrievedPayload = await client.receivePayload(secretUrl);
 
-    expect(retrievedPayload.data).toBe(originalPayload.data);
-    expect(retrievedPayload.data).toHaveLength(10011);
-    expect(retrievedPayload.data.endsWith(" end marker")).toBe(true);
-    expect(retrievedPayload.filename).toBe(originalPayload.filename);
+    const decodedData = retrievedPayload.decode!();
+    expect(decodedData).toBe(largeData);
+    expect(decodedData).toHaveLength(10011);
+    expect(decodedData.endsWith(" end marker")).toBe(true);
+    expect(retrievedPayload.filename).toBe(filename);
   });
 
   test("payload data is base64-encoded in internal format", async () => {
-    const originalPayload: PayloadData = {
-      data: "test message",
-    };
+    const originalText = "test message";
+    const textBytes = encodeText(originalText);
+
+    const originalPayload = client.createPayload();
+    originalPayload.setFromBytes!(textBytes);
 
     // Mock fetch to capture what gets sent
     const sentData: any[] = [];
@@ -282,7 +302,11 @@ describe("HakanaiClient Integration", () => {
   });
 
   test("URL format matches expected pattern", async () => {
-    const payload: PayloadData = { data: "test" };
+    const textBytes = encodeText("test");
+
+    const payload = client.createPayload();
+    payload.setFromBytes!(textBytes);
+
     const url = await client.sendPayload(payload);
 
     const urlObj = new URL(url);
@@ -299,10 +323,12 @@ describe("HakanaiClient Integration", () => {
   });
 
   test("PayloadData decode() method works correctly", async () => {
-    const originalPayload: PayloadData = {
-      data: "Test message with unicode: 🔐 åëïöü",
-      filename: "test.txt",
-    };
+    const originalText = "Test message with unicode: 🔐 åëïöü";
+    const filename = "test.txt";
+    const textBytes = encodeText(originalText);
+
+    const originalPayload = client.createPayload(filename);
+    originalPayload.setFromBytes!(textBytes);
 
     const secretUrl = await client.sendPayload(originalPayload);
     const retrievedPayload = await client.receivePayload(secretUrl);
@@ -310,14 +336,16 @@ describe("HakanaiClient Integration", () => {
     // Test the decode() method
     expect(retrievedPayload.decode).toBeDefined();
     const decodedData = retrievedPayload.decode!();
-    expect(decodedData).toBe(originalPayload.data);
+    expect(decodedData).toBe(originalText);
   });
 
   test("PayloadData decodeBytes() method works correctly", async () => {
-    const originalPayload: PayloadData = {
-      data: "Binary data test",
-      filename: "binary.dat",
-    };
+    const originalText = "Binary data test";
+    const filename = "binary.dat";
+    const textBytes = encodeText(originalText);
+
+    const originalPayload = client.createPayload(filename);
+    originalPayload.setFromBytes!(textBytes);
 
     const secretUrl = await client.sendPayload(originalPayload);
     const retrievedPayload = await client.receivePayload(secretUrl);
@@ -326,11 +354,11 @@ describe("HakanaiClient Integration", () => {
     expect(retrievedPayload.decodeBytes).toBeDefined();
     const decodedBytes = retrievedPayload.decodeBytes!();
     expect(decodedBytes).toBeInstanceOf(Uint8Array);
-    
+
     // Convert back to string to verify
     const decoder = new TextDecoder();
     const decodedString = decoder.decode(decodedBytes);
-    expect(decodedString).toBe(originalPayload.data);
+    expect(decodedString).toBe(originalText);
   });
 });
 
@@ -347,16 +375,22 @@ describe("Error Handling", () => {
       "Payload data cannot be empty",
     );
 
-    await expect(client.sendPayload({ data: "" })).rejects.toThrow(
+    const emptyPayload = client.createPayload();
+    // Don't call setFromBytes, so data remains empty
+    await expect(client.sendPayload(emptyPayload)).rejects.toThrow(
       "Payload data cannot be empty",
     );
 
-    await expect(client.sendPayload({ data: "test" }, 0)).rejects.toThrow(
+    const testBytes = encodeText("test");
+    const validPayload = client.createPayload();
+    validPayload.setFromBytes!(testBytes);
+
+    await expect(client.sendPayload(validPayload, 0)).rejects.toThrow(
       "TTL must be a positive integer",
     );
 
     await expect(
-      client.sendPayload({ data: "test" }, 3600, 123 as any),
+      client.sendPayload(validPayload, 3600, 123 as any),
     ).rejects.toThrow("Auth token must be a string if provided");
   });
 

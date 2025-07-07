@@ -78,11 +78,10 @@ async function validateAndProcessFileInput(fileInput) {
   }
 
   try {
-    const fileContent = await readFileAsBase64(file);
-    return {
-      data: fileContent,
-      filename: fileName,
-    };
+    const fileBytes = await readFileAsBytes(file);
+    const payload = client.createPayload(fileName);
+    payload.setFromBytes(fileBytes);
+    return payload;
   } catch (error) {
     showError(UI_STRINGS.FILE_READ_ERROR);
     return null;
@@ -96,7 +95,20 @@ function validateTextInput(secretInput) {
     secretInput.focus();
     return null;
   }
-  return { data: secret };
+
+  // Check for TextEncoder support
+  if (typeof TextEncoder === "undefined") {
+    showError(
+      "Your browser doesn't support text encoding. Please use a modern browser.",
+    );
+    return null;
+  }
+
+  const encoder = new TextEncoder();
+  const textBytes = encoder.encode(secret);
+  const payload = client.createPayload();
+  payload.setFromBytes(textBytes);
+  return payload;
 }
 
 function setLoadingState(elements, isLoading) {
@@ -143,6 +155,22 @@ async function createSecret() {
   const textRadio = document.getElementById("textRadio");
   const fileRadio = document.getElementById("fileRadio");
 
+  // Check if all required elements exist
+  if (
+    !secretInput ||
+    !fileInput ||
+    !authTokenInput ||
+    !ttlSelect ||
+    !resultDiv ||
+    !loadingDiv ||
+    !button ||
+    !textRadio ||
+    !fileRadio
+  ) {
+    showError("Page not fully loaded. Please refresh and try again.");
+    return;
+  }
+
   const authToken = authTokenInput.value.trim();
   const ttl = parseInt(ttlSelect.value);
   const isFileMode = fileRadio.checked;
@@ -177,18 +205,27 @@ async function createSecret() {
     showSuccess(secretUrl);
     clearInputs(secretInput, fileInput);
   } catch (error) {
-    showError(error.message || UI_STRINGS.CREATE_FAILED);
+    const errorMessage =
+      error?.message || error?.toString() || UI_STRINGS.CREATE_FAILED;
+    showError(errorMessage);
   } finally {
     setLoadingState(elements, false);
   }
 }
 
 function showSuccess(secretUrl) {
-  const resultDiv = document.getElementById("result");
-  resultDiv.className = "result success";
-  const urlId = "url-" + Date.now();
+  const resultContainer = document.getElementById("result");
+  if (!resultContainer) {
+    console.error("Result container not found");
+    return;
+  }
 
-  resultDiv.innerHTML = "";
+  resultContainer.className = "result success";
+  const urlId = crypto?.randomUUID
+    ? `url-${crypto.randomUUID()}`
+    : `url-${Date.now()}-${Math.random()}`;
+
+  resultContainer.innerHTML = "";
 
   // Hide the form elements after successful creation
   const form = document.getElementById("create-secret-form");
@@ -196,16 +233,32 @@ function showSuccess(secretUrl) {
     form.style.display = "none";
   }
 
-  // Create elements programmatically to avoid XSS
+  // Create header section
+  createSuccessHeader(resultContainer);
+
+  // Create URL display section
+  const container = createUrlDisplaySection(secretUrl, urlId);
+  resultContainer.appendChild(container);
+
+  // Create note section
+  createNoteSection(resultContainer);
+
+  // Announce to screen readers
+  announceToScreenReader(UI_STRINGS.SUCCESS_TITLE);
+}
+
+function createSuccessHeader(container) {
   const title = document.createElement("h3");
   title.textContent = UI_STRINGS.SUCCESS_TITLE;
-  resultDiv.appendChild(title);
+  container.appendChild(title);
 
   const instructions = document.createElement("p");
   instructions.className = "share-instructions";
   instructions.textContent = UI_STRINGS.SHARE_INSTRUCTIONS;
-  resultDiv.appendChild(instructions);
+  container.appendChild(instructions);
+}
 
+function createUrlDisplaySection(secretUrl, urlId) {
   const container = document.createElement("div");
   container.className = "secret-container";
 
@@ -234,49 +287,65 @@ function showSuccess(secretUrl) {
   buttonsContainer.appendChild(copyBtn);
 
   const createAnotherBtn = createButton(
-    "copy-button",
+    "secondary-button",
     i18n.t("button.createAnother"),
     "Create another secret",
     function () {
-      // Show the form again and clear result
-      const form = document.getElementById("create-secret-form");
-      const resultDiv = document.getElementById("result");
-      if (form) {
-        form.style.display = "block";
-      }
-      resultDiv.innerHTML = "";
-      resultDiv.className = "";
-
-      // Focus on the first input
-      const textRadio = document.getElementById("textRadio");
-      const secretText = document.getElementById("secretText");
-      if (textRadio && secretText) {
-        textRadio.checked = true;
-        toggleSecretType();
-        secretText.focus();
-      }
+      resetToCreateMode();
     },
   );
   buttonsContainer.appendChild(createAnotherBtn);
 
   container.appendChild(buttonsContainer);
+  return container;
+}
 
-  resultDiv.appendChild(container);
-
+function createNoteSection(container) {
   const note = document.createElement("p");
   note.className = "secret-note";
 
-  // Create strong element for "Note:" text
-  const strong = document.createElement("strong");
-  strong.textContent = i18n.t("msg.createNote").split(":")[0] + ":";
-  note.appendChild(strong);
+  // Handle i18n note text more safely
+  const noteText = i18n.t("msg.createNote");
+  const colonIndex = noteText.indexOf(":");
 
-  // Add the rest of the text
-  note.appendChild(document.createTextNode(" " + i18n.t("msg.createNoteText")));
-  resultDiv.appendChild(note);
+  if (colonIndex > 0) {
+    const strong = document.createElement("strong");
+    strong.textContent = noteText.substring(0, colonIndex + 1);
+    note.appendChild(strong);
+    note.appendChild(
+      document.createTextNode(" " + noteText.substring(colonIndex + 1).trim()),
+    );
+  } else {
+    // Fallback if no colon found
+    const strong = document.createElement("strong");
+    strong.textContent = "Note: ";
+    note.appendChild(strong);
+    note.appendChild(document.createTextNode(i18n.t("msg.createNoteText")));
+  }
 
-  // Announce to screen readers
-  announceToScreenReader(UI_STRINGS.SUCCESS_TITLE);
+  container.appendChild(note);
+}
+
+function resetToCreateMode() {
+  const form = document.getElementById("create-secret-form");
+  const resultContainer = document.getElementById("result");
+
+  if (form) {
+    form.style.display = "block";
+  }
+  if (resultContainer) {
+    resultContainer.innerHTML = "";
+    resultContainer.className = "";
+  }
+
+  // Focus on the first input
+  const textRadio = document.getElementById("textRadio");
+  const secretText = document.getElementById("secretText");
+  if (textRadio && secretText) {
+    textRadio.checked = true;
+    toggleSecretType();
+    secretText.focus();
+  }
 }
 
 function showError(message) {
@@ -308,12 +377,11 @@ function showError(message) {
 function copyUrl(urlId, button) {
   const urlElement = document.getElementById(urlId);
   if (!urlElement) {
-    alert(UI_STRINGS.COPY_FAILED);
+    showError(UI_STRINGS.COPY_FAILED);
     return;
   }
 
   const originalText = button.textContent;
-  // Get the actual URL text from input value
   const urlText = urlElement.value;
 
   copyToClipboard(
@@ -324,16 +392,6 @@ function copyUrl(urlId, button) {
     UI_STRINGS.COPY_FAILED,
   );
 }
-
-// Focus on the secret input when page loads
-document.addEventListener("DOMContentLoaded", function () {
-  const secretText = document.getElementById("secretText");
-  if (secretText) {
-    secretText.focus();
-  }
-  // Initialize UI strings after i18n is loaded
-  updateUIStrings();
-});
 
 // File handling utilities
 function sanitizeFileName(fileName) {
@@ -346,14 +404,14 @@ function sanitizeFileName(fileName) {
   return sanitized.length > 0 ? sanitized : null;
 }
 
-function readFileAsBase64(file) {
+function readFileAsBytes(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = function (e) {
       try {
-        // Get base64 content without the data URL prefix
-        const base64Content = e.target.result.split(",")[1];
-        resolve(base64Content);
+        const arrayBuffer = e.target.result;
+        const bytes = new Uint8Array(arrayBuffer);
+        resolve(bytes);
       } catch (error) {
         reject(error);
       }
@@ -361,7 +419,7 @@ function readFileAsBase64(file) {
     reader.onerror = function () {
       reject(new Error("Failed to read file"));
     };
-    reader.readAsDataURL(file);
+    reader.readAsArrayBuffer(file);
   });
 }
 
@@ -394,7 +452,7 @@ function updateFileInfo() {
     // Show warning if file is too large
     if (file.size > FILE_LIMITS.MAX_SIZE) {
       fileInfoDiv.className = "file-info error";
-      fileSizeSpan.textContent += " (Too large!)";
+      fileSizeSpan.textContent = formatFileSize(file.size) + " (Too large!)";
     } else {
       fileInfoDiv.className = "file-info";
     }
@@ -441,8 +499,18 @@ function toggleSecretType() {
   }
 }
 
-// Set up form submission handler
+// Set up all event handlers when DOM is ready
 document.addEventListener("DOMContentLoaded", function () {
+  // Initialize UI strings after i18n is loaded
+  updateUIStrings();
+
+  // Focus on the secret input
+  const secretText = document.getElementById("secretText");
+  if (secretText) {
+    secretText.focus();
+  }
+
+  // Set up form submission handler
   const form = document.querySelector("form");
   if (form) {
     form.addEventListener("submit", function (event) {

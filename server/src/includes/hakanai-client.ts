@@ -13,8 +13,13 @@ interface CompatibilityCheck {
 }
 
 interface PayloadData {
-  data: string;
-  filename?: string;
+  readonly data: string;
+  readonly filename?: string;
+
+  /**
+   * Set data from raw bytes (for binary files or text converted to bytes)
+   */
+  setFromBytes?(bytes: Uint8Array): void;
 
   /**
    * Decode the base64-encoded data field to a readable string
@@ -396,7 +401,7 @@ class HakanaiClient {
     if (
       !payload.data ||
       typeof payload.data !== "string" ||
-      payload.data.trim().length === 0
+      payload.data.length === 0
     ) {
       throw new Error("Payload data cannot be empty");
     }
@@ -412,13 +417,9 @@ class HakanaiClient {
     const key = CryptoOperations.generateKey();
 
     // Convert PayloadData to Rust-compatible Payload format
-    // The data field must be base64-encoded to match Rust Payload::from_bytes behavior
-    const encoder = new TextEncoder();
-    const dataBytes = encoder.encode(payload.data);
-    const base64Data = btoa(String.fromCharCode(...dataBytes));
-
+    // The data field is already base64-encoded when using setFromBytes
     const rustPayload = {
-      data: base64Data,
+      data: payload.data,
       filename: payload.filename || null,
     };
 
@@ -534,24 +535,38 @@ class HakanaiClient {
       throw new Error("Invalid payload structure");
     }
 
-    // Decode the base64 data back to the original text
-    // The Rust Payload format stores data as base64, we need to decode it
-    let decodedData: string;
-    try {
-      const binaryString = atob(payload.data);
-      const decoder = new TextDecoder();
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-      decodedData = decoder.decode(bytes);
-    } catch (error) {
-      throw new Error("Failed to decode payload data");
-    }
+    return this.createPayloadDataFromInternal(payload);
+  }
 
+  /**
+   * Create PayloadData from internal payload structure (shared implementation)
+   */
+  private createPayloadDataFromInternal(payload: {
+    data: string;
+    filename?: string | null;
+  }): PayloadData {
     return {
-      data: decodedData,
+      get data(): string {
+        return payload.data;
+      },
       filename: payload.filename || undefined,
+      setFromBytes(bytes: Uint8Array): void {
+        if (!(bytes instanceof Uint8Array)) {
+          throw new Error("Data must be a Uint8Array");
+        }
+
+        // Convert bytes to base64 for storage
+        let binaryString = "";
+        const chunkSize = 8192;
+
+        for (let i = 0; i < bytes.length; i += chunkSize) {
+          const chunk = bytes.subarray(i, i + chunkSize);
+          binaryString += String.fromCharCode(...chunk);
+        }
+
+        // Update the internal payload data
+        payload.data = btoa(binaryString);
+      },
       decode(): string {
         const binaryString = atob(payload.data);
         return decodeURIComponent(escape(binaryString));
@@ -565,6 +580,14 @@ class HakanaiClient {
         return bytes;
       },
     };
+  }
+
+  /**
+   * Create a new PayloadData object
+   */
+  createPayload(filename?: string): PayloadData {
+    const payload = { data: "", filename: filename || null };
+    return this.createPayloadDataFromInternal(payload);
   }
 
   /**
