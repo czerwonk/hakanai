@@ -28,7 +28,7 @@ jobs:
           cache-dependency-path: tests/package-lock.json
 
       - name: Setup TypeScript
-        run: npm install -g typescript @types/jest
+        run: npm install -g typescript
 
       - name: Build TypeScript client
         run: make build-ts
