@@ -17,24 +17,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Run Rust tests
+        run: cargo test --verbose
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "18"
+          node-version: "24"
           cache: "npm"
           cache-dependency-path: tests/package-lock.json
 
       - name: Setup TypeScript
-        run: npm install -g typescript
+        run: npm install -g typescript @types/jest
 
       - name: Build TypeScript client
         run: make build-ts
 
       - name: Install test dependencies
-        run: cd tests && npm ci && npm i --save-dev @types/jest
-
-      - name: Run Rust tests
-        run: cargo test --verbose
+        run: npm ci
+        working-directory: ./tests
 
       - name: Run TypeScript tests
-        run: cd tests && npm test
+        run: npm test
+        working-directory: ./tests
