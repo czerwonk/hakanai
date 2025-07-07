@@ -24,7 +24,6 @@ pub enum Command {
 
         #[arg(
             short,
-            long,
             env = "HAKANAI_TO_STDOUT",
             help = "Output the secret to stdout even if it is a file. This is useful for piping the output to other commands."
         )]
@@ -83,7 +82,7 @@ pub enum Command {
             long,
             help = "Filename to use for the secret when sending as a file. Can be determined automatically from --file if provided."
         )]
-        file_name: Option<String>,
+        filename: Option<String>,
     },
 }
 
@@ -99,7 +98,11 @@ mod tests {
             Args::try_parse_from(["hakanai", "get", "https://example.com/secret/abc123"]).unwrap();
 
         match args.command {
-            Command::Get { link, to_stdout, filename } => {
+            Command::Get {
+                link,
+                to_stdout,
+                filename,
+            } => {
                 assert_eq!(link.as_str(), "https://example.com/secret/abc123");
                 assert!(!to_stdout);
                 assert_eq!(filename, None);
@@ -119,7 +122,11 @@ mod tests {
         .unwrap();
 
         match args.command {
-            Command::Get { link, to_stdout, filename } => {
+            Command::Get {
+                link,
+                to_stdout,
+                filename,
+            } => {
                 assert_eq!(link.as_str(), "https://example.com/secret/abc123");
                 assert!(to_stdout);
                 assert_eq!(filename, None);
@@ -130,16 +137,16 @@ mod tests {
 
     #[test]
     fn test_get_command_with_short_to_stdout_flag() {
-        let args = Args::try_parse_from([
-            "hakanai",
-            "get",
-            "https://example.com/secret/abc123",
-            "-t",
-        ])
-        .unwrap();
+        let args =
+            Args::try_parse_from(["hakanai", "get", "https://example.com/secret/abc123", "-t"])
+                .unwrap();
 
         match args.command {
-            Command::Get { link, to_stdout, filename } => {
+            Command::Get {
+                link,
+                to_stdout,
+                filename,
+            } => {
                 assert_eq!(link.as_str(), "https://example.com/secret/abc123");
                 assert!(to_stdout);
                 assert_eq!(filename, None);
@@ -160,7 +167,11 @@ mod tests {
         .unwrap();
 
         match args.command {
-            Command::Get { link, to_stdout, filename } => {
+            Command::Get {
+                link,
+                to_stdout,
+                filename,
+            } => {
                 assert_eq!(link.as_str(), "https://example.com/secret/abc123");
                 assert!(!to_stdout);
                 assert_eq!(filename, Some("downloaded_secret.txt".to_string()));
@@ -181,7 +192,11 @@ mod tests {
         .unwrap();
 
         match args.command {
-            Command::Get { link, to_stdout, filename } => {
+            Command::Get {
+                link,
+                to_stdout,
+                filename,
+            } => {
                 assert_eq!(link.as_str(), "https://example.com/secret/abc123");
                 assert!(!to_stdout);
                 assert_eq!(filename, Some("output.bin".to_string()));
@@ -203,7 +218,11 @@ mod tests {
         .unwrap();
 
         match args.command {
-            Command::Get { link, to_stdout, filename } => {
+            Command::Get {
+                link,
+                to_stdout,
+                filename,
+            } => {
                 assert_eq!(link.as_str(), "https://example.com/secret/abc123");
                 assert!(to_stdout);
                 assert_eq!(filename, Some("ignored.txt".to_string()));
@@ -225,7 +244,11 @@ mod tests {
         .unwrap();
 
         match args.command {
-            Command::Get { link, to_stdout, filename } => {
+            Command::Get {
+                link,
+                to_stdout,
+                filename,
+            } => {
                 assert_eq!(link.as_str(), "https://example.com/secret/abc123");
                 assert!(to_stdout);
                 assert_eq!(filename, Some("file.dat".to_string()));
@@ -246,7 +269,11 @@ mod tests {
         .unwrap();
 
         match args.command {
-            Command::Get { link, to_stdout, filename } => {
+            Command::Get {
+                link,
+                to_stdout,
+                filename,
+            } => {
                 assert_eq!(link.as_str(), "https://example.com/secret/abc123");
                 assert!(!to_stdout);
                 assert_eq!(filename, Some("path/to/file with spaces.txt".to_string()));

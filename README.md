@@ -141,8 +141,9 @@ hakanai get https://hakanai.example.com/s/550e8400-e29b-41d4-a716-446655440000
 
 Hakanai now includes a web interface for users who prefer not to use the CLI:
 - Visit the server root (e.g., `https://hakanai.example.com/`) to access the web interface
+- Create new secrets at `/create` - supports both text and file uploads
 - Paste a hakanai URL to retrieve secrets directly in your browser
-- The same zero-knowledge encryption is maintained - decryption happens in your browser
+- The same zero-knowledge encryption is maintained - all encryption/decryption happens in your browser
 - Mobile-friendly responsive design
 - Multi-language support (English and German) with automatic browser language detection
 
@@ -195,7 +196,27 @@ Serves the hakanai logo.
 Serves the hakanai icon.
 
 ### GET /scripts/hakanai-client.js
-Serves the JavaScript client library for browser-based decryption.
+Serves the JavaScript client library for browser-based encryption/decryption.
+
+### GET /
+Web interface for retrieving secrets - shows a form to paste hakanai URLs.
+
+### GET /create
+Web interface for creating secrets - supports text input and file uploads.
+
+### GET /ready
+Health check endpoint - returns 200 OK when the server is ready.
+
+### GET /s/{id}
+Short link format for retrieving secrets. Dual-mode endpoint:
+- Returns raw decrypted data for CLI clients
+- Returns HTML page for browser clients (based on User-Agent)
+
+### Static Assets
+- `/style.css` - CSS stylesheet
+- `/i18n.js` - Internationalization support
+- `/get-secret.js` - JavaScript for secret retrieval page
+- `/create-secret.js` - JavaScript for secret creation page
 
 ## Development
 
@@ -341,9 +362,13 @@ Based on recent code review and security audit:
 
 ### Server Environment Variables
 
-- `PORT`: Server port (default: 8080)
-- `LISTEN_ADDRESS`: Bind address (default: 127.0.0.1)
-- `REDIS_DSN`: Redis connection string (default: redis://127.0.0.1:6379/)
+- `HAKANAI_PORT`: Server port (default: 8080)
+- `HAKANAI_LISTEN_ADDRESS`: Bind address (default: 0.0.0.0)
+- `HAKANAI_REDIS_DSN`: Redis connection string (default: redis://127.0.0.1:6379/)
+- `HAKANAI_TOKENS`: Comma-separated authentication tokens (default: none, open access)
+- `HAKANAI_UPLOAD_SIZE_LIMIT`: Maximum upload size in bytes (default: 10485760, 10MB)
+- `HAKANAI_CORS_ALLOWED_ORIGINS`: Comma-separated allowed CORS origins (default: none)
+- `HAKANAI_MAX_TTL`: Maximum allowed TTL in seconds (default: 604800, 7 days)
 - `OTEL_EXPORTER_OTLP_ENDPOINT`: OpenTelemetry collector endpoint (optional, enables OTEL when set)
 
 ### Server Command-line Options
@@ -365,7 +390,11 @@ Based on recent code review and security audit:
 - **Input Validation**: Proper UUID validation and TTL enforcement
 - **Error Handling**: Secure error messages that don't leak sensitive information
 - **CORS Security**: Restrictive CORS policy by default, explicit origin allowlist required
-- **Security Headers**: Built-in security headers (X-Frame-Options, X-Content-Type-Options, HSTS)
+- **Security Headers**: The application sets these security headers:
+  - `X-Frame-Options: DENY` - Prevents clickjacking attacks
+  - `X-Content-Type-Options: nosniff` - Prevents MIME type sniffing
+  - `Strict-Transport-Security: max-age=31536000; includeSubDomains` - Enforces HTTPS
+  - Additional headers (CSP, etc.) should be configured at the reverse proxy level
 
 ### Observability
 
