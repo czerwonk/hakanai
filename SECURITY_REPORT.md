@@ -7,7 +7,7 @@
 
 ## Executive Summary
 
-Hakanai demonstrates **excellent security practices** with a well-implemented zero-knowledge architecture. The comprehensive security audit identified **0 High** (was 1, now fixed), **6 Medium**, and **8 Low** severity findings across all components. **No Critical vulnerabilities** were discovered. With the recent memory security improvements using zeroize, the cryptographic implementation follows industry best practices, and the overall security posture is excellent for production deployment.
+Hakanai demonstrates **excellent security practices** with a well-implemented zero-knowledge architecture. The comprehensive security audit identified **0 High** (was 1, now fixed), **5 Medium** (was 6, now 5), and **8 Low** severity findings across all components. **No Critical vulnerabilities** were discovered. With recent security improvements including memory clearing (zeroize) and atomic file operations, the cryptographic implementation follows industry best practices, and the overall security posture is excellent for production deployment.
 
 **Overall Security Rating: A** (upgraded from A-)
 
@@ -17,7 +17,7 @@ Hakanai demonstrates **excellent security practices** with a well-implemented ze
 |----------|-------|----------------------|
 | **Critical** | 0 | - |
 | **High** | ~~1~~ → 0 | ~~CLI (1)~~ → **All Fixed** |
-| **Medium** | 6 | CLI (3), Server (2), JavaScript (1) |
+| **Medium** | ~~6~~ → 5 | CLI (~~3~~ → 2), Server (2), JavaScript (1) |
 | **Low** | 8 | CLI (3), Server (2), JavaScript (3) |
 
 ## Detailed Security Findings
@@ -74,36 +74,24 @@ token_file: Option<String>,
 // Read token from file instead of command line
 ```
 
-#### M02: Race Condition in File Operations (CLI)
-**Component**: CLI (`cli/src/get.rs:53-61`)  
-**CVSS Score**: 5.8  
-**Impact**: Potential file overwrite in concurrent scenarios
+#### ~~M02: Race Condition in File Operations (CLI)~~ ✅ FIXED
+**Component**: CLI (`cli/src/get.rs:74-78`)  
+**CVSS Score**: ~~5.8~~ → 0.0 (Resolved)  
+**Status**: **FIXED** - Atomic file operations implemented
 
 **Description**: 
-Time-of-check-to-time-of-use race condition between file existence check and creation.
+~~Time-of-check-to-time-of-use race condition between file existence check and creation~~ → **RESOLVED**: Atomic file operations now prevent race conditions.
 
-**Vulnerable Code**:
+**Fixed Implementation**:
 ```rust
-if path.exists() {
-    // Race condition window here
-    if path.is_file() {
-        let timestamped_filename = format!("{}.{}", filename, timestamp()?);
-        path = PathBuf::from(timestamped_filename);
-    }
-}
-let mut file = std::fs::File::create(path)?;  // Could overwrite
-```
-
-**Recommendation**:
-Use atomic file operations with `OpenOptions`:
-```rust
-use std::fs::OpenOptions;
-
-let file = OpenOptions::new()
+OpenOptions::new()
     .write(true)
-    .create_new(true)  // Fail if file exists
-    .open(&path)?;
+    .create_new(true) // Fail if file exists - atomic operation
+    .open(&path)?
+    .write_all(bytes)?;
 ```
+
+**Security Impact**: This fix eliminates the race condition vulnerability by using atomic file operations. The `create_new(true)` flag ensures the file is created atomically and fails if it already exists, preventing TOCTOU attacks and accidental overwrites.
 
 #### M03: Missing Rate Limiting (Server)
 **Component**: Server (`server/src/web_api.rs`)  
