@@ -5,7 +5,7 @@ use serde_with::serde_as;
 
 /// Represents the data payload of a secret, which can be either a text message
 /// or a file with optional metadata.
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct Payload {
     /// The base64-encoded data of the secret.
     pub data: String,
@@ -36,7 +36,7 @@ impl Payload {
 
 /// Represents the request to create a new secret.
 #[serde_as]
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct PostSecretRequest {
     /// The secret data to be stored.
     pub data: String,
@@ -59,7 +59,7 @@ impl PostSecretRequest {
 }
 
 /// Represents the response after creating a new secret.
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct PostSecretResponse {
     /// The unique identifier of the created secret.
     pub id: uuid::Uuid,
