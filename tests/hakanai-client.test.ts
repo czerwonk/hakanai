@@ -297,6 +297,41 @@ describe("HakanaiClient Integration", () => {
     const keyBytes = Base64UrlSafe.decode(keyBase64);
     expect(keyBytes).toHaveLength(32);
   });
+
+  test("PayloadData decode() method works correctly", async () => {
+    const originalPayload: PayloadData = {
+      data: "Test message with unicode: 🔐 åëïöü",
+      filename: "test.txt",
+    };
+
+    const secretUrl = await client.sendPayload(originalPayload);
+    const retrievedPayload = await client.receivePayload(secretUrl);
+
+    // Test the decode() method
+    expect(retrievedPayload.decode).toBeDefined();
+    const decodedData = retrievedPayload.decode!();
+    expect(decodedData).toBe(originalPayload.data);
+  });
+
+  test("PayloadData decodeBytes() method works correctly", async () => {
+    const originalPayload: PayloadData = {
+      data: "Binary data test",
+      filename: "binary.dat",
+    };
+
+    const secretUrl = await client.sendPayload(originalPayload);
+    const retrievedPayload = await client.receivePayload(secretUrl);
+
+    // Test the decodeBytes() method
+    expect(retrievedPayload.decodeBytes).toBeDefined();
+    const decodedBytes = retrievedPayload.decodeBytes!();
+    expect(decodedBytes).toBeInstanceOf(Uint8Array);
+    
+    // Convert back to string to verify
+    const decoder = new TextDecoder();
+    const decodedString = decoder.decode(decodedBytes);
+    expect(decodedString).toBe(originalPayload.data);
+  });
 });
 
 describe("Error Handling", () => {
