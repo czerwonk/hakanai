@@ -4,6 +4,7 @@ use std::time::Duration;
 
 use anyhow::{Result, anyhow};
 use colored::Colorize;
+use zeroize::Zeroize;
 
 use hakanai_lib::client;
 use hakanai_lib::client::Client;
@@ -23,7 +24,7 @@ pub async fn send(
     as_file: bool,
     filename: Option<String>,
 ) -> Result<()> {
-    let bytes = read_secret(file.clone())?;
+    let mut bytes = read_secret(file.clone())?;
 
     if bytes.is_empty() {
         return Err(anyhow!(
@@ -47,6 +48,7 @@ pub async fn send(
 
     let filename = get_filename(file, as_file, filename)?;
     let payload = Payload::from_bytes(&bytes, filename);
+    bytes.zeroize();
 
     let user_agent = get_user_agent_name();
     let observer = ProgressObserver::new("Sending secret...")?;
