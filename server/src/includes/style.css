@@ -422,11 +422,6 @@ button.loading::after {
   font-weight: 600;
 }
 
-.secondary-button {
-  background-color: var(--color-border);
-  color: var(--color-text);
-}
-
 .copy-button:hover:not(.copied),
 .download-button:hover {
   background-color: var(--color-primary-hover);
