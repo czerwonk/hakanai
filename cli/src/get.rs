@@ -1,3 +1,4 @@
+use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -71,8 +72,12 @@ fn write_to_file(filename: String, bytes: &[u8]) -> Result<()> {
         eprintln!("{}", warn_message.yellow());
     }
 
-    let mut file = std::fs::File::create(path)?;
-    file.write_all(bytes)?;
+    OpenOptions::new()
+        .write(true)
+        .create_new(true) // Fail if file exists
+        .open(&path)?
+        .write_all(bytes)?;
+
     Ok(())
 }
 
