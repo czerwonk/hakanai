@@ -196,7 +196,7 @@ Serves the hakanai logo.
 Serves the hakanai icon.
 
 ### GET /scripts/hakanai-client.js
-Serves the JavaScript client library for browser-based encryption/decryption.
+Serves the JavaScript client library for browser-based encryption/decryption. The client is implemented in TypeScript and compiled to JavaScript for browser compatibility.
 
 ### GET /
 Web interface for retrieving secrets - shows a form to paste hakanai URLs.
@@ -233,11 +233,17 @@ hakanai/
 ### Building
 
 ```bash
-# Build entire workspace
+# Build entire workspace (includes TypeScript compilation)
 cargo build --workspace --verbose
 
 # Build release version
 cargo build --release --workspace
+
+# Build TypeScript client only
+make build-ts
+
+# Clean TypeScript compiled files
+make clean-ts
 ```
 
 ### Testing
@@ -258,6 +264,9 @@ cargo fmt
 
 # Run linter (warnings as errors)
 RUSTFLAGS="-Dwarnings" cargo clippy --workspace
+
+# TypeScript compilation (automatically checks types)
+tsc
 ```
 
 ## Architecture
@@ -279,6 +288,10 @@ Hakanai implements a zero-knowledge architecture:
   - Shared data models (`Payload`, `PostSecretRequest`, `PostSecretResponse`)
 - **hakanai** (CLI): User-friendly command-line interface
 - **hakanai-server**: RESTful API server with Redis backend
+- **TypeScript Client**: Browser-based client with type safety and enhanced error handling
+  - Written in TypeScript, compiled to JavaScript for browser compatibility
+  - Maintains same zero-knowledge architecture as Rust client
+  - Includes browser compatibility checks and chunked processing for large files
 
 ### Security & Deployment Notes
 
@@ -350,7 +363,7 @@ Based on recent code review and security audit:
 - Add cache headers for static assets
 - Create integration tests for full secret lifecycle
 - Add health check endpoint
-- Consider TypeScript for JavaScript client
+- ✅ **TypeScript for JavaScript client** (completed - provides type safety and enhanced error handling)
 
 ### Future Enhancements
 - Key derivation from URL fragment (never sent to server)
