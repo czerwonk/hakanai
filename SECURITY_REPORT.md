@@ -13,8 +13,8 @@ Hakanai is a minimalist one-time secret sharing service implementing zero-knowle
 
 ### Key Findings
 - **1 High severity** vulnerability identified
-- **6 Medium severity** vulnerabilities identified  
-- **8 Low severity** issues identified
+- **5 Medium severity** vulnerabilities identified  
+- **7 Low severity** issues identified
 - **Zero-knowledge architecture** properly implemented
 - **Strong cryptographic foundations** with industry-standard AES-256-GCM
 - **Comprehensive input validation** across all endpoints
@@ -156,47 +156,50 @@ if (!compatibilityInfo.isCompatible) {
 - Implement file size validation before reading
 - Consider adding a whitelist mode for production use
 
-#### M6: Weak CORS Default Configuration
+#### M6: CORS Configuration Analysis
 **File:** `server/src/main.rs:104-121`  
-**Description:** CORS allows any origin when no explicit allowlist is configured.
+**Description:** CORS configuration correctly implements restrictive defaults.
 
-**Impact:** Potential for cross-origin attacks if no explicit CORS configuration is provided.
+**Status:** ✅ **RESOLVED - No vulnerability exists**
 
-**Recommendation:**
+**Analysis:** The current implementation properly restricts cross-origin requests by default:
+- When no origins are configured, no cross-origin requests are allowed
+- Only explicitly configured origins are permitted
+- This follows security best practices with secure defaults
+
+**Current Implementation:**
 ```rust
-// Default to restrictive CORS
 fn cors_config(allowed_origins: Option<Vec<String>>) -> Cors {
     let mut cors = Cors::default()
         .allowed_methods(vec![http::Method::GET, http::Method::POST])
-        .allowed_headers(vec![
-            http::header::CONTENT_TYPE,
-            http::header::ACCEPT,
-            http::header::AUTHORIZATION,
-        ]);
+        .allowed_headers(vec![/* ... */]);
     
-    if let Some(origins) = allowed_origins {
-        for origin in origins {
-            cors = cors.allowed_origin(&origin);
+    if let Some(allowed_origins) = &allowed_origins {
+        for origin in allowed_origins {
+            cors = cors.allowed_origin(origin);
         }
-    } else {
-        // Default to same-origin only
-        cors = cors.allowed_origin("null"); // Local files
     }
-    
+    // No else clause - secure default: no origins allowed
     cors
 }
 ```
 
+**Recommendation:** No changes needed - implementation is secure.
+
 ### LOW SEVERITY
 
-#### L1: Hardcoded Nonce Size
+#### L1: Nonce Size Implementation
 **File:** `lib/src/crypto.rs:109`  
-**Description:** Nonce length is hardcoded instead of using AES-GCM constants.
+**Description:** Nonce length correctly uses AES-GCM type constants.
 
-**Recommendation:**
+**Status:** ✅ **RESOLVED - No issue exists**
+
+**Analysis:** The implementation properly derives nonce size from the cipher type:
 ```rust
-let nonce_len = <Aes256Gcm as AeadCore>::NonceSize::to_usize();
+let nonce_len = aes_gcm::Nonce::<<Aes256Gcm as AeadCore>::NonceSize>::default().len();
 ```
+
+**Recommendation:** No changes needed - implementation follows best practices.
 
 #### L2: Base64 Encoding Inconsistency
 **File:** `server/src/includes/hakanai-client.ts:78-81`  
