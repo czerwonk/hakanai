@@ -38,8 +38,8 @@ Hakanai demonstrates **excellent architectural design** with a clean separation 
 #### Issues Found
 
 **High Priority**:
-1. **Missing `from_text` method on Payload** (documented but not implemented)
-2. **Documentation inconsistencies** in trait parameters
+1. ~~**Missing `from_text` method on Payload**~~ ✅ FIXED - Not needed, text handled directly as strings
+2. ~~**Documentation inconsistencies**~~ ✅ FIXED - Documentation updated to match implementation
 3. **Potential information leakage** in error messages containing response bodies
 
 **Medium Priority**:
@@ -50,7 +50,7 @@ Hakanai demonstrates **excellent architectural design** with a clean separation 
 **Low Priority**:
 1. **Missing trait derives** (Clone, PartialEq) for better ergonomics
 2. **Code duplication** in options builders
-3. **Magic numbers** for nonce length calculations
+3. ~~**Magic numbers for nonce length calculations**~~ ✅ FIXED - Properly uses type system: `aes_gcm::Nonce::<<Aes256Gcm as AeadCore>::NonceSize>::default().len()`
 
 #### Recommendations
 ```rust
@@ -84,7 +84,7 @@ impl SecretSendOptions {
 #### Issues Found
 
 **High Priority**:
-1. **Flag conflict**: `-t` means different things in send vs get commands
+1. ~~**Flag conflict**: `-t` means different things in send vs get commands~~ ✅ FIXED - Removed `-t` flag from get command
 2. **Missing tests** for core modules (send.rs, observer.rs, helper.rs)
 3. **Secrets remain in memory** without secure clearing
 4. **Token visible in process list** when passed as argument
@@ -101,9 +101,9 @@ impl SecretSendOptions {
 
 #### Recommendations
 ```rust
-// Fix flag conflict
-#[arg(short = 'o', long, help = "Output to stdout")]
-to_stdout: bool,  // Change from -t to -o
+// Flag conflict fixed - removed -t shorthand
+#[arg(long, help = "Output to stdout")]
+to_stdout: bool,  // Only --to-stdout available now
 
 // Add secure memory clearing
 use zeroize::Zeroize;
@@ -136,7 +136,7 @@ token_file: Option<String>,
 **Medium Priority**:
 1. **No custom OTEL metrics** for business operations
 2. **Missing retry logic** for Redis operations
-3. **No health check endpoint**
+3. ~~**No health check endpoint**~~ ✅ FIXED - Added `/ready` endpoint
 4. **Missing Content-Security-Policy header**
 
 **Low Priority**:
@@ -261,8 +261,8 @@ const fetchWithTimeout = (url, options, timeout = 30000) => {
 ## Recommended Action Items
 
 ### Immediate (High Priority)
-1. Fix `-t` flag conflict in CLI
-2. Add missing `from_text` method to Payload
+1. ~~Fix `-t` flag conflict in CLI~~ ✅ FIXED
+2. ~~Add missing `from_text` method to Payload~~ ✅ FIXED - Not needed
 3. Implement structured error responses in API
 4. Add browser compatibility checks
 5. Create integration tests for critical paths
@@ -271,7 +271,7 @@ const fetchWithTimeout = (url, options, timeout = 30000) => {
 1. Add comprehensive error context instead of generic wrapping
 2. Implement secure memory clearing for secrets
 3. Add cache headers for static assets
-4. Create health check endpoint
+4. ~~Create health check endpoint~~ ✅ FIXED - `/ready` endpoint added
 5. Extract shared JavaScript utilities
 
 ### Long Term (Low Priority)
@@ -287,40 +287,21 @@ Hakanai is a **well-architected, security-focused project** that successfully im
 
 The project is **production-ready** with proper infrastructure configuration, as confirmed by the security audit. With the recommended improvements implemented, this would be an A-grade codebase suitable for critical security applications.
 
-<<<<<<< HEAD
 ### Metrics Summary
 - **Security**: A- (Excellent, minor improvements needed)
 - **Code Quality**: B+ (Very good, some refactoring beneficial)  
 - **Test Coverage**: C+ (Adequate, needs expansion)
-- **Documentation**: B- (Good, needs examples and API docs)
+- **Documentation**: B (Good, recently updated and corrected)
 - **Performance**: B (Good, optimization opportunities exist)
 - **Overall**: B+ (Production-ready with minor improvements needed)
-||||||| parent of 2d48dd6 (fix: cleanup documentation and resolve CLI client usage issue)
-### Key Strengths Summary
-- ✅ **Zero unsafe code** - complete memory safety
-- ✅ **Comprehensive error handling** - no panics in production code  
-- ✅ **Excellent test coverage** - 74 tests with edge cases
-- ✅ **Modern Rust idioms** - proper async, traits, generics
-- ✅ **Clean architecture** - well-separated concerns
-- ✅ **Production ready** - minimal technical debt
 
-The minor improvement suggestions are truly minor and don't detract from the overall excellent quality of the codebase. This project showcases how to build robust, secure, and maintainable Rust applications.
+### Recent Fixes Applied
+- ✅ **CLI flag conflict resolved** - Removed `-t` shorthand from get command
+- ✅ **Documentation inconsistencies fixed** - Updated CLAUDE.md and README.md
+- ✅ **Nonce length clarified** - Not a magic number, properly uses type system
+- ✅ **Health check added** - `/ready` endpoint now available
+- ✅ **`from_text` method** - Confirmed not needed, documentation corrected
 
 ---
 
-*This report was generated through comprehensive automated code analysis. The codebase demonstrates exceptional quality and adherence to Rust best practices.*
-=======
-### Key Strengths Summary
-- ✅ **Zero unsafe code** - complete memory safety
-- ✅ **Comprehensive error handling** - no panics in production code  
-- ✅ **Excellent test coverage** - 74 tests with edge cases
-- ✅ **Modern Rust idioms** - proper async, traits, generics
-- ✅ **Clean architecture** - well-separated concerns
-- ✅ **Production ready** - minimal technical debt
-
-The minor improvement suggestions are truly minor and don't detract from the overall excellent quality of the codebase. This project showcases how to build robust, secure, and maintainable Rust applications.
-
----
-
-*This report was generated through comprehensive automated code analysis. The codebase demonstrates exceptional quality and adherence to Rust best practices.*
->>>>>>> 2d48dd6 (fix: cleanup documentation and resolve CLI client usage issue)
+*This report was generated through comprehensive automated code analysis and updated to reflect recent fixes. The codebase demonstrates exceptional quality and adherence to Rust best practices.*
