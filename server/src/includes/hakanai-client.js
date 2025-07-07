@@ -422,6 +422,18 @@ class HakanaiClient {
     return {
       data: decodedData,
       filename: payload.filename || undefined,
+      decode() {
+        const binaryString = atob(payload.data);
+        return decodeURIComponent(escape(binaryString));
+      },
+      decodeBytes() {
+        const binaryString = atob(payload.data);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        return bytes;
+      },
     };
   }
   /**

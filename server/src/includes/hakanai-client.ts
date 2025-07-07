@@ -15,6 +15,16 @@ interface CompatibilityCheck {
 interface PayloadData {
   data: string;
   filename?: string;
+
+  /**
+   * Decode the base64-encoded data field to a readable string
+   */
+  decode?(): string;
+
+  /**
+   * Decode the base64-encoded data field to bytes for binary data
+   */
+  decodeBytes?(): Uint8Array;
 }
 
 interface SecretResponse {
@@ -116,7 +126,8 @@ class Base64UrlSafe {
     const encoder = new TextEncoder();
     const bytes = encoder.encode(text);
     // Convert to Uint8Array if needed (Node.js TextEncoder returns different type)
-    const uint8Array = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+    const uint8Array =
+      bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
     return Base64UrlSafe.encode(uint8Array);
   }
 
@@ -142,7 +153,9 @@ class BrowserCompatibility {
     const missingFeatures: string[] = [];
 
     // Check for Web Crypto API (works in both browser and test environments)
-    const cryptoInstance = (typeof window !== "undefined" && window.crypto) || (typeof global !== "undefined" && global.crypto);
+    const cryptoInstance =
+      (typeof window !== "undefined" && window.crypto) ||
+      (typeof global !== "undefined" && global.crypto);
     if (!cryptoInstance || !cryptoInstance.subtle) {
       missingFeatures.push("Web Crypto API (crypto.subtle)");
     }
@@ -156,7 +169,10 @@ class BrowserCompatibility {
     }
 
     // Check for crypto.getRandomValues
-    if (!cryptoInstance || typeof cryptoInstance.getRandomValues !== "function") {
+    if (
+      !cryptoInstance ||
+      typeof cryptoInstance.getRandomValues !== "function"
+    ) {
       missingFeatures.push("crypto.getRandomValues");
     }
 
@@ -198,7 +214,9 @@ class CryptoOperations {
    * Get crypto instance (works in both browser and test environments)
    */
   private static getCrypto(): Crypto {
-    const cryptoInstance = (typeof window !== "undefined" && window.crypto) || (typeof global !== "undefined" && global.crypto);
+    const cryptoInstance =
+      (typeof window !== "undefined" && window.crypto) ||
+      (typeof global !== "undefined" && global.crypto);
     if (!cryptoInstance) {
       throw new Error("Crypto API not available");
     }
@@ -534,6 +552,18 @@ class HakanaiClient {
     return {
       data: decodedData,
       filename: payload.filename || undefined,
+      decode(): string {
+        const binaryString = atob(payload.data);
+        return decodeURIComponent(escape(binaryString));
+      },
+      decodeBytes(): Uint8Array {
+        const binaryString = atob(payload.data);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        return bytes;
+      },
     };
   }
 

@@ -1,4 +1,4 @@
-import { HakanaiClient } from '/scripts/hakanai-client.js';
+import { HakanaiClient } from "/scripts/hakanai-client.js";
 
 // Listen for language changes to update dynamic content
 document.addEventListener("languageChanged", function (e) {
@@ -152,15 +152,8 @@ function showSuccess(payload) {
     textarea.readOnly = true;
     textarea.setAttribute("aria-label", "Retrieved secret content");
 
-    // Decode base64 data for display
-    let displayData;
-    try {
-      displayData = decodeURIComponent(escape(atob(payload.data)));
-    } catch (e) {
-      // If decode fails, show raw data
-      displayData = payload.data;
-    }
-    textarea.value = displayData;
+    // Use the decode method from PayloadData
+    textarea.value = payload.decode();
 
     textarea.addEventListener("click", function () {
       this.select();
@@ -333,20 +326,8 @@ function downloadSecret(payload) {
     filename = `hakanai-secret-${new Date().toISOString().replace(/[:.]/g, "-")}.txt`;
   }
 
-  // Decode base64 data for download
-  let blobData;
-  try {
-    // Try to decode as base64 first
-    const binaryString = atob(payload.data);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-    blobData = bytes;
-  } catch (e) {
-    // If decode fails, treat as text
-    blobData = new TextEncoder().encode(payload.data);
-  }
+  // Use the decodeBytes method from PayloadData
+  const blobData = payload.decodeBytes();
 
   // Create a blob from the decoded data
   const blob = new Blob([blobData], {
