@@ -42,12 +42,12 @@ pub async fn get(link: url::Url, to_stdout: bool, filename: Option<String>) -> R
     Ok(())
 }
 
-fn print_to_stdout(bytes: &Vec<u8>) -> Result<()> {
-    std::io::stdout().write_all(&bytes)?;
+fn print_to_stdout(bytes: &[u8]) -> Result<()> {
+    std::io::stdout().write_all(bytes)?;
     Ok(())
 }
 
-fn write_to_file(filename: String, bytes: &Vec<u8>) -> Result<()> {
+fn write_to_file(filename: String, bytes: &[u8]) -> Result<()> {
     if filename.is_empty() {
         return Err(anyhow!("Filename cannot be empty"));
     }
@@ -72,7 +72,7 @@ fn write_to_file(filename: String, bytes: &Vec<u8>) -> Result<()> {
     }
 
     let mut file = std::fs::File::create(path)?;
-    file.write_all(&bytes)?;
+    file.write_all(bytes)?;
     Ok(())
 }
 
