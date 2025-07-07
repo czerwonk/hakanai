@@ -8,6 +8,69 @@
 class HakanaiClient {
   constructor(baseUrl) {
     this.baseUrl = baseUrl.replace(/\/$/, ""); // Remove trailing slash
+
+    const compatibilityInfo = HakanaiClient.getCompatibilityInfo();
+    if (!compatibilityInfo.isCompatible) {
+      throw new Error(
+        `Your browser does not support the following required features: ${compatibilityInfo.missingFeatures.join(", ")}. ` +
+          `Please use a modern browser (${compatibilityInfo.supportedBrowsers}) that supports these Web APIs.`,
+      );
+    }
+  }
+
+  /**
+   * Static method to check browser compatibility without creating an instance
+   * @returns {boolean} True if browser is compatible, false otherwise
+   */
+  static isCompatible() {
+    return HakanaiClient.getCompatibilityInfo().isCompatible;
+  }
+
+  /**
+   * Static method to get compatibility information
+   * @returns {Object} Compatibility status and missing features
+   */
+  static getCompatibilityInfo() {
+    const missingFeatures = [];
+
+    // Check for Web Crypto API
+    if (!window.crypto || !window.crypto.subtle) {
+      missingFeatures.push("Web Crypto API (crypto.subtle)");
+    }
+
+    // Check for TextEncoder/TextDecoder
+    if (typeof TextEncoder === "undefined") {
+      missingFeatures.push("TextEncoder");
+    }
+    if (typeof TextDecoder === "undefined") {
+      missingFeatures.push("TextDecoder");
+    }
+
+    // Check for crypto.getRandomValues
+    if (!window.crypto || typeof window.crypto.getRandomValues !== "function") {
+      missingFeatures.push("crypto.getRandomValues");
+    }
+
+    // Check for fetch API
+    if (typeof fetch === "undefined") {
+      missingFeatures.push("Fetch API");
+    }
+
+    // Check for Uint8Array
+    if (typeof Uint8Array === "undefined") {
+      missingFeatures.push("Uint8Array");
+    }
+
+    // Check for atob/btoa (base64 functions)
+    if (typeof atob === "undefined" || typeof btoa === "undefined") {
+      missingFeatures.push("Base64 functions (atob/btoa)");
+    }
+
+    return {
+      isCompatible: missingFeatures.length === 0,
+      missingFeatures: missingFeatures,
+      supportedBrowsers: "Chrome 60+, Firefox 57+, Safari 11+, Edge 79+",
+    };
   }
 
   /**
