@@ -34,11 +34,7 @@
       "html"
     ],
     "transform": {
-      "^.+\\.ts$": ["ts-jest", {
-        "tsconfig": {
-          "types": ["jest", "node"]
-        }
-      }]
+      "^.+\\.ts$": "ts-jest"
     },
     "moduleFileExtensions": [
       "ts",
