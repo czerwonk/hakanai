@@ -16,25 +16,25 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'npm'
+          node-version: "18"
+          cache: "npm"
           cache-dependency-path: tests/package-lock.json
-      
+
       - name: Setup TypeScript
         run: npm install -g typescript
-      
+
       - name: Install test dependencies
         run: cd tests && npm ci
-      
+
       - name: Build TypeScript client
         run: make build-ts
-      
+
       - name: Run Rust tests
         run: cargo test --verbose
-      
+
       - name: Run TypeScript tests
-        run: cd tests && npx ts-jest config:init && npm test
+        run: cd tests && npm test
