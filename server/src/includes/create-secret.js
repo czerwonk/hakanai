@@ -1,7 +1,13 @@
-import { HakanaiClient } from '/scripts/hakanai-client.js';
+import { HakanaiClient } from "/scripts/hakanai-client.js";
+import {
+  createButton,
+  createButtonContainer,
+  copyToClipboard,
+  announceToScreenReader,
+} from "/common-utils.js";
 
 // Listen for language changes to update dynamic content
-document.addEventListener("languageChanged", function (e) {
+document.addEventListener("languageChanged", function () {
   updateUIStrings();
 });
 
@@ -39,10 +45,6 @@ const UI_STRINGS = {
   INVALID_FILENAME: "Invalid filename. Please select a file with a valid name.",
 };
 
-const TIMEOUTS = {
-  COPY_FEEDBACK: 2000,
-};
-
 const FILE_LIMITS = {
   MAX_SIZE: 10 * 1024 * 1024, // 10MB in bytes
 };
@@ -53,6 +55,82 @@ const baseUrl = window.location.origin.includes("file://")
   : window.location.origin;
 
 const client = new HakanaiClient(baseUrl);
+
+async function validateAndProcessFileInput(fileInput) {
+  const file = fileInput.files[0];
+  if (!file) {
+    showError(UI_STRINGS.EMPTY_FILE);
+    fileInput.focus();
+    return null;
+  }
+
+  if (file.size > FILE_LIMITS.MAX_SIZE) {
+    showError(UI_STRINGS.FILE_TOO_LARGE);
+    fileInput.focus();
+    return null;
+  }
+
+  const fileName = sanitizeFileName(file.name);
+  if (!fileName) {
+    showError(UI_STRINGS.INVALID_FILENAME);
+    fileInput.focus();
+    return null;
+  }
+
+  try {
+    const fileContent = await readFileAsBase64(file);
+    return {
+      data: fileContent,
+      filename: fileName,
+    };
+  } catch (error) {
+    showError(UI_STRINGS.FILE_READ_ERROR);
+    return null;
+  }
+}
+
+function validateTextInput(secretInput) {
+  const secret = secretInput.value.trim();
+  if (!secret) {
+    showError(UI_STRINGS.EMPTY_SECRET);
+    secretInput.focus();
+    return null;
+  }
+  return { data: secret };
+}
+
+function setLoadingState(elements, isLoading) {
+  const {
+    loadingDiv,
+    button,
+    secretInput,
+    fileInput,
+    authTokenInput,
+    ttlSelect,
+    textRadio,
+    fileRadio,
+    resultDiv,
+  } = elements;
+
+  loadingDiv.style.display = isLoading ? "block" : "none";
+  button.disabled = isLoading;
+  secretInput.disabled = isLoading;
+  fileInput.disabled = isLoading;
+  authTokenInput.disabled = isLoading;
+  ttlSelect.disabled = isLoading;
+  textRadio.disabled = isLoading;
+  fileRadio.disabled = isLoading;
+
+  if (isLoading) {
+    resultDiv.innerHTML = "";
+  }
+}
+
+function clearInputs(secretInput, fileInput) {
+  secretInput.value = "";
+  fileInput.value = "";
+  updateFileInfo();
+}
 
 async function createSecret() {
   const secretInput = document.getElementById("secretText");
@@ -69,85 +147,39 @@ async function createSecret() {
   const ttl = parseInt(ttlSelect.value);
   const isFileMode = fileRadio.checked;
 
+  const elements = {
+    loadingDiv,
+    button,
+    secretInput,
+    fileInput,
+    authTokenInput,
+    ttlSelect,
+    textRadio,
+    fileRadio,
+    resultDiv,
+  };
+
   let payload;
-  let validationError = null;
-
   if (isFileMode) {
-    // File mode validation and processing
-    const file = fileInput.files[0];
-    if (!file) {
-      showError(UI_STRINGS.EMPTY_FILE);
-      fileInput.focus();
-      return;
-    }
-
-    // Validate file size
-    if (file.size > FILE_LIMITS.MAX_SIZE) {
-      showError(UI_STRINGS.FILE_TOO_LARGE);
-      fileInput.focus();
-      return;
-    }
-
-    // Validate file name (basic sanitization)
-    const fileName = sanitizeFileName(file.name);
-    if (!fileName) {
-      showError(UI_STRINGS.INVALID_FILENAME);
-      fileInput.focus();
-      return;
-    }
-
-    try {
-      const fileContent = await readFileAsBase64(file);
-      payload = {
-        data: fileContent,
-        filename: fileName,
-      };
-    } catch (error) {
-      showError(UI_STRINGS.FILE_READ_ERROR);
-      return;
-    }
+    payload = await validateAndProcessFileInput(fileInput);
   } else {
-    // Text mode validation
-    const secret = secretInput.value.trim();
-    if (!secret) {
-      showError(UI_STRINGS.EMPTY_SECRET);
-      secretInput.focus();
-      return;
-    }
-    payload = { data: secret };
+    payload = validateTextInput(secretInput);
   }
 
-  // Show loading state
-  loadingDiv.style.display = "block";
-  button.disabled = true;
-  secretInput.disabled = true;
-  fileInput.disabled = true;
-  authTokenInput.disabled = true;
-  ttlSelect.disabled = true;
-  textRadio.disabled = true;
-  fileRadio.disabled = true;
-  resultDiv.innerHTML = "";
+  if (!payload) {
+    return;
+  }
+
+  setLoadingState(elements, true);
 
   try {
     const secretUrl = await client.sendPayload(payload, ttl, authToken);
-
     showSuccess(secretUrl);
-
-    // Clear the inputs
-    secretInput.value = "";
-    fileInput.value = "";
-    updateFileInfo();
+    clearInputs(secretInput, fileInput);
   } catch (error) {
     showError(error.message || UI_STRINGS.CREATE_FAILED);
   } finally {
-    loadingDiv.style.display = "none";
-    button.disabled = false;
-    secretInput.disabled = false;
-    fileInput.disabled = false;
-    authTokenInput.disabled = false;
-    ttlSelect.disabled = false;
-    textRadio.disabled = false;
-    fileRadio.disabled = false;
+    setLoadingState(elements, false);
   }
 }
 
@@ -189,44 +221,42 @@ function showSuccess(secretUrl) {
   });
   container.appendChild(urlDisplay);
 
-  const buttonsContainer = document.createElement("div");
-  buttonsContainer.className = "buttons-container";
+  const buttonsContainer = createButtonContainer();
 
-  const copyBtn = document.createElement("button");
-  copyBtn.className = "copy-button";
-  copyBtn.type = "button";
-  copyBtn.textContent = UI_STRINGS.COPY_TEXT;
-  copyBtn.setAttribute("aria-label", "Copy secret URL to clipboard");
-  copyBtn.addEventListener("click", function () {
-    copyUrl(urlId, this);
-  });
+  const copyBtn = createButton(
+    "copy-button",
+    UI_STRINGS.COPY_TEXT,
+    "Copy secret URL to clipboard",
+    function () {
+      copyUrl(urlId, this);
+    },
+  );
   buttonsContainer.appendChild(copyBtn);
 
-  const createAnotherBtn = document.createElement("button");
-  createAnotherBtn.className = "copy-button";
-  createAnotherBtn.type = "button";
-  createAnotherBtn.textContent =
-    i18n.t("button.createAnother") || "Create Another";
-  createAnotherBtn.setAttribute("aria-label", "Create another secret");
-  createAnotherBtn.addEventListener("click", function () {
-    // Show the form again and clear result
-    const form = document.getElementById("create-secret-form");
-    const resultDiv = document.getElementById("result");
-    if (form) {
-      form.style.display = "block";
-    }
-    resultDiv.innerHTML = "";
-    resultDiv.className = "";
+  const createAnotherBtn = createButton(
+    "copy-button",
+    i18n.t("button.createAnother"),
+    "Create another secret",
+    function () {
+      // Show the form again and clear result
+      const form = document.getElementById("create-secret-form");
+      const resultDiv = document.getElementById("result");
+      if (form) {
+        form.style.display = "block";
+      }
+      resultDiv.innerHTML = "";
+      resultDiv.className = "";
 
-    // Focus on the first input
-    const textRadio = document.getElementById("textRadio");
-    const secretText = document.getElementById("secretText");
-    if (textRadio && secretText) {
-      textRadio.checked = true;
-      toggleSecretType();
-      secretText.focus();
-    }
-  });
+      // Focus on the first input
+      const textRadio = document.getElementById("textRadio");
+      const secretText = document.getElementById("secretText");
+      if (textRadio && secretText) {
+        textRadio.checked = true;
+        toggleSecretType();
+        secretText.focus();
+      }
+    },
+  );
   buttonsContainer.appendChild(createAnotherBtn);
 
   container.appendChild(buttonsContainer);
@@ -277,81 +307,33 @@ function showError(message) {
 
 function copyUrl(urlId, button) {
   const urlElement = document.getElementById(urlId);
-  const originalText = button.textContent;
+  if (!urlElement) {
+    alert(UI_STRINGS.COPY_FAILED);
+    return;
+  }
 
+  const originalText = button.textContent;
   // Get the actual URL text from input value
   const urlText = urlElement.value;
 
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    // Modern clipboard API
-    navigator.clipboard
-      .writeText(urlText)
-      .then(() => {
-        button.textContent = UI_STRINGS.COPIED_TEXT;
-        button.classList.add("copied");
-        announceToScreenReader(UI_STRINGS.COPIED_TEXT);
-        setTimeout(() => {
-          button.textContent = originalText;
-          button.classList.remove("copied");
-        }, TIMEOUTS.COPY_FEEDBACK);
-      })
-      .catch((err) => {
-        // Fallback to older method
-        fallbackCopy(urlText, button, originalText);
-      });
-  } else {
-    // Fallback for older browsers
-    fallbackCopy(urlText, button, originalText);
-  }
-}
-
-function fallbackCopy(text, button, originalText) {
-  const textArea = document.createElement("textarea");
-  textArea.value = text;
-  textArea.style.position = "fixed";
-  textArea.style.left = "-999999px";
-  textArea.style.top = "-999999px";
-  document.body.appendChild(textArea);
-  textArea.focus();
-  textArea.select();
-
-  try {
-    document.execCommand("copy");
-    button.textContent = UI_STRINGS.COPIED_TEXT;
-    button.classList.add("copied");
-    announceToScreenReader(UI_STRINGS.COPIED_TEXT);
-    setTimeout(() => {
-      button.textContent = originalText;
-      button.classList.remove("copied");
-    }, TIMEOUTS.COPY_FEEDBACK);
-  } catch (err) {
-    alert(UI_STRINGS.COPY_FAILED);
-  }
-
-  document.body.removeChild(textArea);
+  copyToClipboard(
+    urlText,
+    button,
+    originalText,
+    UI_STRINGS.COPIED_TEXT,
+    UI_STRINGS.COPY_FAILED,
+  );
 }
 
 // Focus on the secret input when page loads
 document.addEventListener("DOMContentLoaded", function () {
-  document.getElementById("secretText").focus();
+  const secretText = document.getElementById("secretText");
+  if (secretText) {
+    secretText.focus();
+  }
   // Initialize UI strings after i18n is loaded
   updateUIStrings();
 });
-
-// Accessibility helper
-function announceToScreenReader(message) {
-  const announcement = document.createElement("div");
-  announcement.setAttribute("role", "status");
-  announcement.setAttribute("aria-live", "polite");
-  announcement.className = "sr-only";
-  announcement.textContent = message;
-  document.body.appendChild(announcement);
-
-  // Remove after announcement
-  setTimeout(() => {
-    document.body.removeChild(announcement);
-  }, 1000);
-}
 
 // File handling utilities
 function sanitizeFileName(fileName) {
@@ -439,7 +421,6 @@ function updateFileInfo() {
 
 function toggleSecretType() {
   const textRadio = document.getElementById("textRadio");
-  const fileRadio = document.getElementById("fileRadio");
   const textInputGroup = document.getElementById("textInputGroup");
   const fileInputGroup = document.getElementById("fileInputGroup");
   const secretText = document.getElementById("secretText");

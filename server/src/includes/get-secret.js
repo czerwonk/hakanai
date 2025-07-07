@@ -1,4 +1,11 @@
 import { HakanaiClient } from "/scripts/hakanai-client.js";
+import {
+  createButton,
+  createButtonContainer,
+  copyToClipboard,
+  announceToScreenReader,
+  debounce,
+} from "/common-utils.js";
 
 // Listen for language changes to update dynamic content
 document.addEventListener("languageChanged", function () {
@@ -43,10 +50,8 @@ const UI_STRINGS = {
 };
 
 const TIMEOUTS = {
-  COPY_FEEDBACK: 2000,
   DEBOUNCE: 300,
   CLEANUP_DELAY: 100,
-  SCREEN_READER_ANNOUNCEMENT: 1000,
 };
 
 // Extract base URL from current location or use a default
@@ -55,19 +60,6 @@ const baseUrl = window.location.origin.includes("file://")
   : window.location.origin;
 
 const client = new HakanaiClient(baseUrl);
-
-// Debouncing helper
-let submitTimeout;
-function debounce(func, wait) {
-  return function executedFunction(...args) {
-    const later = () => {
-      clearTimeout(submitTimeout);
-      func(...args);
-    };
-    clearTimeout(submitTimeout);
-    submitTimeout = setTimeout(later, wait);
-  };
-}
 
 const retrieveSecretDebounced = debounce(async function retrieveSecret() {
   const urlInput = document.getElementById("secretUrl");
@@ -127,24 +119,6 @@ const retrieveSecretDebounced = debounce(async function retrieveSecret() {
 
 async function retrieveSecret() {
   retrieveSecretDebounced();
-}
-
-// Helper function to create buttons
-function createButton(className, text, ariaLabel, clickHandler) {
-  const button = document.createElement("button");
-  button.className = className;
-  button.type = "button";
-  button.textContent = text;
-  button.setAttribute("aria-label", ariaLabel);
-  button.addEventListener("click", clickHandler);
-  return button;
-}
-
-// Helper function to create button container
-function createButtonContainer() {
-  const container = document.createElement("div");
-  container.className = "buttons-container";
-  return container;
 }
 
 function showSuccess(payload) {
@@ -292,53 +266,13 @@ function copySecret(secretId, button) {
   const originalText = button.textContent;
   const secretText = secretElement.value;
 
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    // Modern clipboard API
-    navigator.clipboard
-      .writeText(secretText)
-      .then(() => {
-        button.textContent = UI_STRINGS.COPIED_TEXT;
-        button.classList.add("copied");
-        announceToScreenReader(UI_STRINGS.COPIED_TEXT);
-        setTimeout(() => {
-          button.textContent = originalText;
-          button.classList.remove("copied");
-        }, TIMEOUTS.COPY_FEEDBACK);
-      })
-      .catch(() => {
-        // Fallback to older method
-        fallbackCopy(secretText, button, originalText);
-      });
-  } else {
-    // Fallback for older browsers
-    fallbackCopy(secretText, button, originalText);
-  }
-}
-
-function fallbackCopy(text, button, originalText) {
-  const textArea = document.createElement("textarea");
-  textArea.value = text;
-  textArea.style.position = "fixed";
-  textArea.style.left = "-999999px";
-  textArea.style.top = "-999999px";
-  document.body.appendChild(textArea);
-  textArea.focus();
-  textArea.select();
-
-  try {
-    document.execCommand("copy");
-    button.textContent = UI_STRINGS.COPIED_TEXT;
-    button.classList.add("copied");
-    announceToScreenReader(UI_STRINGS.COPIED_TEXT);
-    setTimeout(() => {
-      button.textContent = originalText;
-      button.classList.remove("copied");
-    }, TIMEOUTS.COPY_FEEDBACK);
-  } catch (error) {
-    alert(UI_STRINGS.COPY_FAILED);
-  }
-
-  document.body.removeChild(textArea);
+  copyToClipboard(
+    secretText,
+    button,
+    originalText,
+    UI_STRINGS.COPIED_TEXT,
+    UI_STRINGS.COPY_FAILED,
+  );
 }
 
 function downloadSecret(payload) {
@@ -395,21 +329,6 @@ if (urlInput) {
 document.addEventListener("DOMContentLoaded", function () {
   updateUIStrings();
 });
-
-// Accessibility helper
-function announceToScreenReader(message) {
-  const announcement = document.createElement("div");
-  announcement.setAttribute("role", "status");
-  announcement.setAttribute("aria-live", "polite");
-  announcement.className = "sr-only";
-  announcement.textContent = message;
-  document.body.appendChild(announcement);
-
-  // Remove after announcement
-  setTimeout(() => {
-    document.body.removeChild(announcement);
-  }, TIMEOUTS.SCREEN_READER_ANNOUNCEMENT);
-}
 
 // Add event listener for form submission
 document.addEventListener("DOMContentLoaded", function () {

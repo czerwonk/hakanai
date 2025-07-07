@@ -10,6 +10,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg.route("/", web::get().to(serve_get_secret_html))
         .route("/create", web::get().to(serve_create_secret_html))
         .route("/scripts/hakanai-client.js", web::get().to(serve_js_client))
+        .route("/common-utils.js", web::get().to(serve_common_utils_js))
         .route("/i18n.js", web::get().to(serve_i18n_js))
         .route("/style.css", web::get().to(serve_css))
         .route("/get-secret.js", web::get().to(serve_get_secret_js))
@@ -20,6 +21,13 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
 
 async fn serve_js_client() -> impl Responder {
     const CONTENT: &str = include_str!("includes/hakanai-client.js");
+    HttpResponse::Ok()
+        .content_type("application/javascript")
+        .body(CONTENT)
+}
+
+async fn serve_common_utils_js() -> impl Responder {
+    const CONTENT: &str = include_str!("includes/common-utils.js");
     HttpResponse::Ok()
         .content_type("application/javascript")
         .body(CONTENT)
