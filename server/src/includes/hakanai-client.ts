@@ -114,8 +114,10 @@ class Base64UrlSafe {
       throw new Error("Input must be a string");
     }
     const encoder = new TextEncoder();
-    const data = encoder.encode(text);
-    return Base64UrlSafe.encode(data);
+    const bytes = encoder.encode(text);
+    // Convert to Uint8Array if needed (Node.js TextEncoder returns different type)
+    const uint8Array = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+    return Base64UrlSafe.encode(uint8Array);
   }
 
   /**
@@ -139,8 +141,9 @@ class BrowserCompatibility {
   static getCompatibilityInfo(): CompatibilityCheck {
     const missingFeatures: string[] = [];
 
-    // Check for Web Crypto API
-    if (!window.crypto || !window.crypto.subtle) {
+    // Check for Web Crypto API (works in both browser and test environments)
+    const cryptoInstance = (typeof window !== "undefined" && window.crypto) || (typeof global !== "undefined" && global.crypto);
+    if (!cryptoInstance || !cryptoInstance.subtle) {
       missingFeatures.push("Web Crypto API (crypto.subtle)");
     }
 
@@ -153,7 +156,7 @@ class BrowserCompatibility {
     }
 
     // Check for crypto.getRandomValues
-    if (!window.crypto || typeof window.crypto.getRandomValues !== "function") {
+    if (!cryptoInstance || typeof cryptoInstance.getRandomValues !== "function") {
       missingFeatures.push("crypto.getRandomValues");
     }
 
@@ -192,11 +195,22 @@ class BrowserCompatibility {
  */
 class CryptoOperations {
   /**
+   * Get crypto instance (works in both browser and test environments)
+   */
+  private static getCrypto(): Crypto {
+    const cryptoInstance = (typeof window !== "undefined" && window.crypto) || (typeof global !== "undefined" && global.crypto);
+    if (!cryptoInstance) {
+      throw new Error("Crypto API not available");
+    }
+    return cryptoInstance;
+  }
+
+  /**
    * Generate a random 256-bit AES key
    */
   static generateKey(): HakanaiCryptoKey {
     const bytes = new Uint8Array(32);
-    crypto.getRandomValues(bytes);
+    CryptoOperations.getCrypto().getRandomValues(bytes);
     return Object.freeze({ bytes, length: 32 });
   }
 
@@ -212,7 +226,7 @@ class CryptoOperations {
       throw new Error("Key must be exactly 32 bytes for AES-256");
     }
 
-    return crypto.subtle.importKey(
+    return CryptoOperations.getCrypto().subtle.importKey(
       "raw",
       rawKey,
       { name: "AES-GCM", length: 256 },
@@ -237,11 +251,11 @@ class CryptoOperations {
 
     // Generate random nonce
     const nonce = new Uint8Array(12);
-    crypto.getRandomValues(nonce);
+    CryptoOperations.getCrypto().getRandomValues(nonce);
 
     const cryptoKey = await CryptoOperations.importKey(key.bytes);
 
-    const ciphertext = await crypto.subtle.encrypt(
+    const ciphertext = await CryptoOperations.getCrypto().subtle.encrypt(
       { name: "AES-GCM", iv: nonce },
       cryptoKey,
       plaintextBytes,
@@ -298,7 +312,7 @@ class CryptoOperations {
     const cryptoKey = await CryptoOperations.importKey(key);
 
     try {
-      const plaintextBytes = await crypto.subtle.decrypt(
+      const plaintextBytes = await CryptoOperations.getCrypto().subtle.decrypt(
         { name: "AES-GCM", iv: nonce },
         cryptoKey,
         ciphertext,
@@ -445,10 +459,12 @@ class HakanaiClient {
       throw new Error("Invalid URL format");
     }
 
-    const secretId = urlObj.pathname.split("/").pop();
-    if (!secretId) {
+    // Extract secret ID from path (expects format /s/{id})
+    const pathParts = urlObj.pathname.split("/");
+    if (pathParts.length < 3 || pathParts[1] !== "s" || !pathParts[2]) {
       throw new Error("No secret ID found in URL");
     }
+    const secretId = pathParts[2];
 
     const keyBase64 = urlObj.hash.slice(1); // Remove the #
     if (!keyBase64) {
@@ -500,7 +516,25 @@ class HakanaiClient {
       throw new Error("Invalid payload structure");
     }
 
-    return payload;
+    // Decode the base64 data back to the original text
+    // The Rust Payload format stores data as base64, we need to decode it
+    let decodedData: string;
+    try {
+      const binaryString = atob(payload.data);
+      const decoder = new TextDecoder();
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      decodedData = decoder.decode(bytes);
+    } catch (error) {
+      throw new Error("Failed to decode payload data");
+    }
+
+    return {
+      data: decodedData,
+      filename: payload.filename || undefined,
+    };
   }
 
   /**

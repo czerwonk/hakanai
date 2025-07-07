@@ -37,6 +37,18 @@ release: build-rust-release build-ts
 build-rust-release:
 	$(CARGO) build --release --workspace --verbose
 
+# Test targets
+.PHONY: test
+test: test-rust test-ts
+
+.PHONY: test-rust
+test-rust:
+	$(CARGO) test --verbose
+
+.PHONY: test-ts
+test-ts: build-ts
+	cd tests && npm test
+
 # Clean builds
 .PHONY: clean
 clean: clean-rust clean-ts
@@ -48,3 +60,4 @@ clean-rust:
 .PHONY: clean-ts
 clean-ts:
 	rm -f $(JS_OUT)
+	rm -rf tests/node_modules tests/coverage
