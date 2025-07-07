@@ -408,7 +408,8 @@ button.loading::after {
 }
 
 .copy-button,
-.download-button {
+.download-button,
+.secondary-button {
   padding: var(--spacing-xs) var(--spacing-lg);
   background-color: var(--color-primary);
   color: var(--color-bg-main);
@@ -421,14 +422,25 @@ button.loading::after {
   font-weight: 600;
 }
 
+.secondary-button {
+  background-color: var(--color-border);
+  color: var(--color-text);
+}
+
 .copy-button:hover:not(.copied),
 .download-button:hover {
   background-color: var(--color-primary-hover);
   transform: translateY(-1px);
 }
 
+.secondary-button:hover {
+  background-color: var(--color-text-muted);
+  transform: translateY(-1px);
+}
+
 .copy-button:focus-visible,
-.download-button:focus-visible {
+.download-button:focus-visible,
+.secondary-button:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
