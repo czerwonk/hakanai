@@ -36,5 +36,5 @@ jobs:
       - name: Run Rust tests
         run: cargo test --verbose
       
-      - name: Run JavaScript tests
-        run: make test-ts
+      - name: Run TypeScript tests
+        run: cd tests && npx ts-jest config:init && npm test
