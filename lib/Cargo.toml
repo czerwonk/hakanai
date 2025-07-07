@@ -17,11 +17,12 @@ serde_with = "3.14.0"
 thiserror = "2.0.12"
 url = { version = "2.5.4", optional = true }
 uuid = { version = "1.17.0", features = ["serde", "v4"] }
+zeroize = { version = "1.8.1", optional = true }
 
 [dev-dependencies]
 mockito = "1.7.0"
 tokio = { version = "1.45.1", features = ["rt-multi-thread", "macros"] }
 
 [features]
-default = ["reqwest", "serde_json", "url", "bytes", "async-stream"]
+default = ["reqwest", "serde_json", "url", "bytes", "async-stream", "zeroize"]
 minimal = []

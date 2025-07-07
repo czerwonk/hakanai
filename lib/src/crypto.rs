@@ -7,6 +7,7 @@ use aes_gcm::{Aes256Gcm, Key, KeyInit, Nonce};
 use async_trait::async_trait;
 use base64::Engine;
 use reqwest::Url;
+use zeroize::Zeroize;
 
 use crate::client::{Client, ClientError};
 use crate::options::{SecretReceiveOptions, SecretSendOptions};
@@ -36,10 +37,12 @@ impl Client<String> for CryptoClient {
         token: String,
         opts: Option<SecretSendOptions>,
     ) -> Result<Url, ClientError> {
-        let key = generate_key();
+        let mut key = generate_key();
         let nonce = Aes256Gcm::generate_nonce(&mut OsRng);
 
         let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(&key));
+        key.zeroize();
+
         let ciphertext = cipher
             .encrypt(&nonce, data.as_bytes())
             .map_err(|e| ClientError::EncryptionError(e.to_string()))?;
@@ -90,7 +93,7 @@ fn append_key_to_link(url: Url, key: &[u8; 32]) -> Url {
 }
 
 fn decrypt(encoded_data: String, key_base64: String) -> Result<String, ClientError> {
-    let key = base64::prelude::BASE64_URL_SAFE_NO_PAD
+    let mut key = base64::prelude::BASE64_URL_SAFE_NO_PAD
         .decode(key_base64)
         .map_err(|e| ClientError::DecryptionError(format!("failed to decode key: {e}")))?;
 
@@ -99,6 +102,7 @@ fn decrypt(encoded_data: String, key_base64: String) -> Result<String, ClientErr
         .map_err(|e| ClientError::DecryptionError(format!("failed to decode data: {e}")))?;
 
     let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(&key));
+    key.zeroize();
 
     let nonce_len = aes_gcm::Nonce::<<Aes256Gcm as AeadCore>::NonceSize>::default().len();
     if payload.len() < nonce_len {
