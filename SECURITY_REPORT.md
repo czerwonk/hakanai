@@ -9,11 +9,11 @@
 
 Hakanai is a minimalist one-time secret sharing service implementing zero-knowledge principles. This security audit evaluated the cryptographic implementation, authentication mechanisms, input validation, memory safety, error handling, and client-side security.
 
-**Overall Security Rating: A-** (Excellent with minor improvements needed)
+**Overall Security Rating: A** (Excellent - production ready)
 
 ### Key Findings
 - **0 High severity** vulnerabilities (H1 resolved with Zeroizing implementation)
-- **5 Medium severity** vulnerabilities identified  
+- **4 Medium severity** vulnerabilities identified (M2 resolved with atomic file operations)
 - **7 Low severity** issues identified
 - **Zero-knowledge architecture** properly implemented
 - **Strong cryptographic foundations** with industry-standard AES-256-GCM
@@ -66,44 +66,38 @@ let secret_bytes = Zeroizing::new(read_secret(file)?);
 - Add environment variable support: `HAKANAI_TOKEN=xyz`
 - Warn users about process visibility when using `--token`
 
-#### M2: Race Condition in File Operations
-**File:** `cli/src/get.rs:57-73`  
-**Description:** Time-of-check-time-of-use (TOCTOU) vulnerability in file existence checking and creation.
+#### M2: Race Condition in File Operations [RESOLVED ✅]
+**File:** `cli/src/get.rs:59-70`  
+**Status:** **RESOLVED** - Atomic file operations now prevent race conditions
 
-**Impact:** Files could be created or modified between the existence check and file creation, potentially leading to unexpected behavior.
+**Previous Issue:** Time-of-check-time-of-use (TOCTOU) vulnerability in file existence checking and creation where files could be created or modified between the existence check and file creation.
 
-**Evidence:**
+**Resolution Implemented:**
+The code now uses atomic file operations with proper error handling:
+
 ```rust
-// Vulnerable pattern
-if path.exists() {
-    // ... check logic
-}
-// File could be created here by another process
-OpenOptions::new()
+// Current secure implementation
+let file_res = OpenOptions::new()
     .write(true)
-    .create_new(true) // This could fail unexpectedly
-    .open(&path)?
-```
+    .create_new(true) // Atomic: fail if file exists
+    .open(&path);
 
-**Recommendation:**
-```rust
-// Use atomic file operations
-match OpenOptions::new()
-    .write(true)
-    .create_new(true)
-    .open(&path) {
-    Ok(file) => {
-        file.write_all(bytes)?;
-        Ok(())
-    }
+match file_res {
+    Ok(mut f) => f.write_all(bytes)?,
     Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {
-        // Handle conflict with timestamp
-        let timestamped_path = generate_timestamped_path(&path)?;
-        create_file_atomic(&timestamped_path, bytes)
+        return write_to_timestamped_file(filename, bytes);
     }
-    Err(e) => Err(e),
-}
+    Err(e) => return Err(e)?,
+};
 ```
+
+**Security Improvements:**
+- File existence check and creation are now atomic with `create_new(true)`
+- Proper error handling for `AlreadyExists` condition
+- Race condition eliminated through atomic operations
+- Timestamped file fallback maintains data integrity
+
+**Impact:** Race conditions in file operations are now completely eliminated, ensuring data integrity and preventing TOCTOU vulnerabilities.
 
 #### M3: Insufficient Error Context
 **File:** `server/src/web_api.rs:52-54`, `lib/src/crypto.rs:77-78`  
@@ -354,7 +348,7 @@ Err(error::ErrorBadRequest("TTL exceeds maximum allowed duration"))
 ### Immediate (High Priority)
 1. ~~**Implement comprehensive memory clearing** for all sensitive data~~ ✅ COMPLETED
 2. **Add token file support** to prevent process argument exposure
-3. **Fix race conditions** in file operations
+3. ~~**Fix race conditions** in file operations~~ ✅ COMPLETED
 
 ### Short-term (Medium Priority)
 1. **Improve error handling** with structured error context
@@ -383,13 +377,13 @@ Hakanai demonstrates **excellent security architecture** with proper zero-knowle
 - Error context preservation
 - File operation race conditions
 
-The identified vulnerabilities are primarily operational concerns rather than fundamental security flaws. With the recommended fixes, Hakanai would achieve **A+ security rating** and be suitable for production deployment in security-conscious environments.
+The identified vulnerabilities are primarily operational concerns rather than fundamental security flaws. With the major security improvements implemented (memory clearing, atomic file operations), Hakanai now achieves **A security rating** and is suitable for production deployment in security-conscious environments. Further improvements to token handling and error context would elevate it to **A+ rating**.
 
 ## Recommendations Summary
 
 1. ~~**Implement comprehensive memory clearing** using `zeroize` crate~~ ✅ COMPLETED
 2. **Add secure token input methods** (file/environment variables)
-3. **Fix file operation race conditions** with atomic operations
+3. ~~**Fix file operation race conditions** with atomic operations~~ ✅ COMPLETED
 4. **Enhance error handling** with structured error context
 5. ~~**Improve CORS security** with restrictive defaults~~ ✅ Already secure (see M6)
 6. **Regular security maintenance** with automated dependency updates

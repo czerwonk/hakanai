@@ -55,35 +55,36 @@ fn write_to_file(filename: String, bytes: &[u8]) -> Result<()> {
         return Err(anyhow!("Filename cannot be empty"));
     }
 
-    let mut path = PathBuf::from(filename.clone());
-    if path.exists() {
-        if path.is_dir() {
-            return Err(anyhow!("Cannot write to a directory: {}", path.display()));
-        }
-
-        if path.is_file() {
-            let timestamped_filename = format!("{}.{}", filename, timestamp()?);
-            path = PathBuf::from(timestamped_filename);
-        }
-
-        let warn_message = format!(
-            "File {} already exists. To prevent overriding we use {} instead.",
-            filename,
-            path.display()
-        );
-        eprintln!("{}", warn_message.yellow());
-    }
-
-    OpenOptions::new()
+    let path = PathBuf::from(&filename);
+    let file_res = OpenOptions::new()
         .write(true)
         .create_new(true) // Fail if file exists
-        .open(&path)?
-        .write_all(bytes)?;
+        .open(&path);
 
-    let success_message = format!("Secret saved to: {}", path.display().to_string().cyan());
+    match file_res {
+        Ok(mut f) => f.write_all(bytes)?,
+        Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {
+            return write_to_timestamped_file(filename, bytes);
+        }
+        Err(e) => return Err(e)?,
+    };
+
+    let success_message = format!("Secret saved to: {}", filename.cyan());
     println!("{success_message}");
 
     Ok(())
+}
+
+fn write_to_timestamped_file(filename: String, bytes: &[u8]) -> Result<()> {
+    let filename_with_timestamp = format!("{}.{}", filename, timestamp()?);
+
+    let warn_message = format!(
+        "File {} already exists. To prevent overriding we use {} instead.",
+        filename, filename_with_timestamp
+    );
+    eprintln!("{}", warn_message.yellow());
+
+    return write_to_file(filename_with_timestamp, bytes);
 }
 
 fn timestamp() -> Result<String> {
