@@ -9,7 +9,6 @@
 interface CompatibilityCheck {
   readonly isCompatible: boolean;
   readonly missingFeatures: readonly string[];
-  readonly supportedBrowsers: string;
 }
 
 interface PayloadData {
@@ -197,7 +196,6 @@ class BrowserCompatibility {
     return {
       isCompatible: missingFeatures.length === 0,
       missingFeatures: Object.freeze(missingFeatures),
-      supportedBrowsers: "Chrome 60+, Firefox 57+, Safari 11+, Edge 79+",
     };
   }
 
@@ -414,8 +412,8 @@ class HakanaiClient {
     const compatibilityInfo = BrowserCompatibility.getCompatibilityInfo();
     if (!compatibilityInfo.isCompatible) {
       throw new Error(
-        `Your browser does not support the following required features: ${compatibilityInfo.missingFeatures.join(", ")}. ` +
-          `Please use a modern browser (${compatibilityInfo.supportedBrowsers}) that supports these Web APIs.`,
+        `Your browser does not support the required security features for this application. ` +
+          `Please use a modern browser with Web Crypto API support.`,
       );
     }
   }
