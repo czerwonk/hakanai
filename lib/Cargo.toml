@@ -4,6 +4,12 @@ version = "1.2.2"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 description = "Client library for Hakanai, a secure secret sharing service."
+readme = "../README.md"
+repository = "https://github.com/czerwonk/hakanai"
+homepage = "https://github.com/czerwonk/hakanai"
+documentation = "https://docs.rs/hakanai-lib"
+keywords = ["encryption", "secret", "sharing", "zero-knowledge", "privacy"]
+categories = ["cryptography", "web-programming", "command-line-utilities"]
 
 [dependencies]
 aes-gcm = "0.10.3"
