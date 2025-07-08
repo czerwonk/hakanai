@@ -84,7 +84,7 @@ fn write_to_timestamped_file(filename: String, bytes: &[u8]) -> Result<()> {
     );
     eprintln!("{}", warn_message.yellow());
 
-    return write_to_file(filename_with_timestamp, bytes);
+    write_to_file(filename_with_timestamp, bytes)
 }
 
 fn timestamp() -> Result<String> {
