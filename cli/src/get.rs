@@ -6,7 +6,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use anyhow::{Result, anyhow};
 use colored::Colorize;
-use zeroize::Zeroize;
+use zeroize::Zeroizing;
 
 use hakanai_lib::client;
 use hakanai_lib::client::Client;
@@ -26,18 +26,21 @@ pub async fn get(link: url::Url, to_stdout: bool, filename: Option<String>) -> R
         .receive_secret(link.clone(), Some(opts))
         .await?;
 
-    let mut bytes = payload.decode_bytes()?;
+    let bytes = Zeroizing::new(payload.decode_bytes()?);
+    let filename = filename.or_else(|| payload.filename.clone());
+    output_secret(&bytes, to_stdout, filename)?;
+
+    Ok(())
+}
+
+fn output_secret(bytes: &[u8], to_stdout: bool, filename: Option<String>) -> Result<()> {
     if to_stdout {
         print_to_stdout(&bytes)?;
     } else if let Some(file) = filename {
         write_to_file(file, &bytes)?;
-    } else if let Some(file) = payload.filename {
-        write_to_file(file, &bytes)?;
     } else {
         print_to_stdout(&bytes)?;
     }
-
-    bytes.zeroize();
 
     Ok(())
 }

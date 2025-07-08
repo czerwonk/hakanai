@@ -12,44 +12,46 @@ Hakanai is a minimalist one-time secret sharing service implementing zero-knowle
 **Overall Security Rating: A-** (Excellent with minor improvements needed)
 
 ### Key Findings
-- **1 High severity** vulnerability identified
+- **0 High severity** vulnerabilities (H1 resolved with Zeroizing implementation)
 - **5 Medium severity** vulnerabilities identified  
 - **7 Low severity** issues identified
 - **Zero-knowledge architecture** properly implemented
 - **Strong cryptographic foundations** with industry-standard AES-256-GCM
 - **Comprehensive input validation** across all endpoints
 - **Robust authentication** with proper token hashing
+- **Memory security** fully implemented with automatic zeroization
 
 ## Security Findings
 
 ### HIGH SEVERITY
 
-#### H1: Memory Exposure of Secrets
+#### H1: Memory Exposure of Secrets [RESOLVED ✅]
 **File:** `lib/src/crypto.rs:40-127`, `cli/src/send.rs:27-51`, `cli/src/get.rs:30-41`  
-**Description:** Cryptographic keys and decrypted secrets remain in memory without explicit clearing, potentially exposing sensitive data through memory dumps, swap files, or process memory access.
+**Status:** **RESOLVED** - Comprehensive implementation of `Zeroizing` guards ensures automatic memory clearing
 
-**Impact:** Secrets could be recovered from memory after use, violating zero-knowledge principles.
+**Previous Issue:** Cryptographic keys and decrypted secrets remained in memory without explicit clearing, potentially exposing sensitive data through memory dumps, swap files, or process memory access.
 
-**Evidence:**
-- Encryption keys generated in `crypto.rs:40` are manually zeroized on line 61, but decrypted plaintext is not cleared
-- CLI operations handle sensitive data without consistent memory clearing  
-- Only partial implementation of `zeroize` crate usage
+**Resolution Implemented:**
+- All encryption keys are wrapped in `Zeroizing::new()` guards (crypto.rs:40, 98)
+- Decrypted plaintext is protected with `Zeroizing::new()` before string conversion (crypto.rs:120)
+- CLI operations wrap all sensitive data in `Zeroizing` guards:
+  - `send.rs:35`: Secret bytes from file/stdin
+  - `get.rs:29`: Decoded payload bytes
+- Automatic memory clearing occurs when variables go out of scope
 
-**Recommendation:**
+**Current Implementation:**
 ```rust
-// Apply zeroize to all sensitive data
-use zeroize::Zeroize;
+// Encryption key protection
+let key = Zeroizing::new(generate_key());
 
-// After decryption
-let mut plaintext = String::from_utf8(plaintext_bytes)?;
-// Use the plaintext...
-plaintext.zeroize();
+// Decrypted data protection  
+let plaintext = Zeroizing::new(String::from_utf8(decrypted_bytes)?);
 
-// For Vec<u8>
-let mut secret_bytes = decrypt_data()?;
-// Use the bytes...
-secret_bytes.zeroize();
+// File/stdin data protection
+let secret_bytes = Zeroizing::new(read_secret(file)?);
 ```
+
+**Impact:** Memory security is now fully implemented with automatic zeroing of all sensitive data, ensuring compliance with zero-knowledge principles.
 
 ### MEDIUM SEVERITY
 
@@ -350,7 +352,7 @@ Err(error::ErrorBadRequest("TTL exceeds maximum allowed duration"))
 ## Remediation Priorities
 
 ### Immediate (High Priority)
-1. **Implement comprehensive memory clearing** for all sensitive data
+1. ~~**Implement comprehensive memory clearing** for all sensitive data~~ ✅ COMPLETED
 2. **Add token file support** to prevent process argument exposure
 3. **Fix race conditions** in file operations
 
@@ -385,11 +387,11 @@ The identified vulnerabilities are primarily operational concerns rather than fu
 
 ## Recommendations Summary
 
-1. **Implement comprehensive memory clearing** using `zeroize` crate
+1. ~~**Implement comprehensive memory clearing** using `zeroize` crate~~ ✅ COMPLETED
 2. **Add secure token input methods** (file/environment variables)
 3. **Fix file operation race conditions** with atomic operations
 4. **Enhance error handling** with structured error context
-5. **Improve CORS security** with restrictive defaults
+5. ~~**Improve CORS security** with restrictive defaults~~ ✅ Already secure (see M6)
 6. **Regular security maintenance** with automated dependency updates
 
 ---

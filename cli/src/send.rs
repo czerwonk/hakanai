@@ -4,7 +4,7 @@ use std::time::Duration;
 
 use anyhow::{Result, anyhow};
 use colored::Colorize;
-use zeroize::Zeroize;
+use zeroize::Zeroizing;
 
 use hakanai_lib::client;
 use hakanai_lib::client::Client;
@@ -32,7 +32,7 @@ pub async fn send(
         eprintln!("{}", "Warning: No token provided.".yellow());
     }
 
-    let mut bytes = read_secret(file.clone())?;
+    let bytes = Zeroizing::new(read_secret(file.clone())?);
 
     if bytes.is_empty() {
         return Err(anyhow!(
@@ -41,7 +41,6 @@ pub async fn send(
     }
 
     if bytes.len() > MAX_SECRET_SIZE_MB * 1024 * 1024 {
-        bytes.zeroize();
         return Err(anyhow!(
             "Secret size exceeds the maximum limit of {MAX_SECRET_SIZE_MB} megabytes."
         ));
@@ -49,7 +48,6 @@ pub async fn send(
 
     let filename = get_filename(file, as_file, filename)?;
     let payload = Payload::from_bytes(&bytes, filename);
-    bytes.zeroize();
 
     let user_agent = get_user_agent_name();
     let observer = ProgressObserver::new("Sending secret...")?;

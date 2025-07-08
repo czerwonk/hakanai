@@ -7,7 +7,7 @@ use aes_gcm::{Aes256Gcm, Key, KeyInit, Nonce};
 use async_trait::async_trait;
 use base64::Engine;
 use reqwest::Url;
-use zeroize::Zeroize;
+use zeroize::Zeroizing;
 
 use crate::client::{Client, ClientError};
 use crate::options::{SecretReceiveOptions, SecretSendOptions};
@@ -37,10 +37,10 @@ impl Client<String> for CryptoClient {
         token: String,
         opts: Option<SecretSendOptions>,
     ) -> Result<Url, ClientError> {
-        let mut key = generate_key();
+        let key = Zeroizing::new(generate_key());
         let nonce = Aes256Gcm::generate_nonce(&mut OsRng);
 
-        let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(&key));
+        let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(&key.as_ref()));
 
         let ciphertext = cipher
             .encrypt(&nonce, data.as_bytes())
@@ -58,7 +58,6 @@ impl Client<String> for CryptoClient {
             .await?;
 
         let url = append_key_to_link(res, &key);
-        key.zeroize();
 
         Ok(url)
     }
@@ -96,9 +95,11 @@ fn append_key_to_link(url: Url, key: &[u8; 32]) -> Url {
 }
 
 fn decrypt(encoded_data: String, key_base64: String) -> Result<String, ClientError> {
-    let mut key = base64::prelude::BASE64_URL_SAFE_NO_PAD
-        .decode(key_base64)
-        .map_err(|e| ClientError::DecryptionError(format!("failed to decode key: {e}")))?;
+    let key = Zeroizing::new(
+        base64::prelude::BASE64_URL_SAFE_NO_PAD
+            .decode(key_base64)
+            .map_err(|e| ClientError::DecryptionError(format!("failed to decode key: {e}")))?,
+    );
 
     let payload = base64::prelude::BASE64_STANDARD
         .decode(encoded_data)
@@ -116,12 +117,13 @@ fn decrypt(encoded_data: String, key_base64: String) -> Result<String, ClientErr
     let (nonce_bytes, ciphertext) = payload.split_at(nonce_len);
     let nonce = Nonce::from_slice(nonce_bytes);
 
-    let plaintext = cipher
-        .decrypt(nonce, ciphertext)
-        .map_err(|e| ClientError::DecryptionError(format!("decryption failed: {e}")))?;
-    key.zeroize();
+    let plaintext = Zeroizing::new(
+        cipher
+            .decrypt(nonce, ciphertext)
+            .map_err(|e| ClientError::DecryptionError(format!("decryption failed: {e}")))?,
+    );
 
-    let data = String::from_utf8(plaintext)
+    let data = String::from_utf8(plaintext.as_slice().to_vec())
         .map_err(|e| ClientError::DecryptionError(format!("failed to convert to string: {e}")))?;
 
     Ok(data)
