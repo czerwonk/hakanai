@@ -40,7 +40,7 @@ impl Client<String> for CryptoClient {
         let key = Zeroizing::new(generate_key());
         let nonce = Aes256Gcm::generate_nonce(&mut OsRng);
 
-        let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(&key.as_ref()));
+        let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(key.as_ref()));
 
         let ciphertext = cipher
             .encrypt(&nonce, data.as_bytes())
