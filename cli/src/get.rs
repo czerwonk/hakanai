@@ -80,6 +80,9 @@ fn write_to_file(filename: String, bytes: &[u8]) -> Result<()> {
         .open(&path)?
         .write_all(bytes)?;
 
+    let success_message = format!("Secret saved to: {}", path.display().to_string().cyan());
+    println!("{}", success_message);
+
     Ok(())
 }
 
