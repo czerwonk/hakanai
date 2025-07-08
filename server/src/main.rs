@@ -134,9 +134,7 @@ async fn get_secret_short(
     info!("Received request for secret: {}", req);
 
     if !user_agent.starts_with("hakanai-") {
-        return HttpResponse::Ok()
-            .content_type("text/html")
-            .body(web_static::get_secret_html_content());
+        return web_static::serve_get_secret_html().await;
     }
 
     match web_api::get_secret_from_request(req, app_data).await {

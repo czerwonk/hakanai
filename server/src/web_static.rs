@@ -1,6 +1,7 @@
+use actix_web::http::header;
 use actix_web::{HttpResponse, Responder, web};
 
-pub const SECRET_HTML_CONTENT: &str = include_str!("includes/get-secret.html");
+const DEFAULT_CACHE_MAX_AGE: u64 = 86400; // 1 day
 
 /// Configures the Actix Web services for the application.
 ///
@@ -19,77 +20,91 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
         .route("/style.css", web::get().to(serve_css));
 }
 
-async fn serve_js_client() -> impl Responder {
-    const CONTENT: &str = include_str!("includes/hakanai-client.js");
+fn serve_with_caching_header(content: &str, content_type: &str, max_age: u64) -> HttpResponse {
+    static ETAG: &str = concat!("\"", env!("CARGO_PKG_VERSION"), "\"");
+
     HttpResponse::Ok()
-        .content_type("application/javascript")
-        .body(CONTENT)
+        .content_type(content_type)
+        .insert_header((header::CACHE_CONTROL, format!("public, max-age={max_age}")))
+        .insert_header((header::ETAG, ETAG))
+        .body(content.to_string())
+}
+
+/// Serves the HTML page for getting a secret, replacing the version placeholder
+pub async fn serve_get_secret_html() -> HttpResponse {
+    const CONTENT: &str = include_str!("includes/get-secret.html");
+    let content = CONTENT.replace("{{ VERSION }}", env!("CARGO_PKG_VERSION"));
+
+    serve_with_caching_header(&content, "text/html", DEFAULT_CACHE_MAX_AGE)
+}
+
+async fn serve_create_secret_html() -> HttpResponse {
+    const CONTENT: &str = include_str!("includes/create-secret.html");
+    let content = CONTENT.replace("{{ VERSION }}", env!("CARGO_PKG_VERSION"));
+
+    serve_with_caching_header(&content, "text/html", DEFAULT_CACHE_MAX_AGE)
+}
+
+async fn serve_js_client() -> impl Responder {
+    serve_with_caching_header(
+        include_str!("includes/hakanai-client.js"),
+        "application/javascript",
+        DEFAULT_CACHE_MAX_AGE,
+    )
 }
 
 async fn serve_common_utils_js() -> impl Responder {
-    const CONTENT: &str = include_str!("includes/common-utils.js");
-    HttpResponse::Ok()
-        .content_type("application/javascript")
-        .body(CONTENT)
+    serve_with_caching_header(
+        include_str!("includes/common-utils.js"),
+        "application/javascript",
+        DEFAULT_CACHE_MAX_AGE,
+    )
 }
 
 async fn serve_i18n_js() -> impl Responder {
-    const CONTENT: &str = include_str!("includes/i18n.js");
-    HttpResponse::Ok()
-        .content_type("application/javascript")
-        .body(CONTENT)
+    serve_with_caching_header(
+        include_str!("includes/i18n.js"),
+        "application/javascript",
+        DEFAULT_CACHE_MAX_AGE,
+    )
 }
 
 async fn serve_css() -> impl Responder {
-    const CONTENT: &str = include_str!("includes/style.css");
-    HttpResponse::Ok().content_type("text/css").body(CONTENT)
+    serve_with_caching_header(
+        include_str!("includes/style.css"),
+        "text/css",
+        DEFAULT_CACHE_MAX_AGE,
+    )
 }
 
 async fn serve_logo() -> impl Responder {
-    const CONTENT: &str = include_str!("../../logo.svg");
-    HttpResponse::Ok()
-        .content_type("image/svg+xml")
-        .body(CONTENT)
+    serve_with_caching_header(
+        include_str!("../../logo.svg"),
+        "image/svg+xml",
+        DEFAULT_CACHE_MAX_AGE,
+    )
 }
 
 async fn serve_icon() -> impl Responder {
-    const CONTENT: &str = include_str!("../../icon.svg");
-    HttpResponse::Ok()
-        .content_type("image/svg+xml")
-        .body(CONTENT)
-}
-
-/// Returns the HTML content for the "get secret" page with the version placeholder replaced.
-///
-/// This function takes the static HTML content for the "get secret" page,
-/// finds the `{{ VERSION }}` placeholder, and replaces it with the current
-/// application version from the `CARGO_PKG_VERSION` environment variable.
-pub fn get_secret_html_content() -> String {
-    SECRET_HTML_CONTENT.replace("{{ VERSION }}", env!("CARGO_PKG_VERSION"))
-}
-
-async fn serve_get_secret_html() -> impl Responder {
-    HttpResponse::Ok()
-        .content_type("text/html")
-        .body(get_secret_html_content())
-}
-
-async fn serve_create_secret_html() -> impl Responder {
-    const CONTENT: &str = include_str!("includes/create-secret.html");
-    let content = CONTENT.replace("{{ VERSION }}", env!("CARGO_PKG_VERSION"));
-    HttpResponse::Ok().content_type("text/html").body(content)
+    serve_with_caching_header(
+        include_str!("../../icon.svg"),
+        "image/svg+xml",
+        DEFAULT_CACHE_MAX_AGE,
+    )
 }
 
 async fn serve_get_secret_js() -> impl Responder {
-    const CONTENT: &str = include_str!("includes/get-secret.js");
-    HttpResponse::Ok()
-        .content_type("application/javascript")
-        .body(CONTENT)
+    serve_with_caching_header(
+        include_str!("includes/get-secret.js"),
+        "application/javascript",
+        DEFAULT_CACHE_MAX_AGE,
+    )
 }
 
 async fn serve_create_secret_js() -> impl Responder {
-    const CONTENT: &str = include_str!("includes/create-secret.js");
-    HttpResponse::Ok()
-        .content_type("application/javascript")
-        .body(CONTENT)
+    serve_with_caching_header(
+        include_str!("includes/create-secret.js"),
+        "application/javascript",
+        DEFAULT_CACHE_MAX_AGE,
+    )
 }
