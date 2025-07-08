@@ -34,7 +34,7 @@ impl DataTransferObserver for ProgressObserver {
         self.progress_bar.set_position(bytes_transferred);
 
         if bytes_transferred >= total_bytes {
-            self.progress_bar.finish_with_message("✓ Complete!");
+            self.progress_bar.finish_and_clear();
         }
     }
 }
