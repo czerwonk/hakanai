@@ -35,11 +35,11 @@ pub async fn get(link: url::Url, to_stdout: bool, filename: Option<String>) -> R
 
 fn output_secret(bytes: &[u8], to_stdout: bool, filename: Option<String>) -> Result<()> {
     if to_stdout {
-        print_to_stdout(&bytes)?;
+        print_to_stdout(bytes)?;
     } else if let Some(file) = filename {
-        write_to_file(file, &bytes)?;
+        write_to_file(file, bytes)?;
     } else {
-        print_to_stdout(&bytes)?;
+        print_to_stdout(bytes)?;
     }
 
     Ok(())
