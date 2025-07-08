@@ -79,8 +79,7 @@ fn write_to_timestamped_file(filename: String, bytes: &[u8]) -> Result<()> {
     let filename_with_timestamp = format!("{}.{}", filename, timestamp()?);
 
     let warn_message = format!(
-        "File {} already exists. To prevent overriding we use {} instead.",
-        filename, filename_with_timestamp
+        "File {filename} already exists. To prevent overriding we use {filename_with_timestamp} instead."
     );
     eprintln!("{}", warn_message.yellow());
 
