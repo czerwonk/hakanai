@@ -130,8 +130,10 @@ class Base64UrlSafe {
     if (typeof text !== "string") {
       throw new Error("Input must be a string");
     }
+
     const encoder = new TextEncoder();
     const bytes = encoder.encode(text);
+
     // Convert to Uint8Array if needed (Node.js TextEncoder returns different type)
     const uint8Array =
       bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
@@ -144,6 +146,7 @@ class Base64UrlSafe {
    */
   static decodeText(encoded: string): string {
     const data = Base64UrlSafe.decode(encoded);
+
     const decoder = new TextDecoder();
     return decoder.decode(data);
   }
@@ -222,6 +225,7 @@ class CryptoOperations {
     if (!cryptoInstance) {
       throw new Error("Crypto API not available");
     }
+
     return cryptoInstance;
   }
 
