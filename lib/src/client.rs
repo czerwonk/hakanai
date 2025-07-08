@@ -55,26 +55,59 @@ pub trait Client<T>: Send + Sync {
     ) -> Result<T, ClientError>;
 }
 
+/// Represents errors that can occur during client operations.
+///
+/// This enum covers all possible error cases when sending or receiving secrets,
+/// including network errors, parsing errors, and cryptographic failures.
 #[derive(Debug, Error)]
 pub enum ClientError {
+    /// Network request failed.
+    ///
+    /// This error occurs when the underlying HTTP client (reqwest) encounters
+    /// a network-level error such as connection timeout, DNS resolution failure,
+    /// or inability to establish a connection.
     #[error("web request failed")]
     Web(#[from] reqwest::Error),
 
+    /// JSON parsing or serialization failed.
+    ///
+    /// This error occurs when the response from the server cannot be parsed
+    /// as valid JSON, or when serializing the payload to JSON fails.
     #[error("parsing JSON failed")]
     Json(#[from] serde_json::Error),
 
+    /// URL parsing failed.
+    ///
+    /// This error occurs when constructing or parsing URLs, typically when
+    /// the base URL or secret URL is malformed.
     #[error("invalid URL")]
     Url(#[from] url::ParseError),
 
+    /// HTTP-level error from the server.
+    ///
+    /// This error represents HTTP status code errors (4xx, 5xx) returned by
+    /// the server, with the error message containing details about the failure.
     #[error("HTTP error: {0}")]
     Http(String),
 
+    /// Custom client error.
+    ///
+    /// This is a catch-all error for client-specific failures that don't
+    /// fit into other categories.
     #[error("Client error: {0}")]
     Custom(String),
 
+    /// Encryption operation failed.
+    ///
+    /// This error occurs when encrypting a secret fails, typically due to
+    /// issues with key generation or the encryption process itself.
     #[error("Encryption error: {0}")]
     EncryptionError(String),
 
+    /// Decryption operation failed.
+    ///
+    /// This error occurs when decrypting a received secret fails, which could
+    /// be due to an invalid key, corrupted data, or tampered ciphertext.
     #[error("Decryption error: {0}")]
     DecryptionError(String),
 }
