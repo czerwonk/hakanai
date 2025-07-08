@@ -335,6 +335,7 @@ The server is designed to run behind a reverse proxy (nginx, Caddy, etc.) which 
 - **TLS termination and HTTPS enforcement**
 - **Rate limiting and DDoS protection**
 - **Request filtering and header sanitization**
+- **Response compression** (gzip, etc.) for improved performance
 
 For production deployments:
 1. **Always use authentication tokens** to prevent unauthorized secret creation

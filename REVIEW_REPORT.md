@@ -136,7 +136,7 @@ return Err(anyhow!("TTL must be greater than zero seconds."));
 - **Efficient async patterns**: Proper use of async streams
 
 **Performance Opportunities:**
-- Add response compression for server
+- ✅ **ARCHITECTURAL DECISION: Response compression** - Delegated to reverse proxy (nginx, Caddy) following established infrastructure layer pattern
 - ✅ **IMPLEMENTED: Cache headers for static assets** - All static assets now include proper Cache-Control and ETag headers
 - Consider connection limits for server
 
@@ -207,7 +207,11 @@ return Err(anyhow!("TTL must be greater than zero seconds."));
    - Add module-level documentation
 
 3. **Performance Optimizations**
-   - Add response compression
+   - ✅ **RESOLVED: Response compression** - Architectural decision to delegate to reverse proxy
+     - Maintains clean separation of concerns (infrastructure vs application layer)
+     - Follows established pattern of delegating TLS, rate limiting, and DDoS protection to proxy
+     - More efficient implementation at proxy level (nginx, Caddy)
+     - Reduces application complexity and dependency overhead
    - ✅ **RESOLVED: Implement cache headers for static assets**
      - All static assets now include proper Cache-Control headers (24h max-age)
      - ETag headers based on application version for efficient caching
