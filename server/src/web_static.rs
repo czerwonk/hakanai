@@ -8,15 +8,15 @@ pub const SECRET_HTML_CONTENT: &str = include_str!("includes/get-secret.html");
 /// including the data store that will be shared across all handlers.
 pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg.route("/", web::get().to(serve_get_secret_html))
-        .route("/create", web::get().to(serve_create_secret_html))
-        .route("/scripts/hakanai-client.js", web::get().to(serve_js_client))
         .route("/common-utils.js", web::get().to(serve_common_utils_js))
-        .route("/i18n.js", web::get().to(serve_i18n_js))
-        .route("/style.css", web::get().to(serve_css))
-        .route("/get-secret.js", web::get().to(serve_get_secret_js))
+        .route("/create", web::get().to(serve_create_secret_html))
         .route("/create-secret.js", web::get().to(serve_create_secret_js))
+        .route("/get-secret.js", web::get().to(serve_get_secret_js))
+        .route("/i18n.js", web::get().to(serve_i18n_js))
         .route("/icon.svg", web::get().to(serve_icon))
-        .route("/logo.svg", web::get().to(serve_logo));
+        .route("/logo.svg", web::get().to(serve_logo))
+        .route("/scripts/hakanai-client.js", web::get().to(serve_js_client))
+        .route("/style.css", web::get().to(serve_css));
 }
 
 async fn serve_js_client() -> impl Responder {
