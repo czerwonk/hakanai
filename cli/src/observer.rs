@@ -26,14 +26,14 @@ impl ProgressObserver {
 
 #[async_trait]
 impl DataTransferObserver for ProgressObserver {
-    async fn on_progress(&self, bytes_uploaded: u64, total_bytes: u64) {
+    async fn on_progress(&self, bytes_transferred: u64, total_bytes: u64) {
         if self.progress_bar.length() == Some(0) {
             self.progress_bar.set_length(total_bytes);
         }
 
-        self.progress_bar.set_position(bytes_uploaded);
+        self.progress_bar.set_position(bytes_transferred);
 
-        if bytes_uploaded >= total_bytes {
+        if bytes_transferred >= total_bytes {
             self.progress_bar.finish_with_message("✓ Complete!");
         }
     }
