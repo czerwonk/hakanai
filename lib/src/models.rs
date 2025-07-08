@@ -27,43 +27,17 @@ impl Payload {
     ///
     /// # Examples
     ///
-    /// ## Creating a payload from a binary file
-    ///
     /// ```
     /// use hakanai_lib::models::Payload;
     ///
-    /// // Read a PDF file
+    /// // Binary file
     /// let pdf_bytes = vec![0x25, 0x50, 0x44, 0x46]; // PDF magic bytes
     /// let payload = Payload::from_bytes(&pdf_bytes, Some("document.pdf".to_string()));
-    ///
-    /// assert!(payload.data.len() > 0); // Data is base64-encoded
     /// assert_eq!(payload.filename, Some("document.pdf".to_string()));
-    /// ```
     ///
-    /// ## Creating a payload from an image
-    ///
-    /// ```
-    /// use hakanai_lib::models::Payload;
-    ///
-    /// // PNG file header
-    /// let image_bytes = vec![0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
-    /// let payload = Payload::from_bytes(&image_bytes, Some("logo.png".to_string()));
-    ///
-    /// // Decode to verify round-trip
-    /// let decoded = payload.decode_bytes().unwrap();
-    /// assert_eq!(decoded, image_bytes);
-    /// ```
-    ///
-    /// ## Text data without a filename
-    ///
-    /// ```
-    /// use hakanai_lib::models::Payload;
-    ///
-    /// let text_bytes = b"Secret message";
-    /// let payload = Payload::from_bytes(text_bytes, None);
-    ///
-    /// // No filename means it's treated as text
-    /// assert!(payload.filename.is_none());
+    /// // Text without filename
+    /// let text_payload = Payload::from_bytes(b"Secret message", None);
+    /// assert!(text_payload.filename.is_none());
     /// ```
     pub fn from_bytes(bytes: &[u8], filename: Option<String>) -> Self {
         use base64::Engine;

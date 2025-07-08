@@ -153,8 +153,6 @@ pub trait Client<T>: Send + Sync {
 ///
 /// # Examples
 ///
-/// ## Basic Error Handling
-///
 /// ```
 /// use hakanai_lib::{client, client::{Client, ClientError}, models::Payload};
 /// use std::time::Duration;
@@ -175,121 +173,12 @@ pub trait Client<T>: Send + Sync {
 ///     None,
 /// ).await {
 ///     Ok(url) => println!("Secret stored at: {}", url),
-///     Err(ClientError::Web(e)) => {
-///         eprintln!("Network error: {}", e);
-///         // Handle network failures - maybe retry or use offline storage
-///     }
-///     Err(ClientError::Http(msg)) => {
-///         eprintln!("Server error: {}", msg);
-///         // Handle server errors - maybe different endpoint or auth
-///     }
-///     Err(ClientError::EncryptionError(msg)) => {
-///         eprintln!("Encryption failed: {}", msg);
-///         // Handle crypto errors - should not normally happen
-///     }
-///     Err(e) => {
-///         eprintln!("Other error: {}", e);
-///         // Handle other error types
-///     }
+///     Err(ClientError::Web(e)) => eprintln!("Network error: {}", e),
+///     Err(ClientError::Http(msg)) => eprintln!("Server error: {}", msg),
+///     Err(ClientError::DecryptionError(msg)) => eprintln!("Decryption failed: {}", msg),
+///     Err(e) => eprintln!("Other error: {}", e),
 /// }
 /// # Ok(())
-/// # }
-/// ```
-///
-/// ## Error Recovery with Retry Logic
-///
-/// ```
-/// use hakanai_lib::{client, client::{Client, ClientError}, models::Payload};
-/// use std::time::Duration;
-/// use url::Url;
-///
-/// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-/// async fn send_with_retry(
-///     client: &impl hakanai_lib::client::Client<Payload>,
-///     payload: Payload,
-///     max_retries: u32,
-/// ) -> Result<Url, ClientError> {
-///     let mut last_error = None;
-///
-///     for attempt in 0..=max_retries {
-///         match client.send_secret(
-///             Url::parse("https://api.example.com").unwrap(),
-///             payload.clone(),
-///             Duration::from_secs(3600),
-///             "auth-token".to_string(),
-///             None,
-///         ).await {
-///             Ok(url) => return Ok(url),
-///             Err(ClientError::Web(_)) | Err(ClientError::Http(_)) if attempt < max_retries => {
-///                 // Retry on network/server errors
-///                 let delay = Duration::from_millis(100 * (1 << attempt));
-///                 tokio::time::sleep(delay).await;
-///                 continue;
-///             }
-///             Err(e) => {
-///                 last_error = Some(e);
-///                 break; // Don't retry on crypto or JSON errors
-///             }
-///         }
-///     }
-///
-///     Err(last_error.unwrap())
-/// }
-///
-/// let client = client::new();
-/// let payload = Payload {
-///     data: "Important secret".to_string(),
-///     filename: None,
-/// };
-///
-/// let result = send_with_retry(&client, payload, 3).await;
-/// match result {
-///     Ok(url) => println!("Success after retries: {}", url),
-///     Err(e) => eprintln!("Failed after retries: {}", e),
-/// }
-/// # Ok(())
-/// # }
-/// ```
-///
-/// ## User-Friendly Error Messages
-///
-/// ```
-/// use hakanai_lib::client::ClientError;
-///
-/// fn user_friendly_error(error: &ClientError) -> String {
-///     match error {
-///         ClientError::Web(_) => {
-///             "Network connection failed. Please check your internet connection and try again.".to_string()
-///         }
-///         ClientError::Http(msg) if msg.contains("401") || msg.contains("403") => {
-///             "Authentication failed. Please check your access token.".to_string()
-///         }
-///         ClientError::Http(msg) if msg.contains("404") => {
-///             "Secret not found. It may have expired or been accessed already.".to_string()
-///         }
-///         ClientError::Http(msg) if msg.contains("5") => {
-///             "Server is temporarily unavailable. Please try again later.".to_string()
-///         }
-///         ClientError::DecryptionError(_) => {
-///             "Failed to decrypt secret. The link may be corrupted or invalid.".to_string()
-///         }
-///         ClientError::Url(_) => {
-///             "Invalid URL format. Please check the secret link.".to_string()
-///         }
-///         ClientError::Json(_) => {
-///             "Invalid response format. The server may be incompatible.".to_string()
-///         }
-///         _ => {
-///             "An unexpected error occurred. Please try again.".to_string()
-///         }
-///     }
-/// }
-///
-/// // Usage in error handling
-/// # fn example() {
-/// # let error = ClientError::Custom("test".to_string());
-/// let user_msg = user_friendly_error(&error);
-/// println!("Error: {}", user_msg);
 /// # }
 /// ```
 #[derive(Debug, Error)]
@@ -355,71 +244,33 @@ pub enum ClientError {
 ///
 /// # Examples
 ///
-/// ## Basic Client Usage
-///
 /// ```
 /// use hakanai_lib::{client, client::Client, models::Payload};
 /// use std::time::Duration;
 /// use url::Url;
 ///
 /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-/// // Get a ready-to-use client
 /// let client = client::new();
 ///
-/// // Send a text payload
-/// let payload = Payload {
-///     data: "Hello, World!".to_string(),
-///     filename: None,
-/// };
-///
+/// // Text payload
+/// let payload = Payload { data: "Hello, World!".to_string(), filename: None };
 /// let secret_url = client.send_secret(
 ///     Url::parse("https://api.example.com")?,
-///     payload.clone(),
+///     payload,
 ///     Duration::from_secs(300),
 ///     "auth-token".to_string(),
 ///     None,
 /// ).await?;
 ///
-/// // Receive and verify the payload
-/// let received_payload = client.receive_secret(secret_url, None).await?;
-/// assert_eq!(received_payload.data, payload.data);
-/// assert_eq!(received_payload.filename, payload.filename);
-/// # Ok(())
-/// # }
-/// ```
-///
-/// ## Working with File Payloads
-///
-/// ```
-/// use hakanai_lib::{client, client::Client, models::Payload};
-/// use std::time::Duration;
-/// use url::Url;
-///
-/// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-/// let client = client::new();
-///
-/// // Create a file payload from binary data
-/// let file_data = b"PDF file content...";
-/// let file_payload = Payload::from_bytes(file_data, Some("document.pdf".to_string()));
-///
-/// // Send the file
-/// let secret_url = client.send_secret(
+/// // File payload
+/// let file_payload = Payload::from_bytes(b"file content", Some("doc.pdf".to_string()));
+/// let file_url = client.send_secret(
 ///     Url::parse("https://api.example.com")?,
 ///     file_payload,
-///     Duration::from_secs(86400), // 24 hours
+///     Duration::from_secs(86400),
 ///     "auth-token".to_string(),
 ///     None,
 /// ).await?;
-///
-/// println!("File shared at: {}", secret_url);
-///
-/// // Later, retrieve the file
-/// let received_payload = client.receive_secret(secret_url, None).await?;
-/// if let Some(filename) = &received_payload.filename {
-///     println!("Received file: {}", filename);
-///     let file_bytes = received_payload.decode_bytes()?;
-///     // Save to filesystem or process the bytes
-/// }
 /// # Ok(())
 /// # }
 /// ```
