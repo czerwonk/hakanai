@@ -24,8 +24,7 @@ pub async fn get(link: url::Url, to_stdout: bool, filename: Option<String>) -> R
 
     let payload = client::new()
         .receive_secret(link.clone(), Some(opts))
-        .await
-        .map_err(|e| anyhow!(e))?;
+        .await?;
 
     let mut bytes = payload.decode_bytes()?;
     if to_stdout {

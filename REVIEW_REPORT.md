@@ -31,7 +31,7 @@ Hakanai is a well-architected, secure secret sharing service with excellent code
 | Component | Grade | Strengths | Key Issues |
 |-----------|-------|-----------|------------|
 | **Library (`lib/`)** | **A** | Excellent trait design, comprehensive tests, strong crypto | Minor: Memory security improvements needed |
-| **CLI (`cli/`)** | **B+** | Good UX, solid argument parsing, proper file handling | Error context could be improved |
+| **CLI (`cli/`)** | **A-** | Good UX, solid argument parsing, proper file handling, excellent error propagation | Integration tests needed |
 | **Server (`server/`)** | **A-** | Clean API, security-conscious, excellent observability | Integration tests needed |
 | **TypeScript Client** | **A** | Excellent type safety, browser compatibility, robust error handling | Well-architected with comprehensive testing |
 
@@ -65,7 +65,6 @@ pub fn new() -> impl Client<Payload> {
 
 **Areas for Improvement:**
 - Memory security: Secrets could benefit from secure clearing (partially addressed with `zeroize`)
-- Error context: Some generic error wrapping loses valuable context
 
 ### 3. Security Implementation 📊 **Grade: A-**
 
@@ -103,25 +102,29 @@ async fn test_end_to_end_encryption_decryption() {
 - No integration tests with real Redis
 - Limited browser automation testing
 
-### 5. Error Handling Patterns 📊 **Grade: B+**
+### 5. Error Handling Patterns 📊 **Grade: A-**
 
 **Strengths:**
 - **Structured error types**: Excellent use of `thiserror` in library layer
 - **Security-conscious error messages**: Server prevents information disclosure
 - **Comprehensive error testing**: Edge cases well covered in tests
+- **✅ Fixed CLI error context**: All errors now properly propagated without generic wrapping
 
-**Issues Identified:**
+**Current Implementation:**
 ```rust
-// ❌ Context loss in CLI
-.map_err(|e| anyhow!(e))?;
+// ✅ Errors properly propagated in CLI
+let bytes = std::fs::read(&file_path)?;  // Full error context preserved
+client.receive_secret(link.clone(), Some(opts)).await?;  // Direct propagation
+
+// ✅ Descriptive errors for validation
+return Err(anyhow!("TTL must be greater than zero seconds."));
 
 // ✅ Good context preservation in library  
 .map_err(|e| ClientError::DecryptionError(format!("failed to decode key: {e}")))?;
 ```
 
 **Recommendations:**
-- Replace generic `anyhow!()` wrapping with contextual error messages
-- Implement structured CLI error types
+- Consider implementing structured CLI error types for consistency
 - Add retry logic for network operations
 
 ### 6. Performance Considerations 📊 **Grade: B+**
@@ -171,11 +174,10 @@ async fn test_end_to_end_encryption_decryption() {
 ## Priority Recommendations
 
 ### 🔴 High Priority
-1. **Fix CLI Error Context Loss**
-   ```rust
-   // Replace generic wrapping
-   .map_err(|e| anyhow!("Failed to send secret: {}", e))?;
-   ```
+1. **✅ RESOLVED: Fix CLI Error Context Loss**
+   - CLI now properly propagates errors without generic wrapping
+   - All file operations and client calls preserve full error context
+   - Only descriptive `anyhow!()` errors for validation failures
 
 2. **Add Missing Tests**
    - Implement tests for CLI `send.rs` module

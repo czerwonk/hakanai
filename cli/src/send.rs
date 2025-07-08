@@ -24,6 +24,14 @@ pub async fn send(
     as_file: bool,
     filename: Option<String>,
 ) -> Result<()> {
+    if ttl.as_secs() == 0 {
+        return Err(anyhow!("TTL must be greater than zero seconds."));
+    }
+
+    if token.is_empty() {
+        eprintln!("{}", "Warning: No token provided.".yellow());
+    }
+
     let mut bytes = read_secret(file.clone())?;
 
     if bytes.is_empty() {
@@ -33,17 +41,10 @@ pub async fn send(
     }
 
     if bytes.len() > MAX_SECRET_SIZE_MB * 1024 * 1024 {
+        bytes.zeroize();
         return Err(anyhow!(
             "Secret size exceeds the maximum limit of {MAX_SECRET_SIZE_MB} megabytes."
         ));
-    }
-
-    if ttl.as_secs() == 0 {
-        return Err(anyhow!("TTL must be greater than zero seconds."));
-    }
-
-    if token.is_empty() {
-        eprintln!("{}", "Warning: No token provided.".yellow());
     }
 
     let filename = get_filename(file, as_file, filename)?;
@@ -58,8 +59,7 @@ pub async fn send(
 
     let link = client::new()
         .send_secret(server.clone(), payload, ttl, token, Some(opts))
-        .await
-        .map_err(|e| anyhow!(e))?;
+        .await?;
 
     println!(
         "Secret sent successfully!\nYou can access it at: {}",
