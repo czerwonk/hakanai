@@ -5,6 +5,9 @@
  * allowing you to send and receive encrypted secrets via the Hakanai API.
  */
 
+const KEY_LENGTH = 32; // 256 bits
+const NONCE_LENGTH = 12; // 96 bits for AES-GCM
+
 // Type definitions
 interface CompatibilityCheck {
   readonly isCompatible: boolean;
@@ -42,7 +45,7 @@ interface SecretRequest {
 
 interface HakanaiCryptoKey {
   readonly bytes: Uint8Array;
-  readonly length: 32;
+  readonly length: number;
 }
 
 /**
@@ -226,9 +229,9 @@ class CryptoOperations {
    * Generate a random 256-bit AES key
    */
   static generateKey(): HakanaiCryptoKey {
-    const bytes = new Uint8Array(32);
+    const bytes = new Uint8Array(KEY_LENGTH);
     CryptoOperations.getCrypto().getRandomValues(bytes);
-    return Object.freeze({ bytes, length: 32 });
+    return Object.freeze({ bytes, length: KEY_LENGTH });
   }
 
   /**
@@ -239,14 +242,14 @@ class CryptoOperations {
       throw new Error("Key must be a Uint8Array");
     }
 
-    if (rawKey.length !== 32) {
-      throw new Error("Key must be exactly 32 bytes for AES-256");
+    if (rawKey.length !== KEY_LENGTH) {
+      throw new Error(`Invalid key length: must be ${KEY_LENGTH} bytes`);
     }
 
     return CryptoOperations.getCrypto().subtle.importKey(
       "raw",
       rawKey,
-      { name: "AES-GCM", length: 256 },
+      { name: "AES-GCM", length: KEY_LENGTH * 8 },
       false,
       ["encrypt", "decrypt"],
     );
@@ -267,7 +270,7 @@ class CryptoOperations {
     const plaintextBytes = encoder.encode(plaintext);
 
     // Generate random nonce
-    const nonce = new Uint8Array(12);
+    const nonce = new Uint8Array(NONCE_LENGTH);
     CryptoOperations.getCrypto().getRandomValues(nonce);
 
     const cryptoKey = await CryptoOperations.importKey(key.bytes);
@@ -306,8 +309,8 @@ class CryptoOperations {
       throw new Error("Encrypted data must be a string");
     }
 
-    if (!(key instanceof Uint8Array) || key.length !== 32) {
-      throw new Error("Key must be a 32-byte Uint8Array");
+    if (!(key instanceof Uint8Array) || key.length !== KEY_LENGTH) {
+      throw new Error(`Key must be a ${KEY_LENGTH}-byte Uint8Array`);
     }
 
     // Decode from standard base64 more efficiently
@@ -318,13 +321,13 @@ class CryptoOperations {
       combined[i] = binaryString.charCodeAt(i);
     }
 
-    if (combined.length < 12) {
+    if (combined.length < NONCE_LENGTH + 1) {
       throw new Error("Invalid encrypted data: too short");
     }
 
     // Extract nonce and ciphertext
-    const nonce = combined.slice(0, 12);
-    const ciphertext = combined.slice(12);
+    const nonce = combined.slice(0, NONCE_LENGTH);
+    const ciphertext = combined.slice(NONCE_LENGTH);
 
     const cryptoKey = await CryptoOperations.importKey(key);
 
@@ -543,7 +546,7 @@ class HakanaiClient {
       throw new Error("Invalid decryption key in URL");
     }
 
-    if (key.length !== 32) {
+    if (key.length !== KEY_LENGTH) {
       throw new Error("Invalid key length");
     }
 
@@ -613,7 +616,10 @@ class HakanaiClient {
    * @deprecated Use CryptoOperations.encrypt() instead
    */
   async encrypt(plaintext: string, key: Uint8Array): Promise<string> {
-    return CryptoOperations.encrypt(plaintext, { bytes: key, length: 32 });
+    return CryptoOperations.encrypt(plaintext, {
+      bytes: key,
+      length: KEY_LENGTH,
+    });
   }
 
   /**

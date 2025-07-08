@@ -4,6 +4,8 @@
  * This client implements the same cryptographic protocol as the Rust CLI client,
  * allowing you to send and receive encrypted secrets via the Hakanai API.
  */
+const KEY_LENGTH = 32; // 256 bits
+const NONCE_LENGTH = 12; // 96 bits for AES-GCM
 /**
  * Type-safe Base64 URL-Safe encoding utility
  * Uses modern browser APIs for better performance and reliability
@@ -158,9 +160,9 @@ class CryptoOperations {
      * Generate a random 256-bit AES key
      */
     static generateKey() {
-        const bytes = new Uint8Array(32);
+        const bytes = new Uint8Array(KEY_LENGTH);
         CryptoOperations.getCrypto().getRandomValues(bytes);
-        return Object.freeze({ bytes, length: 32 });
+        return Object.freeze({ bytes, length: KEY_LENGTH });
     }
     /**
      * Import a raw key for use with WebCrypto API
@@ -169,10 +171,10 @@ class CryptoOperations {
         if (!(rawKey instanceof Uint8Array)) {
             throw new Error("Key must be a Uint8Array");
         }
-        if (rawKey.length !== 32) {
-            throw new Error("Key must be exactly 32 bytes for AES-256");
+        if (rawKey.length !== KEY_LENGTH) {
+            throw new Error(`Invalid key length: must be ${KEY_LENGTH} bytes`);
         }
-        return CryptoOperations.getCrypto().subtle.importKey("raw", rawKey, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+        return CryptoOperations.getCrypto().subtle.importKey("raw", rawKey, { name: "AES-GCM", length: KEY_LENGTH * 8 }, false, ["encrypt", "decrypt"]);
     }
     /**
      * Encrypt a message with AES-GCM
@@ -184,7 +186,7 @@ class CryptoOperations {
         const encoder = new TextEncoder();
         const plaintextBytes = encoder.encode(plaintext);
         // Generate random nonce
-        const nonce = new Uint8Array(12);
+        const nonce = new Uint8Array(NONCE_LENGTH);
         CryptoOperations.getCrypto().getRandomValues(nonce);
         const cryptoKey = await CryptoOperations.importKey(key.bytes);
         const ciphertext = await CryptoOperations.getCrypto().subtle.encrypt({ name: "AES-GCM", iv: nonce }, cryptoKey, plaintextBytes);
@@ -208,8 +210,8 @@ class CryptoOperations {
         if (typeof encryptedData !== "string") {
             throw new Error("Encrypted data must be a string");
         }
-        if (!(key instanceof Uint8Array) || key.length !== 32) {
-            throw new Error("Key must be a 32-byte Uint8Array");
+        if (!(key instanceof Uint8Array) || key.length !== KEY_LENGTH) {
+            throw new Error(`Key must be a ${KEY_LENGTH}-byte Uint8Array`);
         }
         // Decode from standard base64 more efficiently
         const binaryString = atob(encryptedData);
@@ -217,12 +219,12 @@ class CryptoOperations {
         for (let i = 0; i < binaryString.length; i++) {
             combined[i] = binaryString.charCodeAt(i);
         }
-        if (combined.length < 12) {
+        if (combined.length < NONCE_LENGTH + 1) {
             throw new Error("Invalid encrypted data: too short");
         }
         // Extract nonce and ciphertext
-        const nonce = combined.slice(0, 12);
-        const ciphertext = combined.slice(12);
+        const nonce = combined.slice(0, NONCE_LENGTH);
+        const ciphertext = combined.slice(NONCE_LENGTH);
         const cryptoKey = await CryptoOperations.importKey(key);
         try {
             const plaintextBytes = await CryptoOperations.getCrypto().subtle.decrypt({ name: "AES-GCM", iv: nonce }, cryptoKey, ciphertext);
@@ -388,7 +390,7 @@ class HakanaiClient {
         catch (error) {
             throw new Error("Invalid decryption key in URL");
         }
-        if (key.length !== 32) {
+        if (key.length !== KEY_LENGTH) {
             throw new Error("Invalid key length");
         }
         const response = await fetch(`${this.baseUrl}/api/v1/secret/${secretId}`);
@@ -443,7 +445,10 @@ class HakanaiClient {
      * @deprecated Use CryptoOperations.encrypt() instead
      */
     async encrypt(plaintext, key) {
-        return CryptoOperations.encrypt(plaintext, { bytes: key, length: 32 });
+        return CryptoOperations.encrypt(plaintext, {
+            bytes: key,
+            length: KEY_LENGTH,
+        });
     }
     /**
      * @deprecated Use CryptoOperations.decrypt() instead
