@@ -10,6 +10,97 @@ use crate::options::{SecretReceiveOptions, SecretSendOptions};
 use crate::web::WebClient;
 
 /// Defines the asynchronous interface for a client that can send and receive secrets.
+///
+/// This trait represents the core API for secret operations. The library provides
+/// a default implementation via `client::new()`, but users can create wrapper
+/// clients that add additional functionality around the core client.
+///
+/// # Examples
+///
+/// ## Adding Validation to Client Operations
+///
+/// ```
+/// use hakanai_lib::{client, client::{Client, ClientError}, models::Payload};
+/// use hakanai_lib::options::{SecretSendOptions, SecretReceiveOptions};
+/// use async_trait::async_trait;
+/// use url::Url;
+/// use std::time::Duration;
+///
+/// // Wrapper that adds input validation to client operations
+/// struct ValidatingClient {
+///     inner: Box<dyn Client<Payload>>,
+///     max_size: usize,
+/// }
+///
+/// impl ValidatingClient {
+///     fn new(inner: Box<dyn Client<Payload>>, max_size: usize) -> Self {
+///         Self { inner, max_size }
+///     }
+/// }
+///
+/// #[async_trait]
+/// impl Client<Payload> for ValidatingClient {
+///     async fn send_secret(
+///         &self,
+///         base_url: Url,
+///         payload: Payload,
+///         ttl: Duration,
+///         token: String,
+///         opts: Option<SecretSendOptions>,
+///     ) -> Result<Url, ClientError> {
+///         // Validate payload size before sending
+///         if payload.data.len() > self.max_size {
+///             return Err(ClientError::Custom(format!(
+///                 "Payload size {} exceeds maximum {}",
+///                 payload.data.len(),
+///                 self.max_size
+///             )));
+///         }
+///
+///         // Validate filename for security
+///         if let Some(ref filename) = payload.filename {
+///             if filename.contains("..") || filename.starts_with('/') {
+///                 return Err(ClientError::Custom(
+///                     "Invalid filename: path traversal detected".to_string()
+///                 ));
+///             }
+///         }
+///
+///         // Validation passed, proceed with sending
+///         self.inner.send_secret(base_url, payload, ttl, token, opts).await
+///     }
+///
+///     async fn receive_secret(
+///         &self,
+///         url: Url,
+///         opts: Option<SecretReceiveOptions>,
+///     ) -> Result<Payload, ClientError> {
+///         // Pass through to inner client
+///         self.inner.receive_secret(url, opts).await
+///     }
+/// }
+///
+/// // Usage: wrap the default client with validation
+/// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+/// let base_client = client::new();
+/// let validating_client = ValidatingClient::new(Box::new(base_client), 1024 * 1024); // 1MB limit
+///
+/// let payload = Payload {
+///     data: "test secret".to_string(),
+///     filename: None,
+/// };
+///
+/// // This will validate before sending
+/// let url = validating_client.send_secret(
+///     Url::parse("https://api.example.com")?,
+///     payload,
+///     Duration::from_secs(3600),
+///     "token".to_string(),
+///     None,
+/// ).await?;
+/// # Ok(())
+/// # }
+/// ```
 #[async_trait]
 pub trait Client<T>: Send + Sync {
     /// Sends a secret to be stored.
@@ -59,6 +150,148 @@ pub trait Client<T>: Send + Sync {
 ///
 /// This enum covers all possible error cases when sending or receiving secrets,
 /// including network errors, parsing errors, and cryptographic failures.
+///
+/// # Examples
+///
+/// ## Basic Error Handling
+///
+/// ```
+/// use hakanai_lib::{client, client::{Client, ClientError}, models::Payload};
+/// use std::time::Duration;
+/// use url::Url;
+///
+/// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+/// let client = client::new();
+/// let payload = Payload {
+///     data: "Test secret".to_string(),
+///     filename: None,
+/// };
+///
+/// match client.send_secret(
+///     Url::parse("https://api.example.com")?,
+///     payload,
+///     Duration::from_secs(3600),
+///     "auth-token".to_string(),
+///     None,
+/// ).await {
+///     Ok(url) => println!("Secret stored at: {}", url),
+///     Err(ClientError::Web(e)) => {
+///         eprintln!("Network error: {}", e);
+///         // Handle network failures - maybe retry or use offline storage
+///     }
+///     Err(ClientError::Http(msg)) => {
+///         eprintln!("Server error: {}", msg);
+///         // Handle server errors - maybe different endpoint or auth
+///     }
+///     Err(ClientError::EncryptionError(msg)) => {
+///         eprintln!("Encryption failed: {}", msg);
+///         // Handle crypto errors - should not normally happen
+///     }
+///     Err(e) => {
+///         eprintln!("Other error: {}", e);
+///         // Handle other error types
+///     }
+/// }
+/// # Ok(())
+/// # }
+/// ```
+///
+/// ## Error Recovery with Retry Logic
+///
+/// ```
+/// use hakanai_lib::{client, client::{Client, ClientError}, models::Payload};
+/// use std::time::Duration;
+/// use url::Url;
+///
+/// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+/// async fn send_with_retry(
+///     client: &impl hakanai_lib::client::Client<Payload>,
+///     payload: Payload,
+///     max_retries: u32,
+/// ) -> Result<Url, ClientError> {
+///     let mut last_error = None;
+///
+///     for attempt in 0..=max_retries {
+///         match client.send_secret(
+///             Url::parse("https://api.example.com").unwrap(),
+///             payload.clone(),
+///             Duration::from_secs(3600),
+///             "auth-token".to_string(),
+///             None,
+///         ).await {
+///             Ok(url) => return Ok(url),
+///             Err(ClientError::Web(_)) | Err(ClientError::Http(_)) if attempt < max_retries => {
+///                 // Retry on network/server errors
+///                 let delay = Duration::from_millis(100 * (1 << attempt));
+///                 tokio::time::sleep(delay).await;
+///                 continue;
+///             }
+///             Err(e) => {
+///                 last_error = Some(e);
+///                 break; // Don't retry on crypto or JSON errors
+///             }
+///         }
+///     }
+///
+///     Err(last_error.unwrap())
+/// }
+///
+/// let client = client::new();
+/// let payload = Payload {
+///     data: "Important secret".to_string(),
+///     filename: None,
+/// };
+///
+/// let result = send_with_retry(&client, payload, 3).await;
+/// match result {
+///     Ok(url) => println!("Success after retries: {}", url),
+///     Err(e) => eprintln!("Failed after retries: {}", e),
+/// }
+/// # Ok(())
+/// # }
+/// ```
+///
+/// ## User-Friendly Error Messages
+///
+/// ```
+/// use hakanai_lib::client::ClientError;
+///
+/// fn user_friendly_error(error: &ClientError) -> String {
+///     match error {
+///         ClientError::Web(_) => {
+///             "Network connection failed. Please check your internet connection and try again.".to_string()
+///         }
+///         ClientError::Http(msg) if msg.contains("401") || msg.contains("403") => {
+///             "Authentication failed. Please check your access token.".to_string()
+///         }
+///         ClientError::Http(msg) if msg.contains("404") => {
+///             "Secret not found. It may have expired or been accessed already.".to_string()
+///         }
+///         ClientError::Http(msg) if msg.contains("5") => {
+///             "Server is temporarily unavailable. Please try again later.".to_string()
+///         }
+///         ClientError::DecryptionError(_) => {
+///             "Failed to decrypt secret. The link may be corrupted or invalid.".to_string()
+///         }
+///         ClientError::Url(_) => {
+///             "Invalid URL format. Please check the secret link.".to_string()
+///         }
+///         ClientError::Json(_) => {
+///             "Invalid response format. The server may be incompatible.".to_string()
+///         }
+///         _ => {
+///             "An unexpected error occurred. Please try again.".to_string()
+///         }
+///     }
+/// }
+///
+/// // Usage in error handling
+/// # fn example() {
+/// # let error = ClientError::Custom("test".to_string());
+/// let user_msg = user_friendly_error(&error);
+/// println!("Error: {}", user_msg);
+/// # }
+/// ```
 #[derive(Debug, Error)]
 pub enum ClientError {
     /// Network request failed.
@@ -116,6 +349,80 @@ pub enum ClientError {
 ///
 /// This client acts as a layer over a `Client<String>`, handling the serialization
 /// and deserialization of `Payload` objects to and from JSON strings.
+///
+/// **Note:** This is an internal implementation detail. Users should use `client::new()`
+/// which returns a ready-to-use client for `Payload` objects.
+///
+/// # Examples
+///
+/// ## Basic Client Usage
+///
+/// ```
+/// use hakanai_lib::{client, client::Client, models::Payload};
+/// use std::time::Duration;
+/// use url::Url;
+///
+/// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+/// // Get a ready-to-use client
+/// let client = client::new();
+///
+/// // Send a text payload
+/// let payload = Payload {
+///     data: "Hello, World!".to_string(),
+///     filename: None,
+/// };
+///
+/// let secret_url = client.send_secret(
+///     Url::parse("https://api.example.com")?,
+///     payload.clone(),
+///     Duration::from_secs(300),
+///     "auth-token".to_string(),
+///     None,
+/// ).await?;
+///
+/// // Receive and verify the payload
+/// let received_payload = client.receive_secret(secret_url, None).await?;
+/// assert_eq!(received_payload.data, payload.data);
+/// assert_eq!(received_payload.filename, payload.filename);
+/// # Ok(())
+/// # }
+/// ```
+///
+/// ## Working with File Payloads
+///
+/// ```
+/// use hakanai_lib::{client, client::Client, models::Payload};
+/// use std::time::Duration;
+/// use url::Url;
+///
+/// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+/// let client = client::new();
+///
+/// // Create a file payload from binary data
+/// let file_data = b"PDF file content...";
+/// let file_payload = Payload::from_bytes(file_data, Some("document.pdf".to_string()));
+///
+/// // Send the file
+/// let secret_url = client.send_secret(
+///     Url::parse("https://api.example.com")?,
+///     file_payload,
+///     Duration::from_secs(86400), // 24 hours
+///     "auth-token".to_string(),
+///     None,
+/// ).await?;
+///
+/// println!("File shared at: {}", secret_url);
+///
+/// // Later, retrieve the file
+/// let received_payload = client.receive_secret(secret_url, None).await?;
+/// if let Some(filename) = &received_payload.filename {
+///     println!("Received file: {}", filename);
+///     let file_bytes = received_payload.decode_bytes()?;
+///     // Save to filesystem or process the bytes
+/// }
+/// # Ok(())
+/// # }
+/// ```
 pub struct SecretClient {
     client: Box<dyn Client<String>>,
 }
@@ -149,10 +456,41 @@ impl Client<Payload> for SecretClient {
     }
 }
 
-/// Creates a new client instance.
+/// Creates a new client instance with the default configuration.
 ///
-/// This function constructs a default client implementation, which is a `CryptoClient`
-/// wrapping a `WebClient`. This setup provides end-to-end encryption for secrets.
+/// This function constructs a layered client stack that provides:
+/// - HTTP communication via `WebClient`
+/// - AES-256-GCM encryption via `CryptoClient`
+/// - Automatic `Payload` serialization via `SecretClient`
+///
+/// # Examples
+///
+/// ```no_run
+/// use hakanai_lib::{client, client::Client, models::Payload};
+/// use std::time::Duration;
+/// use url::Url;
+///
+/// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+/// // Create the default client
+/// let client = client::new();
+///
+/// // Send a secret
+/// let url = client.send_secret(
+///     Url::parse("https://api.example.com")?,
+///     Payload {
+///         data: "my secret data".to_string(),
+///         filename: None,
+///     },
+///     Duration::from_secs(3600),
+///     "auth-token".to_string(),
+///     None,
+/// ).await?;
+///
+/// // The URL contains the encryption key in the fragment
+/// println!("Share this URL: {}", url);
+/// # Ok(())
+/// # }
+/// ```
 pub fn new() -> impl Client<Payload> {
     SecretClient {
         client: Box::new(CryptoClient::new(Box::new(WebClient::new()))),

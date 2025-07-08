@@ -152,7 +152,11 @@ return Err(anyhow!("TTL must be greater than zero seconds."));
 - ✅ **Project-level**: Excellent README and development guides
 - ✅ **API-level**: Good doc comments with parameter descriptions  
 - ✅ **Architecture**: Clear component descriptions and data flow
-- ❌ **Missing**: Some modules lack usage examples in doc comments
+- ✅ **Usage Examples**: High-priority API documentation now includes comprehensive examples:
+  - Module-level examples in `lib.rs` showing complete workflows
+  - `Client` trait examples demonstrating custom implementations
+  - `new()` function examples for main entry point
+  - `Payload::from_bytes()` examples for binary data handling
 
 ## Language-Specific Idiom Assessment
 
@@ -202,9 +206,9 @@ return Err(anyhow!("TTL must be greater than zero seconds."));
    ```
 
 2. **Enhanced Documentation**
-   - Add more usage examples to API docs
-   - Include troubleshooting section in README
-   - Add module-level documentation
+   - ✅ **RESOLVED: Add usage examples to API docs** - High-priority APIs now have comprehensive examples
+   - ✅ **RESOLVED: Add module-level documentation** - `lib.rs` now includes complete workflow examples
+   - Include troubleshooting section in README (remaining task)
 
 3. **Performance Optimizations**
    - ✅ **RESOLVED: Response compression** - Architectural decision to delegate to reverse proxy

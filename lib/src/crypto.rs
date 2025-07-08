@@ -16,6 +16,47 @@ use crate::options::{SecretReceiveOptions, SecretSendOptions};
 ///
 /// This struct is responsible for encrypting data before sending and decrypting
 /// it upon reception, ensuring that secrets are transmitted securely.
+///
+/// The `CryptoClient` uses AES-256-GCM for authenticated encryption and embeds
+/// the encryption key in the URL fragment for secure sharing.
+///
+/// **Note:** This is an internal implementation detail. Users should use `client::new()`
+/// which returns a client with encryption already configured.
+///
+/// # Examples
+///
+/// ## Basic Usage (Client Library Pattern)
+///
+/// ```
+/// use hakanai_lib::{client, client::Client, models::Payload};
+/// use std::time::Duration;
+/// use url::Url;
+///
+/// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+/// // Get a client with encryption built-in
+/// let client = client::new();
+///
+/// // Send a secret (automatically encrypted)
+/// let secret_url = client.send_secret(
+///     Url::parse("https://api.example.com")?,
+///     Payload {
+///         data: "My secret message".to_string(),
+///         filename: None,
+///     },
+///     Duration::from_secs(3600),
+///     "auth-token".to_string(),
+///     None,
+/// ).await?;
+///
+/// // The URL contains the encryption key in the fragment
+/// println!("Share this URL: {}", secret_url);
+///
+/// // Receive the secret (automatically decrypted)
+/// let received = client.receive_secret(secret_url, None).await?;
+/// assert_eq!(received.data, "My secret message");
+/// # Ok(())
+/// # }
+/// ```
 pub struct CryptoClient {
     inner_client: Box<dyn Client<String>>,
 }
