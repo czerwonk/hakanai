@@ -2,6 +2,8 @@
 name = "hakanai-lib"
 version = "1.2.2"
 edition = "2024"
+license = "MIT OR Apache-2.0"
+description = "Client library for Hakanai, a secure secret sharing service."
 
 [dependencies]
 aes-gcm = "0.10.3"
