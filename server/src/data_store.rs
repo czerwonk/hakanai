@@ -135,7 +135,7 @@ impl DataStore for RedisDataStore {
 
 impl RedisDataStore {
     fn accessed_key(&self, id: Uuid) -> String {
-        format!("accessed:{}", id)
+        format!("accessed:{id}")
     }
 
     #[instrument(skip(self), err)]

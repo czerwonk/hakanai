@@ -81,7 +81,7 @@ fn write_to_file(filename: String, bytes: &[u8]) -> Result<()> {
 
 fn write_to_timestamped_file(filename: String, bytes: &[u8]) -> Result<()> {
     let timestamp = timestamp::now_string()?;
-    let filename_with_timestamp = format!("{}.{}", filename, timestamp);
+    let filename_with_timestamp = format!("{filename}.{timestamp}");
 
     let warn_message = format!(
         "File {filename} already exists. To prevent overriding we use {filename_with_timestamp} instead."
