@@ -2,7 +2,6 @@ use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::PathBuf;
 use std::sync::Arc;
-use std::time::{SystemTime, UNIX_EPOCH};
 
 use anyhow::{Result, anyhow};
 use colored::Colorize;
@@ -11,6 +10,7 @@ use zeroize::Zeroizing;
 use hakanai_lib::client;
 use hakanai_lib::client::Client;
 use hakanai_lib::options::SecretReceiveOptions;
+use hakanai_lib::timestamp;
 
 use crate::helper::get_user_agent_name;
 use crate::observer::ProgressObserver;
@@ -76,7 +76,8 @@ fn write_to_file(filename: String, bytes: &[u8]) -> Result<()> {
 }
 
 fn write_to_timestamped_file(filename: String, bytes: &[u8]) -> Result<()> {
-    let filename_with_timestamp = format!("{}.{}", filename, timestamp()?);
+    let timestamp = timestamp::now_string()?;
+    let filename_with_timestamp = format!("{}.{}", filename, timestamp);
 
     let warn_message = format!(
         "File {filename} already exists. To prevent overriding we use {filename_with_timestamp} instead."
@@ -84,12 +85,6 @@ fn write_to_timestamped_file(filename: String, bytes: &[u8]) -> Result<()> {
     eprintln!("{}", warn_message.yellow());
 
     write_to_file(filename_with_timestamp, bytes)
-}
-
-fn timestamp() -> Result<String> {
-    let now = SystemTime::now();
-    let duration = now.duration_since(UNIX_EPOCH)?;
-    Ok(format!("{}", duration.as_secs()))
 }
 
 #[cfg(test)]

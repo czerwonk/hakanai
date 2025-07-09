@@ -28,7 +28,7 @@ async fn main() -> Result<()> {
     };
 
     info!("Connecting to Redis");
-    let data_store = match RedisDataStore::new(&args.redis_dsn).await {
+    let data_store = match RedisDataStore::new(&args.redis_dsn, args.max_ttl).await {
         Ok(store) => store,
         Err(e) => {
             eprintln!("Failed to create Redis data store: {e}");
