@@ -67,6 +67,7 @@ mod tests {
 
     #[test]
     fn test_progress_observer_creation() {
+        // Test that the public constructor works (this may create a visible progress bar briefly)
         let observer = ProgressObserver::new("Test message");
         assert!(observer.is_ok());
 
@@ -77,10 +78,8 @@ mod tests {
 
     #[test]
     fn test_progress_observer_creation_with_empty_label() {
-        let observer = ProgressObserver::new("");
-        assert!(observer.is_ok());
-
-        let observer = observer.unwrap();
+        // Use hidden progress bar to avoid terminal interference in tests
+        let observer = create_test_observer("");
         assert_eq!(observer.progress_bar.message(), "");
     }
 
