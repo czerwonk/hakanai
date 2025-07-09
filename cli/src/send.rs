@@ -194,15 +194,19 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_send_zero_ttl() {
+    async fn test_send_zero_ttl() -> Result<()> {
         let factory = MockFactory::new();
+        let temp_dir = TempDir::new()?;
+        let file_path = temp_dir.path().join("test.txt");
+        fs::write(&file_path, b"test content")?;
+
         let server = url::Url::parse("https://example.com").unwrap();
         let result = send(
             factory,
             server,
             Duration::from_secs(0),
             "token".to_string(),
-            None,
+            Some(file_path.to_string_lossy().to_string()),
             false,
             None,
         )
@@ -215,6 +219,7 @@ mod tests {
                 .to_string()
                 .contains("TTL must be greater than zero")
         );
+        Ok(())
     }
 
     #[tokio::test]
@@ -278,15 +283,19 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_send_as_file_no_file_path() {
+    async fn test_send_as_file_no_file_path() -> Result<()> {
         let factory = MockFactory::new();
+        let temp_dir = TempDir::new()?;
+        let file_path = temp_dir.path().join("empty.txt");
+        fs::write(&file_path, b"")?; // Empty file to test the empty secret validation
+
         let server = url::Url::parse("https://example.com").unwrap();
         let result = send(
             factory,
             server,
             Duration::from_secs(3600),
             "token".to_string(),
-            None, // no file path
+            Some(file_path.to_string_lossy().to_string()),
             true, // as_file = true
             None, // no explicit filename
         )
@@ -294,9 +303,9 @@ mod tests {
 
         assert!(result.is_err());
         let error_msg = result.unwrap_err().to_string();
-        // When no file path is provided, it tries to read from stdin, gets empty content,
-        // then fails on empty secret validation
+        // Should fail on empty secret validation
         assert!(error_msg.contains("No secret provided"));
+        Ok(())
     }
 
     #[tokio::test]
