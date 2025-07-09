@@ -205,9 +205,17 @@ async function createSecret() {
     showSuccess(secretUrl);
     clearInputs(secretInput, fileInput);
   } catch (error) {
-    const errorMessage =
-      error?.message || error?.toString() || UI_STRINGS.CREATE_FAILED;
-    showError(errorMessage);
+    // Check if it's a HakanaiError with a code for localization
+    if (error.name === "HakanaiError" && error.code) {
+      const errorKey = `error.${error.code}`;
+      const localizedMessage = i18n.t(errorKey);
+      // Fall back to the original message if translation is not found
+      const finalMessage =
+        localizedMessage !== errorKey ? localizedMessage : error.message;
+      showError(finalMessage);
+    } else {
+      showError(error.message || UI_STRINGS.CREATE_FAILED);
+    }
   } finally {
     setLoadingState(elements, false);
   }

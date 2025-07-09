@@ -8,6 +8,7 @@ use uuid::Uuid;
 use hakanai_lib::models::{PostSecretRequest, PostSecretResponse};
 
 use crate::app_data::AppData;
+use crate::data_store::DataStorePopResult;
 use crate::hash::hash_string;
 
 /// Configures the Actix Web services for the application.
@@ -46,8 +47,13 @@ pub async fn get_secret_from_request(
     Span::current().record("id", id.to_string());
 
     match app_data.data_store.pop(id).await {
-        Ok(Some(secret)) => Ok(secret),
-        Ok(None) => Err(error::ErrorNotFound("Secret not found")),
+        Ok(res) => match res {
+            DataStorePopResult::Found(secret) => Ok(secret),
+            DataStorePopResult::NotFound => Err(error::ErrorNotFound("Secret not found")),
+            DataStorePopResult::AlreadyAccessed => {
+                Err(error::ErrorGone("Secret was already accessed"))
+            }
+        },
         Err(e) => {
             error!("Error retrieving secret: {}", e);
             Err(error::ErrorInternalServerError("Operation failed"))
@@ -128,8 +134,8 @@ mod tests {
     use crate::data_store::{DataStore, DataStoreError};
 
     struct MockDataStore {
-        get_result: Option<Option<String>>,
-        get_error: bool,
+        pop_result: DataStorePopResult,
+        pop_error: bool,
         put_error: bool,
         stored_data: Arc<Mutex<Vec<(Uuid, String, Duration)>>>,
     }
@@ -137,20 +143,20 @@ mod tests {
     impl MockDataStore {
         fn new() -> Self {
             MockDataStore {
-                get_result: None,
-                get_error: false,
+                pop_result: DataStorePopResult::NotFound,
+                pop_error: false,
                 put_error: false,
                 stored_data: Arc::new(Mutex::new(Vec::new())),
             }
         }
 
-        fn with_get_result(mut self, result: Option<String>) -> Self {
-            self.get_result = Some(result);
+        fn with_pop_result(mut self, result: DataStorePopResult) -> Self {
+            self.pop_result = result;
             self
         }
 
         fn with_get_error(mut self) -> Self {
-            self.get_error = true;
+            self.pop_error = true;
             self
         }
 
@@ -162,11 +168,11 @@ mod tests {
 
     #[async_trait]
     impl DataStore for MockDataStore {
-        async fn pop(&self, _id: Uuid) -> Result<Option<String>, DataStoreError> {
-            if self.get_error {
+        async fn pop(&self, _id: Uuid) -> Result<DataStorePopResult, DataStoreError> {
+            if self.pop_error {
                 Err(DataStoreError::InternalError("mock error".to_string()))
             } else {
-                Ok(self.get_result.clone().unwrap_or(None))
+                Ok(self.pop_result.clone())
             }
         }
 
@@ -188,7 +194,8 @@ mod tests {
 
     #[actix_web::test]
     async fn test_get_secret_found() {
-        let mock_store = MockDataStore::new().with_get_result(Some("test_secret".to_string()));
+        let mock_store = MockDataStore::new()
+            .with_pop_result(DataStorePopResult::Found("test_secret".to_string()));
         let app_data = AppData {
             data_store: Box::new(mock_store),
             tokens: HashMap::new(),
@@ -215,7 +222,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_get_secret_not_found() {
-        let mock_store = MockDataStore::new().with_get_result(None);
+        let mock_store = MockDataStore::new().with_pop_result(DataStorePopResult::NotFound);
         let app_data = AppData {
             data_store: Box::new(mock_store),
             tokens: HashMap::new(),
@@ -235,6 +242,30 @@ mod tests {
 
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), 404);
+    }
+
+    #[actix_web::test]
+    async fn test_get_secret_already_accessed() {
+        let mock_store = MockDataStore::new().with_pop_result(DataStorePopResult::AlreadyAccessed);
+        let app_data = AppData {
+            data_store: Box::new(mock_store),
+            tokens: HashMap::new(),
+            max_ttl: Duration::from_secs(7200),
+        };
+
+        let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
+            |cfg| {
+                configure(cfg);
+            },
+        ))
+        .await;
+
+        let req = test::TestRequest::get()
+            .uri(&format!("/secret/{}", uuid::Uuid::new_v4()))
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 410);
     }
 
     #[actix_web::test]

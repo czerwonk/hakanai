@@ -1,28 +1,32 @@
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::PathBuf;
-use std::sync::Arc;
-use std::time::{SystemTime, UNIX_EPOCH};
 
 use anyhow::{Result, anyhow};
 use colored::Colorize;
 use zeroize::Zeroizing;
 
-use hakanai_lib::client;
 use hakanai_lib::client::Client;
 use hakanai_lib::options::SecretReceiveOptions;
+use hakanai_lib::timestamp;
 
+use crate::factory::Factory;
 use crate::helper::get_user_agent_name;
-use crate::observer::ProgressObserver;
 
-pub async fn get(link: url::Url, to_stdout: bool, filename: Option<String>) -> Result<()> {
+pub async fn get<T: Factory>(
+    factory: T,
+    link: url::Url,
+    to_stdout: bool,
+    filename: Option<String>,
+) -> Result<()> {
     let user_agent = get_user_agent_name();
-    let observer = ProgressObserver::new("Receiving secret...")?;
+    let observer = factory.new_observer("Receiving secret...")?;
     let opts = SecretReceiveOptions::default()
         .with_user_agent(user_agent)
-        .with_observer(Arc::new(observer));
+        .with_observer(observer);
 
-    let payload = client::new()
+    let payload = factory
+        .new_client()
         .receive_secret(link.clone(), Some(opts))
         .await?;
 
@@ -76,7 +80,8 @@ fn write_to_file(filename: String, bytes: &[u8]) -> Result<()> {
 }
 
 fn write_to_timestamped_file(filename: String, bytes: &[u8]) -> Result<()> {
-    let filename_with_timestamp = format!("{}.{}", filename, timestamp()?);
+    let timestamp = timestamp::now_string()?;
+    let filename_with_timestamp = format!("{filename}.{timestamp}");
 
     let warn_message = format!(
         "File {filename} already exists. To prevent overriding we use {filename_with_timestamp} instead."
@@ -86,15 +91,11 @@ fn write_to_timestamped_file(filename: String, bytes: &[u8]) -> Result<()> {
     write_to_file(filename_with_timestamp, bytes)
 }
 
-fn timestamp() -> Result<String> {
-    let now = SystemTime::now();
-    let duration = now.duration_since(UNIX_EPOCH)?;
-    Ok(format!("{}", duration.as_secs()))
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::mock_client::test_utils::{MockClient, MockFactory};
+    use hakanai_lib::models::Payload;
     use std::fs;
     use tempfile::TempDir;
 
@@ -239,6 +240,209 @@ mod tests {
         let read_content = fs::read_to_string(&file_path)?;
         assert_eq!(read_content, content);
 
+        Ok(())
+    }
+
+    #[test]
+    fn test_write_to_file_empty_filename() {
+        let result = write_to_file("".to_string(), b"content");
+        assert!(result.is_err());
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("Filename cannot be empty")
+        );
+    }
+
+    #[test]
+    fn test_output_secret_to_stdout() -> Result<()> {
+        let content = b"secret content";
+        let result = output_secret(content, true, None);
+        assert!(result.is_ok());
+        Ok(())
+    }
+
+    #[test]
+    fn test_output_secret_to_file() -> Result<()> {
+        let temp_dir = TempDir::new()?;
+        let file_path = temp_dir.path().join("output.txt");
+        let content = b"secret content";
+
+        let result = output_secret(
+            content,
+            false,
+            Some(file_path.to_string_lossy().to_string()),
+        );
+        assert!(result.is_ok());
+
+        let read_content = fs::read(&file_path)?;
+        assert_eq!(read_content, content);
+        Ok(())
+    }
+
+    #[test]
+    fn test_output_secret_defaults_to_stdout() -> Result<()> {
+        let content = b"secret content";
+        let result = output_secret(content, false, None);
+        assert!(result.is_ok());
+        Ok(())
+    }
+
+    // Integration tests with mock client
+    #[tokio::test]
+    async fn test_get_successful_to_stdout() -> Result<()> {
+        let payload = Payload::from_bytes(b"secret text content", None);
+        let client = MockClient::new().with_receive_success(payload);
+        let factory = MockFactory::new().with_client(client);
+
+        let url = url::Url::parse("https://example.com/s/test123#key")?;
+        let result = get(factory, url, true, None).await;
+
+        assert!(result.is_ok());
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_get_successful_to_file_with_payload_filename() -> Result<()> {
+        let temp_dir = TempDir::new()?;
+        let payload = Payload::from_bytes(b"file content", Some("document.txt".to_string()));
+        let client = MockClient::new().with_receive_success(payload);
+        let factory = MockFactory::new().with_client(client);
+
+        // Use temp directory path to avoid writing to current directory
+        let filename = temp_dir
+            .path()
+            .join("document.txt")
+            .to_string_lossy()
+            .to_string();
+        let url = url::Url::parse("https://example.com/s/test123#key")?;
+        let result = get(factory, url, false, Some(filename)).await;
+
+        assert!(result.is_ok());
+
+        // Check that file was created with payload filename
+        let file_path = temp_dir.path().join("document.txt");
+        let content = fs::read(&file_path)?;
+        assert_eq!(content, b"file content");
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_get_successful_to_file_with_custom_filename() -> Result<()> {
+        let temp_dir = TempDir::new()?;
+        let payload = Payload::from_bytes(b"binary content", Some("original.bin".to_string()));
+        let client = MockClient::new().with_receive_success(payload);
+        let factory = MockFactory::new().with_client(client);
+
+        let custom_filename = temp_dir
+            .path()
+            .join("custom.bin")
+            .to_string_lossy()
+            .to_string();
+        let url = url::Url::parse("https://example.com/s/test123#key")?;
+        let result = get(factory, url, false, Some(custom_filename.clone())).await;
+
+        assert!(result.is_ok());
+
+        // Check that file was created with custom filename
+        let file_path = temp_dir.path().join("custom.bin");
+        let content = fs::read(&file_path)?;
+        assert_eq!(content, b"binary content");
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_get_successful_binary_content() -> Result<()> {
+        let temp_dir = TempDir::new()?;
+        let binary_data = vec![0x00, 0x01, 0xFF, 0xFE, 0x42, 0x43];
+        let payload = Payload::from_bytes(&binary_data, Some("binary.dat".to_string()));
+        let client = MockClient::new().with_receive_success(payload);
+        let factory = MockFactory::new().with_client(client);
+
+        let filename = temp_dir
+            .path()
+            .join("output.dat")
+            .to_string_lossy()
+            .to_string();
+        let url = url::Url::parse("https://example.com/s/test123#key")?;
+        let result = get(factory, url, false, Some(filename)).await;
+
+        assert!(result.is_ok());
+
+        let file_path = temp_dir.path().join("output.dat");
+        let content = fs::read(&file_path)?;
+        assert_eq!(content, binary_data);
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_get_client_error() -> Result<()> {
+        let client = MockClient::new().with_receive_failure("Network timeout".to_string());
+        let factory = MockFactory::new().with_client(client);
+
+        let url = url::Url::parse("https://example.com/s/test123#key")?;
+        let result = get(factory, url, true, None).await;
+
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("Network timeout"));
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_get_empty_payload() -> Result<()> {
+        let payload = Payload::from_bytes(b"", None);
+        let client = MockClient::new().with_receive_success(payload);
+        let factory = MockFactory::new().with_client(client);
+
+        let url = url::Url::parse("https://example.com/s/test123#key")?;
+        let result = get(factory, url, true, None).await;
+
+        assert!(result.is_ok());
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_get_file_overwrite_prevention() -> Result<()> {
+        let temp_dir = TempDir::new()?;
+        let file_path = temp_dir.path().join("existing.txt");
+
+        // Create existing file
+        fs::write(&file_path, "existing content")?;
+
+        let payload = Payload::from_bytes(b"new content", None);
+        let client = MockClient::new().with_receive_success(payload);
+        let factory = MockFactory::new().with_client(client);
+
+        let url = url::Url::parse("https://example.com/s/test123#key")?;
+        let result = get(
+            factory,
+            url,
+            false,
+            Some(file_path.to_string_lossy().to_string()),
+        )
+        .await;
+
+        assert!(result.is_ok());
+
+        // Original file should be unchanged
+        let original_content = fs::read_to_string(&file_path)?;
+        assert_eq!(original_content, "existing content");
+
+        // New timestamped file should exist
+        let files: Vec<_> = fs::read_dir(temp_dir.path())?
+            .filter_map(|entry| entry.ok())
+            .filter(|entry| {
+                entry
+                    .file_name()
+                    .to_string_lossy()
+                    .starts_with("existing.txt.")
+            })
+            .collect();
+
+        assert_eq!(files.len(), 1);
+        let timestamped_content = fs::read_to_string(files[0].path())?;
+        assert_eq!(timestamped_content, "new content");
         Ok(())
     }
 }

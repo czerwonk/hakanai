@@ -219,19 +219,27 @@ pub enum ClientError {
     #[error("Client error: {0}")]
     Custom(String),
 
-    /// Encryption operation failed.
-    ///
-    /// This error occurs when encrypting a secret fails, typically due to
-    /// issues with key generation or the encryption process itself.
-    #[error("Encryption error: {0}")]
-    EncryptionError(String),
+    /// Cryptographic error.
+    #[error("crypto error")]
+    CryptoError(String),
 
-    /// Decryption operation failed.
-    ///
-    /// This error occurs when decrypting a received secret fails, which could
-    /// be due to an invalid key, corrupted data, or tampered ciphertext.
-    #[error("Decryption error: {0}")]
+    /// Decryption failed due to invalid data or key.
+    #[error("decryption error")]
     DecryptionError(String),
+
+    /// Error converting bytes to UTF-8.
+    #[error("UTF-8 decoding error")]
+    Utf8DecodeError(#[from] std::string::FromUtf8Error),
+
+    /// Base64 decoding error.
+    #[error("base64 decoding error")]
+    Base64DecodeError(#[from] base64::DecodeError),
+}
+
+impl From<aes_gcm::Error> for ClientError {
+    fn from(err: aes_gcm::Error) -> Self {
+        ClientError::CryptoError(format!("AES-GCM error: {err:?}"))
+    }
 }
 
 /// A client for sending and receiving `Payload` objects.
