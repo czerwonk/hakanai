@@ -86,8 +86,7 @@
       "msg.retrieveNoteText":
         "This secret has been deleted from the server and cannot be accessed again.",
       "msg.downloaded": "Secret downloaded as text file",
-      "msg.binaryDetected":
-        "Binary file detected. Content hidden for security. Use download button to save the file.",
+      "msg.binaryDetected": "Use download button to save the file.",
 
       // Aria labels
       "aria.copySecret": "Copy secret to clipboard",
@@ -107,6 +106,14 @@
         "Create and share one-time secrets securely with Hakanai - zero-knowledge secret sharing",
       "meta.get":
         "Retrieve your one-time secret securely with Hakanai - zero-knowledge secret sharing",
+
+      // Error codes
+      "error.SEND_FAILED": "Failed to send secret",
+      "error.SECRET_NOT_FOUND": "Secret not found or has expired",
+      "error.SECRET_ALREADY_ACCESSED":
+        "Secret has been accessed and is no longer available",
+      "error.RETRIEVE_FAILED": "Failed to retrieve secret",
+      "error.MISSING_DECRYPTION_KEY": "No decryption key found in URL",
     },
     de: {
       // Page titles
@@ -194,7 +201,7 @@
         "Dieses Secret wurde vom Server gelöscht und kann nicht erneut abgerufen werden.",
       "msg.downloaded": "Secret als Textdatei heruntergeladen",
       "msg.binaryDetected":
-        "Binärdatei erkannt. Inhalt aus Sicherheitsgründen versteckt. Bitte Download-Schaltfläche verwenden, um die Datei zu speichern.",
+        "Bitte Download-Button verwenden, um die Datei zu speichern.",
 
       // Aria labels
       "aria.copySecret": "Secret in die Zwischenablage kopieren",
@@ -208,11 +215,19 @@
       "aria.expiresSelect":
         "Bitte die Zeit auswählen, nach der das Secret abläuft",
       "aria.urlInput":
-        "Bitte die vollständige URL einschließlich des Secret-Schlüssels nach dem Hash eingeben",
+        "Bitte die vollständige URL einschließlich des Schlüssels nach dem Hash eingeben",
 
       // Meta descriptions
       "meta.create": "One-Time-Secrets sicher erstellen und teilen mit Hakanai",
       "meta.get": "One-Time-Secrets sicher teilen mit Hakanai",
+
+      // Error codes
+      "error.SEND_FAILED": "Fehler beim Senden des Secrets",
+      "error.SECRET_NOT_FOUND": "Secret nicht gefunden oder abgelaufen",
+      "error.SECRET_ALREADY_ACCESSED":
+        "Secret wurde bereits abgerufen und ist nicht mehr verfügbar",
+      "error.RETRIEVE_FAILED": "Fehler beim Abrufen des Secrets",
+      "error.MISSING_DECRYPTION_KEY": "Kein Schlüssel in der URL gefunden",
     },
   };
 

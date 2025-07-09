@@ -6,6 +6,15 @@
  */
 const KEY_LENGTH = 32; // 256 bits
 const NONCE_LENGTH = 12; // 96 bits for AES-GCM
+// Custom error class for Hakanai errors with error codes
+class HakanaiError extends Error {
+  constructor(code, message, statusCode) {
+    super(message);
+    this.name = "HakanaiError";
+    this.code = code;
+    this.statusCode = statusCode;
+  }
+}
 /**
  * Type-safe Base64 URL-Safe encoding utility
  * Uses modern browser APIs for better performance and reliability
@@ -369,8 +378,10 @@ class HakanaiClient {
       body: JSON.stringify(requestBody),
     });
     if (!response.ok) {
-      throw new Error(
+      throw new HakanaiError(
+        "SEND_FAILED",
         `Failed to send secret: ${response.status} ${response.statusText}`,
+        response.status,
       );
     }
     const result = await response.json();
@@ -403,7 +414,10 @@ class HakanaiClient {
     const secretId = pathParts[2];
     const keyBase64 = urlObj.hash.slice(1); // Remove the #
     if (!keyBase64) {
-      throw new Error("No decryption key found in URL");
+      throw new HakanaiError(
+        "MISSING_DECRYPTION_KEY",
+        "No decryption key found in URL",
+      );
     }
     let key;
     try {
@@ -417,10 +431,23 @@ class HakanaiClient {
     const response = await fetch(`${this.baseUrl}/api/v1/secret/${secretId}`);
     if (!response.ok) {
       if (response.status === 404) {
-        throw new Error("Secret not found or has expired");
+        throw new HakanaiError(
+          "SECRET_NOT_FOUND",
+          "Secret not found or has expired",
+          404,
+        );
       }
-      throw new Error(
+      if (response.status === 410) {
+        throw new HakanaiError(
+          "SECRET_ALREADY_ACCESSED",
+          "Secret has been accessed and is no longer available",
+          410,
+        );
+      }
+      throw new HakanaiError(
+        "RETRIEVE_FAILED",
         `Failed to retrieve secret: ${response.status} ${response.statusText}`,
+        response.status,
       );
     }
     const encryptedData = await response.text();
@@ -484,10 +511,16 @@ class HakanaiClient {
 // Export for use in browsers (global namespace)
 if (typeof window !== "undefined") {
   window.HakanaiClient = HakanaiClient;
+  window.HakanaiError = HakanaiError;
   window.Base64UrlSafe = Base64UrlSafe;
   window.CryptoOperations = CryptoOperations;
 }
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = { HakanaiClient, Base64UrlSafe, CryptoOperations };
+  module.exports = {
+    HakanaiClient,
+    HakanaiError,
+    Base64UrlSafe,
+    CryptoOperations,
+  };
 }
-export { HakanaiClient, Base64UrlSafe, CryptoOperations };
+export { HakanaiClient, HakanaiError, Base64UrlSafe, CryptoOperations };

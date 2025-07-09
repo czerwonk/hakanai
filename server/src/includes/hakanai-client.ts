@@ -14,6 +14,19 @@ interface CompatibilityCheck {
   readonly missingFeatures: readonly string[];
 }
 
+// Custom error class for Hakanai errors with error codes
+class HakanaiError extends Error {
+  readonly code: string;
+  readonly statusCode?: number;
+
+  constructor(code: string, message: string, statusCode?: number) {
+    super(message);
+    this.name = "HakanaiError";
+    this.code = code;
+    this.statusCode = statusCode;
+  }
+}
+
 interface PayloadData {
   readonly data: string;
   readonly filename?: string;
@@ -499,8 +512,10 @@ class HakanaiClient {
     });
 
     if (!response.ok) {
-      throw new Error(
+      throw new HakanaiError(
+        "SEND_FAILED",
         `Failed to send secret: ${response.status} ${response.statusText}`,
+        response.status,
       );
     }
 
@@ -540,7 +555,10 @@ class HakanaiClient {
 
     const keyBase64 = urlObj.hash.slice(1); // Remove the #
     if (!keyBase64) {
-      throw new Error("No decryption key found in URL");
+      throw new HakanaiError(
+        "MISSING_DECRYPTION_KEY",
+        "No decryption key found in URL",
+      );
     }
 
     let key: Uint8Array;
@@ -558,10 +576,23 @@ class HakanaiClient {
 
     if (!response.ok) {
       if (response.status === 404) {
-        throw new Error("Secret not found or has expired");
+        throw new HakanaiError(
+          "SECRET_NOT_FOUND",
+          "Secret not found or has expired",
+          404,
+        );
       }
-      throw new Error(
+      if (response.status === 410) {
+        throw new HakanaiError(
+          "SECRET_ALREADY_ACCESSED",
+          "Secret has been accessed and is no longer available",
+          410,
+        );
+      }
+      throw new HakanaiError(
+        "RETRIEVE_FAILED",
         `Failed to retrieve secret: ${response.status} ${response.statusText}`,
+        response.status,
       );
     }
 
@@ -637,6 +668,7 @@ class HakanaiClient {
 // Export for use in browsers (global namespace)
 if (typeof window !== "undefined") {
   (window as any).HakanaiClient = HakanaiClient;
+  (window as any).HakanaiError = HakanaiError;
   (window as any).Base64UrlSafe = Base64UrlSafe;
   (window as any).CryptoOperations = CryptoOperations;
 }
@@ -644,11 +676,17 @@ if (typeof window !== "undefined") {
 // Export for CommonJS/ES modules
 declare var module: any;
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = { HakanaiClient, Base64UrlSafe, CryptoOperations };
+  module.exports = {
+    HakanaiClient,
+    HakanaiError,
+    Base64UrlSafe,
+    CryptoOperations,
+  };
 }
 
 export {
   HakanaiClient,
+  HakanaiError,
   Base64UrlSafe,
   CryptoOperations,
   type PayloadData,
