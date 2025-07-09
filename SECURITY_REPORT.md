@@ -13,8 +13,8 @@ Hakanai is a minimalist one-time secret sharing service implementing zero-knowle
 
 ### Key Findings
 - **0 High severity** vulnerabilities (H1 resolved with Zeroizing implementation)
-- **4 Medium severity** vulnerabilities identified (M2 resolved with atomic file operations)
-- **7 Low severity** issues identified
+- **4 Medium severity** vulnerabilities identified (M2 resolved with atomic file operations, M6 was not a vulnerability)
+- **6 Low severity** issues identified (L1 was not an issue, L2 resolved with Base64UrlSafe class)
 - **Zero-knowledge architecture** properly implemented
 - **Strong cryptographic foundations** with industry-standard AES-256-GCM
 - **Comprehensive input validation** across all endpoints
@@ -123,21 +123,35 @@ match file_res {
 ```
 
 #### M4: Browser Compatibility Information Disclosure
-**File:** `server/src/includes/hakanai-client.ts:414-420`  
+**File:** `server/src/includes/hakanai-client.ts:414-424`  
 **Description:** Detailed browser compatibility error messages could aid in browser-specific attacks.
 
 **Impact:** Attackers could tailor exploits based on missing browser features.
 
+**Current Implementation:**
+```typescript
+// Current implementation - still exposes generic information
+if (!compatibilityInfo.isCompatible) {
+  throw new Error(
+    `Your browser does not support the required security features for this application. ` +
+      `Please use a modern browser with Web Crypto API support.`,
+  );
+}
+```
+
+**Note:** While the current implementation no longer exposes the specific missing features list in the error message (which would have been a more serious issue), it still provides some information about Web Crypto API support. The `getCompatibilityInfo()` method at lines 162-206 does collect detailed missing features, but these are not exposed in the error message.
+
 **Recommendation:**
 ```typescript
-// Provide generic error without specifics
+// More generic error without mentioning specific APIs
 if (!compatibilityInfo.isCompatible) {
     throw new Error(
-        "Your browser does not support the required security features for this application. " +
-        "Please use a modern browser with Web Crypto API support."
+        "Your browser is not supported. Please use a modern browser."
     );
 }
 ```
+
+**Status:** Partially addressed - error message is generic but still mentions Web Crypto API.
 
 #### M5: Unlimited File Access in CLI
 **File:** `cli/src/send.rs:96-98`  
@@ -197,11 +211,39 @@ let nonce_len = aes_gcm::Nonce::<<Aes256Gcm as AeadCore>::NonceSize>::default().
 
 **Recommendation:** No changes needed - implementation follows best practices.
 
-#### L2: Base64 Encoding Inconsistency
-**File:** `server/src/includes/hakanai-client.ts:78-81`  
-**Description:** Manual base64 conversion instead of using consistent utility functions.
+#### L2: Base64 Encoding Inconsistency [RESOLVED ✅]
+**File:** `server/src/includes/hakanai-client.ts:55-124`  
+**Status:** **RESOLVED** - Comprehensive Base64 utility class implemented
 
-**Status:** Partially addressed in current TypeScript implementation.
+**Previous Issue:** Manual base64 conversion instead of using consistent utility functions.
+
+**Resolution Implemented:**
+The TypeScript implementation now includes a robust `Base64UrlSafe` utility class with:
+- Chunked processing for large arrays (8192 byte chunks)
+- Proper input validation and type checking
+- Comprehensive error handling
+- Consistent URL-safe base64 encoding/decoding
+- Efficient binary string conversion
+
+**Current Implementation:**
+```typescript
+class Base64UrlSafe {
+  static encode(data: Uint8Array): string {
+    // Chunked processing to handle large arrays
+    for (let i = 0; i < data.length; i += chunkSize) {
+      const chunk = data.subarray(i, i + chunkSize);
+      binaryString += String.fromCharCode(...chunk);
+    }
+    // Convert to URL-safe base64
+    return btoa(binaryString)
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=/g, "");
+  }
+}
+```
+
+**Impact:** Base64 encoding/decoding is now consistent, efficient, and properly tested throughout the TypeScript client.
 
 #### L3: Missing Security Headers
 **File:** `server/src/main.rs:86-93`  
@@ -320,15 +362,21 @@ Err(error::ErrorBadRequest("TTL exceeds maximum allowed duration"))
 ## TypeScript Client Security
 
 ### Strengths
-- **Type Safety**: Comprehensive TypeScript implementation
-- **Browser Compatibility**: Robust compatibility checking
-- **Secure Defaults**: Proper crypto API usage
+- **Type Safety**: Comprehensive TypeScript implementation with strict type checking
+- **Browser Compatibility**: Robust compatibility checking with feature detection
+- **Secure Defaults**: Proper crypto API usage with AES-256-GCM
 - **Input Validation**: Comprehensive input validation and sanitization
+- **Base64 Handling**: Dedicated Base64UrlSafe utility class with chunked processing
 
 ### Implementation Quality
 - **Error Handling**: Comprehensive error handling with descriptive messages
-- **Memory Management**: Proper handling of binary data and base64 conversion
-- **API Security**: Consistent API contract validation
+- **Memory Management**: Efficient handling of binary data with chunked processing for large files
+- **API Security**: Consistent API contract validation with type-safe interfaces
+- **Bytes-based Interface**: Unified PayloadData handling through setFromBytes() method
+- **Code Organization**: Clean separation of concerns with dedicated utility classes
+
+### Areas for Improvement
+- **Browser Compatibility Messages**: Still exposes some information about Web Crypto API support (M4)
 
 ## Compliance & Best Practices
 
@@ -347,18 +395,24 @@ Err(error::ErrorBadRequest("TTL exceeds maximum allowed duration"))
 
 ### Immediate (High Priority)
 1. ~~**Implement comprehensive memory clearing** for all sensitive data~~ ✅ COMPLETED
-2. **Add token file support** to prevent process argument exposure
+2. **Add token file support** to prevent process argument exposure (M1)
 3. ~~**Fix race conditions** in file operations~~ ✅ COMPLETED
 
 ### Short-term (Medium Priority)
-1. **Improve error handling** with structured error context
-2. **Enhance CORS configuration** with secure defaults
-3. **Add browser compatibility** error message security
+1. **Improve error handling** with structured error context (M3)
+2. ~~**Enhance CORS configuration** with secure defaults~~ ✅ Already secure (M6)
+3. **Improve browser compatibility** error message to be more generic (M4)
+4. **Document unlimited file access** as intentional design decision (M5)
 
 ### Long-term (Low Priority)
-1. **Update security headers** with comprehensive policy
-2. **Implement dependency** update automation
-3. **Add performance optimizations** for static assets
+1. ~~**Fix nonce size implementation**~~ ✅ Already correct (L1)
+2. ~~**Improve Base64 encoding consistency**~~ ✅ COMPLETED with Base64UrlSafe class (L2)
+3. **Add additional security headers** for defense in depth (L3)
+4. **Reduce verbosity of error messages** (L4)
+5. **Consider anonymizing User-Agent** in logs (L5)
+6. **Update dependencies** regularly (L6)
+7. **Document rate limiting** delegation to reverse proxy (L7)
+8. **Add cache headers** for static assets (L8)
 
 ## Conclusion
 
@@ -381,12 +435,20 @@ The identified vulnerabilities are primarily operational concerns rather than fu
 
 ## Recommendations Summary
 
-1. ~~**Implement comprehensive memory clearing** using `zeroize` crate~~ ✅ COMPLETED
-2. **Add secure token input methods** (file/environment variables)
-3. ~~**Fix file operation race conditions** with atomic operations~~ ✅ COMPLETED
-4. **Enhance error handling** with structured error context
-5. ~~**Improve CORS security** with restrictive defaults~~ ✅ Already secure (see M6)
-6. **Regular security maintenance** with automated dependency updates
+### Completed Security Improvements ✅
+1. **Memory clearing** - Comprehensive zeroization implemented (H1)
+2. **File operation race conditions** - Fixed with atomic operations (M2)
+3. **CORS security** - Already implemented with secure defaults (M6)
+4. **Nonce size** - Implementation already correct (L1)
+5. **Base64 encoding** - Consistent utility class implemented (L2)
+
+### Outstanding Recommendations
+1. **Add secure token input methods** (file/environment variables) - M1
+2. **Enhance error handling** with structured error context - M3
+3. **Improve browser compatibility messages** to be more generic - M4
+4. **Document design decisions** for unlimited file access - M5
+5. **Add comprehensive security headers** - L3
+6. **Regular security maintenance** with automated dependency updates - L6
 
 ---
 
