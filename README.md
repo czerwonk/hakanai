@@ -179,7 +179,8 @@ Retrieve a secret (one-time access).
 
 **Response:**
 - `200 OK`: Plain text secret data
-- `404 Not Found`: Secret doesn't exist or already accessed
+- `404 Not Found`: Secret doesn't exist or has expired
+- `410 Gone`: Secret was already accessed by someone else
 
 ### GET /s/{id}
 Short link for secret retrieval.
@@ -187,7 +188,8 @@ Short link for secret retrieval.
 **Response:**
 - For CLI clients: Plain text secret data
 - For browsers: HTML page for secret retrieval
-- `404 Not Found`: Secret doesn't exist or already accessed
+- `404 Not Found`: Secret doesn't exist or has expired
+- `410 Gone`: Secret was already accessed by someone else
 
 ### GET /logo.svg
 Serves the hakanai logo.
@@ -367,6 +369,7 @@ For production deployments:
 - ✅ Docker deployment with Valkey/Redis included
 - ✅ **Enhanced TypeScript Client**: Bytes-based PayloadData interface with type safety
 - ✅ **Unified Data Handling**: Consistent approach for text and binary data across all clients
+- ✅ **Access Tracking**: Returns 410 Gone status if secret was already accessed
 
 ### Security Implementation
 - ✅ **Zero-knowledge architecture**: All encryption/decryption client-side
