@@ -4,10 +4,18 @@ on:
   push:
     tags:
       - "v*"
+  workflow_run:
+    workflows: ["Build", "Lint", "Test"]
+    types:
+      - completed
 
 jobs:
   publish:
     runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'push' || 
+      (github.event_name == 'workflow_run' && 
+       github.event.workflow_run.conclusion == 'success')
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -39,11 +47,7 @@ jobs:
             exit 1
           fi
 
-      - name: Run tests
-        run: cargo test --workspace --verbose
-
       - name: Publish hakanai-lib to crates.io
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: cargo publish -p hakanai-lib --token $CARGO_REGISTRY_TOKEN
-
