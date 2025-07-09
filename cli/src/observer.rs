@@ -38,3 +38,108 @@ impl DataTransferObserver for ProgressObserver {
         }
     }
 }
+
+impl Drop for ProgressObserver {
+    fn drop(&mut self) {
+        if !self.progress_bar.is_finished() {
+            self.progress_bar.finish_and_clear();
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_progress_observer_creation() {
+        let observer = ProgressObserver::new("Test message");
+        assert!(observer.is_ok());
+
+        let observer = observer.unwrap();
+        assert_eq!(observer.progress_bar.message(), "Test message");
+        assert_eq!(observer.progress_bar.length(), Some(0));
+    }
+
+    #[test]
+    fn test_progress_observer_creation_with_empty_label() {
+        let observer = ProgressObserver::new("");
+        assert!(observer.is_ok());
+
+        let observer = observer.unwrap();
+        assert_eq!(observer.progress_bar.message(), "");
+    }
+
+    #[tokio::test]
+    async fn test_on_progress_sets_length_on_first_call() {
+        let observer = ProgressObserver::new("Test").unwrap();
+
+        // Initial state
+        assert_eq!(observer.progress_bar.length(), Some(0));
+
+        // First progress call should set length
+        observer.on_progress(10, 100).await;
+        assert_eq!(observer.progress_bar.length(), Some(100));
+        assert_eq!(observer.progress_bar.position(), 10);
+    }
+
+    #[tokio::test]
+    async fn test_on_progress_updates_position() {
+        let observer = ProgressObserver::new("Test").unwrap();
+
+        // First call sets length and position
+        observer.on_progress(25, 100).await;
+        assert_eq!(observer.progress_bar.position(), 25);
+
+        // Subsequent calls only update position
+        observer.on_progress(50, 100).await;
+        assert_eq!(observer.progress_bar.position(), 50);
+        assert_eq!(observer.progress_bar.length(), Some(100));
+    }
+
+    #[tokio::test]
+    async fn test_on_progress_completion() {
+        let observer = ProgressObserver::new("Test").unwrap();
+
+        // Progress to completion
+        observer.on_progress(100, 100).await;
+        assert_eq!(observer.progress_bar.position(), 100);
+
+        // Progress bar should be finished but we can't easily test finish_and_clear()
+        // since it modifies terminal state
+    }
+
+    #[tokio::test]
+    async fn test_on_progress_over_completion() {
+        let observer = ProgressObserver::new("Test").unwrap();
+
+        // Progress beyond total should still trigger completion
+        observer.on_progress(150, 100).await;
+        // Position is clamped to length by indicatif
+        assert_eq!(observer.progress_bar.position(), 100);
+        assert_eq!(observer.progress_bar.length(), Some(100));
+    }
+
+    #[tokio::test]
+    async fn test_on_progress_zero_total() {
+        let observer = ProgressObserver::new("Test").unwrap();
+
+        // Edge case: zero total bytes
+        observer.on_progress(0, 0).await;
+        assert_eq!(observer.progress_bar.length(), Some(0));
+        assert_eq!(observer.progress_bar.position(), 0);
+    }
+
+    #[tokio::test]
+    async fn test_on_progress_multiple_calls_same_total() {
+        let observer = ProgressObserver::new("Test").unwrap();
+
+        observer.on_progress(10, 100).await;
+        observer.on_progress(20, 100).await;
+        observer.on_progress(30, 100).await;
+
+        // Length should only be set once
+        assert_eq!(observer.progress_bar.length(), Some(100));
+        assert_eq!(observer.progress_bar.position(), 30);
+    }
+}

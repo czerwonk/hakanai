@@ -1,22 +1,21 @@
 use std::io::{self, Read};
-use std::sync::Arc;
 use std::time::Duration;
 
 use anyhow::{Result, anyhow};
 use colored::Colorize;
 use zeroize::Zeroizing;
 
-use hakanai_lib::client;
 use hakanai_lib::client::Client;
 use hakanai_lib::models::Payload;
 use hakanai_lib::options::SecretSendOptions;
 
+use crate::factory::Factory;
 use crate::helper::get_user_agent_name;
-use crate::observer::ProgressObserver;
 
 const MAX_SECRET_SIZE_MB: usize = 10; // 10 MB
 
-pub async fn send(
+pub async fn send<T: Factory>(
+    factory: T,
     server: url::Url,
     ttl: Duration,
     token: String,
@@ -50,12 +49,13 @@ pub async fn send(
     let payload = Payload::from_bytes(&bytes, filename);
 
     let user_agent = get_user_agent_name();
-    let observer = ProgressObserver::new("Sending secret...")?;
+    let observer = factory.new_observer("Sending secret...")?;
     let opts = SecretSendOptions::default()
         .with_user_agent(user_agent)
-        .with_observer(Arc::new(observer));
+        .with_observer(observer);
 
-    let link = client::new()
+    let link = factory
+        .new_client()
         .send_secret(server.clone(), payload, ttl, token, Some(opts))
         .await?;
 
@@ -98,5 +98,308 @@ fn read_secret(file: Option<String>) -> Result<Vec<u8>> {
         let mut bytes: Vec<u8> = Vec::new();
         io::stdin().read_to_end(&mut bytes)?;
         Ok(bytes)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::mock_client::test_utils::{MockClient, MockFactory};
+    use std::fs;
+    use tempfile::TempDir;
+
+    #[test]
+    fn test_get_filename_not_as_file() {
+        let result = get_filename(Some("test.txt".to_string()), false, None);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), None);
+    }
+
+    #[test]
+    fn test_get_filename_with_explicit_filename() {
+        let result = get_filename(
+            Some("path/to/test.txt".to_string()),
+            true,
+            Some("custom.txt".to_string()),
+        );
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), Some("custom.txt".to_string()));
+    }
+
+    #[test]
+    fn test_get_filename_from_file_path() {
+        let result = get_filename(Some("/path/to/test.txt".to_string()), true, None);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), Some("test.txt".to_string()));
+    }
+
+    #[test]
+    fn test_get_filename_from_file_path_no_extension() {
+        let result = get_filename(Some("/path/to/testfile".to_string()), true, None);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), Some("testfile".to_string()));
+    }
+
+    #[test]
+    fn test_get_filename_no_file_path_as_file() {
+        let result = get_filename(None, true, None);
+        assert!(result.is_err());
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("File name is required")
+        );
+    }
+
+    #[test]
+    fn test_read_secret_from_file() -> Result<()> {
+        let temp_dir = TempDir::new()?;
+        let file_path = temp_dir.path().join("test_secret.txt");
+        let test_content = b"test secret content";
+        fs::write(&file_path, test_content)?;
+
+        let result = read_secret(Some(file_path.to_string_lossy().to_string()))?;
+        assert_eq!(result, test_content);
+        Ok(())
+    }
+
+    #[test]
+    fn test_read_secret_file_not_found() {
+        let result = read_secret(Some("/nonexistent/file.txt".to_string()));
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_read_secret_empty_file() -> Result<()> {
+        let temp_dir = TempDir::new()?;
+        let file_path = temp_dir.path().join("empty.txt");
+        fs::write(&file_path, b"")?;
+
+        let result = read_secret(Some(file_path.to_string_lossy().to_string()))?;
+        assert_eq!(result, b"");
+        Ok(())
+    }
+
+    #[test]
+    fn test_read_secret_binary_file() -> Result<()> {
+        let temp_dir = TempDir::new()?;
+        let file_path = temp_dir.path().join("binary.bin");
+        let binary_content = vec![0x00, 0x01, 0xFF, 0xFE, 0x42];
+        fs::write(&file_path, &binary_content)?;
+
+        let result = read_secret(Some(file_path.to_string_lossy().to_string()))?;
+        assert_eq!(result, binary_content);
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_send_zero_ttl() {
+        let factory = MockFactory::new();
+        let server = url::Url::parse("https://example.com").unwrap();
+        let result = send(
+            factory,
+            server,
+            Duration::from_secs(0),
+            "token".to_string(),
+            None,
+            false,
+            None,
+        )
+        .await;
+
+        assert!(result.is_err());
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("TTL must be greater than zero")
+        );
+    }
+
+    #[tokio::test]
+    async fn test_send_empty_secret_from_file() -> Result<()> {
+        let factory = MockFactory::new();
+        let temp_dir = TempDir::new()?;
+        let file_path = temp_dir.path().join("empty.txt");
+        fs::write(&file_path, b"")?;
+
+        let server = url::Url::parse("https://example.com").unwrap();
+        let result = send(
+            factory,
+            server,
+            Duration::from_secs(3600),
+            "token".to_string(),
+            Some(file_path.to_string_lossy().to_string()),
+            false,
+            None,
+        )
+        .await;
+
+        assert!(result.is_err());
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("No secret provided")
+        );
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_send_oversized_secret() -> Result<()> {
+        let factory = MockFactory::new();
+        let temp_dir = TempDir::new()?;
+        let file_path = temp_dir.path().join("large.txt");
+        // Create file larger than 10MB
+        let large_content = vec![b'A'; (MAX_SECRET_SIZE_MB * 1024 * 1024) + 1];
+        fs::write(&file_path, large_content)?;
+
+        let server = url::Url::parse("https://example.com").unwrap();
+        let result = send(
+            factory,
+            server,
+            Duration::from_secs(3600),
+            "token".to_string(),
+            Some(file_path.to_string_lossy().to_string()),
+            false,
+            None,
+        )
+        .await;
+
+        assert!(result.is_err());
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("Secret size exceeds")
+        );
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_send_as_file_no_file_path() {
+        let factory = MockFactory::new();
+        let server = url::Url::parse("https://example.com").unwrap();
+        let result = send(
+            factory,
+            server,
+            Duration::from_secs(3600),
+            "token".to_string(),
+            None, // no file path
+            true, // as_file = true
+            None, // no explicit filename
+        )
+        .await;
+
+        assert!(result.is_err());
+        let error_msg = result.unwrap_err().to_string();
+        // When no file path is provided, it tries to read from stdin, gets empty content,
+        // then fails on empty secret validation
+        assert!(error_msg.contains("No secret provided"));
+    }
+
+    #[tokio::test]
+    async fn test_send_successful_text_file() -> Result<()> {
+        let expected_url = url::Url::parse("https://example.com/s/success123#key").unwrap();
+        let client = MockClient::new().with_send_success(expected_url.clone());
+        let factory = MockFactory::new().with_client(client);
+
+        let temp_dir = TempDir::new()?;
+        let file_path = temp_dir.path().join("test.txt");
+        fs::write(&file_path, b"test secret content")?;
+
+        let server = url::Url::parse("https://example.com").unwrap();
+        let result = send(
+            factory,
+            server,
+            Duration::from_secs(3600),
+            "token123".to_string(),
+            Some(file_path.to_string_lossy().to_string()),
+            false,
+            None,
+        )
+        .await;
+
+        assert!(result.is_ok());
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_send_successful_as_file() -> Result<()> {
+        let expected_url = url::Url::parse("https://example.com/s/file123#key").unwrap();
+        let client = MockClient::new().with_send_success(expected_url.clone());
+        let factory = MockFactory::new().with_client(client);
+
+        let temp_dir = TempDir::new()?;
+        let file_path = temp_dir.path().join("document.pdf");
+        fs::write(&file_path, b"fake pdf content")?;
+
+        let server = url::Url::parse("https://example.com").unwrap();
+        let result = send(
+            factory,
+            server,
+            Duration::from_secs(7200),
+            "token456".to_string(),
+            Some(file_path.to_string_lossy().to_string()),
+            true, // as_file = true
+            None, // filename extracted from path
+        )
+        .await;
+
+        assert!(result.is_ok());
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_send_successful_with_custom_filename() -> Result<()> {
+        let expected_url = url::Url::parse("https://example.com/s/custom123#key").unwrap();
+        let client = MockClient::new().with_send_success(expected_url.clone());
+        let factory = MockFactory::new().with_client(client);
+
+        let temp_dir = TempDir::new()?;
+        let file_path = temp_dir.path().join("original.txt");
+        fs::write(&file_path, b"file content")?;
+
+        let server = url::Url::parse("https://example.com").unwrap();
+        let result = send(
+            factory,
+            server,
+            Duration::from_secs(3600),
+            "token789".to_string(),
+            Some(file_path.to_string_lossy().to_string()),
+            true,                                // as_file = true
+            Some("custom_name.txt".to_string()), // custom filename
+        )
+        .await;
+
+        assert!(result.is_ok());
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_send_client_error() -> Result<()> {
+        let client = MockClient::new().with_send_failure("Network error".to_string());
+        let factory = MockFactory::new().with_client(client);
+
+        let temp_dir = TempDir::new()?;
+        let file_path = temp_dir.path().join("test.txt");
+        fs::write(&file_path, b"test content")?;
+
+        let server = url::Url::parse("https://example.com").unwrap();
+        let result = send(
+            factory,
+            server,
+            Duration::from_secs(3600),
+            "token".to_string(),
+            Some(file_path.to_string_lossy().to_string()),
+            false,
+            None,
+        )
+        .await;
+
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("Network error"));
+        Ok(())
     }
 }

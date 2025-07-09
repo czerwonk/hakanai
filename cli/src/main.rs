@@ -1,6 +1,8 @@
 mod cli;
+mod factory;
 mod get;
 mod helper;
+mod mock_client;
 mod observer;
 mod send;
 
@@ -27,12 +29,13 @@ async fn main() -> ExitCode {
 }
 
 async fn process_command(args: Args) -> Result<()> {
+    let app_factory = factory::AppFactory {};
     match args.command {
         cli::Command::Get {
             link,
             to_stdout,
             filename,
-        } => get(link, to_stdout, filename).await,
+        } => get(app_factory, link, to_stdout, filename).await,
         cli::Command::Send {
             server,
             ttl,
@@ -40,6 +43,6 @@ async fn process_command(args: Args) -> Result<()> {
             file,
             as_file,
             filename,
-        } => send(server, ttl, token, file, as_file, filename).await,
+        } => send(app_factory, server, ttl, token, file, as_file, filename).await,
     }
 }

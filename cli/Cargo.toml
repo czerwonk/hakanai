@@ -12,8 +12,8 @@ anyhow = "1.0.98"
 humantime = "2.2.0"
 colored = "3.0.0"
 indicatif = "0.18.0"
-async-trait = "0.1.88"
 zeroize = "1.8.1"
+async-trait = "0.1.88"
 
 [dev-dependencies]
 tempfile = "3.15.0"

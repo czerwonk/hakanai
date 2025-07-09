@@ -281,7 +281,19 @@ cargo test --verbose
 
 # Run specific test
 cargo test test_name --package hakanai-lib
+
+# Run TypeScript tests
+npm test --prefix tests
+
+# Run tests with coverage (if cargo-tarpaulin installed)
+cargo tarpaulin --verbose
 ```
+
+The project includes comprehensive test coverage with:
+- **100+ total tests** across all components
+- **Factory pattern** for dependency injection in CLI tests
+- **Mock observers** to prevent console interference during testing
+- **Proper test isolation** with tempfile for all file operations
 
 ### Code Quality
 
@@ -365,7 +377,7 @@ For production deployments:
 - ✅ Short link format (`/s/{id}`) for easier sharing
 - ✅ Internationalization support (English and German)
 - ✅ OpenTelemetry integration for comprehensive observability
-- ✅ Comprehensive test coverage (23+ TypeScript tests, 74+ total tests)
+- ✅ Comprehensive test coverage (100+ total tests: 73 CLI, 23+ TypeScript, server/lib tests)
 - ✅ Docker deployment with Valkey/Redis included
 - ✅ **Enhanced TypeScript Client**: Bytes-based PayloadData interface with type safety
 - ✅ **Unified Data Handling**: Consistent approach for text and binary data across all clients
