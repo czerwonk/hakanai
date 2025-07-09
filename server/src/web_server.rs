@@ -15,6 +15,7 @@ use crate::options::Args;
 use crate::web_api;
 use crate::web_static;
 
+/// Starts the web server with the provided data store and tokens.
 pub async fn run<T>(data_store: T, tokens: Vec<String>, args: Args) -> Result<()>
 where
     T: DataStore + Clone + 'static,
@@ -61,6 +62,12 @@ fn default_headers() -> DefaultHeaders {
         .add((
             "Strict-Transport-Security",
             "max-age=31536000; includeSubDomains",
+        ))
+        .add(("Content-Security-Policy", "default-src 'self'"))
+        .add(("Referrer-Policy", "strict-origin-when-cross-origin"))
+        .add((
+            "Permissions-Policy",
+            "geolocation=(), microphone=(), camera=()",
         ))
 }
 

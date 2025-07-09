@@ -14,7 +14,7 @@ Hakanai is a minimalist one-time secret sharing service implementing zero-knowle
 ### Key Findings
 - **0 High severity** vulnerabilities (H1 resolved with Zeroizing implementation)
 - **4 Medium severity** vulnerabilities identified (M2 resolved with atomic file operations, M6 was not a vulnerability)
-- **6 Low severity** issues identified (L1 was not an issue, L2 resolved with Base64UrlSafe class)
+- **6 Low severity** issues identified (L1 was not an issue, L2 and L3 resolved)
 - **Zero-knowledge architecture** properly implemented
 - **Strong cryptographic foundations** with industry-standard AES-256-GCM
 - **Comprehensive input validation** across all endpoints
@@ -245,22 +245,33 @@ class Base64UrlSafe {
 
 **Impact:** Base64 encoding/decoding is now consistent, efficient, and properly tested throughout the TypeScript client.
 
-#### L3: Missing Security Headers
-**File:** `server/src/main.rs:86-93`  
-**Description:** Could benefit from additional security headers.
+#### L3: Missing Security Headers [RESOLVED ✅]
+**File:** `server/src/web_server.rs:58-72`  
+**Status:** **RESOLVED** - All recommended security headers implemented
 
-**Recommendation:**
+**Previous Issue:** Could benefit from additional security headers.
+
+**Resolution Implemented:**
+All six recommended security headers have been properly implemented in the `default_headers()` function:
 ```rust
-.wrap(
+fn default_headers() -> DefaultHeaders {
     DefaultHeaders::new()
         .add(("X-Frame-Options", "DENY"))
         .add(("X-Content-Type-Options", "nosniff"))
+        .add(("Strict-Transport-Security", "max-age=31536000; includeSubDomains"))
         .add(("Content-Security-Policy", "default-src 'self'"))
         .add(("Referrer-Policy", "strict-origin-when-cross-origin"))
-        .add(("Strict-Transport-Security", "max-age=31536000; includeSubDomains"))
         .add(("Permissions-Policy", "geolocation=(), microphone=(), camera=()"))
-)
+}
 ```
+
+**Impact:** The application now includes comprehensive security headers that:
+- Prevent clickjacking attacks (X-Frame-Options)
+- Prevent MIME type sniffing (X-Content-Type-Options)
+- Enforce HTTPS usage (Strict-Transport-Security)
+- Restrict resource loading (Content-Security-Policy)
+- Control referrer information (Referrer-Policy)
+- Disable unnecessary browser features (Permissions-Policy)
 
 #### L4: Verbose Error Messages
 **File:** `server/src/web_api.rs:87-90`  
