@@ -1,19 +1,23 @@
 name: Publish to crates.io
 
 on:
-  workflow_run:
-    workflows: ["Build", "Lint", "Test"]
-    types:
-      - completed
+  push:
+    tags:
+      - "v*"
 
 jobs:
+  build-check:
+    uses: ./.github/workflows/build.yml
+
+  lint-check:
+    uses: ./.github/workflows/lint.yml
+
+  test-check:
+    uses: ./.github/workflows/test.yml
+
   publish:
     runs-on: ubuntu-latest
-    if: >
-      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) || 
-      (github.event_name == 'workflow_run' && 
-       github.event.workflow_run.conclusion == 'success' &&
-       startsWith(github.event.workflow_run.head_branch, 'refs/tags/'))
+    needs: [build-check, lint-check, test-check]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
