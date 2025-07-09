@@ -83,9 +83,7 @@ impl Client<String> for CryptoClient {
 
         let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(key.as_ref()));
 
-        let ciphertext = cipher
-            .encrypt(&nonce, data.as_bytes())
-            .map_err(|e| ClientError::EncryptionError(e.to_string()))?;
+        let ciphertext = cipher.encrypt(&nonce, data.as_bytes())?;
 
         // Prepend nonce to ciphertext
         let mut payload = nonce.to_vec();
@@ -136,15 +134,9 @@ fn append_key_to_link(url: Url, key: &[u8; 32]) -> Url {
 }
 
 fn decrypt(encoded_data: String, key_base64: String) -> Result<String, ClientError> {
-    let key = Zeroizing::new(
-        base64::prelude::BASE64_URL_SAFE_NO_PAD
-            .decode(key_base64)
-            .map_err(|e| ClientError::DecryptionError(format!("failed to decode key: {e}")))?,
-    );
+    let key = Zeroizing::new(base64::prelude::BASE64_URL_SAFE_NO_PAD.decode(key_base64)?);
 
-    let payload = base64::prelude::BASE64_STANDARD
-        .decode(encoded_data)
-        .map_err(|e| ClientError::DecryptionError(format!("failed to decode data: {e}")))?;
+    let payload = base64::prelude::BASE64_STANDARD.decode(encoded_data)?;
 
     let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(&key));
 
@@ -158,14 +150,9 @@ fn decrypt(encoded_data: String, key_base64: String) -> Result<String, ClientErr
     let (nonce_bytes, ciphertext) = payload.split_at(nonce_len);
     let nonce = Nonce::from_slice(nonce_bytes);
 
-    let plaintext = Zeroizing::new(
-        cipher
-            .decrypt(nonce, ciphertext)
-            .map_err(|e| ClientError::DecryptionError(format!("decryption failed: {e}")))?,
-    );
+    let plaintext = Zeroizing::new(cipher.decrypt(nonce, ciphertext)?);
 
-    let data = String::from_utf8(plaintext.as_slice().to_vec())
-        .map_err(|e| ClientError::DecryptionError(format!("failed to convert to string: {e}")))?;
+    let data = String::from_utf8(plaintext.as_slice().to_vec())?;
 
     Ok(data)
 }
