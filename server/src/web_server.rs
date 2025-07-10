@@ -47,6 +47,7 @@ where
             .wrap(cors_config(args.cors_allowed_origins.clone()))
             .route("/s/{id}", web::get().to(get_secret_short))
             .route("/healthy", web::get().to(healthy))
+            .route("/ready", web::get().to(ready))
             .configure(web_static::configure)
             .service(web::scope("/api/v1").configure(web_api::configure))
     })
@@ -123,4 +124,8 @@ async fn healthy(app_data: web::Data<AppData>) -> impl Responder {
             HttpResponse::InternalServerError().body("unhealthy")
         }
     }
+}
+
+async fn ready() -> impl Responder {
+    HttpResponse::Ok().body("ready")
 }
