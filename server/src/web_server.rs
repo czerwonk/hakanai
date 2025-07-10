@@ -6,7 +6,7 @@ use actix_web::middleware::{DefaultHeaders, Logger};
 use actix_web::{App, HttpResponse, HttpServer, Responder, http, web};
 use opentelemetry_instrumentation_actix_web::{RequestMetrics, RequestTracing};
 
-use tracing::{info, instrument};
+use tracing::{error, info, instrument};
 
 use crate::app_data::AppData;
 use crate::data_store::DataStore;
@@ -46,7 +46,7 @@ where
             .wrap(default_headers())
             .wrap(cors_config(args.cors_allowed_origins.clone()))
             .route("/s/{id}", web::get().to(get_secret_short))
-            .route("/ready", web::get().to(ready))
+            .route("/healthy", web::get().to(healthy))
             .configure(web_static::configure)
             .service(web::scope("/api/v1").configure(web_api::configure))
     })
@@ -113,6 +113,14 @@ async fn get_secret_short(
     }
 }
 
-async fn ready() -> impl Responder {
-    HttpResponse::Ok().body("Ready")
+async fn healthy(app_data: web::Data<AppData>) -> impl Responder {
+    let res = app_data.data_store.is_healthy().await;
+
+    match res {
+        Ok(()) => HttpResponse::Ok().body("healthy"),
+        Err(e) => {
+            error!("Health check failed: {e}");
+            HttpResponse::InternalServerError().body("unhealthy")
+        }
+    }
 }

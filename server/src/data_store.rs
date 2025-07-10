@@ -80,6 +80,12 @@ pub trait DataStore: Send + Sync {
     /// error occurs.
     async fn put(&self, id: Uuid, data: String, expires_in: Duration)
     -> Result<(), DataStoreError>;
+
+    /// Checks if the data store is healthy and can be accessed.
+    ///
+    /// # Returns
+    /// true if the data store is healthy, false otherwise.
+    async fn is_healthy(&self) -> Result<(), DataStoreError>;
 }
 
 /// An implementation of the `DataStore` trait that uses Redis as its backend.
@@ -129,6 +135,12 @@ impl DataStore for RedisDataStore {
             .clone()
             .set_ex(id.to_string(), data, expires_in.as_secs())
             .await?;
+        Ok(())
+    }
+
+    #[instrument(skip(self), err)]
+    async fn is_healthy(&self) -> Result<(), DataStoreError> {
+        let _: () = self.con.clone().ping().await?;
         Ok(())
     }
 }

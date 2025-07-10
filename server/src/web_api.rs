@@ -190,6 +190,10 @@ mod tests {
                 Ok(())
             }
         }
+
+        async fn is_healthy(&self) -> Result<(), DataStoreError> {
+            Ok(())
+        }
     }
 
     #[actix_web::test]
