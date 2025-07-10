@@ -32,6 +32,7 @@
 
   /* Layout */
   --max-width: 600px;
+  --max-width-expanded: 900px;
   --border-radius-sm: 0.125rem;
   --border-radius: 0.25rem;
   --border-radius-lg: 0.5rem;
@@ -61,7 +62,14 @@ body {
   background-color: var(--color-bg-main);
   color: var(--color-text);
   line-height: 1.6;
+  transition: max-width var(--transition-normal) ease-in-out;
 }
+
+/* Expanded layout for secret display */
+body.expanded-view {
+  max-width: var(--max-width-expanded);
+}
+
 .container {
   background-color: var(--color-bg-container);
   padding: var(--spacing-xl);
@@ -390,6 +398,20 @@ button.loading::after {
   transition: border-color var(--transition-fast);
 }
 
+/* Enhanced secret display for desktop/tablet screens */
+@media (min-width: 641px) {
+  .secret-display {
+    min-height: 12rem;
+    height: 25vh;
+    max-height: 40vh;
+  }
+
+  /* Even more space when in expanded view */
+  body.expanded-view .secret-display {
+    max-height: 50vh;
+  }
+}
+
 .secret-display:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
@@ -558,6 +580,11 @@ button.loading::after {
   body {
     margin: 1rem auto;
     padding: var(--spacing-md);
+  }
+
+  /* Don't expand on mobile */
+  body.expanded-view {
+    max-width: var(--max-width);
   }
 
   .container {

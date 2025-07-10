@@ -101,6 +101,9 @@ const retrieveSecretDebounced = debounce(async function retrieveSecret() {
   urlInput.disabled = true;
   resultDiv.innerHTML = "";
 
+  // Remove expanded view when starting new retrieval
+  document.body.classList.remove("expanded-view");
+
   try {
     const payload = await client.receivePayload(processedUrl);
 
@@ -150,6 +153,11 @@ function showSuccess(payload) {
   const isBinaryFile =
     payload.filename !== null && payload.filename !== undefined;
 
+  // Apply expanded view for non-file secrets on larger screens
+  if (!isBinaryFile && window.innerWidth > 640) {
+    document.body.classList.add("expanded-view");
+  }
+
   if (!isBinaryFile) {
     // Only show content for text secrets (no filename)
     const textarea = document.createElement("textarea");
@@ -164,6 +172,19 @@ function showSuccess(payload) {
     textarea.addEventListener("click", function () {
       this.select();
     });
+
+    // Auto-resize textarea based on content (only on non-mobile)
+    if (window.innerWidth > 640) {
+      // Reset height to auto to get the actual scrollHeight
+      textarea.style.height = "auto";
+      // Set height based on content, respecting CSS max-height
+      const scrollHeight = textarea.scrollHeight;
+      const minHeight = parseInt(window.getComputedStyle(textarea).minHeight);
+      const maxHeight = parseInt(window.getComputedStyle(textarea).maxHeight);
+      textarea.style.height =
+        Math.min(Math.max(scrollHeight, minHeight), maxHeight) + "px";
+    }
+
     container.appendChild(textarea);
 
     const buttonsContainer = createButtonContainer();
@@ -253,6 +274,9 @@ function showError(message) {
 
   // Clear existing content
   resultDiv.innerHTML = "";
+
+  // Remove expanded view when showing error
+  document.body.classList.remove("expanded-view");
 
   // Create elements programmatically to avoid XSS
   const title = document.createElement("h3");
