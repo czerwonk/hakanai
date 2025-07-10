@@ -232,7 +232,10 @@ Web interface for retrieving secrets - shows a form to paste hakanai URLs.
 Web interface for creating secrets - supports text input and file uploads.
 
 ### GET /ready
-Health check endpoint - returns 200 OK when the server is ready.
+Readiness check endpoint - returns 200 OK when the server is ready to accept requests.
+
+### GET /healthy
+Health check endpoint - returns 200 OK when the server and all dependencies (Redis) are healthy.
 
 ### GET /s/{id}
 Short link format for retrieving secrets. Dual-mode endpoint:
