@@ -1048,3 +1048,16 @@ legend {
   content: " *";
   color: var(--color-primary);
 }
+
+/* Hide i18n elements until translations are loaded to prevent FOUC */
+[data-i18n]:not(.i18n-loaded),
+[data-i18n-placeholder]:not(.i18n-loaded),
+[data-i18n-aria-label]:not(.i18n-loaded) {
+  visibility: hidden;
+}
+
+/* Special handling for helper text to prevent layout shift */
+.input-helper[data-i18n]:not(.i18n-loaded) {
+  visibility: hidden;
+  min-height: 1.4em; /* Prevent layout shift */
+}

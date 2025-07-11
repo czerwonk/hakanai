@@ -108,6 +108,7 @@
         "Select how long the secret should be available before it expires",
       "aria.urlInput":
         "Enter the full URL including the secret key after the hash",
+      "aria.keyInput": "Enter the base64-encoded decryption key",
       "aria.themeToggle": "Switch between light and dark mode",
       "aria.switchToLight": "Switch to light mode",
       "aria.switchToDark": "Switch to dark mode",
@@ -302,6 +303,7 @@
       document.querySelectorAll("[data-i18n]").forEach((element) => {
         const key = element.getAttribute("data-i18n");
         element.textContent = this.t(key);
+        element.classList.add("i18n-loaded");
       });
 
       // Update all elements with data-i18n-placeholder attribute
@@ -310,12 +312,14 @@
         .forEach((element) => {
           const key = element.getAttribute("data-i18n-placeholder");
           element.placeholder = this.t(key);
+          element.classList.add("i18n-loaded");
         });
 
       // Update all elements with data-i18n-aria-label attribute
       document.querySelectorAll("[data-i18n-aria-label]").forEach((element) => {
         const key = element.getAttribute("data-i18n-aria-label");
         element.setAttribute("aria-label", this.t(key));
+        element.classList.add("i18n-loaded");
       });
 
       // Update page title
