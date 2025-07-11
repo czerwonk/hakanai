@@ -22,6 +22,7 @@
       "label.token": "Token:",
       "label.expires": "Expires after:",
       "label.url": "Secret URL:",
+      "label.key": "Decryption Key:",
       "label.filename": "Filename:",
 
       // Placeholders
@@ -35,6 +36,7 @@
       "helper.fileSelect":
         "Maximum file size: 10MB. File will be encrypted before upload.",
       "helper.token": "Leave empty if no authentication is required",
+      "helper.key": "Base64-encoded decryption key (shared separately)",
       "helper.expires":
         "Secret will self-destruct after this time or first view",
 
@@ -71,6 +73,7 @@
       "msg.emptyUrl": "Please enter a valid secret URL",
       "msg.invalidUrl":
         "Invalid URL format. Please include the full URL with the secret key after #",
+      "msg.missingKey": "Please enter the decryption key",
       "msg.retrieveFailed": "Failed to retrieve secret",
       "msg.successTitle": "Success",
       "msg.errorTitle": "Error",
@@ -136,6 +139,7 @@
       "label.token": "Token:",
       "label.expires": "Läuft ab nach:",
       "label.url": "Secret-URL:",
+      "label.key": "Geheimer Schlüssel:",
       "label.filename": "Dateiname:",
 
       // Placeholders
@@ -151,6 +155,7 @@
         "Maximale Dateigröße: 10MB. Die Datei wird vor dem Upload verschlüsselt.",
       "helper.token":
         "Kann leer gelassen werden, wenn keine Authentifizierung erforderlich ist",
+      "helper.key": "Base64-kodierter geheimer Schlüssel (separat geteilt)",
       "helper.expires":
         "Das Secret wird nach dieser Zeit oder beim ersten Zugriff selbst zerstört",
 
@@ -187,6 +192,7 @@
       "msg.emptyUrl": "Bitte eine gültige Secret-URL eingeben",
       "msg.invalidUrl":
         "Ungültiges URL-Format. Bitte vollständige URL einschließlich des Teils nach dem # eingeben",
+      "msg.missingKey": "Bitte den geheimen Schlüssel eingeben",
       "msg.retrieveFailed": "Fehler beim Abrufen des Secrets",
       "msg.successTitle": "Erfolg",
       "msg.errorTitle": "Fehler",
@@ -219,6 +225,7 @@
         "Bitte die Zeit auswählen, nach der das Secret abläuft",
       "aria.urlInput":
         "Bitte die vollständige URL einschließlich des Schlüssels nach dem Hash eingeben",
+      "aria.keyInput": "Bitte den Base64-kodierten geheimen Schlüssel eingeben",
       "aria.themeToggle": "Zwischen hellem und dunklem Modus wechseln",
       "aria.switchToLight": "Zum hellen Modus wechseln",
       "aria.switchToDark": "Zum dunklen Modus wechseln",

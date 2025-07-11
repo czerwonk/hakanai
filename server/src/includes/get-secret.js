@@ -18,6 +18,7 @@ document.addEventListener("languageChanged", function () {
 function updateUIStrings() {
   UI_STRINGS.EMPTY_URL = i18n.t("msg.emptyUrl");
   UI_STRINGS.INVALID_URL = i18n.t("msg.invalidUrl");
+  UI_STRINGS.MISSING_KEY = i18n.t("msg.missingKey");
   UI_STRINGS.RETRIEVE_FAILED = i18n.t("msg.retrieveFailed");
   UI_STRINGS.SUCCESS_TITLE = i18n.t("msg.successTitle");
   UI_STRINGS.ERROR_TITLE = i18n.t("msg.errorTitle");
@@ -36,6 +37,7 @@ const UI_STRINGS = {
   EMPTY_URL: "Please enter a valid secret URL",
   INVALID_URL:
     "Invalid URL format. Please include the full URL with the secret key after #",
+  MISSING_KEY: "Please enter the decryption key",
   RETRIEVE_FAILED: "Failed to retrieve secret",
   SUCCESS_TITLE: "Secret Retrieved Successfully",
   ERROR_TITLE: "Error",
@@ -66,11 +68,13 @@ const client = new HakanaiClient(baseUrl);
 
 const retrieveSecretDebounced = debounce(async function retrieveSecret() {
   const urlInput = document.getElementById("secretUrl");
+  const keyInput = document.getElementById("secretKey");
   const resultDiv = document.getElementById("result");
   const loadingDiv = document.getElementById("loading");
   const button = document.getElementById("retrieveBtn");
 
   const url = urlInput.value.trim();
+  const key = keyInput.value.trim();
 
   if (!url) {
     showError(UI_STRINGS.EMPTY_URL);
@@ -86,22 +90,32 @@ const retrieveSecretDebounced = debounce(async function retrieveSecret() {
     processedUrl = currentScheme + "//" + url;
   }
 
+  let hasFragment = false;
   try {
     const urlObj = new URL(processedUrl);
-    if (!urlObj.hash || urlObj.hash.length <= 1) {
-      throw new Error("Missing hash");
-    }
+    hasFragment = urlObj.hash && urlObj.hash.length > 1;
   } catch (error) {
-    // Since msg.invalidUrl already mentions missing hash, just use it
     showError(UI_STRINGS.INVALID_URL);
     urlInput.focus();
     return;
+  }
+
+  // If URL has no fragment, we need a separate key
+  if (!hasFragment) {
+    if (!key) {
+      showError(UI_STRINGS.MISSING_KEY);
+      keyInput.focus();
+      return;
+    }
+    // Construct the URL with the key as fragment
+    processedUrl = processedUrl + "#" + key;
   }
 
   // Show loading state
   loadingDiv.style.display = "block";
   button.disabled = true;
   urlInput.disabled = true;
+  keyInput.disabled = true;
   resultDiv.innerHTML = "";
 
   // Remove expanded view when starting new retrieval
@@ -112,8 +126,12 @@ const retrieveSecretDebounced = debounce(async function retrieveSecret() {
 
     showSuccess(payload);
 
-    // Clear the input
+    // Clear the inputs
     urlInput.value = "";
+    keyInput.value = "";
+
+    // Hide the key input field since URL is now empty
+    toggleKeyInputVisibility();
   } catch (error) {
     // Check if it's a HakanaiError with a code for localization
     if (error.name === "HakanaiError" && error.code) {
@@ -130,11 +148,56 @@ const retrieveSecretDebounced = debounce(async function retrieveSecret() {
     loadingDiv.style.display = "none";
     button.disabled = false;
     urlInput.disabled = false;
+    keyInput.disabled = false;
   }
 }, TIMEOUTS.DEBOUNCE);
 
 async function retrieveSecret() {
   retrieveSecretDebounced();
+}
+
+function toggleKeyInputVisibility() {
+  const urlInput = document.getElementById("secretUrl");
+  const keyInputGroup = document.getElementById("keyInputGroup");
+  const keyInput = document.getElementById("secretKey");
+
+  const url = urlInput.value.trim();
+
+  if (!url) {
+    keyInputGroup.style.display = "none";
+    keyInput.required = false;
+    keyInput.value = "";
+    return;
+  }
+
+  let processedUrl = url;
+  if (!url.match(/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//)) {
+    const currentScheme = window.location.protocol;
+    processedUrl = currentScheme + "//" + url;
+  }
+
+  let hasFragment = false;
+  try {
+    const urlObj = new URL(processedUrl);
+    hasFragment = urlObj.hash && urlObj.hash.length > 1;
+  } catch (error) {
+    // Invalid URL, hide key input
+    keyInputGroup.style.display = "none";
+    keyInput.required = false;
+    keyInput.value = "";
+    return;
+  }
+
+  if (hasFragment) {
+    // URL has fragment, hide key input
+    keyInputGroup.style.display = "none";
+    keyInput.required = false;
+    keyInput.value = "";
+  } else {
+    // URL has no fragment, show key input
+    keyInputGroup.style.display = "block";
+    keyInput.required = true;
+  }
 }
 
 function showSuccess(payload) {
@@ -377,5 +440,18 @@ document.addEventListener("DOMContentLoaded", function () {
       event.preventDefault();
       retrieveSecret();
     });
+  }
+
+  // Add event listener for URL input to toggle key visibility
+  const urlInput = document.getElementById("secretUrl");
+  if (urlInput) {
+    urlInput.addEventListener("input", toggleKeyInputVisibility);
+    urlInput.addEventListener("paste", () => {
+      // Use setTimeout to ensure paste content is processed
+      setTimeout(toggleKeyInputVisibility, 0);
+    });
+
+    // Initial check on page load
+    toggleKeyInputVisibility();
   }
 });
