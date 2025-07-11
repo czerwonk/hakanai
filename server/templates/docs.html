@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="{description}" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+    />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <title>{title}</title>
+    <link rel="stylesheet" href="/style.css" />
+    <script src="/common-utils.js" type="module"></script>
+  </head>
+  <body class="expanded-view">
+    <div class="container">
+      <div class="header">
+        <a href="/">
+          <img src="/logo.svg" alt="Hakanai" />
+        </a>
+      </div>
+
+      <h1>{title}</h1>
+      <p><strong>Version:</strong> {version}</p>
+
+      <p>
+        <strong
+          >📄
+          <a href="/openapi.json" class="download-link"
+            >Download OpenAPI JSON</a
+          ></strong
+        >
+        for use with API tools like Postman, Insomnia, or code generators.
+      </p>
+
+      <section>
+        <h2>Authentication</h2>
+        <p>
+          If the server requires authentication, include your token in the
+          Authorization header:
+        </p>
+        <div class="code-block">
+          <code>Authorization: Bearer your-token-here</code>
+        </div>
+      </section>
+
+      <section>
+        <h2>API Endpoints</h2>
+        {endpoints | unescaped}
+      </section>
+
+      <section>
+        <h2>Important Notes</h2>
+        <ul>
+          <li>
+            <strong>Zero-Knowledge:</strong> All encryption/decryption happens
+            client-side
+          </li>
+          <li>
+            <strong>One-Time Access:</strong> Secrets are deleted after first
+            retrieval
+          </li>
+          <li>
+            <strong>Self-Destructing:</strong> Secrets expire after configured
+            TTL
+          </li>
+          <li>
+            <strong>Base64 Encoding:</strong> All secret data must be base64
+            encoded
+          </li>
+          <li>
+            <strong>Maximum Size:</strong> Check server configuration for upload
+            limits
+          </li>
+        </ul>
+      </section>
+
+      <div class="footer">
+        <div class="footer-content">
+          <div class="footer-line">
+            <span class="project-name">Hakanai</span>
+            <span class="version">{version}</span>
+          </div>
+          <div class="footer-line">
+            <a
+              href="https://github.com/czerwonk/hakanai"
+              target="_blank"
+              rel="noopener"
+              >Github</a
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module">
+      import \{ initTheme } from "/common-utils.js";
+      document.addEventListener("DOMContentLoaded", function () \{
+        initTheme();
+      });
+    </script>
+  </body>
+</html>

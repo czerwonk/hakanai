@@ -944,6 +944,23 @@ section li {
   line-height: 1.5;
 }
 
+.download-link {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-size: var(--font-size-base);
+  transition: color var(--transition-fast);
+}
+
+.download-link:hover {
+  text-decoration: underline;
+}
+
+.download-link:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--border-radius-sm);
+}
+
 /* Modern segmented control styling */
 fieldset {
   border: none;

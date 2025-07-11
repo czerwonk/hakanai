@@ -237,6 +237,9 @@ Web interface for creating secrets - supports text input and file uploads.
 ### GET /docs
 API documentation page - comprehensive reference for developers using the REST API.
 
+### GET /openapi.json
+OpenAPI 3.0 specification file for API tooling integration (Postman, code generators, etc.).
+
 ### GET /ready
 Readiness check endpoint - returns 200 OK when the server is ready to accept requests.
 

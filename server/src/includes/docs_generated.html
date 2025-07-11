@@ -3,16 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta
-      name="description"
-      content="Hakanai API Documentation - Zero-knowledge secret sharing API reference"
-    />
+    <meta name="description" content="Zero-knowledge one-time secret sharing service" />
     <meta
       http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
     />
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
-    <title>Hakanai - API Documentation</title>
+    <title>Hakanai API</title>
     <link rel="stylesheet" href="/style.css" />
     <script src="/common-utils.js" type="module"></script>
   </head>
@@ -24,7 +21,18 @@
         </a>
       </div>
 
-      <h1>API Documentation</h1>
+      <h1>Hakanai API</h1>
+      <p><strong>Version:</strong> 1.3.2</p>
+
+      <p>
+        <strong
+          >📄
+          <a href="/openapi.json" class="download-link"
+            >Download OpenAPI JSON</a
+          ></strong
+        >
+        for use with API tools like Postman, Insomnia, or code generators.
+      </p>
 
       <section>
         <h2>Authentication</h2>
@@ -39,80 +47,51 @@
 
       <section>
         <h2>API Endpoints</h2>
-
         <div class="endpoint">
-          <h3>Create Secret</h3>
-          <div class="method-url">
-            <span class="method post">POST</span>
-            <span class="url">/api/v1/secret</span>
-          </div>
+  <h3>Create a new secret</h3>
+  <div class="method-url">
+    <span class="method post">POST</span>
+    <span class="url">/api/v1/secret</span>
+  </div>
 
-          <h4>Request Body</h4>
-          <div class="code-block">
-            <code
-              >{ "data": "base64-encoded-secret-data", "expires_in": 3600
-              }</code
-            >
-          </div>
+  <p>Creates a new one-time secret with optional expiration. All encryption happens client-side.</p>
 
-          <h4>Response</h4>
-          <div class="code-block">
-            <code>{ "id": "550e8400-e29b-41d4-a716-446655440000" }</code>
-          </div>
+  <h4>Request Body</h4>
+                    <div class="code-block">
+                      <code>{
+  "data": "bXkgc2VjcmV0IG1lc3NhZ2U=",
+  "expires_in": 3600
+}</code>
+                    </div>
 
-          <h4>Status Codes</h4>
-          <ul>
-            <li><strong>200 OK</strong> - Secret created successfully</li>
-            <li><strong>400 Bad Request</strong> - Invalid request body</li>
-            <li>
-              <strong>401 Unauthorized</strong> - Missing or invalid token
-            </li>
-          </ul>
-        </div>
+  <h4>Status Codes</h4>
+  <ul>
+    <li><strong>200 OK</strong> - Secret created successfully</li>
+<li><strong>400 Bad Request</strong> - Bad request - invalid JSON or missing required fields</li>
+<li><strong>401 Unauthorized</strong> - Unauthorized - missing or invalid authentication token</li>
 
-        <div class="endpoint">
-          <h3>Retrieve Secret</h3>
-          <div class="method-url">
-            <span class="method get">GET</span>
-            <span class="url">/api/v1/secret/{id}</span>
-          </div>
+  </ul>
+</div>
+<div class="endpoint">
+  <h3>Retrieve a secret</h3>
+  <div class="method-url">
+    <span class="method get">GET</span>
+    <span class="url">/api/v1/secret/{id}</span>
+  </div>
 
-          <h4>Response</h4>
-          <div class="code-block">
-            <code>base64-encoded-secret-data</code>
-          </div>
+  <p>Retrieves a one-time secret by ID. The secret is deleted after retrieval.</p>
 
-          <h4>Status Codes</h4>
-          <ul>
-            <li><strong>200 OK</strong> - Secret retrieved successfully</li>
-            <li>
-              <strong>404 Not Found</strong> - Secret not found or expired
-            </li>
-            <li><strong>410 Gone</strong> - Secret already accessed</li>
-          </ul>
-        </div>
-      </section>
+  
 
-      <section>
-        <h2>Example Usage</h2>
+  <h4>Status Codes</h4>
+  <ul>
+    <li><strong>200 OK</strong> - Secret retrieved successfully</li>
+<li><strong>404 Not Found</strong> - Secret not found or has expired</li>
+<li><strong>410 Gone</strong> - Secret has already been accessed and deleted</li>
 
-        <h4>Creating a Secret (curl)</h4>
-        <div class="code-block">
-          <code
-            >curl -X POST https://hakanai.example.com/api/v1/secret \ -H
-            "Content-Type: application/json" \ -H "Authorization: Bearer
-            your-token" \ -d '{ "data": "bXkgc2VjcmV0IG1lc3NhZ2U=",
-            "expires_in": 3600 }'</code
-          >
-        </div>
+  </ul>
+</div>
 
-        <h4>Retrieving a Secret (curl)</h4>
-        <div class="code-block">
-          <code
-            >curl
-            https://hakanai.example.com/api/v1/secret/550e8400-e29b-41d4-a716-446655440000</code
-          >
-        </div>
       </section>
 
       <section>
@@ -145,7 +124,7 @@
         <div class="footer-content">
           <div class="footer-line">
             <span class="project-name">Hakanai</span>
-            <span class="version">v1.3.2</span>
+            <span class="version">1.3.2</span>
           </div>
           <div class="footer-line">
             <a
@@ -167,4 +146,3 @@
     </script>
   </body>
 </html>
-
