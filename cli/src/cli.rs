@@ -97,6 +97,13 @@ pub struct GetArgs {
     pub link: Url,
 
     #[arg(
+        short,
+        long,
+        help = "Optional base64 encoded secret key to use for decryption if not part of the URL."
+    )]
+    pub key: Option<String>,
+
+    #[arg(
         long,
         env = "HAKANAI_TO_STDOUT",
         help = "Output the secret to stdout even if it is a file. This is useful for piping the output to other commands."
@@ -111,11 +118,36 @@ pub struct GetArgs {
     pub filename: Option<String>,
 }
 
+impl GetArgs {
+    pub fn secret_url(&self) -> Result<Url> {
+        let mut url = self.link.clone();
+
+        if url.fragment().is_some() {
+            if self.key.is_some() {
+                return Err(anyhow!(
+                    "The URL already contains a fragment, but a key was provided as an argument."
+                ));
+            }
+
+            return Ok(url);
+        }
+
+        let key = self.key.clone().unwrap_or_default();
+        if key.is_empty() {
+            return Err(anyhow!("No key provided in URL or as an argument"));
+        }
+
+        url.set_fragment(Some(&key));
+        Ok(url)
+    }
+}
+
 /// Represents the top-level command enum for the application.
 #[derive(Debug, Subcommand)]
 pub enum Command {
     /// Receives an ephemeral secret from the server.
     Get(GetArgs),
+
     /// Send a secret to the server.
     /// Content is either read from stdin or from file (if --file is specified).
     Send(SendArgs),
@@ -130,15 +162,75 @@ mod tests {
     #[test]
     fn test_get_command_parsing() {
         let args =
+            Args::try_parse_from(["hakanai", "get", "https://example.com/secret/abc123#test"])
+                .unwrap();
+
+        match args.command {
+            Command::Get(get_args) => {
+                assert_eq!(
+                    get_args.secret_url().unwrap().as_str(),
+                    "https://example.com/secret/abc123#test"
+                );
+                assert!(!get_args.to_stdout);
+                assert_eq!(get_args.filename, None);
+            }
+            _ => panic!("expected get command"),
+        }
+    }
+
+    #[test]
+    fn test_get_command_with_key_arg() {
+        let args = Args::try_parse_from([
+            "hakanai",
+            "get",
+            "https://example.com/secret/abc123",
+            "--key",
+            "test",
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Get(get_args) => {
+                assert_eq!(
+                    get_args.secret_url().unwrap().as_str(),
+                    "https://example.com/secret/abc123#test"
+                );
+            }
+            _ => panic!("expected get command"),
+        }
+    }
+
+    #[test]
+    fn test_get_command_without_key() {
+        let args =
             Args::try_parse_from(["hakanai", "get", "https://example.com/secret/abc123"]).unwrap();
 
         match args.command {
             Command::Get(get_args) => {
-                assert_eq!(get_args.link.as_str(), "https://example.com/secret/abc123");
-                assert!(!get_args.to_stdout);
-                assert_eq!(get_args.filename, None);
+                let url = get_args.secret_url();
+                assert!(url.is_err());
             }
-            _ => panic!("Expected Get command"),
+            _ => panic!("expected get command"),
+        }
+    }
+
+    #[test]
+    fn test_get_command_with_conflicting_keys() {
+        let args = Args::try_parse_from([
+            "hakanai",
+            "get",
+            "https://example.com/secret/abc123#foo",
+            "-k",
+            "bar",
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Get(get_args) => {
+                let url = get_args.secret_url();
+                assert!(url.is_err());
+            }
+            _ => panic!("expected get command"),
         }
     }
 

@@ -21,10 +21,8 @@ pub async fn get<T: Factory>(factory: T, args: GetArgs) -> Result<()> {
         .with_user_agent(user_agent)
         .with_observer(observer);
 
-    let payload = factory
-        .new_client()
-        .receive_secret(args.link.clone(), Some(opts))
-        .await?;
+    let url = args.secret_url()?.clone();
+    let payload = factory.new_client().receive_secret(url, Some(opts)).await?;
 
     let bytes = Zeroizing::new(payload.decode_bytes()?);
     let filename = args.filename.or_else(|| payload.filename.clone());
@@ -95,9 +93,15 @@ mod tests {
     use std::fs;
     use tempfile::TempDir;
 
-    fn create_get_args(link: &str, to_stdout: bool, filename: Option<String>) -> GetArgs {
+    fn create_get_args(
+        link: &str,
+        key: Option<String>,
+        to_stdout: bool,
+        filename: Option<String>,
+    ) -> GetArgs {
         GetArgs {
             link: url::Url::parse(link).unwrap(),
+            key,
             to_stdout,
             filename,
         }
@@ -291,7 +295,7 @@ mod tests {
         let client = MockClient::new().with_receive_success(payload);
         let factory = MockFactory::new().with_client(client);
 
-        let args = create_get_args("https://example.com/s/test123#key", true, None);
+        let args = create_get_args("https://example.com/s/test123#key", None, true, None);
         let result = get(factory, args).await;
 
         assert!(result.is_ok());
@@ -311,7 +315,12 @@ mod tests {
             .join("document.txt")
             .to_string_lossy()
             .to_string();
-        let args = create_get_args("https://example.com/s/test123#key", false, Some(filename));
+        let args = create_get_args(
+            "https://example.com/s/test123#key",
+            None,
+            false,
+            Some(filename),
+        );
         let result = get(factory, args).await;
 
         assert!(result.is_ok());
@@ -337,6 +346,7 @@ mod tests {
             .to_string();
         let args = create_get_args(
             "https://example.com/s/test123#key",
+            None,
             false,
             Some(custom_filename.clone()),
         );
@@ -364,7 +374,12 @@ mod tests {
             .join("output.dat")
             .to_string_lossy()
             .to_string();
-        let args = create_get_args("https://example.com/s/test123#key", false, Some(filename));
+        let args = create_get_args(
+            "https://example.com/s/test123#key",
+            None,
+            false,
+            Some(filename),
+        );
         let result = get(factory, args).await;
 
         assert!(result.is_ok());
@@ -380,7 +395,7 @@ mod tests {
         let client = MockClient::new().with_receive_failure("Network timeout".to_string());
         let factory = MockFactory::new().with_client(client);
 
-        let args = create_get_args("https://example.com/s/test123#key", true, None);
+        let args = create_get_args("https://example.com/s/test123#key", None, true, None);
         let result = get(factory, args).await;
 
         assert!(result.is_err());
@@ -394,7 +409,7 @@ mod tests {
         let client = MockClient::new().with_receive_success(payload);
         let factory = MockFactory::new().with_client(client);
 
-        let args = create_get_args("https://example.com/s/test123#key", true, None);
+        let args = create_get_args("https://example.com/s/test123#key", None, true, None);
         let result = get(factory, args).await;
 
         assert!(result.is_ok());
@@ -415,6 +430,7 @@ mod tests {
 
         let args = create_get_args(
             "https://example.com/s/test123#key",
+            None,
             false,
             Some(file_path.to_string_lossy().to_string()),
         );
