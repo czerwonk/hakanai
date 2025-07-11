@@ -2,7 +2,7 @@
 
 **Date:** 2025-07-11  
 **Audit Type:** Comprehensive Security Assessment  
-**Codebase Version:** 1.4.0  
+**Codebase Version:** 1.5.0  
 **Auditor:** Claude Code Security Analysis
 
 ## Executive Summary
@@ -500,16 +500,27 @@ Err(error::ErrorBadRequest(format!(
 1. **Anonymize User-Agent logging** (L5)
 2. **Optimize static asset caching** (L6)
 
-## Version 1.4.0 Updates
+## Version 1.5.0 Updates
 
 ### New Security Features
-- **Build-time Template Generation**: Secure template processing with tinytemplate
-- **Git Exclusion**: Generated files properly excluded from version control
-- **Refactored Build System**: Improved code organization and maintainability
-- **Version Consistency**: Automatic version injection in all generated content
+- **Enhanced Channel Separation**: `--separate-key` flag for CLI enables defense-in-depth security
+- **Key Parameter Support**: `--key` flag for CLI get command supports separate key authentication
+- **Reduced Attack Surface**: Cryptographic material can be completely removed from URLs
+- **Backward Compatibility**: Traditional URL-with-fragment mode remains fully supported
+- **Build-time Template Generation**: Secure template processing with tinytemplate (inherited from 1.4.0)
+- **Git Exclusion**: Generated files properly excluded from version control (inherited from 1.4.0)
+- **Refactored Build System**: Improved code organization and maintainability (inherited from 1.4.0)
+- **Version Consistency**: Automatic version injection in all generated content (inherited from 1.4.0)
+
+### Enhanced Security Analysis
+The new separate key feature provides additional security benefits:
+- **Defense in Depth**: URL and key can be shared through different communication channels
+- **Reduced Attack Surface**: No cryptographic material in URLs when using separate key mode
+- **Flexible Security**: Users can choose between convenience (traditional mode) and enhanced security (separate key mode)
+- **Zero Impact**: Changes are backward compatible with existing deployments
 
 ### Build System Security Analysis
-The new build-time template generation system introduces additional security considerations:
+The build-time template generation system (inherited from 1.4.0) introduces additional security considerations:
 - Templates are processed at build time, reducing runtime attack surface
 - Generated files are excluded from git, preventing accidental commits
 - Template variables are limited to safe, pre-validated values
@@ -517,11 +528,12 @@ The new build-time template generation system introduces additional security con
 
 ## Conclusion
 
-Hakanai version 1.4.0 maintains **excellent security architecture** with proper zero-knowledge implementation and strong cryptographic foundations. The build-time template generation system adds new functionality while maintaining security best practices.
+Hakanai version 1.5.0 maintains **excellent security architecture** with proper zero-knowledge implementation and strong cryptographic foundations. The new separate key feature enhances security through defense-in-depth principles while maintaining backward compatibility.
 
 **Key Strengths:**
 - Robust zero-knowledge architecture
 - Industry-standard cryptographic implementation
+- Enhanced channel separation with `--separate-key` option
 - Comprehensive input validation and security headers
 - Type-safe implementation in both Rust and TypeScript
 - Secure build-time template generation
@@ -558,4 +570,4 @@ With all high-priority security issues resolved, Hakanai has achieved **A+ secur
 
 ---
 
-*This report was generated through comprehensive static analysis and manual code review. The audit covers version 1.4.0 with emphasis on the new build-time template generation system. Regular security audits are recommended as the codebase evolves.*
+*This report was generated through comprehensive static analysis and manual code review. The audit covers version 1.5.0 with emphasis on the new separate key security feature. Regular security audits are recommended as the codebase evolves.*

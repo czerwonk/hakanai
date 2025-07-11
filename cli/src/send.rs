@@ -2,6 +2,7 @@ use std::io::{self, Read};
 
 use anyhow::{Result, anyhow};
 use colored::Colorize;
+use url::Url;
 use zeroize::Zeroizing;
 
 use hakanai_lib::client::Client;
@@ -52,12 +53,28 @@ pub async fn send<T: Factory>(factory: T, args: SendArgs) -> Result<()> {
         .send_secret(args.server.clone(), payload, args.ttl, token, Some(opts))
         .await?;
 
-    println!(
-        "Secret sent successfully!\nYou can access it at: {}",
-        link.to_string().cyan()
-    );
+    print_link(link, args.separate_key);
 
     Ok(())
+}
+
+fn print_link(link: Url, separate_key: bool) {
+    println!("Secret sent successfully!\n");
+
+    if separate_key {
+        print_link_separate_key(link);
+    } else {
+        println!("Secret link: {}", link.to_string().cyan());
+    }
+}
+
+fn print_link_separate_key(link: Url) {
+    let mut url = link.clone();
+    url.set_fragment(None);
+    println!("Secret link: {}", url.to_string().cyan());
+
+    let key = link.fragment().unwrap_or_default();
+    println!("Key:         {}", key.cyan());
 }
 
 fn get_filename(
@@ -101,25 +118,6 @@ mod tests {
     use std::fs;
     use std::time::Duration;
     use tempfile::TempDir;
-
-    fn create_send_args(
-        server: &str,
-        ttl_secs: u64,
-        token: Option<String>,
-        file: Option<String>,
-        as_file: bool,
-        filename: Option<String>,
-    ) -> SendArgs {
-        SendArgs {
-            server: url::Url::parse(server).unwrap(),
-            ttl: Duration::from_secs(ttl_secs),
-            token,
-            token_file: None,
-            file,
-            as_file,
-            filename,
-        }
-    }
 
     #[test]
     fn test_get_filename_not_as_file() {
@@ -213,14 +211,11 @@ mod tests {
         let file_path = temp_dir.path().join("test.txt");
         fs::write(&file_path, b"test content")?;
 
-        let args = create_send_args(
-            "https://example.com",
-            0,
-            Some("token".to_string()),
-            Some(file_path.to_string_lossy().to_string()),
-            false,
-            None,
-        );
+        let args = SendArgs::builder()
+            .with_server("https://example.com")
+            .with_ttl(Duration::from_secs(0))
+            .with_token("token")
+            .with_file(&file_path.to_string_lossy().to_string());
         let result = send(factory, args).await;
 
         assert!(result.is_err());
@@ -240,14 +235,11 @@ mod tests {
         let file_path = temp_dir.path().join("empty.txt");
         fs::write(&file_path, b"")?;
 
-        let args = create_send_args(
-            "https://example.com",
-            3600,
-            Some("token".to_string()),
-            Some(file_path.to_string_lossy().to_string()),
-            false,
-            None,
-        );
+        let args = SendArgs::builder()
+            .with_server("https://example.com")
+            .with_ttl(Duration::from_secs(3600))
+            .with_token("token")
+            .with_file(&file_path.to_string_lossy().to_string());
         let result = send(factory, args).await;
 
         assert!(result.is_err());
@@ -269,14 +261,11 @@ mod tests {
         let large_content = vec![b'A'; (MAX_SECRET_SIZE_MB * 1024 * 1024) + 1];
         fs::write(&file_path, large_content)?;
 
-        let args = create_send_args(
-            "https://example.com",
-            3600,
-            Some("token".to_string()),
-            Some(file_path.to_string_lossy().to_string()),
-            false,
-            None,
-        );
+        let args = SendArgs::builder()
+            .with_server("https://example.com")
+            .with_ttl(Duration::from_secs(3600))
+            .with_token("token")
+            .with_file(&file_path.to_string_lossy().to_string());
         let result = send(factory, args).await;
 
         assert!(result.is_err());
@@ -296,14 +285,12 @@ mod tests {
         let file_path = temp_dir.path().join("empty.txt");
         fs::write(&file_path, b"")?; // Empty file to test the empty secret validation
 
-        let args = create_send_args(
-            "https://example.com",
-            3600,
-            Some("token".to_string()),
-            Some(file_path.to_string_lossy().to_string()),
-            true, // as_file = true
-            None, // no explicit filename
-        );
+        let args = SendArgs::builder()
+            .with_server("https://example.com")
+            .with_ttl(Duration::from_secs(3600))
+            .with_token("token")
+            .with_file(&file_path.to_string_lossy().to_string())
+            .with_as_file();
         let result = send(factory, args).await;
 
         assert!(result.is_err());
@@ -323,14 +310,11 @@ mod tests {
         let file_path = temp_dir.path().join("test.txt");
         fs::write(&file_path, b"test secret content")?;
 
-        let args = create_send_args(
-            "https://example.com",
-            3600,
-            Some("token123".to_string()),
-            Some(file_path.to_string_lossy().to_string()),
-            false,
-            None,
-        );
+        let args = SendArgs::builder()
+            .with_server("https://example.com")
+            .with_ttl(Duration::from_secs(3600))
+            .with_token("token123")
+            .with_file(&file_path.to_string_lossy().to_string());
         let result = send(factory, args).await;
 
         assert!(result.is_ok());
@@ -347,14 +331,12 @@ mod tests {
         let file_path = temp_dir.path().join("document.pdf");
         fs::write(&file_path, b"fake pdf content")?;
 
-        let args = create_send_args(
-            "https://example.com",
-            7200,
-            Some("token456".to_string()),
-            Some(file_path.to_string_lossy().to_string()),
-            true, // as_file = true
-            None, // filename extracted from path
-        );
+        let args = SendArgs::builder()
+            .with_server("https://example.com")
+            .with_ttl(Duration::from_secs(7200))
+            .with_token("token456")
+            .with_file(&file_path.to_string_lossy().to_string())
+            .with_as_file();
         let result = send(factory, args).await;
 
         assert!(result.is_ok());
@@ -371,14 +353,13 @@ mod tests {
         let file_path = temp_dir.path().join("original.txt");
         fs::write(&file_path, b"file content")?;
 
-        let args = create_send_args(
-            "https://example.com",
-            3600,
-            Some("token789".to_string()),
-            Some(file_path.to_string_lossy().to_string()),
-            true,                                // as_file = true
-            Some("custom_name.txt".to_string()), // custom filename
-        );
+        let args = SendArgs::builder()
+            .with_server("https://example.com")
+            .with_ttl(Duration::from_secs(3600))
+            .with_token("token789")
+            .with_file(&file_path.to_string_lossy().to_string())
+            .with_as_file()
+            .with_filename("custom_name.txt");
         let result = send(factory, args).await;
 
         assert!(result.is_ok());
@@ -394,14 +375,11 @@ mod tests {
         let file_path = temp_dir.path().join("test.txt");
         fs::write(&file_path, b"test content")?;
 
-        let args = create_send_args(
-            "https://example.com",
-            3600,
-            Some("token".to_string()),
-            Some(file_path.to_string_lossy().to_string()),
-            false,
-            None,
-        );
+        let args = SendArgs::builder()
+            .with_server("https://example.com")
+            .with_ttl(Duration::from_secs(3600))
+            .with_token("token")
+            .with_file(&file_path.to_string_lossy().to_string());
         let result = send(factory, args).await;
 
         assert!(result.is_err());

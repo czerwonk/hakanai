@@ -19,8 +19,17 @@ Hakanai embodies the Japanese concept of transience - secrets that exist only fo
 
 1. Your client (CLI or browser) encrypts the secret locally
 2. Sends only the ciphertext to our server
-3. You share the link with the decryption key
+3. You share the link with the decryption key (either embedded in URL or separately)
 4. Recipient views once, then it's gone forever
+
+### Enhanced Security Mode
+
+With the `--separate-key` option, Hakanai provides enhanced security by separating the secret URL from the decryption key:
+
+1. **Traditional mode**: One URL contains both secret ID and key (`/s/uuid#key`)
+2. **Separate key mode**: Secret URL (`/s/uuid`) and key are provided separately
+3. **Defense in depth**: Share URL and key through different communication channels
+4. **Reduced attack surface**: No cryptographic material in any single URL
 
 ## Security Model
 
@@ -119,6 +128,14 @@ echo "secret" | hakanai send --server https://hakanai.example.com
 # Send with authentication token (required if server has token whitelist)
 echo "secret" | hakanai send --token my-auth-token
 
+# Generate separate key for enhanced security (key and URL shared via different channels)
+echo "sensitive data" | hakanai send --separate-key
+# Output:
+# Secret sent successfully!
+# 
+# Secret link: https://hakanai.example.com/s/uuid
+# Key:         base64-encoded-key
+
 # Combine options
 hakanai send -f secret.txt -s https://hakanai.example.com --ttl 1h -t my-token
 ```
@@ -131,6 +148,9 @@ hakanai get https://hakanai.example.com/secret/550e8400-e29b-41d4-a716-446655440
 
 # Get using the short link format
 hakanai get https://hakanai.example.com/s/550e8400-e29b-41d4-a716-446655440000
+
+# Get using separate key (when --separate-key was used)
+hakanai get https://hakanai.example.com/s/550e8400-e29b-41d4-a716-446655440000 --key base64-encoded-key
 
 # Secret is displayed and immediately destroyed on server
 ```

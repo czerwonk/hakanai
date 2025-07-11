@@ -273,41 +273,132 @@ function createUrlDisplaySection(secretUrl, urlId) {
   const container = document.createElement("div");
   container.className = "secret-container";
 
-  const urlDisplay = document.createElement("input");
-  urlDisplay.type = "text";
-  urlDisplay.id = urlId;
-  urlDisplay.readOnly = true;
-  urlDisplay.setAttribute("aria-label", "Secret URL");
-  urlDisplay.value = secretUrl;
-  urlDisplay.className = "url-display";
-  urlDisplay.addEventListener("click", function () {
-    this.select();
-  });
-  container.appendChild(urlDisplay);
+  // Check if separate key mode is enabled
+  const separateKeyCheckbox = document.getElementById("separateKey");
+  const separateMode = separateKeyCheckbox && separateKeyCheckbox.checked;
 
-  const buttonsContainer = createButtonContainer();
+  if (separateMode) {
+    // Split the URL and key for separate display
+    const url = new URL(secretUrl);
+    const key = url.hash.substring(1); // Remove the # prefix
+    url.hash = ""; // Remove the fragment from the URL
+    const urlWithoutFragment = url.toString();
 
-  const copyBtn = createButton(
-    "copy-button",
-    UI_STRINGS.COPY_TEXT,
-    "Copy secret URL to clipboard",
-    function () {
-      copyUrl(urlId, this);
-    },
-  );
-  buttonsContainer.appendChild(copyBtn);
+    // Create URL display
+    const urlLabel = document.createElement("label");
+    urlLabel.textContent = i18n.t("label.url");
+    urlLabel.style.fontWeight = "bold";
+    urlLabel.style.marginBottom = "0.5rem";
+    urlLabel.style.display = "block";
+    container.appendChild(urlLabel);
 
-  const createAnotherBtn = createButton(
-    "secondary-button",
-    i18n.t("button.createAnother"),
-    "Create another secret",
-    function () {
-      resetToCreateMode();
-    },
-  );
-  buttonsContainer.appendChild(createAnotherBtn);
+    const urlDisplay = document.createElement("input");
+    urlDisplay.type = "text";
+    urlDisplay.id = urlId;
+    urlDisplay.readOnly = true;
+    urlDisplay.setAttribute("aria-label", "Secret URL");
+    urlDisplay.value = urlWithoutFragment;
+    urlDisplay.className = "url-display";
+    urlDisplay.addEventListener("click", function () {
+      this.select();
+    });
+    container.appendChild(urlDisplay);
 
-  container.appendChild(buttonsContainer);
+    // Create key display
+    const keyLabel = document.createElement("label");
+    keyLabel.textContent = i18n.t("label.key");
+    keyLabel.style.fontWeight = "bold";
+    keyLabel.style.marginBottom = "0.5rem";
+    keyLabel.style.marginTop = "1rem";
+    keyLabel.style.display = "block";
+    container.appendChild(keyLabel);
+
+    const keyDisplay = document.createElement("input");
+    keyDisplay.type = "text";
+    keyDisplay.id = urlId + "-key";
+    keyDisplay.readOnly = true;
+    keyDisplay.setAttribute("aria-label", "Decryption Key");
+    keyDisplay.value = key;
+    keyDisplay.className = "url-display";
+    keyDisplay.addEventListener("click", function () {
+      this.select();
+    });
+    container.appendChild(keyDisplay);
+
+    // Create copy buttons container for the 3 copy operations
+    const copyButtonsContainer = createButtonContainer();
+
+    const copyUrlBtn = createButton(
+      "secondary-button",
+      i18n.t("button.copyUrl"),
+      "Copy secret URL to clipboard",
+      function () {
+        copyUrl(urlId, this);
+      },
+    );
+    copyButtonsContainer.appendChild(copyUrlBtn);
+
+    const copyKeyBtn = createButton(
+      "secondary-button",
+      i18n.t("button.copyKey"),
+      "Copy decryption key to clipboard",
+      function () {
+        copyUrl(urlId + "-key", this);
+      },
+    );
+    copyButtonsContainer.appendChild(copyKeyBtn);
+
+    // Add "Create Another" button to the same container in separate mode
+    const createAnotherBtn = createButton(
+      "secondary-button",
+      i18n.t("button.createAnother"),
+      "Create another secret",
+      function () {
+        resetToCreateMode();
+      },
+    );
+    copyButtonsContainer.appendChild(createAnotherBtn);
+
+    container.appendChild(copyButtonsContainer);
+  } else {
+    // Traditional combined display
+    const urlDisplay = document.createElement("input");
+    urlDisplay.type = "text";
+    urlDisplay.id = urlId;
+    urlDisplay.readOnly = true;
+    urlDisplay.setAttribute("aria-label", "Secret URL");
+    urlDisplay.value = secretUrl;
+    urlDisplay.className = "url-display";
+    urlDisplay.addEventListener("click", function () {
+      this.select();
+    });
+    container.appendChild(urlDisplay);
+
+    // Create buttons container for traditional mode - both copy and create another
+    const buttonsContainer = createButtonContainer();
+
+    const copyBtn = createButton(
+      "secondary-button",
+      UI_STRINGS.COPY_TEXT,
+      "Copy secret URL to clipboard",
+      function () {
+        copyUrl(urlId, this);
+      },
+    );
+    buttonsContainer.appendChild(copyBtn);
+
+    const createAnotherBtn = createButton(
+      "secondary-button",
+      i18n.t("button.createAnother"),
+      "Create another secret",
+      function () {
+        resetToCreateMode();
+      },
+    );
+    buttonsContainer.appendChild(createAnotherBtn);
+
+    container.appendChild(buttonsContainer);
+  }
   return container;
 }
 

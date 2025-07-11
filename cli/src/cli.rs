@@ -67,6 +67,12 @@ pub struct SendArgs {
         help = "Filename to use for the secret when sending as a file. Can be determined automatically from --file if provided."
     )]
     pub filename: Option<String>,
+
+    #[arg(
+        long,
+        help = "Does not include the key in the URL fragment, but instead prints it to stdout. This is useful for sharing the key separately."
+    )]
+    pub separate_key: bool,
 }
 
 impl SendArgs {
@@ -89,12 +95,69 @@ impl SendArgs {
             Err(e) => Err(anyhow!("Failed to read token file '{path}': {e}")),
         }
     }
+
+    #[cfg(test)]
+    pub fn builder() -> Self {
+        Self {
+            server: Url::parse("http://localhost:8080").unwrap(),
+            ttl: Duration::from_secs(24 * 60 * 60), // 24h
+            token: None,
+            token_file: None,
+            file: None,
+            as_file: false,
+            filename: None,
+            separate_key: false,
+        }
+    }
+
+    #[cfg(test)]
+    pub fn with_server(mut self, server: &str) -> Self {
+        self.server = Url::parse(server).unwrap();
+        self
+    }
+
+    #[cfg(test)]
+    pub fn with_ttl(mut self, ttl: Duration) -> Self {
+        self.ttl = ttl;
+        self
+    }
+
+    #[cfg(test)]
+    pub fn with_token(mut self, token: &str) -> Self {
+        self.token = Some(token.to_string());
+        self
+    }
+
+    #[cfg(test)]
+    pub fn with_file(mut self, file: &str) -> Self {
+        self.file = Some(file.to_string());
+        self
+    }
+
+    #[cfg(test)]
+    pub fn with_as_file(mut self) -> Self {
+        self.as_file = true;
+        self
+    }
+
+    #[cfg(test)]
+    pub fn with_filename(mut self, filename: &str) -> Self {
+        self.filename = Some(filename.to_string());
+        self
+    }
 }
 
 /// Represents the arguments for the `get` command.
 #[derive(Debug, Clone, Parser)]
 pub struct GetArgs {
     pub link: Url,
+
+    #[arg(
+        short,
+        long,
+        help = "Optional base64 encoded secret key to use for decryption if not part of the URL."
+    )]
+    pub key: Option<String>,
 
     #[arg(
         long,
@@ -111,11 +174,58 @@ pub struct GetArgs {
     pub filename: Option<String>,
 }
 
+impl GetArgs {
+    pub fn secret_url(&self) -> Result<Url> {
+        let mut url = self.link.clone();
+
+        if url.fragment().is_some() {
+            if self.key.is_some() {
+                return Err(anyhow!(
+                    "The URL already contains a fragment, but a key was provided as an argument."
+                ));
+            }
+
+            return Ok(url);
+        }
+
+        let key = self.key.clone().unwrap_or_default();
+        if key.is_empty() {
+            return Err(anyhow!("No key provided in URL or as an argument"));
+        }
+
+        url.set_fragment(Some(&key));
+        Ok(url)
+    }
+
+    #[cfg(test)]
+    pub fn builder(link: &str) -> Self {
+        Self {
+            link: Url::parse(link).unwrap(),
+            key: None,
+            to_stdout: false,
+            filename: None,
+        }
+    }
+
+    #[cfg(test)]
+    pub fn with_to_stdout(mut self) -> Self {
+        self.to_stdout = true;
+        self
+    }
+
+    #[cfg(test)]
+    pub fn with_filename(mut self, filename: &str) -> Self {
+        self.filename = Some(filename.to_string());
+        self
+    }
+}
+
 /// Represents the top-level command enum for the application.
 #[derive(Debug, Subcommand)]
 pub enum Command {
     /// Receives an ephemeral secret from the server.
     Get(GetArgs),
+
     /// Send a secret to the server.
     /// Content is either read from stdin or from file (if --file is specified).
     Send(SendArgs),
@@ -130,57 +240,95 @@ mod tests {
     #[test]
     fn test_get_command_parsing() {
         let args =
+            Args::try_parse_from(["hakanai", "get", "https://example.com/secret/abc123#test"])
+                .unwrap();
+
+        match args.command {
+            Command::Get(get_args) => {
+                assert_eq!(
+                    get_args.secret_url().unwrap().as_str(),
+                    "https://example.com/secret/abc123#test"
+                );
+                assert!(!get_args.to_stdout);
+                assert_eq!(get_args.filename, None);
+            }
+            _ => panic!("expected get command"),
+        }
+    }
+
+    #[test]
+    fn test_get_command_with_key_arg() {
+        let args = Args::try_parse_from([
+            "hakanai",
+            "get",
+            "https://example.com/secret/abc123",
+            "--key",
+            "test",
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Get(get_args) => {
+                assert_eq!(
+                    get_args.secret_url().unwrap().as_str(),
+                    "https://example.com/secret/abc123#test"
+                );
+            }
+            _ => panic!("expected get command"),
+        }
+    }
+
+    #[test]
+    fn test_get_command_without_key() {
+        let args =
             Args::try_parse_from(["hakanai", "get", "https://example.com/secret/abc123"]).unwrap();
 
         match args.command {
             Command::Get(get_args) => {
-                assert_eq!(get_args.link.as_str(), "https://example.com/secret/abc123");
-                assert!(!get_args.to_stdout);
-                assert_eq!(get_args.filename, None);
+                let url = get_args.secret_url();
+                assert!(url.is_err());
             }
-            _ => panic!("Expected Get command"),
+            _ => panic!("expected get command"),
+        }
+    }
+
+    #[test]
+    fn test_get_command_with_conflicting_keys() {
+        let args = Args::try_parse_from([
+            "hakanai",
+            "get",
+            "https://example.com/secret/abc123#foo",
+            "-k",
+            "bar",
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Get(get_args) => {
+                let url = get_args.secret_url();
+                assert!(url.is_err());
+            }
+            _ => panic!("expected get command"),
         }
     }
 
     #[test]
     fn test_get_command_with_to_stdout_flag() {
-        let args = Args::try_parse_from([
-            "hakanai",
-            "get",
-            "https://example.com/secret/abc123",
-            "--to-stdout",
-        ])
-        .unwrap();
+        let get_args = GetArgs::builder("https://example.com/secret/abc123").with_to_stdout();
 
-        match args.command {
-            Command::Get(get_args) => {
-                assert_eq!(get_args.link.as_str(), "https://example.com/secret/abc123");
-                assert!(get_args.to_stdout);
-                assert_eq!(get_args.filename, None);
-            }
-            _ => panic!("Expected Get command"),
-        }
+        assert_eq!(get_args.link.as_str(), "https://example.com/secret/abc123");
+        assert!(get_args.to_stdout);
+        assert_eq!(get_args.filename, None);
     }
 
     #[test]
     fn test_get_command_with_filename() {
-        let args = Args::try_parse_from([
-            "hakanai",
-            "get",
-            "https://example.com/secret/abc123",
-            "--filename",
-            "downloaded_secret.txt",
-        ])
-        .unwrap();
+        let get_args = GetArgs::builder("https://example.com/secret/abc123")
+            .with_filename("downloaded_secret.txt");
 
-        match args.command {
-            Command::Get(get_args) => {
-                assert_eq!(get_args.link.as_str(), "https://example.com/secret/abc123");
-                assert!(!get_args.to_stdout);
-                assert_eq!(get_args.filename, Some("downloaded_secret.txt".to_string()));
-            }
-            _ => panic!("Expected Get command"),
-        }
+        assert_eq!(get_args.link.as_str(), "https://example.com/secret/abc123");
+        assert!(!get_args.to_stdout);
+        assert_eq!(get_args.filename, Some("downloaded_secret.txt".to_string()));
     }
 
     #[test]
@@ -206,24 +354,13 @@ mod tests {
 
     #[test]
     fn test_get_command_with_to_stdout_and_filename() {
-        let args = Args::try_parse_from([
-            "hakanai",
-            "get",
-            "https://example.com/secret/abc123",
-            "--to-stdout",
-            "--filename",
-            "ignored.txt",
-        ])
-        .unwrap();
+        let get_args = GetArgs::builder("https://example.com/secret/abc123")
+            .with_to_stdout()
+            .with_filename("ignored.txt");
 
-        match args.command {
-            Command::Get(get_args) => {
-                assert_eq!(get_args.link.as_str(), "https://example.com/secret/abc123");
-                assert!(get_args.to_stdout);
-                assert_eq!(get_args.filename, Some("ignored.txt".to_string()));
-            }
-            _ => panic!("Expected Get command"),
-        }
+        assert_eq!(get_args.link.as_str(), "https://example.com/secret/abc123");
+        assert!(get_args.to_stdout);
+        assert_eq!(get_args.filename, Some("ignored.txt".to_string()));
     }
 
     #[test]
@@ -272,32 +409,16 @@ mod tests {
 
     #[test]
     fn test_send_command_with_custom_server() {
-        let args = Args::try_parse_from([
-            "hakanai",
-            "send",
-            "--server",
-            "https://hakanai.routing.rocks",
-        ])
-        .unwrap();
+        let send_args = SendArgs::builder().with_server("https://hakanai.routing.rocks");
 
-        match args.command {
-            Command::Send(send_args) => {
-                assert_eq!(send_args.server.as_str(), "https://hakanai.routing.rocks/");
-            }
-            _ => panic!("Expected Send command"),
-        }
+        assert_eq!(send_args.server.as_str(), "https://hakanai.routing.rocks/");
     }
 
     #[test]
     fn test_send_command_with_custom_ttl() {
-        let args = Args::try_parse_from(["hakanai", "send", "--ttl", "12h"]).unwrap();
+        let send_args = SendArgs::builder().with_ttl(Duration::from_secs(12 * 60 * 60));
 
-        match args.command {
-            Command::Send(send_args) => {
-                assert_eq!(send_args.ttl, Duration::from_secs(12 * 60 * 60)); // 12 hours
-            }
-            _ => panic!("Expected Send command"),
-        }
+        assert_eq!(send_args.ttl, Duration::from_secs(12 * 60 * 60)); // 12 hours
     }
 
     #[test]
@@ -527,24 +648,13 @@ mod tests {
 
     #[test]
     fn test_send_command_with_all_file_options() {
-        let args = Args::try_parse_from([
-            "hakanai",
-            "send",
-            "--file",
-            "/home/user/secret.bin",
-            "--as-file",
-            "--filename",
-            "renamed_secret.bin",
-        ])
-        .unwrap();
+        let send_args = SendArgs::builder()
+            .with_file("/home/user/secret.bin")
+            .with_as_file()
+            .with_filename("renamed_secret.bin");
 
-        match args.command {
-            Command::Send(send_args) => {
-                assert_eq!(send_args.file, Some("/home/user/secret.bin".to_string()));
-                assert!(send_args.as_file);
-                assert_eq!(send_args.filename, Some("renamed_secret.bin".to_string()));
-            }
-            _ => panic!("Expected Send command"),
-        }
+        assert_eq!(send_args.file, Some("/home/user/secret.bin".to_string()));
+        assert!(send_args.as_file);
+        assert_eq!(send_args.filename, Some("renamed_secret.bin".to_string()));
     }
 }
