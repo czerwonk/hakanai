@@ -25,12 +25,14 @@
 
   /* Theme-specific values */
   --dark-error-bg: rgba(232, 36, 36, 0.1);
+  --dark-success-bg: rgba(127, 180, 202, 0.08); /* Subtle primary color tint */
   --dark-button-gradient: rgba(255, 255, 255, 0.05);
   --dark-button-text: #1f1f28;
   --dark-button-shadow: rgba(0, 0, 0, 0.2);
   --dark-container-shadow: rgba(0, 0, 0, 0.1);
 
   --light-error-bg: rgba(195, 64, 67, 0.1);
+  --light-success-bg: rgba(45, 79, 103, 0.05); /* Subtle primary color tint */
   --light-button-gradient: rgba(0, 0, 0, 0.05);
   --light-button-text: #ffffff;
   --light-button-shadow: rgba(0, 0, 0, 0.1);
@@ -48,6 +50,7 @@
   --theme-error: var(--dark-error);
   --theme-error-light: var(--dark-error-light);
   --theme-error-bg: var(--dark-error-bg);
+  --theme-success-bg: var(--dark-success-bg);
   --theme-button-gradient: var(--dark-button-gradient);
   --theme-button-text: var(--dark-button-text);
   --theme-button-shadow: var(--dark-button-shadow);
@@ -105,6 +108,7 @@ body[data-theme="light"] {
   --theme-error: var(--light-error);
   --theme-error-light: var(--light-error-light);
   --theme-error-bg: var(--light-error-bg);
+  --theme-success-bg: var(--light-success-bg);
   --theme-button-gradient: var(--light-button-gradient);
   --theme-button-text: var(--light-button-text);
   --theme-button-shadow: var(--light-button-shadow);
@@ -124,6 +128,7 @@ body[data-theme="light"] {
     --theme-error: var(--light-error);
     --theme-error-light: var(--light-error-light);
     --theme-error-bg: var(--light-error-bg);
+    --theme-success-bg: var(--light-success-bg);
     --theme-button-gradient: var(--light-button-gradient);
     --theme-button-text: var(--light-button-text);
     --theme-button-shadow: var(--light-button-shadow);
@@ -148,6 +153,7 @@ body {
   --color-error: var(--theme-error);
   --color-error-light: var(--theme-error-light);
   --color-error-bg: var(--theme-error-bg);
+  --color-success-bg: var(--theme-success-bg);
   --button-gradient: var(--theme-button-gradient);
   --button-text: var(--theme-button-text);
   --button-shadow: var(--theme-button-shadow);
@@ -467,7 +473,7 @@ button.loading::after {
 }
 
 .result.success {
-  background-color: var(--color-bg-input);
+  background-color: var(--color-success-bg);
   border: 1px solid var(--color-primary);
   color: var(--color-text);
 }
