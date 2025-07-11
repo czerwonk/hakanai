@@ -102,7 +102,7 @@ mod tests {
     #[test]
     fn test_print_to_stdout_with_text() {
         let text = "Hello, World!";
-        let result = print_to_stdout(&text.as_bytes().to_vec());
+        let result = print_to_stdout(text.as_bytes());
         assert!(result.is_ok());
     }
 
@@ -115,7 +115,7 @@ mod tests {
 
     #[test]
     fn test_print_to_stdout_empty() {
-        let result = print_to_stdout(&vec![]);
+        let result = print_to_stdout(&[]);
         assert!(result.is_ok());
     }
 
@@ -127,7 +127,7 @@ mod tests {
 
         write_to_file(
             file_path.to_string_lossy().to_string(),
-            &content.as_bytes().to_vec(),
+            content.as_bytes(),
         )?;
 
         let read_content = fs::read_to_string(&file_path)?;
@@ -158,7 +158,7 @@ mod tests {
         let temp_dir = TempDir::new()?;
         let file_path = temp_dir.path().join("empty.txt");
 
-        write_to_file(file_path.to_string_lossy().to_string(), &vec![])?;
+        write_to_file(file_path.to_string_lossy().to_string(), &[])?;
 
         assert!(file_path.exists());
         let read_content = fs::read(&file_path)?;
@@ -178,7 +178,7 @@ mod tests {
 
         write_to_file(
             file_path.to_string_lossy().to_string(),
-            &content.as_bytes().to_vec(),
+            content.as_bytes(),
         )?;
 
         let read_content = fs::read_to_string(&file_path)?;
@@ -199,7 +199,7 @@ mod tests {
         let new_content = "New content";
         write_to_file(
             file_path.to_string_lossy().to_string(),
-            &new_content.as_bytes().to_vec(),
+            new_content.as_bytes(),
         )?;
 
         // Original file should still have initial content
@@ -234,7 +234,7 @@ mod tests {
 
         write_to_file(
             file_path.to_string_lossy().to_string(),
-            &content.as_bytes().to_vec(),
+            content.as_bytes(),
         )?;
 
         let read_content = fs::read_to_string(&file_path)?;

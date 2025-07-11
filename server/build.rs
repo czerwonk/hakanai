@@ -195,5 +195,5 @@ fn generate_html_file(
     output_path: &str,
 ) {
     let html = tt.render(template_name, context).unwrap();
-    fs::write(output_path, html).unwrap_or_else(|_| panic!("Failed to write {}", output_path));
+    fs::write(output_path, html).unwrap_or_else(|_| panic!("Failed to write {output_path}"));
 }
