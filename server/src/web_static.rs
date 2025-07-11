@@ -1,7 +1,7 @@
 use actix_web::http::header;
 use actix_web::{HttpResponse, Responder, web};
 
-const DEFAULT_CACHE_MAX_AGE: u64 = 86400; // 1 day
+const DEFAULT_CACHE_MAX_AGE: u64 = 604800; // 7 days
 
 /// Configures the Actix Web services for the application.
 ///
