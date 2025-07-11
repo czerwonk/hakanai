@@ -100,6 +100,9 @@
         "Select how long the secret should be available before it expires",
       "aria.urlInput":
         "Enter the full URL including the secret key after the hash",
+      "aria.themeToggle": "Switch between light and dark mode",
+      "aria.switchToLight": "Switch to light mode",
+      "aria.switchToDark": "Switch to dark mode",
 
       // Meta descriptions
       "meta.create":
@@ -216,6 +219,9 @@
         "Bitte die Zeit auswählen, nach der das Secret abläuft",
       "aria.urlInput":
         "Bitte die vollständige URL einschließlich des Schlüssels nach dem Hash eingeben",
+      "aria.themeToggle": "Zwischen hellem und dunklem Modus wechseln",
+      "aria.switchToLight": "Zum hellen Modus wechseln",
+      "aria.switchToDark": "Zum dunklen Modus wechseln",
 
       // Meta descriptions
       "meta.create": "One-Time-Secrets sicher erstellen und teilen mit Hakanai",

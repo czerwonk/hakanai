@@ -4,11 +4,14 @@ import {
   createButtonContainer,
   copyToClipboard,
   announceToScreenReader,
+  initTheme,
+  updateThemeToggleButton,
 } from "/common-utils.js";
 
 // Listen for language changes to update dynamic content
 document.addEventListener("languageChanged", function () {
   updateUIStrings();
+  updateThemeToggleButton();
 });
 
 function updateUIStrings() {
@@ -509,6 +512,9 @@ function toggleSecretType() {
 
 // Set up all event handlers when DOM is ready
 document.addEventListener("DOMContentLoaded", function () {
+  // Initialize theme
+  initTheme();
+
   // Initialize UI strings after i18n is loaded
   updateUIStrings();
 

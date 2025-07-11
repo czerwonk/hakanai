@@ -2,7 +2,7 @@
 
 **Date:** 2025-07-09  
 **Audit Type:** Comprehensive Security Assessment  
-**Codebase Version:** 1.3.0  
+**Codebase Version:** 1.3.2  
 **Auditor:** Claude Code Security Analysis
 
 ## Executive Summary
@@ -301,7 +301,7 @@ Err(error::ErrorBadRequest("TTL exceeds maximum allowed duration"))
 - **Minimal attack surface**: Limited number of external dependencies
 - **Security-focused**: Uses security-conscious crates (zeroize, sha2, etc.)
 
-**Version 1.3.0 Dependencies:**
+**Version 1.3.2 Dependencies:**
 - `aes-gcm`: 0.10.3 (latest stable)
 - `tokio`: 1.45.1 (latest stable)
 - `actix-web`: 4.11.0 (latest stable)
@@ -405,6 +405,13 @@ Err(error::ErrorBadRequest("TTL exceeds maximum allowed duration"))
 
 ### Areas for Improvement
 - **Browser Compatibility Messages**: Still exposes some information about Web Crypto API support (M4)
+
+### Client-Side Security Features (Version 1.3.2)
+- **Theme Toggle Security**: Secure localStorage validation with proper input sanitization
+  - Theme values are validated to only allow 'light' or 'dark' (prevents injection attacks)
+  - Try-catch blocks around localStorage operations handle disabled/restricted storage
+  - System preference fallback when localStorage access fails
+  - No exposure of sensitive data through theme persistence mechanism
 
 ## Compliance & Best Practices
 

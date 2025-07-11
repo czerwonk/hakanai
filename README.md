@@ -144,6 +144,7 @@ Hakanai now includes a web interface for users who prefer not to use the CLI:
 - Create new secrets at `/create` - supports both text and file uploads
 - Paste a hakanai URL to retrieve secrets directly in your browser
 - The same zero-knowledge encryption is maintained - all encryption/decryption happens in your browser
+- **Dark/Light Mode Toggle**: Automatic system preference detection with manual override
 - Mobile-friendly responsive design
 - Multi-language support (English and German) with automatic browser language detection
 
@@ -385,6 +386,8 @@ For production deployments:
 - ✅ **Enhanced TypeScript Client**: Bytes-based PayloadData interface with type safety
 - ✅ **Unified Data Handling**: Consistent approach for text and binary data across all clients
 - ✅ **Access Tracking**: Returns 410 Gone status if secret was already accessed
+- ✅ **Dark/Light Mode**: System preference detection with manual toggle and localStorage persistence
+- ✅ **Health Endpoints**: `/healthy` and `/ready` endpoints for monitoring and orchestration
 
 ### Security Implementation
 - ✅ **Zero-knowledge architecture**: All encryption/decryption client-side

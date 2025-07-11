@@ -5,11 +5,14 @@ import {
   copyToClipboard,
   announceToScreenReader,
   debounce,
+  initTheme,
+  updateThemeToggleButton,
 } from "/common-utils.js";
 
 // Listen for language changes to update dynamic content
 document.addEventListener("languageChanged", function () {
   updateUIStrings();
+  updateThemeToggleButton();
 });
 
 function updateUIStrings() {
@@ -361,11 +364,13 @@ if (urlInput) {
 
 // Initialize UI strings after DOM is ready
 document.addEventListener("DOMContentLoaded", function () {
-  updateUIStrings();
-});
+  // Initialize theme
+  initTheme();
 
-// Add event listener for form submission
-document.addEventListener("DOMContentLoaded", function () {
+  // Initialize UI strings
+  updateUIStrings();
+
+  // Add event listener for form submission
   const form = document.querySelector("form");
   if (form) {
     form.addEventListener("submit", function (event) {
