@@ -19,8 +19,8 @@ pub async fn send<T: Factory>(factory: T, args: SendArgs) -> Result<()> {
         return Err(anyhow!("TTL must be greater than zero seconds."));
     }
 
-    let token = args.token()?;
-    if token.is_none() {
+    let token = args.token()?.unwrap_or_default();
+    if token.is_empty() {
         eprintln!("{}", "Warning: No token provided.".yellow());
     }
 
@@ -49,13 +49,7 @@ pub async fn send<T: Factory>(factory: T, args: SendArgs) -> Result<()> {
 
     let link = factory
         .new_client()
-        .send_secret(
-            args.server.clone(),
-            payload,
-            args.ttl,
-            token.unwrap_or_default(),
-            Some(opts),
-        )
+        .send_secret(args.server.clone(), payload, args.ttl, token, Some(opts))
         .await?;
 
     println!(
