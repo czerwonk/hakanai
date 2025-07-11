@@ -10,15 +10,11 @@ use hakanai_lib::client::Client;
 use hakanai_lib::options::SecretReceiveOptions;
 use hakanai_lib::timestamp;
 
+use crate::cli::GetArgs;
 use crate::factory::Factory;
 use crate::helper::get_user_agent_name;
 
-pub async fn get<T: Factory>(
-    factory: T,
-    link: url::Url,
-    to_stdout: bool,
-    filename: Option<String>,
-) -> Result<()> {
+pub async fn get<T: Factory>(factory: T, args: GetArgs) -> Result<()> {
     let user_agent = get_user_agent_name();
     let observer = factory.new_observer("Receiving secret...")?;
     let opts = SecretReceiveOptions::default()
@@ -27,12 +23,12 @@ pub async fn get<T: Factory>(
 
     let payload = factory
         .new_client()
-        .receive_secret(link.clone(), Some(opts))
+        .receive_secret(args.link.clone(), Some(opts))
         .await?;
 
     let bytes = Zeroizing::new(payload.decode_bytes()?);
-    let filename = filename.or_else(|| payload.filename.clone());
-    output_secret(&bytes, to_stdout, filename)?;
+    let filename = args.filename.or_else(|| payload.filename.clone());
+    output_secret(&bytes, args.to_stdout, filename)?;
 
     Ok(())
 }
@@ -99,6 +95,14 @@ mod tests {
     use std::fs;
     use tempfile::TempDir;
 
+    fn create_get_args(link: &str, to_stdout: bool, filename: Option<String>) -> GetArgs {
+        GetArgs {
+            link: url::Url::parse(link).unwrap(),
+            to_stdout,
+            filename,
+        }
+    }
+
     #[test]
     fn test_print_to_stdout_with_text() {
         let text = "Hello, World!";
@@ -125,10 +129,7 @@ mod tests {
         let file_path = temp_dir.path().join("test.txt");
         let content = "Test file content";
 
-        write_to_file(
-            file_path.to_string_lossy().to_string(),
-            content.as_bytes(),
-        )?;
+        write_to_file(file_path.to_string_lossy().to_string(), content.as_bytes())?;
 
         let read_content = fs::read_to_string(&file_path)?;
         assert_eq!(read_content, content);
@@ -176,10 +177,7 @@ mod tests {
         let file_path = sub_dir.join("nested.txt");
         let content = "Nested file content";
 
-        write_to_file(
-            file_path.to_string_lossy().to_string(),
-            content.as_bytes(),
-        )?;
+        write_to_file(file_path.to_string_lossy().to_string(), content.as_bytes())?;
 
         let read_content = fs::read_to_string(&file_path)?;
         assert_eq!(read_content, content);
@@ -232,10 +230,7 @@ mod tests {
         let file_path = temp_dir.path().join("file with spaces and !@#$.txt");
         let content = "Special filename content";
 
-        write_to_file(
-            file_path.to_string_lossy().to_string(),
-            content.as_bytes(),
-        )?;
+        write_to_file(file_path.to_string_lossy().to_string(), content.as_bytes())?;
 
         let read_content = fs::read_to_string(&file_path)?;
         assert_eq!(read_content, content);
@@ -296,8 +291,8 @@ mod tests {
         let client = MockClient::new().with_receive_success(payload);
         let factory = MockFactory::new().with_client(client);
 
-        let url = url::Url::parse("https://example.com/s/test123#key")?;
-        let result = get(factory, url, true, None).await;
+        let args = create_get_args("https://example.com/s/test123#key", true, None);
+        let result = get(factory, args).await;
 
         assert!(result.is_ok());
         Ok(())
@@ -316,8 +311,8 @@ mod tests {
             .join("document.txt")
             .to_string_lossy()
             .to_string();
-        let url = url::Url::parse("https://example.com/s/test123#key")?;
-        let result = get(factory, url, false, Some(filename)).await;
+        let args = create_get_args("https://example.com/s/test123#key", false, Some(filename));
+        let result = get(factory, args).await;
 
         assert!(result.is_ok());
 
@@ -340,8 +335,12 @@ mod tests {
             .join("custom.bin")
             .to_string_lossy()
             .to_string();
-        let url = url::Url::parse("https://example.com/s/test123#key")?;
-        let result = get(factory, url, false, Some(custom_filename.clone())).await;
+        let args = create_get_args(
+            "https://example.com/s/test123#key",
+            false,
+            Some(custom_filename.clone()),
+        );
+        let result = get(factory, args).await;
 
         assert!(result.is_ok());
 
@@ -365,8 +364,8 @@ mod tests {
             .join("output.dat")
             .to_string_lossy()
             .to_string();
-        let url = url::Url::parse("https://example.com/s/test123#key")?;
-        let result = get(factory, url, false, Some(filename)).await;
+        let args = create_get_args("https://example.com/s/test123#key", false, Some(filename));
+        let result = get(factory, args).await;
 
         assert!(result.is_ok());
 
@@ -381,8 +380,8 @@ mod tests {
         let client = MockClient::new().with_receive_failure("Network timeout".to_string());
         let factory = MockFactory::new().with_client(client);
 
-        let url = url::Url::parse("https://example.com/s/test123#key")?;
-        let result = get(factory, url, true, None).await;
+        let args = create_get_args("https://example.com/s/test123#key", true, None);
+        let result = get(factory, args).await;
 
         assert!(result.is_err());
         assert!(result.unwrap_err().to_string().contains("Network timeout"));
@@ -395,8 +394,8 @@ mod tests {
         let client = MockClient::new().with_receive_success(payload);
         let factory = MockFactory::new().with_client(client);
 
-        let url = url::Url::parse("https://example.com/s/test123#key")?;
-        let result = get(factory, url, true, None).await;
+        let args = create_get_args("https://example.com/s/test123#key", true, None);
+        let result = get(factory, args).await;
 
         assert!(result.is_ok());
         Ok(())
@@ -414,14 +413,12 @@ mod tests {
         let client = MockClient::new().with_receive_success(payload);
         let factory = MockFactory::new().with_client(client);
 
-        let url = url::Url::parse("https://example.com/s/test123#key")?;
-        let result = get(
-            factory,
-            url,
+        let args = create_get_args(
+            "https://example.com/s/test123#key",
             false,
             Some(file_path.to_string_lossy().to_string()),
-        )
-        .await;
+        );
+        let result = get(factory, args).await;
 
         assert!(result.is_ok());
 

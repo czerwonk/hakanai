@@ -1,5 +1,4 @@
 use std::io::{self, Read};
-use std::time::Duration;
 
 use anyhow::{Result, anyhow};
 use colored::Colorize;
@@ -9,29 +8,24 @@ use hakanai_lib::client::Client;
 use hakanai_lib::models::Payload;
 use hakanai_lib::options::SecretSendOptions;
 
+use crate::cli::SendArgs;
 use crate::factory::Factory;
 use crate::helper::get_user_agent_name;
 
 const MAX_SECRET_SIZE_MB: usize = 10; // 10 MB
 
-pub async fn send<T: Factory>(
-    factory: T,
-    server: url::Url,
-    ttl: Duration,
-    token: String,
-    file: Option<String>,
-    as_file: bool,
-    filename: Option<String>,
-) -> Result<()> {
-    if ttl.as_secs() == 0 {
+pub async fn send<T: Factory>(factory: T, args: SendArgs) -> Result<()> {
+    if args.ttl.as_secs() == 0 {
         return Err(anyhow!("TTL must be greater than zero seconds."));
     }
 
-    if token.is_empty() {
+    let token = args.token().map_err(anyhow::Error::msg)?;
+
+    if token.is_none() {
         eprintln!("{}", "Warning: No token provided.".yellow());
     }
 
-    let bytes = Zeroizing::new(read_secret(file.clone())?);
+    let bytes = Zeroizing::new(read_secret(args.file.clone())?);
 
     if bytes.is_empty() {
         return Err(anyhow!(
@@ -45,7 +39,7 @@ pub async fn send<T: Factory>(
         ));
     }
 
-    let filename = get_filename(file, as_file, filename)?;
+    let filename = get_filename(args.file, args.as_file, args.filename)?;
     let payload = Payload::from_bytes(&bytes, filename);
 
     let user_agent = get_user_agent_name();
@@ -56,7 +50,13 @@ pub async fn send<T: Factory>(
 
     let link = factory
         .new_client()
-        .send_secret(server.clone(), payload, ttl, token, Some(opts))
+        .send_secret(
+            args.server.clone(),
+            payload,
+            args.ttl,
+            token.unwrap_or_default(),
+            Some(opts),
+        )
         .await?;
 
     println!(
@@ -106,7 +106,27 @@ mod tests {
     use super::*;
     use crate::mock_client::test_utils::{MockClient, MockFactory};
     use std::fs;
+    use std::time::Duration;
     use tempfile::TempDir;
+
+    fn create_send_args(
+        server: &str,
+        ttl_secs: u64,
+        token: Option<String>,
+        file: Option<String>,
+        as_file: bool,
+        filename: Option<String>,
+    ) -> SendArgs {
+        SendArgs {
+            server: url::Url::parse(server).unwrap(),
+            ttl: Duration::from_secs(ttl_secs),
+            token,
+            token_file: None,
+            file,
+            as_file,
+            filename,
+        }
+    }
 
     #[test]
     fn test_get_filename_not_as_file() {
@@ -200,17 +220,15 @@ mod tests {
         let file_path = temp_dir.path().join("test.txt");
         fs::write(&file_path, b"test content")?;
 
-        let server = url::Url::parse("https://example.com").unwrap();
-        let result = send(
-            factory,
-            server,
-            Duration::from_secs(0),
-            "token".to_string(),
+        let args = create_send_args(
+            "https://example.com",
+            0,
+            Some("token".to_string()),
             Some(file_path.to_string_lossy().to_string()),
             false,
             None,
-        )
-        .await;
+        );
+        let result = send(factory, args).await;
 
         assert!(result.is_err());
         assert!(
@@ -229,17 +247,15 @@ mod tests {
         let file_path = temp_dir.path().join("empty.txt");
         fs::write(&file_path, b"")?;
 
-        let server = url::Url::parse("https://example.com").unwrap();
-        let result = send(
-            factory,
-            server,
-            Duration::from_secs(3600),
-            "token".to_string(),
+        let args = create_send_args(
+            "https://example.com",
+            3600,
+            Some("token".to_string()),
             Some(file_path.to_string_lossy().to_string()),
             false,
             None,
-        )
-        .await;
+        );
+        let result = send(factory, args).await;
 
         assert!(result.is_err());
         assert!(
@@ -260,17 +276,15 @@ mod tests {
         let large_content = vec![b'A'; (MAX_SECRET_SIZE_MB * 1024 * 1024) + 1];
         fs::write(&file_path, large_content)?;
 
-        let server = url::Url::parse("https://example.com").unwrap();
-        let result = send(
-            factory,
-            server,
-            Duration::from_secs(3600),
-            "token".to_string(),
+        let args = create_send_args(
+            "https://example.com",
+            3600,
+            Some("token".to_string()),
             Some(file_path.to_string_lossy().to_string()),
             false,
             None,
-        )
-        .await;
+        );
+        let result = send(factory, args).await;
 
         assert!(result.is_err());
         assert!(
@@ -289,17 +303,15 @@ mod tests {
         let file_path = temp_dir.path().join("empty.txt");
         fs::write(&file_path, b"")?; // Empty file to test the empty secret validation
 
-        let server = url::Url::parse("https://example.com").unwrap();
-        let result = send(
-            factory,
-            server,
-            Duration::from_secs(3600),
-            "token".to_string(),
+        let args = create_send_args(
+            "https://example.com",
+            3600,
+            Some("token".to_string()),
             Some(file_path.to_string_lossy().to_string()),
             true, // as_file = true
             None, // no explicit filename
-        )
-        .await;
+        );
+        let result = send(factory, args).await;
 
         assert!(result.is_err());
         let error_msg = result.unwrap_err().to_string();
@@ -318,17 +330,15 @@ mod tests {
         let file_path = temp_dir.path().join("test.txt");
         fs::write(&file_path, b"test secret content")?;
 
-        let server = url::Url::parse("https://example.com").unwrap();
-        let result = send(
-            factory,
-            server,
-            Duration::from_secs(3600),
-            "token123".to_string(),
+        let args = create_send_args(
+            "https://example.com",
+            3600,
+            Some("token123".to_string()),
             Some(file_path.to_string_lossy().to_string()),
             false,
             None,
-        )
-        .await;
+        );
+        let result = send(factory, args).await;
 
         assert!(result.is_ok());
         Ok(())
@@ -344,17 +354,15 @@ mod tests {
         let file_path = temp_dir.path().join("document.pdf");
         fs::write(&file_path, b"fake pdf content")?;
 
-        let server = url::Url::parse("https://example.com").unwrap();
-        let result = send(
-            factory,
-            server,
-            Duration::from_secs(7200),
-            "token456".to_string(),
+        let args = create_send_args(
+            "https://example.com",
+            7200,
+            Some("token456".to_string()),
             Some(file_path.to_string_lossy().to_string()),
             true, // as_file = true
             None, // filename extracted from path
-        )
-        .await;
+        );
+        let result = send(factory, args).await;
 
         assert!(result.is_ok());
         Ok(())
@@ -370,17 +378,15 @@ mod tests {
         let file_path = temp_dir.path().join("original.txt");
         fs::write(&file_path, b"file content")?;
 
-        let server = url::Url::parse("https://example.com").unwrap();
-        let result = send(
-            factory,
-            server,
-            Duration::from_secs(3600),
-            "token789".to_string(),
+        let args = create_send_args(
+            "https://example.com",
+            3600,
+            Some("token789".to_string()),
             Some(file_path.to_string_lossy().to_string()),
             true,                                // as_file = true
             Some("custom_name.txt".to_string()), // custom filename
-        )
-        .await;
+        );
+        let result = send(factory, args).await;
 
         assert!(result.is_ok());
         Ok(())
@@ -395,17 +401,15 @@ mod tests {
         let file_path = temp_dir.path().join("test.txt");
         fs::write(&file_path, b"test content")?;
 
-        let server = url::Url::parse("https://example.com").unwrap();
-        let result = send(
-            factory,
-            server,
-            Duration::from_secs(3600),
-            "token".to_string(),
+        let args = create_send_args(
+            "https://example.com",
+            3600,
+            Some("token".to_string()),
             Some(file_path.to_string_lossy().to_string()),
             false,
             None,
-        )
-        .await;
+        );
+        let result = send(factory, args).await;
 
         assert!(result.is_err());
         assert!(result.unwrap_err().to_string().contains("Network error"));

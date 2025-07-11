@@ -31,18 +31,7 @@ async fn main() -> ExitCode {
 async fn process_command(args: Args) -> Result<()> {
     let app_factory = factory::AppFactory {};
     match args.command {
-        cli::Command::Get {
-            link,
-            to_stdout,
-            filename,
-        } => get(app_factory, link, to_stdout, filename).await,
-        cli::Command::Send {
-            server,
-            ttl,
-            token,
-            file,
-            as_file,
-            filename,
-        } => send(app_factory, server, ttl, token, file, as_file, filename).await,
+        cli::Command::Get(get_args) => get(app_factory, get_args).await,
+        cli::Command::Send(send_args) => send(app_factory, send_args).await,
     }
 }
