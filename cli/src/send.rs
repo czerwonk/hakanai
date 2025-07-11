@@ -19,8 +19,7 @@ pub async fn send<T: Factory>(factory: T, args: SendArgs) -> Result<()> {
         return Err(anyhow!("TTL must be greater than zero seconds."));
     }
 
-    let token = args.token().map_err(anyhow::Error::msg)?;
-
+    let token = args.token()?;
     if token.is_none() {
         eprintln!("{}", "Warning: No token provided.".yellow());
     }
