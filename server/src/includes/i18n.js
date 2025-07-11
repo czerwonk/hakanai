@@ -23,6 +23,7 @@
       "label.expires": "Expires after:",
       "label.url": "Secret URL:",
       "label.key": "Decryption Key:",
+      "label.separateKey": "Show URL and key separately for enhanced security",
       "label.filename": "Filename:",
 
       // Placeholders
@@ -37,6 +38,8 @@
         "Maximum file size: 10MB. File will be encrypted before upload.",
       "helper.token": "Leave empty if no authentication is required",
       "helper.key": "Base64-encoded decryption key (shared separately)",
+      "helper.separateKey":
+        "When enabled, the URL and decryption key are displayed separately, allowing you to share them through different channels for enhanced security.",
       "helper.expires":
         "Secret will self-destruct after this time or first view",
 
@@ -54,6 +57,8 @@
       "button.retrieve": "Retrieve Secret",
       "button.copy": "Copy",
       "button.copied": "Copied!",
+      "button.copyUrl": "Copy URL",
+      "button.copyKey": "Copy Key",
       "button.download": "Download",
       "button.createAnother": "Create Another",
 
@@ -140,6 +145,8 @@
       "label.expires": "Läuft ab nach:",
       "label.url": "Secret-URL:",
       "label.key": "Geheimer Schlüssel:",
+      "label.separateKey":
+        "URL und Schlüssel separat anzeigen für erweiterte Sicherheit",
       "label.filename": "Dateiname:",
 
       // Placeholders
@@ -156,6 +163,8 @@
       "helper.token":
         "Kann leer gelassen werden, wenn keine Authentifizierung erforderlich ist",
       "helper.key": "Base64-kodierter geheimer Schlüssel (separat geteilt)",
+      "helper.separateKey":
+        "Wenn aktiviert, werden URL und geheimer Schlüssel separat angezeigt, so dass sie über verschiedene Kanäle für erweiterte Sicherheit geteilt werden können.",
       "helper.expires":
         "Das Secret wird nach dieser Zeit oder beim ersten Zugriff selbst zerstört",
 
@@ -173,6 +182,8 @@
       "button.retrieve": "Secret abrufen",
       "button.copy": "Kopieren",
       "button.copied": "Kopiert!",
+      "button.copyUrl": "URL kopieren",
+      "button.copyKey": "Schlüssel kopieren",
       "button.download": "Herunterladen",
       "button.createAnother": "Neues Secret erstellen",
 
