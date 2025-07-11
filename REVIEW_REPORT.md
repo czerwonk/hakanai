@@ -55,9 +55,9 @@ fn generate_docs() {
 |-----------|-------|-----------|------------|
 | **Library (`lib/`)** | **A-** | Excellent trait design, comprehensive tests, strong crypto | Minor error context improvements possible |
 | **CLI (`cli/`)** | **A** | Excellent UX, complete test coverage, factory pattern DI | Minor anyhow! usage appropriate for CLI |
-| **Server (`server/`)** | **A** | Clean API, security-conscious, build-time generation | Memory leaks in build.rs template generation |
+| **Server (`server/`)** | **A** | Clean API, security-conscious, build-time generation | Minor template escaping improvements possible |
 | **TypeScript Client** | **A** | Excellent type safety, browser compatibility, robust error handling | Minor namespace pollution in global exports |
-| **Build System** | **A-** | Sophisticated template generation, proper change detection | Box::leak() usage for lifetime management |
+| **Build System** | **A** | Sophisticated template generation, proper change detection, clean memory management | Minor template escaping improvements possible |
 
 ## Detailed Analysis
 
@@ -114,7 +114,7 @@ fn generate_html_file(
 }
 ```
 
-### 3. Build System Quality 📊 **Grade: A-**
+### 3. Build System Quality 📊 **Grade: A**
 
 **New in Version 1.4.0: Build-Time Template Generation**
 
@@ -139,20 +139,25 @@ fn main() {
 }
 ```
 
-**Areas for Improvement:**
+**Recent Improvements:**
 ```rust
-// Issue: Intentional memory leaks for lifetime management
-context.insert("method_class", Box::leak(method_class.into_boxed_str()));
-context.insert("method_upper", Box::leak(method_upper.into_boxed_str()));
+// ✅ RESOLVED: Now uses owned strings instead of Box::leak()
+fn create_endpoint_context<'a>(
+    path: &'a str,
+    method: &str,
+    operation: &'a Value,
+    status_codes_html: &'a str,
+    request_body_html: &'a str,
+) -> HashMap<String, String> {
+    let mut context: HashMap<String, String> = HashMap::new();
+    context.insert("method_class".to_string(), method.to_lowercase());
+    context.insert("method_upper".to_string(), method.to_uppercase());
+    // ... other insertions
+    context
+}
 ```
 
-**Recommendation:**
-```rust
-// Use owned HashMap to avoid lifetime issues
-let mut context: HashMap<String, String> = HashMap::new();
-context.insert("method_class".to_string(), method_class);
-context.insert("method_upper".to_string(), method_upper);
-```
+**Impact:** Eliminated intentional memory leaks while maintaining clean lifetime management
 
 ### 4. Security Implementation 📊 **Grade: A+**
 
@@ -314,12 +319,12 @@ The server uses build-time template generation for consistent and efficient HTML
 - ✅ Modern browser API usage
 - ✅ Namespace considerations for global exports
 
-### Build System Idioms: **Good (B+)**
+### Build System Idioms: **Excellent (A-)**
 - ✅ Proper change detection with `cargo:rerun-if-changed`
 - ✅ Clean function organization
 - ✅ Template processing with secure defaults
-- ⚠️ Memory leaks using `Box::leak()` for lifetime management
-- ⚠️ Could use more idiomatic lifetime solutions
+- ✅ **RESOLVED**: Proper lifetime management with owned strings instead of `Box::leak()`
+- ✅ Idiomatic Rust patterns throughout build system
 
 ## RESOLVED Issues
 
@@ -364,21 +369,17 @@ The server uses build-time template generation for consistent and efficient HTML
 - **Current**: Generated files excluded from git, regenerated on each build
 - **Impact**: Cleaner repository and forced consistency across environments
 
+#### Build System Memory Management
+**Status:** **RESOLVED** - Eliminated memory leaks with proper lifetime management
+- **Previous**: Used `Box::leak()` for string lifetime management in template context
+- **Current**: Uses `HashMap<String, String>` with owned strings
+- **Impact**: No memory leaks, cleaner Rust code, better performance
+
 ## Current Issues & Recommendations
 
 ### 🔴 High Priority
 
-1. **Build System Memory Management**
-   ```rust
-   // Current: Intentional memory leaks
-   context.insert("method_class", Box::leak(method_class.into_boxed_str()));
-   
-   // Recommended: Use owned strings
-   let mut context: HashMap<String, String> = HashMap::new();
-   context.insert("method_class".to_string(), method_class);
-   ```
-
-2. **Token File Support** (Security)
+1. **Token File Support** (Security)
    ```rust
    #[arg(long, env = "HAKANAI_TOKEN_FILE")]
    token_file: Option<PathBuf>,
@@ -487,7 +488,7 @@ The Hakanai codebase version 1.4.0 represents **exemplary Rust development** wit
 - **Documentation Quality**: **A (4.6/5)** *(improved from 4.5/5)*
 - **Language Idioms**: **A (4.5/5)** *(maintained)*
 - **Error Handling**: **A (4.7/5)** *(maintained)*
-- **Build System**: **A- (4.4/5)** *(new category)*
+- **Build System**: **A (4.5/5)** *(new category)*
 
 ### Production Readiness: ✅ **APPROVED FOR PRODUCTION**
 
@@ -509,7 +510,6 @@ The system continues to demonstrate excellent engineering practices and is fully
 - ✅ **Refactored build scripts** with improved function organization
 
 **Minor Enhancements Suggested:**
-- Fix memory leaks in build system using proper lifetime management
 - Add HTML escaping in build templates
 - Consider integration tests with real Redis for end-to-end validation
 - Continue regular dependency updates and security audits

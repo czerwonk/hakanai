@@ -131,21 +131,25 @@ fn create_endpoint_context<'a>(
     operation: &'a Value,
     status_codes_html: &'a str,
     request_body_html: &'a str,
-) -> HashMap<&'static str, &'a str> {
+) -> HashMap<String, String> {
     let method_class = method.to_lowercase();
     let method_upper = method.to_uppercase();
 
-    let mut context = HashMap::new();
-    context.insert("summary", operation["summary"].as_str().unwrap_or(""));
-    context.insert("method_class", Box::leak(method_class.into_boxed_str()));
-    context.insert("method_upper", Box::leak(method_upper.into_boxed_str()));
-    context.insert("path", path);
+    let mut context: HashMap<String, String> = HashMap::new();
     context.insert(
-        "description",
-        operation["description"].as_str().unwrap_or(""),
+        "summary".to_string(),
+        operation["summary"].as_str().unwrap_or("").to_string(),
     );
-    context.insert("request_body", request_body_html);
-    context.insert("status_codes", status_codes_html);
+    context.insert("method_class".to_string(), method_class);
+    context.insert("method_upper".to_string(), method_upper);
+    context.insert("path".to_string(), path.to_string());
+    context.insert(
+        "description".to_string(),
+        operation["description"].as_str().unwrap_or("").to_string(),
+    );
+    context.insert("request_body".to_string(), request_body_html.to_string());
+    context.insert("status_codes".to_string(), status_codes_html.to_string());
+
     context
 }
 
