@@ -274,7 +274,7 @@ hakanai/
 ### Building
 
 ```bash
-# Build entire workspace (includes TypeScript compilation)
+# Build entire workspace (includes TypeScript compilation and HTML generation)
 cargo build --workspace --verbose
 
 # Build release version
@@ -286,6 +286,37 @@ make build-ts
 # Clean TypeScript compiled files
 make clean-ts
 ```
+
+#### Build-Time Template Generation
+
+The server uses build-time template generation for consistent and efficient HTML serving:
+
+**Generated Files (auto-generated, do not edit directly):**
+- `server/src/includes/docs_generated.html` - API documentation from OpenAPI spec
+- `server/src/includes/create-secret.html` - Create secret page with version substitution
+- `server/src/includes/get-secret.html` - Retrieve secret page with version substitution
+
+*Note: These files are excluded from git and regenerated on every build.*
+
+**Source Templates (edit these):**
+- `server/templates/docs.html` - API documentation template
+- `server/templates/endpoint.html` - Individual endpoint template
+- `server/templates/create-secret.html` - Create secret page template
+- `server/templates/get-secret.html` - Retrieve secret page template
+
+**How it works:**
+1. `server/build.rs` runs during compilation
+2. Templates in `templates/` directory are processed with tinytemplate
+3. Variables like `{version}` are substituted with build-time values
+4. Generated HTML files are embedded in the binary with `include_bytes!`
+5. No runtime string replacement needed - templates are pre-processed
+
+**Template Variables:**
+- `{version}` - Cargo package version (e.g., "1.3.2")
+- `{title}`, `{description}` - From OpenAPI spec
+- `{endpoints}` - Generated endpoint documentation
+
+This approach ensures version consistency and eliminates runtime overhead.
 
 ### Testing
 

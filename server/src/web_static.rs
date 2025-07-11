@@ -32,19 +32,21 @@ fn serve_with_caching_header(content: &[u8], content_type: &str, max_age: u64) -
         .body(content.to_vec())
 }
 
-/// Serves the HTML page for getting a secret, replacing the version placeholder
+/// Serves the HTML page for getting a secret
 pub async fn serve_get_secret_html() -> HttpResponse {
-    const CONTENT: &str = include_str!("includes/get-secret.html");
-    let content = CONTENT.replace("{{ VERSION }}", env!("CARGO_PKG_VERSION"));
-
-    serve_with_caching_header(content.as_bytes(), "text/html", DEFAULT_CACHE_MAX_AGE)
+    serve_with_caching_header(
+        include_bytes!("includes/get-secret.html"),
+        "text/html",
+        DEFAULT_CACHE_MAX_AGE,
+    )
 }
 
 async fn serve_create_secret_html() -> HttpResponse {
-    const CONTENT: &str = include_str!("includes/create-secret.html");
-    let content = CONTENT.replace("{{ VERSION }}", env!("CARGO_PKG_VERSION"));
-
-    serve_with_caching_header(content.as_bytes(), "text/html", DEFAULT_CACHE_MAX_AGE)
+    serve_with_caching_header(
+        include_bytes!("includes/create-secret.html"),
+        "text/html",
+        DEFAULT_CACHE_MAX_AGE,
+    )
 }
 
 async fn serve_js_client() -> impl Responder {

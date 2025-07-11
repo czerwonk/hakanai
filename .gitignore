@@ -26,3 +26,8 @@ AGENTS.md
 node_modules/
 
 docker-compose.override.yml
+
+# Build-time generated HTML files
+server/src/includes/docs_generated.html
+server/src/includes/create-secret.html
+server/src/includes/get-secret.html
