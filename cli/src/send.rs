@@ -2,6 +2,7 @@ use std::io::{self, Read};
 
 use anyhow::{Result, anyhow};
 use colored::Colorize;
+use url::Url;
 use zeroize::Zeroizing;
 
 use hakanai_lib::client::Client;
@@ -52,12 +53,28 @@ pub async fn send<T: Factory>(factory: T, args: SendArgs) -> Result<()> {
         .send_secret(args.server.clone(), payload, args.ttl, token, Some(opts))
         .await?;
 
-    println!(
-        "Secret sent successfully!\nYou can access it at: {}",
-        link.to_string().cyan()
-    );
+    print_link(link, args.separate_key);
 
     Ok(())
+}
+
+fn print_link(link: Url, separate_key: bool) {
+    println!("Secret sent successfully!\n");
+
+    if separate_key {
+        print_link_separate_key(link);
+    } else {
+        println!("Secret link: {}", link.to_string().cyan());
+    }
+}
+
+fn print_link_separate_key(link: Url) {
+    let mut url = link.clone();
+    url.set_fragment(None);
+    println!("Secret link: {}", url.to_string().cyan());
+
+    let key = link.fragment().unwrap_or_default();
+    println!("Key:         {}", key.cyan());
 }
 
 fn get_filename(
