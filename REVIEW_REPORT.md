@@ -3,11 +3,11 @@
 **Date:** July 11, 2025  
 **Reviewer:** Automated Code Review  
 **Project:** Hakanai - Zero-Knowledge Secret Sharing Service  
-**Version:** 1.4.0  
+**Version:** 1.5.0  
 
 ## Executive Summary
 
-Hakanai continues to be an exceptionally well-architected, secure secret sharing service demonstrating outstanding code quality. The project exhibits exemplary engineering practices, comprehensive testing (100+ tests with factory pattern DI), and robust security implementation achieving A+ security rating. Version 1.4.0 introduces significant improvements with build-time template generation while maintaining excellent code quality standards.
+Hakanai continues to be an exceptionally well-architected, secure secret sharing service demonstrating outstanding code quality. The project exhibits exemplary engineering practices, comprehensive testing (100+ tests with factory pattern DI), and robust security implementation achieving A+ security rating. Version 1.5.0 introduces enhanced security features with separate key functionality while maintaining all previous quality improvements from build-time template generation.
 
 **Overall Grade: A** (Excellent - exceeds production standards)
 
@@ -28,18 +28,40 @@ Hakanai continues to be an exceptionally well-architected, secure secret sharing
 - **Build-time template generation** for efficient and secure HTML generation
 - **Production-ready** with all major issues resolved
 
-## Version 1.4.0 Updates
+## Version 1.5.0 Updates
 
 ### New Features & Improvements
-- **Build-time Template Generation**: Secure, efficient HTML generation using tinytemplate
-- **Git Exclusion**: Generated files properly excluded from version control
-- **Version Consistency**: Automatic version injection across all generated content
-- **Refactored Build System**: Improved code organization with smaller, focused functions
-- **Enhanced Documentation**: Updated build process documentation in README
+- **Enhanced Security Features**: Separate key functionality for defense-in-depth security
+- **CLI Enhancements**: `--separate-key` and `--key` parameters for flexible security modes
+- **Channel Separation**: URL and decryption key can be shared through different channels
+- **Backward Compatibility**: All existing functionality remains unchanged
+- **Build-time Template Generation**: Secure, efficient HTML generation using tinytemplate (inherited from 1.4.0)
+- **Git Exclusion**: Generated files properly excluded from version control (inherited from 1.4.0)
+- **Version Consistency**: Automatic version injection across all generated content (inherited from 1.4.0)
+- **Refactored Build System**: Improved code organization with smaller, focused functions (inherited from 1.4.0)
+- **Enhanced Documentation**: Updated build process documentation in README (inherited from 1.4.0)
+
+### Security Enhancement Analysis
+```rust
+// Enhanced CLI with separate key functionality
+#[arg(
+    long,
+    help = "Does not include the key in the URL fragment, but instead prints it to stdout. This is useful for sharing the key separately."
+)]
+pub separate_key: bool,
+
+#[arg(
+    short,
+    long,
+    help = "Optional base64 encoded secret key to use for decryption if not part of the URL."
+)]
+pub key: Option<String>,
+```
+**Strengths**: Clean CLI design with backward compatibility and enhanced security options
 
 ### Build System Analysis
 ```rust
-// Clean function organization in build.rs
+// Clean function organization in build.rs (inherited from 1.4.0)
 fn generate_docs() {
     let openapi = load_openapi();
     let html = generate_docs_html(&openapi);
@@ -285,9 +307,18 @@ fs::write(output_path, html)
 - ✅ **Build system**: Comprehensive documentation of template generation process
 - ✅ **Usage Examples**: High-priority API documentation includes comprehensive examples
 
-**Version 1.4.0 Documentation Improvements:**
+**Version 1.5.0 Documentation Improvements:**
 ```markdown
-#### Build-Time Template Generation
+#### Enhanced Security Mode
+
+With the `--separate-key` option, Hakanai provides enhanced security by separating the secret URL from the decryption key:
+
+1. **Traditional mode**: One URL contains both secret ID and key (`/s/uuid#key`)
+2. **Separate key mode**: Secret URL (`/s/uuid`) and key are provided separately
+3. **Defense in depth**: Share URL and key through different communication channels
+4. **Reduced attack surface**: No cryptographic material in any single URL
+
+#### Build-Time Template Generation (inherited from 1.4.0)
 
 The server uses build-time template generation for consistent and efficient HTML serving:
 
@@ -502,20 +533,24 @@ The system continues to demonstrate excellent engineering practices and is fully
 - **Excellent observability** with OpenTelemetry integration and dual logging
 - **Efficient build system** with template generation and version consistency
 
-**Version 1.4.0 Improvements:**
-- ✅ **Build-time template generation** for improved performance and maintainability
-- ✅ **Enhanced version management** with automatic injection across all components
-- ✅ **Improved git workflow** with proper exclusion of generated files
-- ✅ **Better documentation** including comprehensive build system explanation
-- ✅ **Refactored build scripts** with improved function organization
+**Version 1.5.0 Improvements:**
+- ✅ **Enhanced security features** with separate key functionality for defense-in-depth
+- ✅ **CLI enhancements** with `--separate-key` and `--key` parameters
+- ✅ **Channel separation** enabling URL and key sharing through different channels
+- ✅ **Backward compatibility** maintaining all existing functionality
+- ✅ **Build-time template generation** for improved performance and maintainability (inherited from 1.4.0)
+- ✅ **Enhanced version management** with automatic injection across all components (inherited from 1.4.0)
+- ✅ **Improved git workflow** with proper exclusion of generated files (inherited from 1.4.0)
+- ✅ **Better documentation** including comprehensive build system explanation (inherited from 1.4.0)
+- ✅ **Refactored build scripts** with improved function organization (inherited from 1.4.0)
 
 **Minor Enhancements Suggested:**
 - Add HTML escaping in build templates
 - Consider integration tests with real Redis for end-to-end validation
 - Continue regular dependency updates and security audits
 
-**Recommendation:** The system continues to exceed production standards with exceptional code quality, comprehensive testing, robust security implementation, and now includes an efficient build-time generation system that improves both performance and maintainability.
+**Recommendation:** The system continues to exceed production standards with exceptional code quality, comprehensive testing, robust security implementation, and now includes enhanced security features with separate key functionality that provides defense-in-depth protection while maintaining backward compatibility.
 
 ---
 
-*This comprehensive code review was conducted using automated analysis tools, manual code inspection, and assessment against industry best practices for Rust, TypeScript, and web development. The review covers the new build-time template generation system introduced in version 1.4.0.*
+*This comprehensive code review was conducted using automated analysis tools, manual code inspection, and assessment against industry best practices for Rust, TypeScript, and web development. The review covers the new separate key security enhancements introduced in version 1.5.0.*
