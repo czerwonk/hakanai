@@ -93,20 +93,6 @@ mod tests {
     use std::fs;
     use tempfile::TempDir;
 
-    fn create_get_args(
-        link: &str,
-        key: Option<String>,
-        to_stdout: bool,
-        filename: Option<String>,
-    ) -> GetArgs {
-        GetArgs {
-            link: url::Url::parse(link).unwrap(),
-            key,
-            to_stdout,
-            filename,
-        }
-    }
-
     #[test]
     fn test_print_to_stdout_with_text() {
         let text = "Hello, World!";
@@ -295,7 +281,7 @@ mod tests {
         let client = MockClient::new().with_receive_success(payload);
         let factory = MockFactory::new().with_client(client);
 
-        let args = create_get_args("https://example.com/s/test123#key", None, true, None);
+        let args = GetArgs::builder("https://example.com/s/test123#key").with_to_stdout();
         let result = get(factory, args).await;
 
         assert!(result.is_ok());
@@ -315,12 +301,7 @@ mod tests {
             .join("document.txt")
             .to_string_lossy()
             .to_string();
-        let args = create_get_args(
-            "https://example.com/s/test123#key",
-            None,
-            false,
-            Some(filename),
-        );
+        let args = GetArgs::builder("https://example.com/s/test123#key").with_filename(&filename);
         let result = get(factory, args).await;
 
         assert!(result.is_ok());
@@ -344,12 +325,8 @@ mod tests {
             .join("custom.bin")
             .to_string_lossy()
             .to_string();
-        let args = create_get_args(
-            "https://example.com/s/test123#key",
-            None,
-            false,
-            Some(custom_filename.clone()),
-        );
+        let args =
+            GetArgs::builder("https://example.com/s/test123#key").with_filename(&custom_filename);
         let result = get(factory, args).await;
 
         assert!(result.is_ok());
@@ -374,12 +351,7 @@ mod tests {
             .join("output.dat")
             .to_string_lossy()
             .to_string();
-        let args = create_get_args(
-            "https://example.com/s/test123#key",
-            None,
-            false,
-            Some(filename),
-        );
+        let args = GetArgs::builder("https://example.com/s/test123#key").with_filename(&filename);
         let result = get(factory, args).await;
 
         assert!(result.is_ok());
@@ -395,7 +367,7 @@ mod tests {
         let client = MockClient::new().with_receive_failure("Network timeout".to_string());
         let factory = MockFactory::new().with_client(client);
 
-        let args = create_get_args("https://example.com/s/test123#key", None, true, None);
+        let args = GetArgs::builder("https://example.com/s/test123#key").with_to_stdout();
         let result = get(factory, args).await;
 
         assert!(result.is_err());
@@ -409,7 +381,7 @@ mod tests {
         let client = MockClient::new().with_receive_success(payload);
         let factory = MockFactory::new().with_client(client);
 
-        let args = create_get_args("https://example.com/s/test123#key", None, true, None);
+        let args = GetArgs::builder("https://example.com/s/test123#key").with_to_stdout();
         let result = get(factory, args).await;
 
         assert!(result.is_ok());
@@ -428,12 +400,8 @@ mod tests {
         let client = MockClient::new().with_receive_success(payload);
         let factory = MockFactory::new().with_client(client);
 
-        let args = create_get_args(
-            "https://example.com/s/test123#key",
-            None,
-            false,
-            Some(file_path.to_string_lossy().to_string()),
-        );
+        let args = GetArgs::builder("https://example.com/s/test123#key")
+            .with_filename(&file_path.to_string_lossy().to_string());
         let result = get(factory, args).await;
 
         assert!(result.is_ok());
