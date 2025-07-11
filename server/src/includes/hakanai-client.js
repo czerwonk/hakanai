@@ -508,13 +508,6 @@ class HakanaiClient {
     return CryptoOperations.decrypt(encryptedData, key);
   }
 }
-// Export for use in browsers (global namespace)
-if (typeof window !== "undefined") {
-  window.HakanaiClient = HakanaiClient;
-  window.HakanaiError = HakanaiError;
-  window.Base64UrlSafe = Base64UrlSafe;
-  window.CryptoOperations = CryptoOperations;
-}
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
     HakanaiClient,

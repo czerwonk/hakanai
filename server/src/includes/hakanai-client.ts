@@ -665,14 +665,6 @@ class HakanaiClient {
   }
 }
 
-// Export for use in browsers (global namespace)
-if (typeof window !== "undefined") {
-  (window as any).HakanaiClient = HakanaiClient;
-  (window as any).HakanaiError = HakanaiError;
-  (window as any).Base64UrlSafe = Base64UrlSafe;
-  (window as any).CryptoOperations = CryptoOperations;
-}
-
 // Export for CommonJS/ES modules
 declare var module: any;
 if (typeof module !== "undefined" && module.exports) {
