@@ -12,6 +12,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
         .route("/common-utils.js", web::get().to(serve_common_utils_js))
         .route("/create", web::get().to(serve_create_secret_html))
         .route("/create-secret.js", web::get().to(serve_create_secret_js))
+        .route("/docs", web::get().to(serve_docs_html))
         .route("/get-secret.js", web::get().to(serve_get_secret_js))
         .route("/i18n.js", web::get().to(serve_i18n_js))
         .route("/icon.svg", web::get().to(serve_icon))
@@ -105,6 +106,14 @@ async fn serve_create_secret_js() -> impl Responder {
     serve_with_caching_header(
         include_bytes!("includes/create-secret.js"),
         "application/javascript",
+        DEFAULT_CACHE_MAX_AGE,
+    )
+}
+
+async fn serve_docs_html() -> impl Responder {
+    serve_with_caching_header(
+        include_str!("includes/docs.html").as_bytes(),
+        "text/html",
         DEFAULT_CACHE_MAX_AGE,
     )
 }
