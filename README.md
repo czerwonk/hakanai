@@ -150,7 +150,9 @@ Hakanai now includes a web interface for users who prefer not to use the CLI:
 
 ## API Reference
 
-**📚 For a complete, interactive API documentation, visit `/docs` on your running server.**
+**📚 For complete API documentation, visit `/docs` on your running server.**
+
+The documentation is automatically generated from the OpenAPI specification, ensuring it always reflects the current API state. Both human-readable docs and machine-readable specs are kept in perfect sync.
 
 ### POST /api/v1/secret
 Create a new secret.
@@ -235,10 +237,10 @@ Web interface for retrieving secrets - shows a form to paste hakanai URLs.
 Web interface for creating secrets - supports text input and file uploads.
 
 ### GET /docs
-API documentation page - comprehensive reference for developers using the REST API.
+Auto-generated API documentation page - comprehensive reference for developers using the REST API.
 
 ### GET /openapi.json
-OpenAPI 3.0 specification file for API tooling integration (Postman, code generators, etc.).
+OpenAPI 3.0 specification file - the source of truth for API documentation and tooling integration (Postman, code generators, etc.).
 
 ### GET /ready
 Readiness check endpoint - returns 200 OK when the server is ready to accept requests.
