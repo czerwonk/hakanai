@@ -25,7 +25,9 @@
       "**/*.test.ts"
     ],
     "collectCoverageFrom": [
-      "../server/src/includes/hakanai-client.ts"
+      "../server/src/includes/hakanai-client.ts",
+      "../server/src/includes/i18n.ts",
+      "../server/src/includes/common-utils.ts"
     ],
     "coverageDirectory": "coverage",
     "coverageReporters": [

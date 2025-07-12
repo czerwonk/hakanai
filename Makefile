@@ -6,8 +6,8 @@ CARGO := cargo
 TSC := tsc
 
 # TypeScript files
-TS_SRC := server/src/includes/hakanai-client.ts
-JS_OUT := server/src/includes/hakanai-client.js
+TS_SRC := server/src/includes/hakanai-client.ts server/src/includes/common-utils.ts server/src/includes/i18n.ts
+JS_OUT := server/src/includes/hakanai-client.js server/src/includes/common-utils.js server/src/includes/i18n.js
 
 # Default target
 .PHONY: all
@@ -15,11 +15,11 @@ all: build
 
 # Build everything
 .PHONY: build
-build: build-rust build-ts
+build: build-ts build-rust
 
-# Build Rust workspace
+# Build Rust workspace (depends on TypeScript)
 .PHONY: build-rust
-build-rust:
+build-rust: build-ts
 	$(CARGO) build --workspace --verbose
 
 # Build TypeScript
@@ -31,10 +31,10 @@ $(JS_OUT): $(TS_SRC) tsconfig.json
 
 # Release builds
 .PHONY: release
-release: build-rust-release build-ts
+release: build-ts build-rust-release
 
 .PHONY: build-rust-release
-build-rust-release:
+build-rust-release: build-ts
 	$(CARGO) build --release --workspace --verbose
 
 # Test targets
