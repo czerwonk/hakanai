@@ -70,6 +70,11 @@ declare global {
 }
 
 function updateUIStrings(): void {
+  // Check if i18n is available before using it
+  if (!window.i18n?.t) {
+    return;
+  }
+
   UI_STRINGS.EMPTY_URL = window.i18n.t("msg.emptyUrl");
   UI_STRINGS.INVALID_URL = window.i18n.t("msg.invalidUrl");
   UI_STRINGS.MISSING_KEY = window.i18n.t("msg.missingKey");
@@ -139,7 +144,8 @@ function clearInputs(): void {
 
 function showLoadingState(): void {
   const { loadingDiv, resultDiv } = getElements();
-  loadingDiv.style.display = "block";
+  loadingDiv.classList.add("visible");
+  loadingDiv.classList.remove("hidden");
   resultDiv.innerHTML = "";
   document.body.classList.remove("expanded-view");
   setElementsState(true);
@@ -147,7 +153,8 @@ function showLoadingState(): void {
 
 function hideLoadingState(): void {
   const { loadingDiv } = getElements();
-  loadingDiv.style.display = "none";
+  loadingDiv.classList.add("hidden");
+  loadingDiv.classList.remove("visible");
   setElementsState(false);
 }
 
@@ -238,7 +245,8 @@ function hideKeyInput(
   keyInputGroup: HTMLElement,
   keyInput: HTMLInputElement,
 ): void {
-  keyInputGroup.style.display = "none";
+  keyInputGroup.classList.remove("visible");
+  keyInputGroup.classList.add("hidden");
   keyInput.required = false;
   secureInputClear(keyInput);
 }
@@ -247,7 +255,8 @@ function showKeyInput(
   keyInputGroup: HTMLElement,
   keyInput: HTMLInputElement,
 ): void {
-  keyInputGroup.style.display = "block";
+  keyInputGroup.classList.remove("hidden");
+  keyInputGroup.classList.add("visible");
   keyInput.required = true;
 }
 
@@ -441,7 +450,7 @@ function downloadSecret(payload: PayloadData): void {
   const url = window.URL.createObjectURL(blob);
 
   const anchor = document.createElement("a");
-  anchor.style.display = "none";
+  anchor.classList.add("hidden");
   anchor.href = url;
   anchor.download = filename;
 
@@ -484,6 +493,11 @@ function setupForm(): void {
 }
 
 document.addEventListener("languageChanged", () => {
+  updateUIStrings();
+  updateThemeToggleButton();
+});
+
+document.addEventListener("i18nInitialized", () => {
   updateUIStrings();
   updateThemeToggleButton();
 });

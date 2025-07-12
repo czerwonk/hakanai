@@ -73,6 +73,11 @@ declare global {
 }
 
 function updateUIStrings(): void {
+  // Check if i18n is available before using it
+  if (!window.i18n?.t) {
+    return;
+  }
+
   UI_STRINGS.EMPTY_SECRET = window.i18n.t("msg.emptySecret");
   UI_STRINGS.EMPTY_FILE = window.i18n.t("msg.emptyFile");
   UI_STRINGS.CREATE_FAILED = window.i18n.t("msg.createFailed");
@@ -231,7 +236,13 @@ function setElementsState(elements: Elements, disabled: boolean): void {
     resultDiv,
   } = elements;
 
-  loadingDiv.style.display = disabled ? "block" : "none";
+  if (disabled) {
+    loadingDiv.classList.add("visible");
+    loadingDiv.classList.remove("hidden");
+  } else {
+    loadingDiv.classList.add("hidden");
+    loadingDiv.classList.remove("visible");
+  }
   button.disabled = disabled;
   secretInput.disabled = disabled;
   fileInput.disabled = disabled;
@@ -321,7 +332,7 @@ function generateUrlId(): string {
 function hideForm(): void {
   const form = document.getElementById("create-secret-form");
   if (form) {
-    form.style.display = "none";
+    form.classList.add("hidden");
   }
 }
 
@@ -533,7 +544,7 @@ function resetToCreateMode(): void {
   const resultContainer = document.getElementById("result");
 
   if (form) {
-    form.style.display = "block";
+    form.classList.remove("hidden");
   }
   if (resultContainer) {
     resultContainer.innerHTML = "";
@@ -576,7 +587,7 @@ function showError(message: string): void {
 function showForm(): void {
   const form = document.getElementById("create-secret-form");
   if (form) {
-    form.style.display = "block";
+    form.classList.remove("hidden");
   }
 }
 
@@ -631,7 +642,7 @@ function showFileInfo(file: File, elements: FileElements): void {
 
   fileNameSpan.textContent = sanitizedName || "Invalid filename";
   fileSizeSpan.textContent = formatFileSize(file.size);
-  fileInfoDiv.style.display = "block";
+  fileInfoDiv.classList.remove("hidden");
 
   if (file.size > FILE_LIMITS.MAX_SIZE) {
     fileInfoDiv.className = "file-info error";
@@ -643,22 +654,22 @@ function showFileInfo(file: File, elements: FileElements): void {
 
 function hideFileInfo(elements: FileElements): void {
   const { fileInfoDiv } = elements;
-  fileInfoDiv.style.display = "none";
+  fileInfoDiv.classList.add("hidden");
 }
 
 function switchToFileMode(elements: FileElements): void {
   const { radioGroup, textInputGroup, fileInputGroup, fileRadio } = elements;
 
-  radioGroup.style.display = "none";
-  textInputGroup.style.display = "none";
-  fileInputGroup.style.display = "block";
+  radioGroup.classList.add("hidden");
+  textInputGroup.classList.add("hidden");
+  fileInputGroup.classList.remove("hidden");
   fileRadio.checked = true;
 }
 
 function switchToTextMode(elements: FileElements): void {
   const { radioGroup, textRadio } = elements;
 
-  radioGroup.style.display = "block";
+  radioGroup.classList.remove("hidden");
   textRadio.checked = true;
   toggleSecretType();
 }
@@ -684,8 +695,8 @@ function setupTextMode(): void {
   const secretFile = document.getElementById("secretFile") as HTMLInputElement;
 
   if (textInputGroup && fileInputGroup && secretText && secretFile) {
-    textInputGroup.style.display = "block";
-    fileInputGroup.style.display = "none";
+    textInputGroup.classList.remove("hidden");
+    fileInputGroup.classList.add("hidden");
     secretText.required = true;
     secretFile.required = false;
     secretText.focus();
@@ -699,8 +710,8 @@ function setupFileMode(): void {
   const secretFile = document.getElementById("secretFile") as HTMLInputElement;
 
   if (textInputGroup && fileInputGroup && secretText && secretFile) {
-    textInputGroup.style.display = "none";
-    fileInputGroup.style.display = "block";
+    textInputGroup.classList.add("hidden");
+    fileInputGroup.classList.remove("hidden");
     secretText.required = false;
     secretFile.required = true;
     secretFile.focus();
@@ -753,6 +764,11 @@ function focusSecretInput(): void {
 }
 
 document.addEventListener("languageChanged", () => {
+  updateUIStrings();
+  updateThemeToggleButton();
+});
+
+document.addEventListener("i18nInitialized", () => {
   updateUIStrings();
   updateThemeToggleButton();
 });

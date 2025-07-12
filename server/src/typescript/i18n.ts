@@ -274,6 +274,7 @@ class I18n {
     this.currentLang = this.detectLanguage();
     this.applyTranslations();
     this.setupLanguageSwitcher();
+    this.dispatchInitializedEvent();
   }
 
   private detectLanguage(): LanguageCode {
@@ -406,6 +407,14 @@ class I18n {
     );
   }
 
+  private dispatchInitializedEvent(): void {
+    document.dispatchEvent(
+      new CustomEvent("i18nInitialized", {
+        detail: { language: this.currentLang },
+      }),
+    );
+  }
+
   private setupLanguageSwitcher(): void {
     const switcher = document.getElementById(
       "language-switcher",
@@ -461,6 +470,8 @@ if (document.readyState === "loading") {
   initializeI18n();
 }
 
+// Note: No exports needed for browser usage - i18n is attached to window.i18n
+// Exports below are for testing purposes only and will be removed in compiled JS
 export {
   I18n,
   translations,
