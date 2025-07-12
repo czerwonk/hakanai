@@ -4,6 +4,7 @@ import {
   createButtonContainer,
   copyToClipboard,
   announceToScreenReader,
+  secureInputClear,
   initTheme,
   updateThemeToggleButton,
 } from "./common-utils.js";
@@ -248,7 +249,7 @@ function clearInputs(
   secretInput: HTMLInputElement,
   fileInput: HTMLInputElement,
 ): void {
-  secretInput.value = "";
+  secureInputClear(secretInput);
   fileInput.value = "";
   updateFileInfo();
 }
@@ -304,6 +305,10 @@ async function createSecret(): Promise<void> {
     handleCreateError(error);
   } finally {
     setElementsState(elements, false);
+    // Clear auth token from memory for security
+    if (elements.authTokenInput.value) {
+      secureInputClear(elements.authTokenInput);
+    }
   }
 }
 

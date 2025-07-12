@@ -4,6 +4,7 @@ import {
   createButtonContainer,
   copyToClipboard,
   announceToScreenReader,
+  secureInputClear,
   debounce,
   initTheme,
   updateThemeToggleButton,
@@ -132,8 +133,8 @@ function setElementsState(disabled: boolean): void {
 
 function clearInputs(): void {
   const { urlInput, keyInput } = getElements();
-  urlInput.value = "";
-  keyInput.value = "";
+  secureInputClear(urlInput);
+  secureInputClear(keyInput);
 }
 
 function showLoadingState(): void {
@@ -239,7 +240,7 @@ function hideKeyInput(
 ): void {
   keyInputGroup.style.display = "none";
   keyInput.required = false;
-  keyInput.value = "";
+  secureInputClear(keyInput);
 }
 
 function showKeyInput(
