@@ -401,7 +401,7 @@ mod tests {
         let factory = MockFactory::new().with_client(client);
 
         let args = GetArgs::builder("https://example.com/s/test123#key")
-            .with_filename(&file_path.to_string_lossy().to_string());
+            .with_filename(file_path.to_string_lossy().as_ref());
         let result = get(factory, args).await;
 
         assert!(result.is_ok());

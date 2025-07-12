@@ -54,9 +54,9 @@ fn compile_typescript() {
         let stderr = String::from_utf8_lossy(&output.stderr);
         let stdout = String::from_utf8_lossy(&output.stdout);
         println!("cargo:warning=TypeScript compilation failed");
-        println!("cargo:warning=STDOUT: {}", stdout);
-        println!("cargo:warning=STDERR: {}", stderr);
-        panic!("TypeScript compilation failed: {}", stderr);
+        println!("cargo:warning=STDOUT: {stdout}");
+        println!("cargo:warning=STDERR: {stderr}");
+        panic!("TypeScript compilation failed: {stderr}");
     }
 
     println!("cargo:warning=TypeScript compilation successful");
