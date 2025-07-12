@@ -130,15 +130,15 @@ describe("Common Utils", () => {
         expect(button.classList.contains("copied")).toBe(true);
       });
 
-      test("should show alert when clipboard API fails", async () => {
+      test("should show visual feedback when clipboard API fails", async () => {
         jest.useRealTimers(); // Use real timers for this test
 
         mockClipboard.writeText.mockRejectedValue(
           new Error("Clipboard failed"),
         );
 
-        // Mock alert
-        window.alert = jest.fn();
+        // Mock document.execCommand to also fail (fallback)
+        document.execCommand = jest.fn().mockReturnValue(false);
 
         const button = document.createElement("button");
         button.textContent = "Copy";
@@ -150,29 +150,53 @@ describe("Common Utils", () => {
         // Wait for promise rejection
         await new Promise((resolve) => setTimeout(resolve, 0));
 
-        expect(window.alert).toHaveBeenCalledWith("Failed");
+        // Should show visual feedback instead of alert
+        expect(button.textContent).toBe("Failed");
+        expect(button.classList.contains("copy-failed")).toBe(true);
 
         jest.useFakeTimers(); // Restore fake timers
       });
 
-      test("should show alert when clipboard API is not available", () => {
+      test("should use fallback when clipboard API is not available", () => {
         // Remove clipboard API
         Object.defineProperty(navigator, "clipboard", {
           value: undefined,
           writable: true,
         });
 
-        // Mock alert
-        window.alert = jest.fn();
+        // Mock document.execCommand to succeed (fallback method)
+        document.execCommand = jest.fn().mockReturnValue(true);
 
         const button = document.createElement("button");
         button.textContent = "Copy";
 
         copyToClipboard("test text", button, "Copy", "Copied!", "Failed");
 
-        expect(window.alert).toHaveBeenCalledWith(
-          "Failed (Clipboard API not supported)",
-        );
+        // Should use fallback method successfully
+        expect(document.execCommand).toHaveBeenCalledWith("copy");
+        expect(button.textContent).toBe("Copied!");
+        expect(button.classList.contains("copied")).toBe(true);
+      });
+
+      test("should show visual feedback when both clipboard API and fallback fail", () => {
+        // Remove clipboard API
+        Object.defineProperty(navigator, "clipboard", {
+          value: undefined,
+          writable: true,
+        });
+
+        // Mock document.execCommand to fail (fallback method)
+        document.execCommand = jest.fn().mockReturnValue(false);
+
+        const button = document.createElement("button");
+        button.textContent = "Copy";
+
+        copyToClipboard("test text", button, "Copy", "Copied!", "Failed");
+
+        // Should show visual failure feedback
+        expect(document.execCommand).toHaveBeenCalledWith("copy");
+        expect(button.textContent).toBe("Failed");
+        expect(button.classList.contains("copy-failed")).toBe(true);
       });
 
       test("should restore button state after timeout", async () => {
