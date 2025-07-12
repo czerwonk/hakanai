@@ -48,6 +48,14 @@ export function copyToClipboard(
     .catch(() => alert(failedMessage));
 }
 
+export function secureInputClear(input: HTMLInputElement): void {
+  if (input.value.length > 0) {
+    // Simple secure clear: overwrite then empty
+    input.value = "x".repeat(input.value.length);
+    input.value = "";
+  }
+}
+
 function showCopySuccess(
   button: HTMLButtonElement,
   originalText: string,

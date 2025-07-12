@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::fs;
+use std::process::Command;
 
 use serde_json::Value;
 use tinytemplate::TinyTemplate;
@@ -11,8 +12,54 @@ fn main() {
     println!("cargo:rerun-if-changed=templates/create-secret.html");
     println!("cargo:rerun-if-changed=templates/get-secret.html");
 
+    // TypeScript files that should trigger recompilation
+    println!("cargo:rerun-if-changed=src/typescript/hakanai-client.ts");
+    println!("cargo:rerun-if-changed=src/typescript/common-utils.ts");
+    println!("cargo:rerun-if-changed=src/typescript/i18n.ts");
+    println!("cargo:rerun-if-changed=src/typescript/get-secret.ts");
+    println!("cargo:rerun-if-changed=src/typescript/create-secret.ts");
+    println!("cargo:rerun-if-changed=src/typescript/types.ts");
+    println!("cargo:rerun-if-changed=tsconfig.json");
+
+    compile_typescript();
     generate_docs();
     generate_static_html_files();
+}
+
+fn compile_typescript() {
+    println!("cargo:warning=Compiling TypeScript files...");
+
+    // Check if TypeScript compiler is available
+    let tsc_check = Command::new("tsc").arg("--version").output();
+
+    match tsc_check {
+        Ok(output) if output.status.success() => {
+            println!("cargo:warning=Found TypeScript compiler");
+        }
+        _ => {
+            println!(
+                "cargo:warning=TypeScript compiler (tsc) not found. Please install TypeScript with: npm install -g typescript"
+            );
+            panic!("TypeScript compiler not available. Install with: npm install -g typescript");
+        }
+    }
+
+    // Compile TypeScript files
+    let output = Command::new("tsc")
+        .current_dir("..") // Run from workspace root where tsconfig.json is located
+        .output()
+        .expect("Failed to execute TypeScript compiler");
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        println!("cargo:warning=TypeScript compilation failed");
+        println!("cargo:warning=STDOUT: {}", stdout);
+        println!("cargo:warning=STDERR: {}", stderr);
+        panic!("TypeScript compilation failed: {}", stderr);
+    }
+
+    println!("cargo:warning=TypeScript compilation successful");
 }
 
 fn generate_docs() {

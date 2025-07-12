@@ -14,7 +14,7 @@
     "forceConsistentCasingInFileNames": true
   },
   "include": [
-    "server/src/includes/*.ts"
+    "server/src/typescript/*.ts"
   ],
   "exclude": [
     "node_modules",

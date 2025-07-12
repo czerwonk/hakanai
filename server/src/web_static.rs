@@ -14,12 +14,13 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
         .route("/create-secret.js", web::get().to(serve_create_secret_js))
         .route("/docs", web::get().to(serve_docs_html))
         .route("/get-secret.js", web::get().to(serve_get_secret_js))
-        .route("/openapi.json", web::get().to(serve_openapi_json))
+        .route("/hakanai-client.js", web::get().to(serve_js_client))
         .route("/i18n.js", web::get().to(serve_i18n_js))
         .route("/icon.svg", web::get().to(serve_icon))
         .route("/logo.svg", web::get().to(serve_logo))
-        .route("/scripts/hakanai-client.js", web::get().to(serve_js_client))
-        .route("/style.css", web::get().to(serve_css));
+        .route("/openapi.json", web::get().to(serve_openapi_json))
+        .route("/style.css", web::get().to(serve_css))
+        .route("/types.js", web::get().to(serve_types_js));
 }
 
 fn serve_with_caching_header(content: &[u8], content_type: &str, max_age: u64) -> HttpResponse {
@@ -125,6 +126,14 @@ async fn serve_openapi_json() -> impl Responder {
     serve_with_caching_header(
         include_str!("includes/openapi.json").as_bytes(),
         "application/json",
+        DEFAULT_CACHE_MAX_AGE,
+    )
+}
+
+async fn serve_types_js() -> impl Responder {
+    serve_with_caching_header(
+        include_bytes!("includes/types.js"),
+        "application/javascript",
         DEFAULT_CACHE_MAX_AGE,
     )
 }

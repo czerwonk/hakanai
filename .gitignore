@@ -36,3 +36,6 @@ server/src/includes/get-secret.html
 server/src/includes/hakanai-client.js
 server/src/includes/common-utils.js
 server/src/includes/i18n.js
+server/src/includes/get-secret.js
+server/src/includes/create-secret.js
+server/src/includes/types.js
