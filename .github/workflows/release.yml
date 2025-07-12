@@ -18,9 +18,33 @@ jobs:
   test-check:
     uses: ./.github/workflows/test.yml
 
+  precompile-typescript:
+    name: Pre-compile TypeScript
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "24"
+
+      - name: Install TypeScript
+        run: npm install -g typescript
+
+      - name: Compile TypeScript
+        run: tsc
+
+      - name: Upload compiled JavaScript
+        uses: actions/upload-artifact@v4
+        with:
+          name: compiled-js
+          path: server/src/includes/*.js
+
   build:
     name: Build - ${{ matrix.platform.release_for }}
-    needs: [build-check, lint-check, test-check]
+    needs: [build-check, lint-check, test-check, precompile-typescript]
     strategy:
       matrix:
         platform:
@@ -64,13 +88,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      - name: Download pre-compiled JavaScript
+        uses: actions/download-artifact@v4
         with:
-          node-version: "24"
+          name: compiled-js
+          path: server/src/includes/
 
-      - name: Install TypeScript
-        run: npm install -g typescript
+      - name: Set SKIP_TYPESCRIPT_BUILD
+        run: echo "SKIP_TYPESCRIPT_BUILD=1" >> $GITHUB_ENV
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable

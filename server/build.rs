@@ -29,6 +29,33 @@ fn main() {
 fn compile_typescript() {
     println!("cargo:warning=Compiling TypeScript files...");
 
+    // Check if we should skip TypeScript compilation (for CI/Docker builds)
+    if std::env::var("SKIP_TYPESCRIPT_BUILD").is_ok() {
+        println!("cargo:warning=Skipping TypeScript compilation (SKIP_TYPESCRIPT_BUILD set)");
+        return;
+    }
+
+    // Check if pre-compiled JavaScript files exist
+    let js_files = [
+        "src/includes/hakanai-client.js",
+        "src/includes/common-utils.js",
+        "src/includes/i18n.js",
+        "src/includes/get-secret.js",
+        "src/includes/create-secret.js",
+        "src/includes/types.js",
+    ];
+
+    let all_js_exist = js_files
+        .iter()
+        .all(|file| std::path::Path::new(file).exists());
+
+    if all_js_exist {
+        println!(
+            "cargo:warning=Pre-compiled JavaScript files found, skipping TypeScript compilation"
+        );
+        return;
+    }
+
     // Check if TypeScript compiler is available
     let tsc_check = Command::new("tsc").arg("--version").output();
 
@@ -40,7 +67,12 @@ fn compile_typescript() {
             println!(
                 "cargo:warning=TypeScript compiler (tsc) not found. Please install TypeScript with: npm install -g typescript"
             );
-            panic!("TypeScript compiler not available. Install with: npm install -g typescript");
+            println!(
+                "cargo:warning=Or set SKIP_TYPESCRIPT_BUILD=1 to use pre-compiled JavaScript files"
+            );
+            panic!(
+                "TypeScript compiler not available. Install with: npm install -g typescript or set SKIP_TYPESCRIPT_BUILD=1"
+            );
         }
     }
 
