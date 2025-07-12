@@ -3,6 +3,16 @@
  * Sets up Web Crypto API and browser globals
  */
 
+// CRITICAL: Fix Date.now BEFORE any other imports to prevent jsdom issues
+const OriginalDate = Date;
+global.Date = OriginalDate;
+global.Date.now = OriginalDate.now || function() { return new OriginalDate().getTime(); };
+
+// Also monkey-patch the Date object to ensure it always has .now
+if (!Date.now) {
+  Date.now = function() { return new Date().getTime(); };
+}
+
 // Setup Web Crypto API with real implementation
 const { Crypto } = require("@peculiar/webcrypto");
 const { TextEncoder, TextDecoder } = require("util");
@@ -51,4 +61,40 @@ global.btoa =
   global.btoa || ((str) => Buffer.from(str, "binary").toString("base64"));
 global.atob =
   global.atob || ((str) => Buffer.from(str, "base64").toString("binary"));
+
+// Additional Date.now setup for window context
+if (typeof window !== "undefined") {
+  window.Date = OriginalDate;
+  window.Date.now = OriginalDate.now || function() { return new OriginalDate().getTime(); };
+}
+
+// Also set it directly on global for early access
+global.now = global.Date.now;
+
+// Setup mock location to avoid redefinition issues
+global.locationMock = {
+  origin: "https://example.com",
+  protocol: "https:",
+  href: "https://example.com/get",
+  pathname: "/get",
+};
+
+// Setup i18n mock
+const mockI18n = {
+  t: (key) => {
+    // Return English translations for aria labels to fix common-utils tests
+    const translations = {
+      'aria.switchToLight': 'Switch to light mode',
+      'aria.switchToDark': 'Switch to dark mode',
+    };
+    return translations[key] || key;
+  },
+  setLanguage: () => {},
+  getCurrentLanguage: () => 'en'
+};
+
+global.i18n = mockI18n;
+if (typeof window !== "undefined") {
+  window.i18n = mockI18n;
+}
 

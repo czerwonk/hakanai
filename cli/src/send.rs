@@ -215,7 +215,7 @@ mod tests {
             .with_server("https://example.com")
             .with_ttl(Duration::from_secs(0))
             .with_token("token")
-            .with_file(&file_path.to_string_lossy().to_string());
+            .with_file(file_path.to_string_lossy().as_ref());
         let result = send(factory, args).await;
 
         assert!(result.is_err());
@@ -239,7 +239,7 @@ mod tests {
             .with_server("https://example.com")
             .with_ttl(Duration::from_secs(3600))
             .with_token("token")
-            .with_file(&file_path.to_string_lossy().to_string());
+            .with_file(file_path.to_string_lossy().as_ref());
         let result = send(factory, args).await;
 
         assert!(result.is_err());
@@ -265,7 +265,7 @@ mod tests {
             .with_server("https://example.com")
             .with_ttl(Duration::from_secs(3600))
             .with_token("token")
-            .with_file(&file_path.to_string_lossy().to_string());
+            .with_file(file_path.to_string_lossy().as_ref());
         let result = send(factory, args).await;
 
         assert!(result.is_err());
@@ -289,7 +289,7 @@ mod tests {
             .with_server("https://example.com")
             .with_ttl(Duration::from_secs(3600))
             .with_token("token")
-            .with_file(&file_path.to_string_lossy().to_string())
+            .with_file(file_path.to_string_lossy().as_ref())
             .with_as_file();
         let result = send(factory, args).await;
 
@@ -314,7 +314,7 @@ mod tests {
             .with_server("https://example.com")
             .with_ttl(Duration::from_secs(3600))
             .with_token("token123")
-            .with_file(&file_path.to_string_lossy().to_string());
+            .with_file(file_path.to_string_lossy().as_ref());
         let result = send(factory, args).await;
 
         assert!(result.is_ok());
@@ -335,7 +335,7 @@ mod tests {
             .with_server("https://example.com")
             .with_ttl(Duration::from_secs(7200))
             .with_token("token456")
-            .with_file(&file_path.to_string_lossy().to_string())
+            .with_file(file_path.to_string_lossy().as_ref())
             .with_as_file();
         let result = send(factory, args).await;
 
@@ -357,7 +357,7 @@ mod tests {
             .with_server("https://example.com")
             .with_ttl(Duration::from_secs(3600))
             .with_token("token789")
-            .with_file(&file_path.to_string_lossy().to_string())
+            .with_file(file_path.to_string_lossy().as_ref())
             .with_as_file()
             .with_filename("custom_name.txt");
         let result = send(factory, args).await;
@@ -379,7 +379,7 @@ mod tests {
             .with_server("https://example.com")
             .with_ttl(Duration::from_secs(3600))
             .with_token("token")
-            .with_file(&file_path.to_string_lossy().to_string());
+            .with_file(file_path.to_string_lossy().as_ref());
         let result = send(factory, args).await;
 
         assert!(result.is_err());

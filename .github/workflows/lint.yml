@@ -17,5 +17,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+          cache-dependency-path: tests/package-lock.json
+
+      - name: Setup TypeScript
+        run: npm install -g typescript
       - name: Run clippy
         run: cargo clippy --workspace

@@ -1,40 +1,34 @@
 # Hakanai Makefile
-# Build system for Rust workspace and TypeScript compilation
+# Build system for Rust workspace with integrated TypeScript compilation
 
 # Variables
 CARGO := cargo
 TSC := tsc
 
-# TypeScript files
-TS_SRC := server/src/includes/hakanai-client.ts
-JS_OUT := server/src/includes/hakanai-client.js
+# TypeScript source files (for reference and manual compilation if needed)
+TS_SRC := server/src/typescript/hakanai-client.ts server/src/typescript/common-utils.ts server/src/typescript/i18n.ts server/src/typescript/get-secret.ts server/src/typescript/create-secret.ts server/src/typescript/types.ts
+# Generated JavaScript files (output to includes directory)
+JS_OUT := server/src/includes/hakanai-client.js server/src/includes/common-utils.js server/src/includes/i18n.js server/src/includes/get-secret.js server/src/includes/create-secret.js server/src/includes/types.js
 
 # Default target
 .PHONY: all
 all: build
 
-# Build everything
+# Build everything (TypeScript compilation now integrated in build.rs)
 .PHONY: build
-build: build-rust build-ts
-
-# Build Rust workspace
-.PHONY: build-rust
-build-rust:
+build:
 	$(CARGO) build --workspace --verbose
 
-# Build TypeScript
+# Manual TypeScript compilation (optional - normally handled by build.rs)
 .PHONY: build-ts
-build-ts: $(JS_OUT)
+build-ts: clean-ts $(JS_OUT)
 
 $(JS_OUT): $(TS_SRC) tsconfig.json
 	$(TSC)
 
-# Release builds
+# Release builds (TypeScript compilation handled by build.rs)
 .PHONY: release
-release: build-rust-release build-ts
-
-.PHONY: build-rust-release
-build-rust-release:
+release:
 	$(CARGO) build --release --workspace --verbose
 
 # Test targets

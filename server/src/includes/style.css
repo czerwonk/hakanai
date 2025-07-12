@@ -1061,3 +1061,16 @@ legend {
   visibility: hidden;
   min-height: 1.4em; /* Prevent layout shift */
 }
+
+/* Utility classes for show/hide (CSP-friendly) */
+.hidden {
+  display: none !important;
+}
+
+.visible {
+  display: block !important;
+}
+
+.loading.visible {
+  display: block !important;
+}

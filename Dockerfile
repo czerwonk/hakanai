@@ -2,7 +2,9 @@ FROM rust:slim-bookworm as builder
 RUN apt-get update && apt-get install -y \
     pkg-config \
     libssl-dev \
-    && rm -rf /var/lib/apt/lists/*
+    npm && \
+    npm install -g typescript && \
+    rm -rf /var/lib/apt/lists/*
 WORKDIR /src
 COPY . .
 RUN cd server && cargo build --release

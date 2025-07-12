@@ -8,16 +8,23 @@
     "test:coverage": "jest --coverage"
   },
   "devDependencies": {
-    "@types/jest": "^29.5.0",
-    "jest": "^29.5.0",
-    "jest-environment-jsdom": "^29.5.0",
-    "@peculiar/webcrypto": "^1.4.0",
-    "ts-jest": "^29.1.0",
-    "typescript": "^5.0.0"
+    "@types/jest": "^29.5.14",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "@peculiar/webcrypto": "^1.5.0",
+    "ts-jest": "^29.2.5",
+    "typescript": "^5.6.3",
+    "jsdom": "^25.0.1"
   },
   "jest": {
     "preset": "ts-jest",
     "testEnvironment": "jsdom",
+    "testEnvironmentOptions": {
+      "url": "https://localhost"
+    },
+    "setupFiles": [
+      "<rootDir>/setup.js"
+    ],
     "setupFilesAfterEnv": [
       "<rootDir>/setup.js"
     ],
@@ -25,7 +32,11 @@
       "**/*.test.ts"
     ],
     "collectCoverageFrom": [
-      "../server/src/includes/hakanai-client.ts"
+      "../server/src/typescript/hakanai-client.ts",
+      "../server/src/typescript/i18n.ts",
+      "../server/src/typescript/common-utils.ts",
+      "../server/src/typescript/create-secret.ts",
+      "../server/src/typescript/get-secret.ts"
     ],
     "coverageDirectory": "coverage",
     "coverageReporters": [
@@ -40,7 +51,9 @@
       "ts",
       "js",
       "json"
-    ]
+    ],
+    "moduleNameMapper": {
+      "^\\.\\/(.+)\\.js$": "./$1"
+    }
   }
 }
-

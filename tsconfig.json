@@ -8,13 +8,13 @@
     "declaration": false,
     "skipLibCheck": true,
     "moduleResolution": "node",
-    "strict": false,
+    "strict": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true
   },
   "include": [
-    "server/src/includes/*.ts"
+    "server/src/typescript/*.ts"
   ],
   "exclude": [
     "node_modules",

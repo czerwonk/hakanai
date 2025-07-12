@@ -223,7 +223,14 @@ Serves the hakanai logo.
 Serves the hakanai icon.
 
 ### GET /scripts/hakanai-client.js
-Serves the JavaScript client library for browser-based encryption/decryption. The client is implemented in TypeScript and compiled to JavaScript for browser compatibility.
+Serves the JavaScript client library for browser-based encryption/decryption. The client is **implemented in TypeScript** and automatically compiled to JavaScript during the build process for browser compatibility.
+
+**TypeScript Client Architecture:**
+- **Source**: TypeScript files in `server/src/typescript/`
+- **Compiled Output**: JavaScript files in `server/src/includes/`
+- **Build Integration**: Automatic compilation via `build.rs` during cargo build
+- **Type Safety**: Comprehensive type definitions with strict type checking
+- **Browser Compatibility**: Feature detection with graceful fallback
 
 **TypeScript Client API:**
 ```javascript
@@ -275,9 +282,13 @@ Short link format for retrieving secrets. Dual-mode endpoint:
 
 ### Static Assets
 - `/style.css` - CSS stylesheet
-- `/i18n.js` - Internationalization support
-- `/get-secret.js` - JavaScript for secret retrieval page
-- `/create-secret.js` - JavaScript for secret creation page
+- `/i18n.js` - Internationalization support (compiled from TypeScript)
+- `/get-secret.js` - JavaScript for secret retrieval page (compiled from TypeScript)
+- `/create-secret.js` - JavaScript for secret creation page (compiled from TypeScript)
+- `/common-utils.js` - Shared utilities (compiled from TypeScript)
+- `/hakanai-client.js` - Main client library (compiled from TypeScript)
+
+**Note:** All JavaScript files are compiled from TypeScript sources during the build process.
 
 ## Development
 
@@ -300,11 +311,14 @@ cargo build --workspace --verbose
 # Build release version
 cargo build --release --workspace
 
-# Build TypeScript client only
+# Build TypeScript client only (compiles .ts to .js)
 make build-ts
 
 # Clean TypeScript compiled files
 make clean-ts
+
+# TypeScript type checking only (no compilation)
+tsc --noEmit
 ```
 
 #### Build-Time Template Generation
@@ -392,10 +406,15 @@ Hakanai implements a zero-knowledge architecture:
   - Shared data models (`Payload`, `PostSecretRequest`, `PostSecretResponse`)
 - **hakanai** (CLI): User-friendly command-line interface
 - **hakanai-server**: RESTful API server with Redis backend
-- **TypeScript Client**: Browser-based client with type safety and enhanced error handling
-  - Written in TypeScript, compiled to JavaScript for browser compatibility
-  - Maintains same zero-knowledge architecture as Rust client
-  - Includes browser compatibility checks and chunked processing for large files
+- **TypeScript Client**: Modern browser-based implementation with comprehensive type safety
+  - **Full TypeScript Implementation**: Complete rewrite in TypeScript with strict type checking
+  - **Automatic Compilation**: TypeScript sources compiled to JavaScript during build process
+  - **Type-Safe Architecture**: Comprehensive interfaces and type definitions
+  - **Zero-Knowledge Maintained**: Same cryptographic security as Rust client
+  - **Browser Compatibility**: Comprehensive feature detection with graceful fallback
+  - **Enhanced Error Handling**: Structured error types with detailed messages
+  - **Chunked Processing**: Efficient handling of large files with 8KB chunks
+  - **Modular Architecture**: Clean separation with dedicated classes for crypto, utils, and i18n
   - **Bytes-based PayloadData Interface**: Unified approach for text and binary data
     - `payload.setFromBytes(bytes)` - Sets data from raw bytes with automatic base64 encoding
     - `payload.decode()` - Decodes to text with proper Unicode handling
