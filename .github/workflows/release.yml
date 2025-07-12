@@ -64,6 +64,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "24"
+
+      - name: Install TypeScript
+        run: npm install -g typescript
+
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
