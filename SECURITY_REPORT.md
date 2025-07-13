@@ -1,27 +1,29 @@
 # Security Audit Report - Hakanai
 
-**Date:** 2025-07-11
-**Audit Type:** Comprehensive Security Assessment
-**Codebase Version:** 1.6.0
+**Date:** 2025-07-13
+**Audit Type:** Comprehensive Security Assessment  
+**Codebase Version:** 1.6.4
 **Auditor:** Claude Code Security Analysis
 
 ## Executive Summary
 
 Hakanai is a minimalist one-time secret sharing service implementing zero-knowledge principles. This security audit evaluated the cryptographic implementation, authentication mechanisms, input validation, memory safety, error handling, build-time template generation, and client-side security.
 
-**Overall Security Rating: A+** (Excellent - production ready with best-in-class security)
+**Overall Security Rating: A-** (Excellent - production ready with minor improvements needed)
 
-### Key Findings
+### Key Findings  
 - **0 Critical severity** vulnerabilities
 - **0 High severity** vulnerabilities
-- **1 Medium severity** vulnerability identified
-- **2 Low severity** issues identified
+- **3 Medium severity** vulnerabilities identified (2 new, 1 resolved)
+- **4 Low severity** issues identified (2 new, 2 resolved)
 - **Zero-knowledge architecture** properly implemented
 - **Strong cryptographic foundations** with industry-standard AES-256-GCM
 - **Comprehensive input validation** across all endpoints
 - **Robust authentication** with proper token hashing
 - **Build-time template generation** with security considerations
 - **Full TypeScript client architecture** with modular design and comprehensive security
+- **Enhanced cache busting** for secure asset delivery
+- **Improved authentication token management** with 24-hour expiration
 
 ## Security Findings
 
@@ -334,18 +336,163 @@ Err(error::ErrorBadRequest(format!(
 
 **Impact:** This implementation enhances API usability while maintaining security best practices.
 
+#### M5: localStorage Authentication Token Storage
+**File:** `server/src/typescript/common-utils.ts:236-290`  
+**Description:** Authentication tokens are stored in browser's localStorage, which persists across browser sessions and is vulnerable to XSS attacks.
+
+**Security Risks:**
+- **XSS Vulnerability**: localStorage accessible to any JavaScript code, including malicious scripts
+- **Persistent Storage**: Tokens survive browser restarts, increasing exposure window
+- **Cross-Tab Access**: Tokens accessible from all tabs/windows of the same origin
+
+**Current Implementation:**
+```typescript
+export function saveAuthToken(token: string): void {
+  const tokenData: StoredTokenData = {
+    token: token,
+    expires: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
+  };
+  localStorage.setItem(AUTH_TOKEN_KEY, JSON.stringify(tokenData));
+}
+```
+
+**Recommendation:**
+```typescript
+// Use sessionStorage for better security
+export function saveAuthToken(token: string): void {
+  const tokenData: StoredTokenData = {
+    token: token,
+    expires: Date.now() + (24 * 60 * 60 * 1000)
+  };
+  sessionStorage.setItem(AUTH_TOKEN_KEY, JSON.stringify(tokenData));
+}
+```
+
+**Impact:** Medium - Increases attack surface for XSS and persistent token exposure.
+
+#### M6: JSON Parsing Without Validation
+**File:** `server/src/typescript/common-utils.ts:262-281`  
+**Description:** Authentication token data is parsed from localStorage without proper validation, potentially vulnerable to prototype pollution.
+
+**Security Risk:**
+```typescript
+// Current implementation lacks validation
+const tokenData: StoredTokenData = JSON.parse(stored);
+if (tokenData.expires && tokenData.expires > Date.now()) {
+  return tokenData.token;
+}
+```
+
+**Recommendation:**
+```typescript
+// Add proper validation
+const tokenData: StoredTokenData = JSON.parse(stored);
+if (!tokenData || 
+    typeof tokenData.token !== 'string' || 
+    typeof tokenData.expires !== 'number' ||
+    !tokenData.token.trim()) {
+  localStorage.removeItem(AUTH_TOKEN_KEY);
+  return null;
+}
+```
+
+**Impact:** Medium - Could lead to prototype pollution or type confusion attacks.
+
 #### L5: User-Agent Header Logging
 **File:** `server/src/main.rs:129-140`  
 **Description:** User-Agent header is logged, potentially exposing client information.
 
 **Recommendation:** Hash or anonymize user-agent strings in logs for privacy.
 
-#### L6: Static Asset Cache Headers
+#### L6: Static Asset Cache Headers [RESOLVED ✅]
 **File:** `server/src/web_static.rs`  
-**Description:** Static assets include cache headers but could be optimized further.
+**Status:** **RESOLVED** - Cache busting implementation addresses this concern
 
-**Current Implementation:** 1-day cache with ETag
-**Recommendation:** Consider longer cache durations for versioned assets.
+**Previous Issue:** Static assets included cache headers but could be optimized further.
+
+**Resolution Implemented:**
+```rust
+// Cache buster generation in build.rs
+fn generate_cache_buster() -> String {
+    use std::collections::hash_map::DefaultHasher;
+    use std::hash::{Hash, Hasher};
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    let mut hasher = DefaultHasher::new();
+    let timestamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    timestamp.hash(&mut hasher);
+    std::process::id().hash(&mut hasher);
+    
+    format!("{:x}", hasher.finish())[..8].to_string()
+}
+
+// Applied to all assets in templates
+<link rel="stylesheet" href="/style.css?v={cache_buster}" />
+<script type="module" src="/i18n.js?v={cache_buster}"></script>
+```
+
+**Security Benefits:**
+- **Cache Poisoning Prevention**: Unique URLs prevent cache poisoning attacks
+- **Immediate Updates**: Users always receive latest security updates
+- **Version Tracking**: Each build gets unique identifier for tracking
+
+**Impact:** Security improvement - ensures users always receive the latest code and security updates.
+
+#### L7: Build System TypeScript Compiler Security
+**File:** `server/build.rs:60-77`  
+**Description:** TypeScript compiler is executed without version or integrity validation during build process.
+
+**Security Risk:** Supply chain attack if TypeScript compiler is compromised or unexpected version is used.
+
+**Current Implementation:**
+```rust
+let tsc_check = Command::new("tsc").arg("--version").output();
+```
+
+**Recommendation:**
+```rust
+// Add version validation
+let output = Command::new("tsc").arg("--version").output()?;
+let version = String::from_utf8_lossy(&output.stdout);
+if !version.contains("5.") { // Expected major version
+    return Err("Unexpected TypeScript compiler version".into());
+}
+```
+
+**Impact:** Low - Requires compromised development environment, but good defense-in-depth practice.
+
+#### L8: Filename Sanitization Enhancement
+**File:** `server/src/typescript/create-secret.ts:143-150`  
+**Description:** Filename sanitization could be more robust against directory traversal attempts.
+
+**Current Implementation:**
+```typescript
+// Simple character replacement
+filename = filename.replace(/[<>:"/\\|?*]/g, '_');
+```
+
+**Recommendation:**
+```typescript
+// More comprehensive validation
+function sanitizeFilename(filename: string): string {
+  // Remove path separators and dangerous characters
+  let clean = filename.replace(/[<>:"/\\|?*]/g, '_');
+  
+  // Prevent directory traversal
+  clean = clean.replace(/\.\./g, '_');
+  
+  // Remove leading/trailing dots and spaces
+  clean = clean.replace(/^[.\s]+|[.\s]+$/g, '');
+  
+  // Ensure not empty
+  return clean || 'unnamed_file';
+}
+```
+
+**Impact:** Low - Defense-in-depth improvement for filename handling.
 
 ## RESOLVED ISSUES
 
@@ -510,19 +657,22 @@ Err(error::ErrorBadRequest(format!(
 1. **Anonymize User-Agent logging** (L5)
 2. **Optimize static asset caching** (L6)
 
-## Version 1.6.0 Updates
+## Version 1.6.4 Updates
 
 ### New Security Features
-- **Complete TypeScript Migration**: All client-side code now implemented in TypeScript
-- **Modular Security Architecture**: Clean separation of crypto, utils, and UI logic
-- **Enhanced Type Safety**: Comprehensive type checking prevents runtime security errors
-- **Secure Memory Management**: `secureInputClear()` for sensitive DOM elements
-- **Structured Error Handling**: Type-safe error classes with secure error messages
-- **Maintained Security Features**: All 1.5.0 enhancements (separate key, channel separation) preserved
-- **Build-time Template Generation**: Secure template processing with tinytemplate (inherited from 1.4.0)
-- **Git Exclusion**: Generated files properly excluded from version control (inherited from 1.4.0)
-- **Refactored Build System**: Improved code organization and maintainability (inherited from 1.4.0)
-- **Version Consistency**: Automatic version injection in all generated content (inherited from 1.4.0)
+- **Cache Busting Implementation**: Automatic cache busting for JavaScript and CSS files prevents cache poisoning attacks
+  - Generates unique 8-character hash for each build using timestamp and process ID
+  - Applied to all static assets (`i18n.js`, `get-secret.js`, `create-secret.js`, `style.css`)
+  - Ensures users always receive latest security updates
+- **Enhanced Authentication Token Management**: 24-hour expiration with localStorage persistence
+  - Automatic token cleanup after expiration
+  - Better user experience for trusted devices
+  - However, introduces new security considerations (see M5, M6)
+- **TypeScript Client Improvements**: Maintained modular architecture with enhanced functionality
+  - Removed legacy fallback functions for better security
+  - Simplified codebase by removing compatibility code for unsupported browsers
+- **Build System Enhancements**: Improved template processing with cache buster integration
+- **All Previous Features Maintained**: Zero-knowledge architecture, separate key mode, comprehensive security headers
 
 ### Enhanced Security Analysis
 The TypeScript migration provides additional security benefits:
@@ -542,34 +692,37 @@ The build-time template generation system (inherited from 1.4.0) introduces addi
 
 ## Conclusion
 
-Hakanai version 1.6.0 maintains **excellent security architecture** with proper zero-knowledge implementation and strong cryptographic foundations. The complete TypeScript migration enhances security through comprehensive type safety, modular design, and secure memory management while preserving all previous security features.
+Hakanai version 1.6.4 maintains **excellent security architecture** with proper zero-knowledge implementation and strong cryptographic foundations. The cache busting implementation significantly improves security by ensuring users always receive the latest code, while new authentication token management features introduce some considerations that should be addressed.
 
 **Key Strengths:**
-- Robust zero-knowledge architecture
-- Industry-standard cryptographic implementation
-- Complete TypeScript client architecture with modular design
-- Enhanced type safety preventing entire classes of runtime errors
-- Secure memory management for DOM elements
-- Comprehensive input validation and security headers
-- Type-safe implementation in both Rust and TypeScript
+- Robust zero-knowledge architecture with AES-256-GCM encryption
+- Industry-standard cryptographic implementation with proper memory safety
+- Cache busting implementation prevents cache poisoning attacks
+- Comprehensive security headers and input validation
+- TypeScript client architecture with modular design and type safety
 - Secure build-time template generation
-- Complete memory safety with automatic zeroization
 - Up-to-date dependencies with no known vulnerabilities
-- Enhanced channel separation with `--separate-key` option (maintained from 1.5.0)
+- Enhanced channel separation with `--separate-key` option
+- Complete memory safety with automatic zeroization
 
-**Critical Areas for Improvement:**
-- Path traversal protection
+**Areas for Improvement:**
+- localStorage token storage should be replaced with sessionStorage (M5)
+- JSON parsing needs validation to prevent prototype pollution (M6)
+- Path traversal protection still needed (M3)
 
-With all high-priority security issues resolved, Hakanai has achieved **A+ security rating** and is suitable for production deployment in the most security-conscious environments. The remaining issues are minor operational improvements.
+With **A- security rating**, Hakanai remains suitable for production deployment. The new security concerns around localStorage usage should be addressed for optimal security posture.
 
 ## Recommendations Summary
 
 ### Outstanding Medium Priority Recommendations  
-1. **Path traversal protection** - Add filename validation (M3)
+1. **Replace localStorage with sessionStorage** - Reduce XSS attack surface for authentication tokens (M5)
+2. **Add JSON validation** - Prevent prototype pollution in token parsing (M6)
+3. **Path traversal protection** - Add filename validation (M3)
 
 ### Outstanding Low Priority Recommendations
 1. **Anonymize User-Agent logging** - Hash or anonymize user-agent strings (L5)
-2. **Optimize static asset caching** - Consider longer cache durations (L6)
+2. **TypeScript compiler validation** - Add version checking for build security (L7)
+3. **Enhanced filename sanitization** - Improve directory traversal protection (L8)
 
 ### Completed Security Improvements ✅
 1. **Memory clearing** - Comprehensive zeroization implemented
@@ -584,7 +737,8 @@ With all high-priority security issues resolved, Hakanai has achieved **A+ secur
 10. **TypeScript namespace pollution** - Removed global exports, clean ES6 modules only (L3)
 11. **Default server configuration** - Optimal development workflow with production flexibility (M2)
 12. **Token exposure vulnerability** - Removed CLI --token argument, secure env/file methods only (H1)
+13. **Static asset cache optimization** - Implemented cache busting for secure asset delivery (L6)
 
 ---
 
-*This report was generated through comprehensive static analysis and manual code review. The audit covers version 1.5.0 with emphasis on the new separate key security feature. Regular security audits are recommended as the codebase evolves.*
+*This report was generated through comprehensive static analysis and manual code review. The audit covers version 1.6.4 with emphasis on the new cache busting implementation and authentication token management features. Regular security audits are recommended as the codebase evolves.*

@@ -1,13 +1,13 @@
 # Code Review Report - Hakanai
 
-**Date:** July 11, 2025  
+**Date:** July 13, 2025  
 **Reviewer:** Automated Code Review  
 **Project:** Hakanai - Zero-Knowledge Secret Sharing Service  
-**Version:** 1.6.0
+**Version:** 1.6.4
 
 ## Executive Summary
 
-Hakanai continues to be an exceptionally well-architected, secure secret sharing service demonstrating outstanding code quality. The project exhibits exemplary engineering practices, comprehensive testing (100+ tests with factory pattern DI), and robust security implementation achieving A+ security rating. Version 1.6.0 completes the TypeScript migration with modular architecture and enhanced type safety.
+Hakanai continues to be an exceptionally well-architected, secure secret sharing service demonstrating outstanding code quality. The project exhibits exemplary engineering practices, comprehensive testing (100+ tests with factory pattern DI), and robust security implementation. Version 1.6.4 introduces cache busting for static assets and enhanced authentication token management while maintaining the high code quality standards.
 
 **Overall Grade: A** (Excellent - exceeds production standards)
 
@@ -28,21 +28,29 @@ Hakanai continues to be an exceptionally well-architected, secure secret sharing
 - **Build-time template generation** for efficient and secure HTML generation
 - **Production-ready** with all major issues resolved
 
-## Version 1.6.0 Updates
+## Version 1.6.4 Updates
 
-### New Features & Improvements
-- **Complete TypeScript Migration**: All JavaScript client code rewritten in TypeScript
-- **Modular Architecture**: Clean separation with dedicated TypeScript modules
-- **Enhanced Type Safety**: Strict TypeScript configuration with comprehensive type coverage
-- **Build Integration**: TypeScript compilation integrated into Rust build system
-- **Secure Memory Management**: DOM-level secure memory clearing for sensitive data
-- **Enhanced Testing**: 26+ TypeScript tests across all modules
-- **Maintained Security**: All 1.5.0 security features (separate key, channel separation) preserved
-- **Build-time Template Generation**: Secure, efficient HTML generation using tinytemplate (inherited from 1.4.0)
-- **Git Exclusion**: Generated files properly excluded from version control (inherited from 1.4.0)
-- **Version Consistency**: Automatic version injection across all generated content (inherited from 1.4.0)
-- **Refactored Build System**: Improved code organization with smaller, focused functions (inherited from 1.4.0)
-- **Enhanced Documentation**: Updated build process documentation in README (inherited from 1.4.0)
+### New Features & Improvements Since v1.6.0
+- **Cache Busting Implementation**: Automatic cache busting for JavaScript and CSS files ensures users get latest updates
+  - Generates unique 8-character hash for each build using timestamp + process ID
+  - Applied to all static assets via URL query parameters
+  - Prevents browser caching issues across deployments
+- **Enhanced Authentication Token Management**: Tokens now stored in localStorage with 24-hour expiration
+  - Automatic token cleanup after expiration
+  - Better persistence across browser sessions
+  - Simplified token management code
+- **iOS Copy Button Fix**: Removed unnecessary platform-specific code for cleaner implementation
+- **TypeScript Code Improvements**: Removed legacy browser compatibility functions
+- **Build System Enhancements**: Improved template processing with cache buster integration
+
+### Maintained Features from Previous Versions
+- **Complete TypeScript Architecture**: Modular design with dedicated modules for each concern
+- **Enhanced Type Safety**: Comprehensive type definitions and strict TypeScript configuration
+- **Build Integration**: TypeScript compilation seamlessly integrated into Rust build system
+- **Secure Memory Management**: DOM-level secure clearing for sensitive data
+- **Comprehensive Testing**: 100+ tests across Rust and TypeScript components
+- **Zero-Knowledge Security**: All cryptographic operations remain client-side
+- **Separate Key Mode**: Enhanced security with URL/key separation (from v1.5.0)
 
 ### Security Enhancement Analysis
 ```rust
@@ -64,15 +72,25 @@ pub key: Option<String>,
 
 ### Build System Analysis
 ```rust
-// Clean function organization in build.rs (inherited from 1.4.0)
-fn generate_docs() {
-    let openapi = load_openapi();
-    let html = generate_docs_html(&openapi);
-    fs::write("src/includes/docs_generated.html", html)
-        .expect("Failed to write generated docs.html");
+// Cache buster implementation (new in 1.6.4)
+fn generate_cache_buster() -> String {
+    use std::collections::hash_map::DefaultHasher;
+    use std::hash::{Hash, Hasher};
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    let mut hasher = DefaultHasher::new();
+    let timestamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    timestamp.hash(&mut hasher);
+    std::process::id().hash(&mut hasher);
+    
+    format!("{:x}", hasher.finish())[..8].to_string()
 }
 ```
-**Strengths**: Well-organized, single-responsibility functions with clear error handling
+**Strengths**: Ensures unique cache busters for each build, preventing stale asset issues
+**Improvement Opportunity**: Could use content-based hashing for true cache invalidation
 
 ## Component-Level Assessment
 
@@ -80,9 +98,9 @@ fn generate_docs() {
 |-----------|-------|-----------|------------|
 | **Library (`lib/`)** | **A-** | Excellent trait design, comprehensive tests, strong crypto | Minor error context improvements possible |
 | **CLI (`cli/`)** | **A** | Excellent UX, complete test coverage, factory pattern DI | Minor anyhow! usage appropriate for CLI |
-| **Server (`server/`)** | **A** | Clean API, security-conscious, build-time generation | Minor template escaping improvements possible |
-| **TypeScript Client** | **A+** | Exceptional modular architecture, comprehensive type safety, secure memory handling | All previous issues resolved |
-| **Build System** | **A** | Sophisticated template generation, proper change detection, clean memory management | Minor template escaping improvements possible |
+| **Server (`server/`)** | **A** | Clean API, security-conscious, cache busting implementation | Template escaping, Cargo.toml edition issue |
+| **TypeScript Client** | **A** | Modular architecture, type safety, token management | localStorage security concerns, performance optimizations |
+| **Build System** | **A-** | Template generation, cache busting, TypeScript integration | Could use content-based hashing, error recovery |
 
 ## Detailed Analysis
 
@@ -409,50 +427,94 @@ The server uses build-time template generation for consistent and efficient HTML
 - **Current**: Uses `HashMap<String, String>` with owned strings
 - **Impact**: No memory leaks, cleaner Rust code, better performance
 
+### ✅ New Resolved Issues in v1.6.4
+
+#### Browser Cache Management
+**Status:** **RESOLVED** - Cache busting implementation ensures users get latest code
+- **Previous**: Static assets cached indefinitely, causing stale code issues
+- **Current**: Unique cache buster appended to all JS/CSS URLs
+- **Impact**: Users always receive latest security updates and bug fixes
+
+#### iOS Copy Button Compatibility
+**Status:** **RESOLVED** - Simplified implementation works across all platforms
+- **Previous**: Platform-specific code for iOS copy functionality
+- **Current**: Unified implementation using standard clipboard API
+- **Impact**: Cleaner code, better maintainability
+
+#### Legacy Browser Compatibility Code
+**Status:** **RESOLVED** - Removed unnecessary fallback functions
+- **Previous**: Multiple fallback implementations for older browsers
+- **Current**: Single modern implementation (browsers supporting crypto API required)
+- **Impact**: Smaller bundle size, cleaner codebase
+
 ## Current Issues & Recommendations
 
 ### 🔴 High Priority
 
-1. **Token File Support** (Security)
+1. **Content-Based Cache Busting** (Performance/Correctness)
    ```rust
-   #[arg(long, env = "HAKANAI_TOKEN_FILE")]
-   token_file: Option<PathBuf>,
+   // Current: Changes on every build
+   // Better: Only changes when content changes
+   fn generate_cache_buster(files: &[&str]) -> String {
+       use sha2::{Sha256, Digest};
+       let mut hasher = Sha256::new();
+       for file in files {
+           if let Ok(content) = fs::read(file) {
+               hasher.update(&content);
+           }
+       }
+       format!("{:x}", hasher.finalize())[..8].to_string()
+   }
    ```
+
+2. **Cargo.toml Configuration Issues**
+   ```toml
+   # Current: Invalid values
+   resolver = "3"  # Should be "2"
+   edition = "2024"  # Should be "2021"
+   ```
+
+3. **Token Storage Security** [RESOLVED - Moved to security audit]
+   - See SECURITY_REPORT.md for localStorage vs sessionStorage recommendations
 
 ### 🟡 Medium Priority
 
-1. **Build Template HTML Escaping**
+1. **TypeScript Build Error Recovery**
    ```rust
-   fn html_escape(input: &str) -> String {
-       input
-           .replace('&', "&amp;")
-           .replace('<', "&lt;")
-           .replace('>', "&gt;")
-           .replace('"', "&quot;")
-           .replace('\'', "&#x27;")
+   // Add fallback to pre-compiled files
+   match Command::new("tsc").output() {
+       Ok(output) if output.status.success() => {
+           println!("cargo:warning=TypeScript compilation successful");
+       }
+       _ => {
+           if all_js_exist {
+               println!("cargo:warning=Using pre-compiled JavaScript files");
+           } else {
+               panic!("TypeScript compilation failed and no fallback files");
+           }
+       }
    }
    ```
 
-2. **Enhanced Error Context**
-   ```rust
-   #[derive(Debug, thiserror::Error)]
-   pub enum BuildError {
-       #[error("Template processing failed for {template}: {source}")]
-       TemplateError {
-           template: String,
-           source: Box<dyn std::error::Error>,
-       },
-   }
-   ```
-
-3. **TypeScript Namespace Management**
+2. **Base64 Performance Optimization**
    ```typescript
-   // Use namespaced export instead of global pollution
-   (window as any).Hakanai = {
-       Client: HakanaiClient,
-       CryptoOperations: CryptoOperations,
-       Base64UrlSafe: Base64UrlSafe
-   };
+   // Use array join pattern for better performance
+   encode(data: Uint8Array): string {
+       const chunks: string[] = [];
+       for (let i = 0; i < data.length; i += CHUNK_SIZE) {
+           const chunk = data.subarray(i, i + CHUNK_SIZE);
+           chunks.push(btoa(String.fromCharCode(...chunk)));
+       }
+       return chunks.join('');
+   }
+   ```
+
+3. **Token Validation**
+   ```typescript
+   function validateToken(token: string): boolean {
+       // Add proper token format validation
+       return token.length > 0 && /^[A-Za-z0-9+/=]+$/.test(token);
+   }
    ```
 
 ### 🟢 Low Priority
@@ -512,17 +574,17 @@ The codebase continues to demonstrate excellent security practices with zero-kno
 
 ## Conclusion
 
-The Hakanai codebase version 1.4.0 represents **exemplary Rust development** with sophisticated architecture patterns, comprehensive security implementation, and strong adherence to language best practices. The new build-time template generation system adds significant value while maintaining the high code quality standards.
+The Hakanai codebase version 1.6.4 represents **exemplary Rust development** with sophisticated architecture patterns, comprehensive security implementation, and strong adherence to language best practices. The cache busting implementation and authentication token enhancements demonstrate active maintenance and continuous improvement.
 
 ### Final Grades
-- **Overall Code Quality**: **A (4.6/5)** *(improved from 4.5/5)*
-- **Architecture Design**: **A+ (4.8/5)** *(maintained)*
-- **Security Implementation**: **A+ (4.8/5)** *(maintained)*
+- **Overall Code Quality**: **A (4.5/5)** *(slight decrease due to config issues)*
+- **Architecture Design**: **A (4.7/5)** *(maintained excellence)*
+- **Security Implementation**: **A (4.6/5)** *(minor concerns with localStorage)*
 - **Testing Coverage**: **A (4.7/5)** *(maintained)*
-- **Documentation Quality**: **A (4.6/5)** *(improved from 4.5/5)*
+- **Documentation Quality**: **A- (4.4/5)** *(could use more JSDoc comments)*
 - **Language Idioms**: **A (4.5/5)** *(maintained)*
 - **Error Handling**: **A (4.7/5)** *(maintained)*
-- **Build System**: **A (4.5/5)** *(new category)*
+- **Build System**: **A- (4.3/5)** *(cache busting good, but could improve)*
 
 ### Production Readiness: ✅ **APPROVED FOR PRODUCTION**
 
@@ -536,24 +598,25 @@ The system continues to demonstrate excellent engineering practices and is fully
 - **Excellent observability** with OpenTelemetry integration and dual logging
 - **Efficient build system** with template generation and version consistency
 
-**Version 1.5.0 Improvements:**
-- ✅ **Enhanced security features** with separate key functionality for defense-in-depth
-- ✅ **CLI enhancements** with `--separate-key` and `--key` parameters
-- ✅ **Channel separation** enabling URL and key sharing through different channels
-- ✅ **Backward compatibility** maintaining all existing functionality
-- ✅ **Build-time template generation** for improved performance and maintainability (inherited from 1.4.0)
-- ✅ **Enhanced version management** with automatic injection across all components (inherited from 1.4.0)
-- ✅ **Improved git workflow** with proper exclusion of generated files (inherited from 1.4.0)
-- ✅ **Better documentation** including comprehensive build system explanation (inherited from 1.4.0)
-- ✅ **Refactored build scripts** with improved function organization (inherited from 1.4.0)
+**Version 1.6.4 Improvements:**
+- ✅ **Cache busting implementation** prevents browser caching issues across deployments
+- ✅ **Enhanced token management** with localStorage persistence and 24-hour expiration
+- ✅ **Simplified codebase** removed legacy browser compatibility code
+- ✅ **iOS compatibility fix** unified clipboard implementation
+- ✅ **Maintained all previous features** including separate key mode, TypeScript architecture, build-time templates
 
-**Minor Enhancements Suggested:**
-- Add HTML escaping in build templates
-- Consider integration tests with real Redis for end-to-end validation
-- Continue regular dependency updates and security audits
+**High Priority Issues Identified:**
+- ⚠️ **Cargo.toml configuration** invalid resolver and edition values need correction
+- ⚠️ **Cache busting optimization** should use content-based hashing instead of timestamp
+- ⚠️ **Build system robustness** TypeScript compilation needs better error recovery
 
-**Recommendation:** The system continues to exceed production standards with exceptional code quality, comprehensive testing, robust security implementation, and now includes enhanced security features with separate key functionality that provides defense-in-depth protection while maintaining backward compatibility.
+**Medium Priority Improvements:**
+- localStorage security concerns (see SECURITY_REPORT.md)
+- Base64 performance optimization opportunities
+- Token validation enhancements needed
+
+**Recommendation:** The system remains production-ready with excellent code quality. The cache busting implementation is a valuable addition, though it could be optimized. Address the Cargo.toml configuration issues and consider the security recommendations for token storage. Overall, the codebase demonstrates continuous improvement and active maintenance.
 
 ---
 
-*This comprehensive code review was conducted using automated analysis tools, manual code inspection, and assessment against industry best practices for Rust, TypeScript, and web development. The review covers the new separate key security enhancements introduced in version 1.5.0.*
+*This comprehensive code review was conducted using automated analysis tools, manual code inspection, and assessment against industry best practices for Rust, TypeScript, and web development. The review covers version 1.6.4 with emphasis on cache busting and authentication token management improvements.*
