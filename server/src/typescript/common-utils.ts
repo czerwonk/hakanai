@@ -27,50 +27,6 @@ export function createButtonContainer(): HTMLDivElement {
   return container;
 }
 
-function fallbackCopyToClipboard(
-  text: string,
-  button: HTMLButtonElement,
-  originalText: string,
-  successMessage: string,
-  failedMessage: string,
-): void {
-  // Create a temporary textarea element
-  const textArea = document.createElement("textarea");
-  textArea.value = text;
-
-  // Make it invisible but functional
-  textArea.style.position = "fixed";
-  textArea.style.left = "-999999px";
-  textArea.style.top = "-999999px";
-  textArea.setAttribute("readonly", "");
-  textArea.style.opacity = "0";
-
-  document.body.appendChild(textArea);
-
-  try {
-    textArea.select();
-    textArea.setSelectionRange(0, 99999); // For mobile devices
-
-    const successful = document.execCommand("copy");
-    document.body.removeChild(textArea);
-
-    if (successful) {
-      showCopySuccess(button, originalText, successMessage);
-    } else {
-      showCopyFailure(button, originalText, failedMessage);
-    }
-  } catch (err) {
-    document.body.removeChild(textArea);
-    showCopyFailure(button, originalText, failedMessage);
-  }
-}
-
-function isModernCopySupported(): boolean {
-  return (
-    navigator.clipboard && typeof navigator.clipboard.writeText === "function"
-  );
-}
-
 export function copyToClipboard(
   text: string,
   button: HTMLButtonElement,
@@ -78,30 +34,10 @@ export function copyToClipboard(
   successMessage: string,
   failedMessage: string,
 ): void {
-  if (!isModernCopySupported()) {
-    fallbackCopyToClipboard(
-      text,
-      button,
-      originalText,
-      successMessage,
-      failedMessage,
-    );
-    return;
-  }
-
   navigator.clipboard
     .writeText(text)
     .then(() => showCopySuccess(button, originalText, successMessage))
-    .catch(() => {
-      // Fallback to legacy method
-      fallbackCopyToClipboard(
-        text,
-        button,
-        originalText,
-        successMessage,
-        failedMessage,
-      );
-    });
+    .catch(() => showCopyFailure(button, originalText, failedMessage));
 }
 
 export function secureInputClear(input: HTMLInputElement): void {
