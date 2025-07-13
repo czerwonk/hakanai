@@ -417,7 +417,7 @@ function copySecret(secretId: string, button: HTMLButtonElement): void {
     secretId,
   ) as HTMLTextAreaElement;
   if (!secretElement) {
-    alert(UI_STRINGS.COPY_FAILED);
+    showError(UI_STRINGS.COPY_FAILED);
     return;
   }
 

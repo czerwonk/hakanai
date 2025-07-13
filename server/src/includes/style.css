@@ -608,21 +608,25 @@ button.loading::after {
   outline-offset: 2px;
 }
 
-.copy-button.copied {
+.copy-button.copied,
+.secondary-button.copied {
   background-color: var(--color-border);
   color: var(--color-text);
 }
 
-.copy-button.copied::before {
+.copy-button.copied::before,
+.secondary-button.copied::before {
   content: "✓ ";
 }
 
-.copy-button.copy-failed {
+.copy-button.copy-failed,
+.secondary-button.copy-failed {
   background-color: var(--color-error);
   color: var(--button-text);
 }
 
-.copy-button.copy-failed::before {
+.copy-button.copy-failed::before,
+.secondary-button.copy-failed::before {
   content: "✗ ";
 }
 

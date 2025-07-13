@@ -72,9 +72,7 @@ function fallbackCopyToClipboard(
 
 function isModernCopySupported(): boolean {
   return (
-    navigator.clipboard &&
-    typeof navigator.clipboard.writeText === "function" &&
-    !isIOSDevice() // for iOS devices, use fallback method to avoid full-screen notifications
+    navigator.clipboard && typeof navigator.clipboard.writeText === "function"
   );
 }
 
@@ -85,7 +83,6 @@ export function copyToClipboard(
   successMessage: string,
   failedMessage: string,
 ): void {
-  // For iOS devices, use fallback method to avoid full-screen notifications
   if (!isModernCopySupported()) {
     fallbackCopyToClipboard(
       text,
