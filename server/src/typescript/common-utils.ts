@@ -31,7 +31,13 @@ function isIOSDevice(): boolean {
   return /iPad|iPhone|iPod/.test(navigator.userAgent);
 }
 
-function fallbackCopyToClipboard(text: string): boolean {
+function fallbackCopyToClipboard(
+  text: string,
+  button: HTMLButtonElement,
+  originalText: string,
+  successMessage: string,
+  failedMessage: string,
+): void {
   // Create a temporary textarea element
   const textArea = document.createElement("textarea");
   textArea.value = text;
@@ -52,11 +58,24 @@ function fallbackCopyToClipboard(text: string): boolean {
 
     const successful = document.execCommand("copy");
     document.body.removeChild(textArea);
-    return successful;
+
+    if (successful) {
+      showCopySuccess(button, originalText, successMessage);
+    } else {
+      showCopyFailure(button, originalText, failedMessage);
+    }
   } catch (err) {
     document.body.removeChild(textArea);
-    return false;
+    showCopyFailure(button, originalText, failedMessage);
   }
+}
+
+function isModernCopySupported(): boolean {
+  return (
+    navigator.clipboard &&
+    typeof navigator.clipboard.writeText === "function" &&
+    !isIOSDevice() // for iOS devices, use fallback method to avoid full-screen notifications
+  );
 }
 
 export function copyToClipboard(
@@ -67,43 +86,30 @@ export function copyToClipboard(
   failedMessage: string,
 ): void {
   // For iOS devices, use fallback method to avoid full-screen notifications
-  if (isIOSDevice()) {
-    const success = fallbackCopyToClipboard(text);
-    if (success) {
-      showCopySuccess(button, originalText, successMessage);
-    } else {
-      // On iOS, show a more user-friendly message without alert
-      showCopyFailure(button, originalText, failedMessage);
-    }
+  if (!isModernCopySupported()) {
+    fallbackCopyToClipboard(
+      text,
+      button,
+      originalText,
+      successMessage,
+      failedMessage,
+    );
     return;
   }
 
-  // For other browsers, try modern clipboard API first
-  if (
-    navigator.clipboard &&
-    typeof navigator.clipboard.writeText === "function"
-  ) {
-    navigator.clipboard
-      .writeText(text)
-      .then(() => showCopySuccess(button, originalText, successMessage))
-      .catch(() => {
-        // Fallback to legacy method
-        const success = fallbackCopyToClipboard(text);
-        if (success) {
-          showCopySuccess(button, originalText, successMessage);
-        } else {
-          showCopyFailure(button, originalText, failedMessage);
-        }
-      });
-  } else {
-    // Use fallback method for older browsers
-    const success = fallbackCopyToClipboard(text);
-    if (success) {
-      showCopySuccess(button, originalText, successMessage);
-    } else {
-      showCopyFailure(button, originalText, failedMessage);
-    }
-  }
+  navigator.clipboard
+    .writeText(text)
+    .then(() => showCopySuccess(button, originalText, successMessage))
+    .catch(() => {
+      // Fallback to legacy method
+      fallbackCopyToClipboard(
+        text,
+        button,
+        originalText,
+        successMessage,
+        failedMessage,
+      );
+    });
 }
 
 export function secureInputClear(input: HTMLInputElement): void {
