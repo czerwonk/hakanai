@@ -5,6 +5,7 @@
 
 import {
   HakanaiClient,
+  HakanaiErrorCodes,
   Base64UrlSafe,
   CryptoOperations,
 } from "../server/src/typescript/hakanai-client";
@@ -393,6 +394,80 @@ describe("Error Handling", () => {
     ).rejects.toThrow("Auth token must be a string if provided");
   });
 
+  test("sendPayload handles 401 authentication required error", async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      statusText: "Unauthorized",
+    }) as any;
+
+    const testBytes = encodeText("test secret");
+    const payload = client.createPayload();
+    payload.setFromBytes!(testBytes);
+
+    await expect(
+      client.sendPayload(payload, 3600, "invalid-token"),
+    ).rejects.toThrow(
+      "Authentication required: Please provide a valid authentication token",
+    );
+  });
+
+  test("sendPayload handles 403 invalid token error", async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 403,
+      statusText: "Forbidden",
+    }) as any;
+
+    const testBytes = encodeText("test secret");
+    const payload = client.createPayload();
+    payload.setFromBytes!(testBytes);
+
+    await expect(
+      client.sendPayload(payload, 3600, "bad-token"),
+    ).rejects.toThrow(
+      "Invalid authentication token: Please check your token and try again",
+    );
+  });
+
+  test("sendPayload throws HakanaiError with correct error codes", async () => {
+    // Test 401 error
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      statusText: "Unauthorized",
+    }) as any;
+
+    const testBytes = encodeText("test secret");
+    const payload = client.createPayload();
+    payload.setFromBytes!(testBytes);
+
+    try {
+      await client.sendPayload(payload, 3600, "invalid-token");
+      fail("Expected error to be thrown");
+    } catch (error: any) {
+      expect(error.name).toBe("HakanaiError");
+      expect(error.code).toBe(HakanaiErrorCodes.AUTHENTICATION_REQUIRED);
+      expect(error.statusCode).toBe(401);
+    }
+
+    // Test 403 error
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 403,
+      statusText: "Forbidden",
+    }) as any;
+
+    try {
+      await client.sendPayload(payload, 3600, "bad-token");
+      fail("Expected error to be thrown");
+    } catch (error: any) {
+      expect(error.name).toBe("HakanaiError");
+      expect(error.code).toBe(HakanaiErrorCodes.INVALID_TOKEN);
+      expect(error.statusCode).toBe(403);
+    }
+  });
+
   test("receivePayload validates URL", async () => {
     await expect(client.receivePayload("")).rejects.toThrow(
       "URL must be a non-empty string",
@@ -425,6 +500,52 @@ describe("Error Handling", () => {
     await expect(
       client.receivePayload("http://localhost:8080/s/missing#" + validKey),
     ).rejects.toThrow("Secret not found or has expired");
+  });
+});
+
+describe("Error Code Constants", () => {
+  test("HakanaiErrorCodes exports all expected constants", () => {
+    expect(HakanaiErrorCodes.AUTHENTICATION_REQUIRED).toBe(
+      "AUTHENTICATION_REQUIRED",
+    );
+    expect(HakanaiErrorCodes.INVALID_TOKEN).toBe("INVALID_TOKEN");
+    expect(HakanaiErrorCodes.SEND_FAILED).toBe("SEND_FAILED");
+    expect(HakanaiErrorCodes.SECRET_NOT_FOUND).toBe("SECRET_NOT_FOUND");
+    expect(HakanaiErrorCodes.SECRET_ALREADY_ACCESSED).toBe(
+      "SECRET_ALREADY_ACCESSED",
+    );
+    expect(HakanaiErrorCodes.RETRIEVE_FAILED).toBe("RETRIEVE_FAILED");
+    expect(HakanaiErrorCodes.MISSING_DECRYPTION_KEY).toBe(
+      "MISSING_DECRYPTION_KEY",
+    );
+  });
+
+  test("Error codes are readonly constants", () => {
+    // This should be a compile-time check, but we can verify the values exist
+    const codes = Object.keys(HakanaiErrorCodes);
+    expect(codes.length).toBe(7);
+
+    // Verify all expected codes are present
+    expect(codes).toContain("AUTHENTICATION_REQUIRED");
+    expect(codes).toContain("INVALID_TOKEN");
+    expect(codes).toContain("SEND_FAILED");
+    expect(codes).toContain("SECRET_NOT_FOUND");
+    expect(codes).toContain("SECRET_ALREADY_ACCESSED");
+    expect(codes).toContain("RETRIEVE_FAILED");
+    expect(codes).toContain("MISSING_DECRYPTION_KEY");
+  });
+
+  test("Error codes can be used for comparison", () => {
+    // Test that we can compare against the constants
+    function checkErrorCode(code: string): boolean {
+      return code === HakanaiErrorCodes.AUTHENTICATION_REQUIRED;
+    }
+
+    expect(checkErrorCode(HakanaiErrorCodes.AUTHENTICATION_REQUIRED)).toBe(
+      true,
+    );
+    expect(checkErrorCode(HakanaiErrorCodes.INVALID_TOKEN)).toBe(false);
+    expect(checkErrorCode("SOME_OTHER_CODE")).toBe(false);
   });
 });
 

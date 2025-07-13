@@ -301,3 +301,71 @@ export function initTheme(): void {
   updateThemeToggleButton();
   setupSystemThemeListener();
 }
+
+// Cookie management for auth tokens
+const AUTH_TOKEN_COOKIE = "hakanai-auth-token";
+const COOKIE_MAX_AGE = 24 * 60 * 60; // 24 hours in seconds
+
+function isSecureContext(): boolean {
+  return (
+    window.location.protocol === "https:" ||
+    window.location.hostname === "localhost"
+  );
+}
+
+export function saveAuthTokenToCookie(token: string): boolean {
+  if (!token.trim()) return false;
+
+  try {
+    const cookieOptions = [
+      `${AUTH_TOKEN_COOKIE}=${encodeURIComponent(token)}`,
+      `Max-Age=${COOKIE_MAX_AGE}`,
+      "SameSite=Strict",
+      "HttpOnly=false", // Need to access from JS
+    ];
+
+    if (isSecureContext()) {
+      cookieOptions.push("Secure");
+    }
+
+    document.cookie = cookieOptions.join("; ");
+    return true;
+  } catch (error) {
+    console.warn("Failed to save auth token to cookie:", error);
+    return false;
+  }
+}
+
+export function getAuthTokenFromCookie(): string | null {
+  try {
+    const cookies = document.cookie.split(";");
+    for (const cookie of cookies) {
+      const [name, value] = cookie.trim().split("=");
+      if (name === AUTH_TOKEN_COOKIE) {
+        return decodeURIComponent(value || "");
+      }
+    }
+    return null;
+  } catch (error) {
+    console.warn("Failed to read auth token from cookie:", error);
+    return null;
+  }
+}
+
+export function clearAuthTokenCookie(): void {
+  try {
+    const cookieOptions = [
+      `${AUTH_TOKEN_COOKIE}=`,
+      "Max-Age=0",
+      "SameSite=Strict",
+    ];
+
+    if (isSecureContext()) {
+      cookieOptions.push("Secure");
+    }
+
+    document.cookie = cookieOptions.join("; ");
+  } catch (error) {
+    console.warn("Failed to clear auth token cookie:", error);
+  }
+}

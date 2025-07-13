@@ -8,6 +8,26 @@
 const KEY_LENGTH = 32; // 256 bits
 const NONCE_LENGTH = 12; // 96 bits for AES-GCM
 
+// Error code constants
+const HakanaiErrorCodes = {
+  // Authentication errors
+  AUTHENTICATION_REQUIRED: "AUTHENTICATION_REQUIRED",
+  INVALID_TOKEN: "INVALID_TOKEN",
+
+  // Request/send errors
+  SEND_FAILED: "SEND_FAILED",
+
+  // Retrieval errors
+  SECRET_NOT_FOUND: "SECRET_NOT_FOUND",
+  SECRET_ALREADY_ACCESSED: "SECRET_ALREADY_ACCESSED",
+  RETRIEVE_FAILED: "RETRIEVE_FAILED",
+  MISSING_DECRYPTION_KEY: "MISSING_DECRYPTION_KEY",
+} as const;
+
+// Type for error codes
+type HakanaiErrorCode =
+  (typeof HakanaiErrorCodes)[keyof typeof HakanaiErrorCodes];
+
 // Type definitions
 interface CompatibilityCheck {
   readonly isCompatible: boolean;
@@ -16,10 +36,10 @@ interface CompatibilityCheck {
 
 // Custom error class for Hakanai errors with error codes
 class HakanaiError extends Error {
-  readonly code: string;
+  readonly code: HakanaiErrorCode;
   readonly statusCode?: number;
 
-  constructor(code: string, message: string, statusCode?: number) {
+  constructor(code: HakanaiErrorCode, message: string, statusCode?: number) {
     super(message);
     this.name = "HakanaiError";
     this.code = code;
@@ -512,8 +532,26 @@ class HakanaiClient {
     });
 
     if (!response.ok) {
+      // Handle authentication errors with specific messages
+      if (response.status === 401) {
+        throw new HakanaiError(
+          HakanaiErrorCodes.AUTHENTICATION_REQUIRED,
+          "Authentication required: Please provide a valid authentication token",
+          response.status,
+        );
+      }
+
+      if (response.status === 403) {
+        throw new HakanaiError(
+          HakanaiErrorCodes.INVALID_TOKEN,
+          "Invalid authentication token: Please check your token and try again",
+          response.status,
+        );
+      }
+
+      // Generic error for other status codes
       throw new HakanaiError(
-        "SEND_FAILED",
+        HakanaiErrorCodes.SEND_FAILED,
         `Failed to send secret: ${response.status} ${response.statusText}`,
         response.status,
       );
@@ -556,7 +594,7 @@ class HakanaiClient {
     const keyBase64 = urlObj.hash.slice(1); // Remove the #
     if (!keyBase64) {
       throw new HakanaiError(
-        "MISSING_DECRYPTION_KEY",
+        HakanaiErrorCodes.MISSING_DECRYPTION_KEY,
         "No decryption key found in URL",
       );
     }
@@ -577,20 +615,20 @@ class HakanaiClient {
     if (!response.ok) {
       if (response.status === 404) {
         throw new HakanaiError(
-          "SECRET_NOT_FOUND",
+          HakanaiErrorCodes.SECRET_NOT_FOUND,
           "Secret not found or has expired",
           404,
         );
       }
       if (response.status === 410) {
         throw new HakanaiError(
-          "SECRET_ALREADY_ACCESSED",
+          HakanaiErrorCodes.SECRET_ALREADY_ACCESSED,
           "Secret has been accessed and is no longer available",
           410,
         );
       }
       throw new HakanaiError(
-        "RETRIEVE_FAILED",
+        HakanaiErrorCodes.RETRIEVE_FAILED,
         `Failed to retrieve secret: ${response.status} ${response.statusText}`,
         response.status,
       );
@@ -671,6 +709,7 @@ if (typeof module !== "undefined" && module.exports) {
   module.exports = {
     HakanaiClient,
     HakanaiError,
+    HakanaiErrorCodes,
     Base64UrlSafe,
     CryptoOperations,
   };
@@ -679,6 +718,7 @@ if (typeof module !== "undefined" && module.exports) {
 export {
   HakanaiClient,
   HakanaiError,
+  HakanaiErrorCodes,
   Base64UrlSafe,
   CryptoOperations,
   type PayloadData,

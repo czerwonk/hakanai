@@ -30,6 +30,8 @@ const translations: Translations = {
     "label.url": "Secret URL:",
     "label.key": "Decryption Key:",
     "label.separateKey": "Show URL and key separately for enhanced security",
+    "label.saveToken":
+      "Remember authentication token (stored securely in browser)",
     "label.filename": "Filename:",
 
     // Placeholders
@@ -46,6 +48,8 @@ const translations: Translations = {
     "helper.key": "Base64-encoded decryption key (shared separately)",
     "helper.separateKey":
       "When enabled, the URL and decryption key are displayed separately, allowing you to share them through different channels for enhanced security.",
+    "helper.saveToken":
+      "Token will be stored securely in your browser for 24 hours. Only enable on trusted devices.",
     "helper.expires": "Secret will self-destruct after this time or first view",
 
     // Time options
@@ -126,6 +130,10 @@ const translations: Translations = {
 
     // Error codes
     "error.SEND_FAILED": "Failed to send secret",
+    "error.AUTHENTICATION_REQUIRED":
+      "Authentication required - Please enter your authentication token",
+    "error.INVALID_TOKEN":
+      "Invalid authentication token - Please check your token and try again",
     "error.SECRET_NOT_FOUND": "Secret not found or has expired",
     "error.SECRET_ALREADY_ACCESSED":
       "Secret has been accessed and is no longer available",
@@ -153,6 +161,8 @@ const translations: Translations = {
     "label.key": "Geheimer Schlüssel:",
     "label.separateKey":
       "URL und Schlüssel separat anzeigen für erweiterte Sicherheit",
+    "label.saveToken":
+      "Authentifizierungs-Token merken (sicher im Browser gespeichert)",
     "label.filename": "Dateiname:",
 
     // Placeholders
@@ -171,6 +181,8 @@ const translations: Translations = {
     "helper.key": "Base64-kodierter geheimer Schlüssel (separat geteilt)",
     "helper.separateKey":
       "Wenn aktiviert, werden URL und geheimer Schlüssel separat angezeigt, so dass sie über verschiedene Kanäle für erweiterte Sicherheit geteilt werden können.",
+    "helper.saveToken":
+      "Token wird sicher für 24 Stunden im Browser gespeichert. Nur auf vertrauenswürdigen Geräten aktivieren.",
     "helper.expires":
       "Das Secret wird nach dieser Zeit oder beim ersten Zugriff selbst zerstört",
 
@@ -253,6 +265,10 @@ const translations: Translations = {
 
     // Error codes
     "error.SEND_FAILED": "Fehler beim Senden des Secrets",
+    "error.AUTHENTICATION_REQUIRED":
+      "Authentifizierung erforderlich - Bitte Authentifizierungs-Token eingeben",
+    "error.INVALID_TOKEN":
+      "Ungültiges Authentifizierungs-Token - Bitte Token überprüfen und erneut versuchen",
     "error.SECRET_NOT_FOUND": "Secret nicht gefunden oder abgelaufen",
     "error.SECRET_ALREADY_ACCESSED":
       "Secret wurde bereits abgerufen und ist nicht mehr verfügbar",

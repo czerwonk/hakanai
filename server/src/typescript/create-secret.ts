@@ -1,4 +1,8 @@
-import { HakanaiClient, type PayloadData } from "./hakanai-client.js";
+import {
+  HakanaiClient,
+  HakanaiErrorCodes,
+  type PayloadData,
+} from "./hakanai-client.js";
 import {
   createButton,
   createButtonContainer,
@@ -7,6 +11,9 @@ import {
   secureInputClear,
   initTheme,
   updateThemeToggleButton,
+  saveAuthTokenToCookie,
+  getAuthTokenFromCookie,
+  clearAuthTokenCookie,
 } from "./common-utils.js";
 import {
   type RequiredElements,
@@ -280,6 +287,20 @@ function handleCreateError(error: unknown): void {
     const finalMessage =
       localizedMessage !== errorKey ? localizedMessage : error.message;
     showError(finalMessage);
+
+    // Focus auth token input for authentication errors
+    if (
+      error.code === HakanaiErrorCodes.AUTHENTICATION_REQUIRED ||
+      error.code === HakanaiErrorCodes.INVALID_TOKEN
+    ) {
+      const authTokenInput = document.getElementById(
+        "authToken",
+      ) as HTMLInputElement;
+      if (authTokenInput) {
+        authTokenInput.focus();
+        authTokenInput.select();
+      }
+    }
   } else if (isStandardError(error)) {
     showError(error.message);
   } else if (isErrorLike(error)) {
@@ -310,14 +331,26 @@ async function createSecret(): Promise<void> {
 
   try {
     const secretUrl = await client.sendPayload(payload, ttl, authToken);
+
+    // Handle auth token cookie saving
+    const saveTokenCookie = document.getElementById(
+      "saveTokenCookie",
+    ) as HTMLInputElement;
+    if (saveTokenCookie) {
+      handleAuthTokenSave(authToken, saveTokenCookie.checked);
+    }
+
     showSuccess(secretUrl);
     clearInputs(elements.secretInput, elements.fileInput);
   } catch (error: unknown) {
     handleCreateError(error);
   } finally {
     setElementsState(elements, false);
-    // Clear auth token from memory for security
-    if (elements.authTokenInput.value) {
+    // Clear auth token from memory for security (unless saving to cookie)
+    const saveTokenCookie = document.getElementById(
+      "saveTokenCookie",
+    ) as HTMLInputElement;
+    if (elements.authTokenInput.value && !saveTokenCookie?.checked) {
       secureInputClear(elements.authTokenInput);
     }
   }
@@ -756,6 +789,38 @@ function setupFileInputHandler(): void {
   }
 }
 
+function initializeAuthToken(): void {
+  const savedToken = getAuthTokenFromCookie();
+  if (savedToken) {
+    const authTokenInput = document.getElementById(
+      "authToken",
+    ) as HTMLInputElement;
+    const saveTokenCheckbox = document.getElementById(
+      "saveTokenCookie",
+    ) as HTMLInputElement;
+
+    if (authTokenInput) {
+      authTokenInput.value = savedToken;
+    }
+
+    // Check the checkbox since we have a saved token
+    if (saveTokenCheckbox) {
+      saveTokenCheckbox.checked = true;
+    }
+  }
+}
+
+function handleAuthTokenSave(token: string, shouldSave: boolean): void {
+  if (shouldSave && token.trim()) {
+    const saved = saveAuthTokenToCookie(token);
+    if (!saved) {
+      console.warn("Failed to save auth token to cookie");
+    }
+  } else if (!shouldSave) {
+    clearAuthTokenCookie();
+  }
+}
+
 function focusSecretInput(): void {
   const secretText = document.getElementById("secretText") as HTMLInputElement;
   if (secretText) {
@@ -780,6 +845,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setupFormHandler();
   setupRadioHandlers();
   setupFileInputHandler();
+  initializeAuthToken();
 });
 
 // Export functions for testing
@@ -794,5 +860,7 @@ export {
   toggleSecretType,
   resetToCreateMode,
   updateUIStrings,
+  initializeAuthToken,
+  handleAuthTokenSave,
   UI_STRINGS,
 };

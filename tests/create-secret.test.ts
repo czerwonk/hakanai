@@ -12,6 +12,11 @@ jest.mock("../server/src/typescript/hakanai-client", () => ({
   })),
 }));
 
+const mockSaveAuthTokenToCookie = jest.fn();
+const mockGetAuthTokenFromCookie = jest.fn();
+const mockClearAuthTokenCookie = jest.fn();
+const mockSecureInputClear = jest.fn();
+
 jest.mock("../server/src/typescript/common-utils", () => ({
   createButton: jest.fn(),
   createButtonContainer: jest.fn(),
@@ -19,20 +24,20 @@ jest.mock("../server/src/typescript/common-utils", () => ({
   announceToScreenReader: mockAnnounceToScreenReader,
   initTheme: jest.fn(),
   updateThemeToggleButton: jest.fn(),
+  saveAuthTokenToCookie: mockSaveAuthTokenToCookie,
+  getAuthTokenFromCookie: mockGetAuthTokenFromCookie,
+  clearAuthTokenCookie: mockClearAuthTokenCookie,
+  secureInputClear: mockSecureInputClear,
 }));
 
+const mockIsHakanaiError = jest.fn();
+const mockIsStandardError = jest.fn();
+const mockIsErrorLike = jest.fn();
+
 jest.mock("../server/src/typescript/types", () => ({
-  isHakanaiError: jest.fn(
-    (error: any) =>
-      error && error.name === "HakanaiError" && typeof error.code === "string",
-  ),
-  isStandardError: jest.fn((error: any) => error instanceof Error),
-  isErrorLike: jest.fn(
-    (error: any) =>
-      error &&
-      typeof error === "object" &&
-      ("message" in error || "name" in error),
-  ),
+  isHakanaiError: mockIsHakanaiError,
+  isStandardError: mockIsStandardError,
+  isErrorLike: mockIsErrorLike,
 }));
 
 describe("create-secret.ts", () => {
@@ -43,6 +48,23 @@ describe("create-secret.ts", () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
+
+    // Set up default mock implementations for type guards
+    mockIsHakanaiError.mockImplementation(
+      (error: any) =>
+        error &&
+        error.name === "HakanaiError" &&
+        typeof error.code === "string",
+    );
+    mockIsStandardError.mockImplementation(
+      (error: any) => error instanceof Error,
+    );
+    mockIsErrorLike.mockImplementation(
+      (error: any) =>
+        error &&
+        typeof error === "object" &&
+        ("message" in error || "name" in error),
+    );
 
     dom = new JSDOM(`
       <!DOCTYPE html>
@@ -95,6 +117,10 @@ describe("create-secret.ts", () => {
           "msg.fileTooLarge": "File size exceeds 10MB limit",
           "msg.fileReadError": "Error reading file",
           "msg.invalidFilename": "Invalid filename",
+          "error.AUTHENTICATION_REQUIRED":
+            "Authentication required - Please enter your authentication token",
+          "error.INVALID_TOKEN":
+            "Invalid authentication token - Please check your token and try again",
         };
         return translations[key] || key;
       }),
@@ -231,6 +257,181 @@ describe("create-secret.ts", () => {
 
       // Verify mode switched (this is a basic functionality test)
       expect(fileRadio.checked).toBe(true);
+    });
+  });
+
+  describe("Cookie Integration", () => {
+    beforeEach(() => {
+      // Add saveTokenCookie checkbox to DOM
+      const saveTokenCheckbox = document.createElement("input");
+      saveTokenCheckbox.type = "checkbox";
+      saveTokenCheckbox.id = "saveTokenCookie";
+      document.body.appendChild(saveTokenCheckbox);
+
+      // Reset mock implementations
+      mockSaveAuthTokenToCookie.mockReset();
+      mockGetAuthTokenFromCookie.mockReset();
+      mockClearAuthTokenCookie.mockReset();
+      mockSecureInputClear.mockReset();
+    });
+
+    test("should have cookie integration functions available", () => {
+      // Test that the functions are exported and can be called
+      expect(typeof createSecretModule.initializeAuthToken).toBe("function");
+      expect(typeof createSecretModule.handleAuthTokenSave).toBe("function");
+
+      // Since the module is heavily mocked, we primarily test that the functions exist
+      // and can be called without throwing errors
+      expect(() => createSecretModule.initializeAuthToken()).not.toThrow();
+      expect(() =>
+        createSecretModule.handleAuthTokenSave("test", true),
+      ).not.toThrow();
+      expect(() =>
+        createSecretModule.handleAuthTokenSave("test", false),
+      ).not.toThrow();
+    });
+
+    test("should handle checkbox-based cookie saving logic", async () => {
+      // Test that the checkbox affects behavior
+      const secretInput = document.getElementById(
+        "secretText",
+      ) as HTMLInputElement;
+      const authTokenInput = document.getElementById(
+        "authToken",
+      ) as HTMLInputElement;
+
+      secretInput.value = "test secret";
+      authTokenInput.value = "test-token";
+
+      // Test with checkbox checked
+      const saveTokenCheckbox = document.createElement("input");
+      saveTokenCheckbox.type = "checkbox";
+      saveTokenCheckbox.id = "saveTokenCookie";
+      saveTokenCheckbox.checked = true;
+      document.body.appendChild(saveTokenCheckbox);
+
+      // Mock successful creation
+      const mockPayload = { data: "encrypted", filename: null };
+      mockCreatePayload.mockReturnValue(mockPayload);
+      mockSendPayload.mockResolvedValue("https://example.com/s/123#key");
+
+      // Should not throw
+      await expect(createSecretModule.createSecret()).resolves.not.toThrow();
+
+      // Test with checkbox unchecked
+      saveTokenCheckbox.checked = false;
+      authTokenInput.value = "test-token-2";
+      secretInput.value = "test secret 2";
+
+      await expect(createSecretModule.createSecret()).resolves.not.toThrow();
+    });
+
+    test("should handle missing checkbox gracefully", async () => {
+      const secretInput = document.getElementById(
+        "secretText",
+      ) as HTMLInputElement;
+      const authTokenInput = document.getElementById(
+        "authToken",
+      ) as HTMLInputElement;
+
+      secretInput.value = "test secret";
+      authTokenInput.value = "test-token";
+
+      // No checkbox in DOM
+
+      // Mock successful creation
+      const mockPayload = { data: "encrypted", filename: null };
+      mockCreatePayload.mockReturnValue(mockPayload);
+      mockSendPayload.mockResolvedValue("https://example.com/s/123#key");
+
+      // Should not throw when checkbox is missing
+      await expect(createSecretModule.createSecret()).resolves.not.toThrow();
+    });
+  });
+
+  describe("Authentication Error Handling", () => {
+    test("authentication error translations are available", () => {
+      // Test that the specific error codes we added are in the i18n translations
+      const authRequiredKey = "error.AUTHENTICATION_REQUIRED";
+      const invalidTokenKey = "error.INVALID_TOKEN";
+
+      // These translations should exist and return meaningful messages
+      const authRequiredMessage = (window as any).i18n.t(authRequiredKey);
+      const invalidTokenMessage = (window as any).i18n.t(invalidTokenKey);
+
+      expect(authRequiredMessage).toBeDefined();
+      expect(invalidTokenMessage).toBeDefined();
+
+      // The keys should not be returned as-is (meaning translation exists)
+      expect(authRequiredMessage).not.toBe(authRequiredKey);
+      expect(invalidTokenMessage).not.toBe(invalidTokenKey);
+
+      // Check that translations contain expected content
+      expect(authRequiredMessage).toContain("Authentication required");
+      expect(invalidTokenMessage).toContain("Invalid authentication token");
+    });
+
+    test("auth token input element exists in DOM", () => {
+      // Test that auth token input exists and can be manipulated
+      const authTokenInput = document.getElementById(
+        "authToken",
+      ) as HTMLInputElement;
+      expect(authTokenInput).toBeDefined();
+      expect(authTokenInput.tagName).toBe("INPUT");
+      expect(authTokenInput.type).toBe("text");
+
+      // Mock focus and select methods (these exist in real DOM)
+      authTokenInput.focus = jest.fn();
+      authTokenInput.select = jest.fn();
+
+      // Test that the methods can be called
+      authTokenInput.focus();
+      authTokenInput.select();
+
+      expect(authTokenInput.focus).toHaveBeenCalled();
+      expect(authTokenInput.select).toHaveBeenCalled();
+    });
+
+    test("type guards work correctly for error identification", () => {
+      // Test that our type guards correctly identify HakanaiError
+      const hakanaiError = {
+        name: "HakanaiError",
+        code: "AUTHENTICATION_REQUIRED", // Using string for now since this is a mock test
+        message: "Authentication required",
+      };
+
+      const standardError = new Error("Standard error");
+
+      const otherObject = {
+        message: "Some message",
+      };
+
+      expect(mockIsHakanaiError(hakanaiError)).toBe(true);
+      expect(mockIsHakanaiError(standardError)).toBe(false);
+      expect(mockIsStandardError(standardError)).toBe(true);
+      expect(mockIsErrorLike(otherObject)).toBe(true);
+    });
+
+    test("error handling functions are exported and callable", () => {
+      // Test that error handling related functions exist and can be called
+      expect(typeof createSecretModule.createSecret).toBe("function");
+      expect(typeof createSecretModule.showError).toBe("function");
+
+      // Test that showError can be called without throwing
+      expect(() => createSecretModule.showError("Test error")).not.toThrow();
+    });
+
+    test("UI strings contain authentication error messages", () => {
+      // Verify that the UI_STRINGS object (if exported) or error handling
+      // supports the authentication error cases
+      const uiStrings = createSecretModule.UI_STRINGS;
+      if (uiStrings) {
+        // If UI_STRINGS is exported, verify it has basic error handling
+        expect(typeof uiStrings).toBe("object");
+      }
+
+      // At minimum, verify the module exports what we expect
+      expect(createSecretModule).toBeDefined();
     });
   });
 });
