@@ -317,9 +317,13 @@ export function saveAuthTokenToCookie(token: string): boolean {
   if (!token.trim()) return false;
 
   try {
+    const expirationDate = new Date();
+    expirationDate.setTime(expirationDate.getTime() + COOKIE_MAX_AGE * 1000);
+
     const cookieOptions = [
       `${AUTH_TOKEN_COOKIE}=${encodeURIComponent(token)}`,
       `Max-Age=${COOKIE_MAX_AGE}`,
+      `Expires=${expirationDate.toUTCString()}`,
       "SameSite=Strict",
       "HttpOnly=false", // Need to access from JS
     ];

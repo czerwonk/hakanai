@@ -493,9 +493,15 @@ describe("Common Utils", () => {
         const result = saveAuthTokenToCookie("test-token-123");
 
         expect(result).toBe(true);
-        expect(mockCookieSetter).toHaveBeenCalledWith(
-          "hakanai-auth-token=test-token-123; Max-Age=86400; SameSite=Strict; HttpOnly=false; Secure",
-        );
+        expect(mockCookieSetter).toHaveBeenCalledTimes(1);
+        
+        const cookieString = mockCookieSetter.mock.calls[0][0];
+        expect(cookieString).toContain("hakanai-auth-token=test-token-123");
+        expect(cookieString).toContain("Max-Age=86400");
+        expect(cookieString).toContain("Expires=");
+        expect(cookieString).toContain("SameSite=Strict");
+        expect(cookieString).toContain("HttpOnly=false");
+        expect(cookieString).toContain("Secure");
       });
 
       test("should save token without Secure flag on localhost", () => {
@@ -548,9 +554,15 @@ describe("Common Utils", () => {
         const result = saveAuthTokenToCookie("token with spaces=&;");
 
         expect(result).toBe(true);
-        expect(mockCookieSetter).toHaveBeenCalledWith(
-          "hakanai-auth-token=token%20with%20spaces%3D%26%3B; Max-Age=86400; SameSite=Strict; HttpOnly=false; Secure",
-        );
+        expect(mockCookieSetter).toHaveBeenCalledTimes(1);
+        
+        const cookieString = mockCookieSetter.mock.calls[0][0];
+        expect(cookieString).toContain("hakanai-auth-token=token%20with%20spaces%3D%26%3B");
+        expect(cookieString).toContain("Max-Age=86400");
+        expect(cookieString).toContain("Expires=");
+        expect(cookieString).toContain("SameSite=Strict");
+        expect(cookieString).toContain("HttpOnly=false");
+        expect(cookieString).toContain("Secure");
       });
 
       test("should return false for empty token", () => {
