@@ -265,16 +265,35 @@ fn generate_static_html_files() {
     generate_html_file(&tt, "get-secret", &context, "src/includes/get-secret.html");
 }
 
-fn create_version_context() -> HashMap<&'static str, &'static str> {
+fn create_version_context() -> HashMap<&'static str, String> {
     let mut context = HashMap::new();
-    context.insert("version", env!("CARGO_PKG_VERSION"));
+    context.insert("version", env!("CARGO_PKG_VERSION").to_string());
+    context.insert("cache_buster", generate_cache_buster());
     context
+}
+
+fn generate_cache_buster() -> String {
+    use std::collections::hash_map::DefaultHasher;
+    use std::hash::{Hash, Hasher};
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    // Use current timestamp and process ID to generate a unique build ID
+    let mut hasher = DefaultHasher::new();
+    let timestamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    timestamp.hash(&mut hasher);
+    std::process::id().hash(&mut hasher);
+
+    // Use first 8 characters of the hash as cache buster
+    format!("{:x}", hasher.finish())[..8].to_string()
 }
 
 fn generate_html_file(
     tt: &TinyTemplate,
     template_name: &str,
-    context: &HashMap<&'static str, &'static str>,
+    context: &HashMap<&'static str, String>,
     output_path: &str,
 ) {
     let html = tt.render(template_name, context).unwrap();
