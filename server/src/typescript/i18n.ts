@@ -49,7 +49,7 @@ const translations: Translations = {
     "helper.separateKey":
       "When enabled, the URL and decryption key are displayed separately, allowing you to share them through different channels for enhanced security.",
     "helper.saveToken":
-      "Token will be stored securely in your browser for 24 hours. Only enable on trusted devices.",
+      "Token will be stored securely in your browser for the current session only. You will need to re-enter it when you start a new browser session.",
     "helper.expires": "Secret will self-destruct after this time or first view",
 
     // Time options
@@ -182,7 +182,7 @@ const translations: Translations = {
     "helper.separateKey":
       "Wenn aktiviert, werden URL und geheimer Schlüssel separat angezeigt, so dass sie über verschiedene Kanäle für erweiterte Sicherheit geteilt werden können.",
     "helper.saveToken":
-      "Token wird sicher für 24 Stunden im Browser gespeichert. Nur auf vertrauenswürdigen Geräten aktivieren.",
+      "Token wird sicher für die Session im Browser gespeichert. Nach dem Schließen des Tabs muss dieses neu eigegeben werden.",
     "helper.expires":
       "Das Secret wird nach dieser Zeit oder beim ersten Zugriff selbst zerstört",
 

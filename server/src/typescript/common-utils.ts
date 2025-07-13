@@ -233,58 +233,34 @@ export function initTheme(): void {
   setupSystemThemeListener();
 }
 
-// LocalStorage management for auth tokens
+// SessionStorage management for auth tokens
 const AUTH_TOKEN_KEY = "hakanai-auth-token";
-const TOKEN_EXPIRY_HOURS = 24;
-
-interface StoredTokenData {
-  token: string;
-  expires: number;
-}
 
 export function saveAuthTokenToStorage(token: string): boolean {
   if (!token.trim()) return false;
 
   try {
-    const expirationTime = Date.now() + TOKEN_EXPIRY_HOURS * 60 * 60 * 1000;
-    const tokenData: StoredTokenData = {
-      token: token,
-      expires: expirationTime,
-    };
-    localStorage.setItem(AUTH_TOKEN_KEY, JSON.stringify(tokenData));
+    sessionStorage.setItem(AUTH_TOKEN_KEY, token);
     return true;
   } catch (error) {
-    console.warn("Failed to save auth token to localStorage:", error);
+    console.warn("Failed to save auth token to sessionStorage:", error);
     return false;
   }
 }
 
 export function getAuthTokenFromStorage(): string | null {
   try {
-    const stored = localStorage.getItem(AUTH_TOKEN_KEY);
-    if (!stored) return null;
-
-    const tokenData: StoredTokenData = JSON.parse(stored);
-
-    // Check if token has expired
-    if (Date.now() > tokenData.expires) {
-      localStorage.removeItem(AUTH_TOKEN_KEY); // Clean up expired token
-      return null;
-    }
-
-    return tokenData.token;
+    return sessionStorage.getItem(AUTH_TOKEN_KEY);
   } catch (error) {
-    console.warn("Failed to read auth token from localStorage:", error);
-    // Clean up corrupted data
-    localStorage.removeItem(AUTH_TOKEN_KEY);
+    console.warn("Failed to read auth token from sessionStorage:", error);
     return null;
   }
 }
 
 export function clearAuthTokenStorage(): void {
   try {
-    localStorage.removeItem(AUTH_TOKEN_KEY);
+    sessionStorage.removeItem(AUTH_TOKEN_KEY);
   } catch (error) {
-    console.warn("Failed to clear auth token from localStorage:", error);
+    console.warn("Failed to clear auth token from sessionStorage:", error);
   }
 }

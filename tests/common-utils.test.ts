@@ -4,25 +4,21 @@ import {
   clearAuthTokenStorage,
 } from "../server/src/typescript/common-utils";
 
-describe("LocalStorage Auth Token Management", () => {
+describe("SessionStorage Auth Token Management", () => {
   beforeEach(() => {
-    // Clear localStorage before each test
-    localStorage.clear();
+    // Clear sessionStorage before each test
+    sessionStorage.clear();
     jest.clearAllMocks();
   });
 
   describe("saveAuthTokenToStorage", () => {
-    test("should save token to localStorage", () => {
+    test("should save token to sessionStorage", () => {
       const result = saveAuthTokenToStorage("test-token-123");
 
       expect(result).toBe(true);
 
-      const stored = localStorage.getItem("hakanai-auth-token");
-      expect(stored).toBeTruthy();
-
-      const tokenData = JSON.parse(stored!);
-      expect(tokenData.token).toBe("test-token-123");
-      expect(tokenData.expires).toBeGreaterThan(Date.now());
+      const stored = sessionStorage.getItem("hakanai-auth-token");
+      expect(stored).toBe("test-token-123");
     });
 
     test("should return false for empty token", () => {
@@ -37,12 +33,8 @@ describe("LocalStorage Auth Token Management", () => {
   });
 
   describe("getAuthTokenFromStorage", () => {
-    test("should retrieve token from localStorage", () => {
-      const tokenData = {
-        token: "test-token-123",
-        expires: Date.now() + 24 * 60 * 60 * 1000, // 24 hours from now
-      };
-      localStorage.setItem("hakanai-auth-token", JSON.stringify(tokenData));
+    test("should retrieve token from sessionStorage", () => {
+      sessionStorage.setItem("hakanai-auth-token", "test-token-123");
 
       const result = getAuthTokenFromStorage();
       expect(result).toBe("test-token-123");
@@ -52,39 +44,15 @@ describe("LocalStorage Auth Token Management", () => {
       const result = getAuthTokenFromStorage();
       expect(result).toBe(null);
     });
-
-    test("should return null and clean up expired token", () => {
-      const tokenData = {
-        token: "expired-token",
-        expires: Date.now() - 1000, // 1 second ago (expired)
-      };
-      localStorage.setItem("hakanai-auth-token", JSON.stringify(tokenData));
-
-      const result = getAuthTokenFromStorage();
-      expect(result).toBe(null);
-      expect(localStorage.getItem("hakanai-auth-token")).toBe(null);
-    });
-
-    test("should handle corrupted JSON data", () => {
-      localStorage.setItem("hakanai-auth-token", "invalid-json-data");
-
-      const result = getAuthTokenFromStorage();
-      expect(result).toBe(null);
-      expect(localStorage.getItem("hakanai-auth-token")).toBe(null);
-    });
   });
 
   describe("clearAuthTokenStorage", () => {
-    test("should clear token from localStorage", () => {
-      const tokenData = {
-        token: "test-token-123",
-        expires: Date.now() + 24 * 60 * 60 * 1000,
-      };
-      localStorage.setItem("hakanai-auth-token", JSON.stringify(tokenData));
+    test("should clear token from sessionStorage", () => {
+      sessionStorage.setItem("hakanai-auth-token", "test-token-123");
 
       clearAuthTokenStorage();
 
-      expect(localStorage.getItem("hakanai-auth-token")).toBe(null);
+      expect(sessionStorage.getItem("hakanai-auth-token")).toBe(null);
     });
   });
 
@@ -98,4 +66,3 @@ describe("LocalStorage Auth Token Management", () => {
     });
   });
 });
-

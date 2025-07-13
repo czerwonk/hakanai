@@ -819,7 +819,7 @@ function handleAuthTokenSave(token: string, shouldSave: boolean): void {
   if (shouldSave && token.trim()) {
     const saved = saveAuthTokenToStorage(token);
     if (!saved) {
-      console.warn("Failed to save auth token to localStorage");
+      console.warn("Failed to save auth token to sessionStorage");
     }
   } else if (!shouldSave) {
     clearAuthTokenStorage();
