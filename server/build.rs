@@ -280,7 +280,7 @@ fn generate_cache_buster() -> String {
     // Check TypeScript source directory
     if let Ok(entries) = fs::read_dir("src/typescript") {
         for entry in entries.filter_map(|e| e.ok()) {
-            if entry.path().extension().map_or(false, |ext| ext == "ts") {
+            if entry.path().extension().is_some_and(|ext| ext == "ts") {
                 if let Ok(metadata) = entry.metadata() {
                     if let Ok(modified) = metadata.modified() {
                         latest_time = latest_time.max(modified);
@@ -300,7 +300,7 @@ fn generate_cache_buster() -> String {
     // Check templates
     if let Ok(entries) = fs::read_dir("templates") {
         for entry in entries.filter_map(|e| e.ok()) {
-            if entry.path().extension().map_or(false, |ext| ext == "html") {
+            if entry.path().extension().is_some_and(|ext| ext == "html") {
                 if let Ok(metadata) = entry.metadata() {
                     if let Ok(modified) = metadata.modified() {
                         latest_time = latest_time.max(modified);

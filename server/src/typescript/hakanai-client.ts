@@ -101,13 +101,15 @@ class Base64UrlSafe {
     }
 
     // Convert Uint8Array to binary string safely, handling large arrays
-    let binaryString = "";
     const chunkSize = 8192; // Process in chunks to avoid call stack limits
+    const chunks: string[] = [];
 
     for (let i = 0; i < data.length; i += chunkSize) {
       const chunk = data.subarray(i, i + chunkSize);
-      binaryString += String.fromCharCode(...chunk);
+      chunks.push(String.fromCharCode(...chunk));
     }
+
+    const binaryString = chunks.join("");
 
     // Encode to standard base64 then convert to URL-safe
     return btoa(binaryString)
