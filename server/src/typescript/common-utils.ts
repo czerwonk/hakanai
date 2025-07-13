@@ -52,7 +52,6 @@ function fallbackCopyToClipboard(
   document.body.appendChild(textArea);
 
   try {
-    textArea.focus();
     textArea.select();
     textArea.setSelectionRange(0, 99999); // For mobile devices
 
