@@ -12,9 +12,9 @@ jest.mock("../server/src/typescript/hakanai-client", () => ({
   })),
 }));
 
-const mockSaveAuthTokenToCookie = jest.fn();
-const mockGetAuthTokenFromCookie = jest.fn();
-const mockClearAuthTokenCookie = jest.fn();
+const mockSaveAuthTokenToStorage = jest.fn();
+const mockGetAuthTokenFromStorage = jest.fn();
+const mockClearAuthTokenStorage = jest.fn();
 const mockSecureInputClear = jest.fn();
 
 jest.mock("../server/src/typescript/common-utils", () => ({
@@ -24,9 +24,9 @@ jest.mock("../server/src/typescript/common-utils", () => ({
   announceToScreenReader: mockAnnounceToScreenReader,
   initTheme: jest.fn(),
   updateThemeToggleButton: jest.fn(),
-  saveAuthTokenToCookie: mockSaveAuthTokenToCookie,
-  getAuthTokenFromCookie: mockGetAuthTokenFromCookie,
-  clearAuthTokenCookie: mockClearAuthTokenCookie,
+  saveAuthTokenToStorage: mockSaveAuthTokenToStorage,
+  getAuthTokenFromStorage: mockGetAuthTokenFromStorage,
+  clearAuthTokenStorage: mockClearAuthTokenStorage,
   secureInputClear: mockSecureInputClear,
 }));
 
@@ -269,9 +269,9 @@ describe("create-secret.ts", () => {
       document.body.appendChild(saveTokenCheckbox);
 
       // Reset mock implementations
-      mockSaveAuthTokenToCookie.mockReset();
-      mockGetAuthTokenFromCookie.mockReset();
-      mockClearAuthTokenCookie.mockReset();
+      mockSaveAuthTokenToStorage.mockReset();
+      mockGetAuthTokenFromStorage.mockReset();
+      mockClearAuthTokenStorage.mockReset();
       mockSecureInputClear.mockReset();
     });
 

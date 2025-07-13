@@ -11,9 +11,9 @@ import {
   secureInputClear,
   initTheme,
   updateThemeToggleButton,
-  saveAuthTokenToCookie,
-  getAuthTokenFromCookie,
-  clearAuthTokenCookie,
+  saveAuthTokenToStorage,
+  getAuthTokenFromStorage,
+  clearAuthTokenStorage,
 } from "./common-utils.js";
 import {
   type RequiredElements,
@@ -457,14 +457,18 @@ function createSeparateUrlDisplay(
   const copyUrlBtn = createCopyButton(
     window.i18n.t("button.copyUrl"),
     "Copy secret URL to clipboard",
-    () => copyUrl(urlId),
+    function (this: HTMLButtonElement) {
+      copyUrl(urlId, this);
+    },
   );
   buttonsContainer.appendChild(copyUrlBtn);
 
   const copyKeyBtn = createCopyButton(
     window.i18n.t("button.copyKey"),
     "Copy decryption key to clipboard",
-    () => copyUrl(urlId + "-key"),
+    function (this: HTMLButtonElement) {
+      copyUrl(urlId + "-key", this);
+    },
   );
   buttonsContainer.appendChild(copyKeyBtn);
 
@@ -494,7 +498,9 @@ function createCombinedUrlDisplay(
   const copyBtn = createCopyButton(
     UI_STRINGS.COPY_TEXT,
     "Copy secret URL to clipboard",
-    () => copyUrl(urlId),
+    function (this: HTMLButtonElement) {
+      copyUrl(urlId, this);
+    },
   );
   buttonsContainer.appendChild(copyBtn);
 
@@ -624,9 +630,8 @@ function showForm(): void {
   }
 }
 
-function copyUrl(urlId: string): void {
+function copyUrl(urlId: string, button: HTMLButtonElement): void {
   const urlElement = document.getElementById(urlId) as HTMLInputElement;
-  const button = document.activeElement as HTMLButtonElement;
 
   if (!urlElement || !button) {
     showError(UI_STRINGS.COPY_FAILED);
@@ -790,7 +795,7 @@ function setupFileInputHandler(): void {
 }
 
 function initializeAuthToken(): void {
-  const savedToken = getAuthTokenFromCookie();
+  const savedToken = getAuthTokenFromStorage();
   if (savedToken) {
     const authTokenInput = document.getElementById(
       "authToken",
@@ -812,12 +817,12 @@ function initializeAuthToken(): void {
 
 function handleAuthTokenSave(token: string, shouldSave: boolean): void {
   if (shouldSave && token.trim()) {
-    const saved = saveAuthTokenToCookie(token);
+    const saved = saveAuthTokenToStorage(token);
     if (!saved) {
-      console.warn("Failed to save auth token to cookie");
+      console.warn("Failed to save auth token to localStorage");
     }
   } else if (!shouldSave) {
-    clearAuthTokenCookie();
+    clearAuthTokenStorage();
   }
 }
 

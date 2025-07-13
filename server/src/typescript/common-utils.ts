@@ -27,10 +27,6 @@ export function createButtonContainer(): HTMLDivElement {
   return container;
 }
 
-function isIOSDevice(): boolean {
-  return /iPad|iPhone|iPod/.test(navigator.userAgent);
-}
-
 function fallbackCopyToClipboard(
   text: string,
   button: HTMLButtonElement,
@@ -301,74 +297,58 @@ export function initTheme(): void {
   setupSystemThemeListener();
 }
 
-// Cookie management for auth tokens
-const AUTH_TOKEN_COOKIE = "hakanai-auth-token";
-const COOKIE_MAX_AGE = 24 * 60 * 60; // 24 hours in seconds
+// LocalStorage management for auth tokens
+const AUTH_TOKEN_KEY = "hakanai-auth-token";
+const TOKEN_EXPIRY_HOURS = 24;
 
-function isSecureContext(): boolean {
-  return (
-    window.location.protocol === "https:" ||
-    window.location.hostname === "localhost"
-  );
+interface StoredTokenData {
+  token: string;
+  expires: number;
 }
 
-export function saveAuthTokenToCookie(token: string): boolean {
+export function saveAuthTokenToStorage(token: string): boolean {
   if (!token.trim()) return false;
 
   try {
-    const expirationDate = new Date();
-    expirationDate.setTime(expirationDate.getTime() + COOKIE_MAX_AGE * 1000);
-
-    const cookieOptions = [
-      `${AUTH_TOKEN_COOKIE}=${encodeURIComponent(token)}`,
-      `Max-Age=${COOKIE_MAX_AGE}`,
-      `Expires=${expirationDate.toUTCString()}`,
-      "SameSite=Strict",
-      "HttpOnly=false", // Need to access from JS
-    ];
-
-    if (isSecureContext()) {
-      cookieOptions.push("Secure");
-    }
-
-    document.cookie = cookieOptions.join("; ");
+    const expirationTime = Date.now() + TOKEN_EXPIRY_HOURS * 60 * 60 * 1000;
+    const tokenData: StoredTokenData = {
+      token: token,
+      expires: expirationTime,
+    };
+    localStorage.setItem(AUTH_TOKEN_KEY, JSON.stringify(tokenData));
     return true;
   } catch (error) {
-    console.warn("Failed to save auth token to cookie:", error);
+    console.warn("Failed to save auth token to localStorage:", error);
     return false;
   }
 }
 
-export function getAuthTokenFromCookie(): string | null {
+export function getAuthTokenFromStorage(): string | null {
   try {
-    const cookies = document.cookie.split(";");
-    for (const cookie of cookies) {
-      const [name, value] = cookie.trim().split("=");
-      if (name === AUTH_TOKEN_COOKIE) {
-        return decodeURIComponent(value || "");
-      }
+    const stored = localStorage.getItem(AUTH_TOKEN_KEY);
+    if (!stored) return null;
+
+    const tokenData: StoredTokenData = JSON.parse(stored);
+
+    // Check if token has expired
+    if (Date.now() > tokenData.expires) {
+      localStorage.removeItem(AUTH_TOKEN_KEY); // Clean up expired token
+      return null;
     }
-    return null;
+
+    return tokenData.token;
   } catch (error) {
-    console.warn("Failed to read auth token from cookie:", error);
+    console.warn("Failed to read auth token from localStorage:", error);
+    // Clean up corrupted data
+    localStorage.removeItem(AUTH_TOKEN_KEY);
     return null;
   }
 }
 
-export function clearAuthTokenCookie(): void {
+export function clearAuthTokenStorage(): void {
   try {
-    const cookieOptions = [
-      `${AUTH_TOKEN_COOKIE}=`,
-      "Max-Age=0",
-      "SameSite=Strict",
-    ];
-
-    if (isSecureContext()) {
-      cookieOptions.push("Secure");
-    }
-
-    document.cookie = cookieOptions.join("; ");
+    localStorage.removeItem(AUTH_TOKEN_KEY);
   } catch (error) {
-    console.warn("Failed to clear auth token cookie:", error);
+    console.warn("Failed to clear auth token from localStorage:", error);
   }
 }
