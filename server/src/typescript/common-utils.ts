@@ -40,14 +40,6 @@ export function copyToClipboard(
     .catch(() => showCopyFailure(button, originalText, failedMessage));
 }
 
-export function secureInputClear(input: HTMLInputElement): void {
-  if (input.value.length > 0) {
-    // Simple secure clear: overwrite then empty
-    input.value = "x".repeat(input.value.length);
-    input.value = "";
-  }
-}
-
 function showCopySuccess(
   button: HTMLButtonElement,
   originalText: string,
@@ -77,6 +69,14 @@ function showCopyFailure(
     button.textContent = originalText;
     button.classList.remove("copy-failed");
   }, COPY_FEEDBACK_TIMEOUT);
+}
+
+export function secureInputClear(input: HTMLInputElement): void {
+  if (input.value.length > 0) {
+    // Simple secure clear: overwrite then empty
+    input.value = "x".repeat(input.value.length);
+    input.value = "";
+  }
 }
 
 export function announceToScreenReader(message: string): void {
