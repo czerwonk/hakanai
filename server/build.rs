@@ -273,21 +273,48 @@ fn create_version_context() -> HashMap<&'static str, String> {
 }
 
 fn generate_cache_buster() -> String {
-    use std::collections::hash_map::DefaultHasher;
-    use std::hash::{Hash, Hasher};
-    use std::time::{SystemTime, UNIX_EPOCH};
+    use std::time::SystemTime;
 
-    // Use current timestamp and process ID to generate a unique build ID
-    let mut hasher = DefaultHasher::new();
-    let timestamp = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_nanos();
-    timestamp.hash(&mut hasher);
-    std::process::id().hash(&mut hasher);
+    let mut latest_time = SystemTime::UNIX_EPOCH;
 
-    // Use first 8 characters of the hash as cache buster
-    format!("{:x}", hasher.finish())[..8].to_string()
+    // Check TypeScript source directory
+    if let Ok(entries) = fs::read_dir("src/typescript") {
+        for entry in entries.filter_map(|e| e.ok()) {
+            if entry.path().extension().map_or(false, |ext| ext == "ts") {
+                if let Ok(metadata) = entry.metadata() {
+                    if let Ok(modified) = metadata.modified() {
+                        latest_time = latest_time.max(modified);
+                    }
+                }
+            }
+        }
+    }
+
+    // Check static assets
+    if let Ok(metadata) = fs::metadata("src/includes/style.css") {
+        if let Ok(modified) = metadata.modified() {
+            latest_time = latest_time.max(modified);
+        }
+    }
+
+    // Check templates
+    if let Ok(entries) = fs::read_dir("templates") {
+        for entry in entries.filter_map(|e| e.ok()) {
+            if entry.path().extension().map_or(false, |ext| ext == "html") {
+                if let Ok(metadata) = entry.metadata() {
+                    if let Ok(modified) = metadata.modified() {
+                        latest_time = latest_time.max(modified);
+                    }
+                }
+            }
+        }
+    }
+
+    latest_time
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs()
+        .to_string()
 }
 
 fn generate_html_file(
