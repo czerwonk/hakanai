@@ -8,10 +8,10 @@ use tinytemplate::TinyTemplate;
 
 fn main() -> Result<()> {
     println!("cargo:rerun-if-changed=src/includes/openapi.json");
-    println!("cargo:rerun-if-changed=templates/docs.html");
-    println!("cargo:rerun-if-changed=templates/endpoint.html");
-    println!("cargo:rerun-if-changed=templates/create-secret.html");
-    println!("cargo:rerun-if-changed=templates/get-secret.html");
+    println!("cargo:rerun-if-changed=src/templates/docs.html");
+    println!("cargo:rerun-if-changed=src/templates/endpoint.html");
+    println!("cargo:rerun-if-changed=src/templates/create-secret.html");
+    println!("cargo:rerun-if-changed=src/templates/get-secret.html");
 
     // TypeScript files that should trigger recompilation
     println!("cargo:rerun-if-changed=src/typescript/hakanai-client.ts");
@@ -92,6 +92,7 @@ fn compile_typescript() -> Result<()> {
 }
 
 fn generate_docs() -> Result<()> {
+    println!("cargo:warning=Generate docs...");
     let openapi = load_openapi()?;
 
     let html = generate_docs_html(&openapi).context("failed to generate docs HTML")?;
@@ -112,8 +113,8 @@ fn generate_docs_html(openapi: &Value) -> Result<String> {
     let mut tt = TinyTemplate::new();
 
     let docs_template =
-        fs::read_to_string("templates/docs.html").context("Failed to read docs template")?;
-    let endpoint_template = fs::read_to_string("templates/endpoint.html")
+        fs::read_to_string("src/templates/docs.html").context("Failed to read docs template")?;
+    let endpoint_template = fs::read_to_string("src/templates/endpoint.html")
         .context("Failed to read endpoint template")?;
 
     tt.add_template("docs", &docs_template)?;
@@ -264,11 +265,12 @@ fn get_status_text(code: &str) -> &'static str {
 }
 
 fn generate_static_html_files() -> Result<()> {
+    println!("cargo:warning=Generate static HTML pages...");
     let mut tt = TinyTemplate::new();
 
-    let create_secret_template = fs::read_to_string("templates/create-secret.html")
+    let create_secret_template = fs::read_to_string("src/templates/create-secret.html")
         .context("failed to read create-secret template")?;
-    let get_secret_template = fs::read_to_string("templates/get-secret.html")
+    let get_secret_template = fs::read_to_string("src/templates/get-secret.html")
         .context("failed to read get-secret template")?;
 
     tt.add_template("create-secret", &create_secret_template)?;
@@ -314,7 +316,7 @@ fn get_latest_modified_time(path: &str, ext: &str) -> SystemTime {
 fn generate_cache_buster() -> String {
     let typescript_modified = get_latest_modified_time("src/typescript", "ts");
     let includes_modified = get_latest_modified_time("src/includes", "css");
-    let templates_modified = get_latest_modified_time("templates", "html");
+    let templates_modified = get_latest_modified_time("src/templates", "html");
 
     [typescript_modified, includes_modified, templates_modified]
         .iter()
