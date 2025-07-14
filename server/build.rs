@@ -1,11 +1,12 @@
-use std::collections::HashMap;
 use std::fs;
 use std::process::Command;
+use std::{collections::HashMap, time::SystemTime};
 
+use anyhow::{Context, Result, anyhow};
 use serde_json::Value;
 use tinytemplate::TinyTemplate;
 
-fn main() {
+fn main() -> Result<()> {
     println!("cargo:rerun-if-changed=src/includes/openapi.json");
     println!("cargo:rerun-if-changed=templates/docs.html");
     println!("cargo:rerun-if-changed=templates/endpoint.html");
@@ -21,21 +22,16 @@ fn main() {
     println!("cargo:rerun-if-changed=src/typescript/types.ts");
     println!("cargo:rerun-if-changed=tsconfig.json");
 
-    compile_typescript();
-    generate_docs();
-    generate_static_html_files();
+    let start = std::time::Instant::now();
+    compile_typescript()?;
+    generate_docs()?;
+    generate_static_html_files()?;
+    println!("cargo:warning=Build completed in {:?}", start.elapsed());
+
+    Ok(())
 }
 
-fn compile_typescript() {
-    println!("cargo:warning=Compiling TypeScript files...");
-
-    // Check if we should skip TypeScript compilation (for CI/Docker builds)
-    if std::env::var("SKIP_TYPESCRIPT_BUILD").is_ok() {
-        println!("cargo:warning=Skipping TypeScript compilation (SKIP_TYPESCRIPT_BUILD set)");
-        return;
-    }
-
-    // Check if pre-compiled JavaScript files exist
+fn all_js_files_exist() -> bool {
     let js_files = [
         "src/includes/hakanai-client.js",
         "src/includes/common-utils.js",
@@ -45,42 +41,42 @@ fn compile_typescript() {
         "src/includes/types.js",
     ];
 
-    let all_js_exist = js_files
+    js_files
         .iter()
-        .all(|file| std::path::Path::new(file).exists());
+        .all(|file| std::path::Path::new(file).exists())
+}
 
-    if all_js_exist {
-        println!(
-            "cargo:warning=Pre-compiled JavaScript files found, skipping TypeScript compilation"
-        );
-        return;
+fn ensure_typescript_is_installed() -> Result<()> {
+    let is_installed = Command::new("tsc")
+        .arg("--version")
+        .output()?
+        .status
+        .success();
+
+    if is_installed {
+        println!("cargo:warning=TypeScript compiler (tsc) is installed");
+        return Ok(());
+    } else {
+        return Err(anyhow!(
+            "TypeScript compiler not available. Install with: npm install -g typescript or set SKIP_TYPESCRIPT_BUILD=1"
+        ));
+    }
+}
+
+fn compile_typescript() -> Result<()> {
+    println!("cargo:warning=Compiling TypeScript files...");
+
+    if std::env::var("SKIP_TYPESCRIPT_BUILD").is_ok() && all_js_files_exist() {
+        println!("cargo:warning=Skipping TypeScript compilation (SKIP_TYPESCRIPT_BUILD set)");
+        return Ok(());
     }
 
-    // Check if TypeScript compiler is available
-    let tsc_check = Command::new("tsc").arg("--version").output();
-
-    match tsc_check {
-        Ok(output) if output.status.success() => {
-            println!("cargo:warning=Found TypeScript compiler");
-        }
-        _ => {
-            println!(
-                "cargo:warning=TypeScript compiler (tsc) not found. Please install TypeScript with: npm install -g typescript"
-            );
-            println!(
-                "cargo:warning=Or set SKIP_TYPESCRIPT_BUILD=1 to use pre-compiled JavaScript files"
-            );
-            panic!(
-                "TypeScript compiler not available. Install with: npm install -g typescript or set SKIP_TYPESCRIPT_BUILD=1"
-            );
-        }
-    }
+    ensure_typescript_is_installed()?;
 
     // Compile TypeScript files
     let output = Command::new("tsc")
         .current_dir("..") // Run from workspace root where tsconfig.json is located
-        .output()
-        .expect("Failed to execute TypeScript compiler");
+        .output()?;
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
@@ -92,49 +88,56 @@ fn compile_typescript() {
     }
 
     println!("cargo:warning=TypeScript compilation successful");
+    Ok(())
 }
 
-fn generate_docs() {
-    let openapi = load_openapi();
-    let html = generate_docs_html(&openapi);
+fn generate_docs() -> Result<()> {
+    let openapi = load_openapi()?;
+
+    let html = generate_docs_html(&openapi).context("failed to generate docs HTML")?;
+
     fs::write("src/includes/docs_generated.html", html)
-        .expect("Failed to write generated docs.html");
+        .context("failed to write docs_generated.html")?;
+    Ok(())
 }
 
-fn load_openapi() -> Value {
+fn load_openapi() -> Result<Value> {
     let content =
-        fs::read_to_string("src/includes/openapi.json").expect("Failed to read openapi.json");
-    serde_json::from_str(&content).expect("Failed to parse openapi.json")
+        fs::read_to_string("src/includes/openapi.json").context("failed to read openapi.json")?;
+
+    serde_json::from_str(&content).context("failed to parse openapi.json")
 }
 
-fn generate_docs_html(openapi: &Value) -> String {
+fn generate_docs_html(openapi: &Value) -> Result<String> {
     let mut tt = TinyTemplate::new();
 
     let docs_template =
-        fs::read_to_string("templates/docs.html").expect("Failed to read docs template");
-    let endpoint_template =
-        fs::read_to_string("templates/endpoint.html").expect("Failed to read endpoint template");
+        fs::read_to_string("templates/docs.html").context("Failed to read docs template")?;
+    let endpoint_template = fs::read_to_string("templates/endpoint.html")
+        .context("Failed to read endpoint template")?;
 
-    tt.add_template("docs", &docs_template).unwrap();
-    tt.add_template("endpoint", &endpoint_template).unwrap();
+    tt.add_template("docs", &docs_template)?;
+    tt.add_template("endpoint", &endpoint_template)?;
 
-    let endpoints_html = generate_all_endpoints(&tt, openapi);
+    let endpoints_html = generate_all_endpoints(&tt, openapi)?;
     let context = create_docs_context(openapi, &endpoints_html);
-    tt.render("docs", &context).unwrap()
+
+    Ok(tt.render("docs", &context)?)
 }
 
-fn generate_all_endpoints(tt: &TinyTemplate, openapi: &Value) -> String {
+fn generate_all_endpoints(tt: &TinyTemplate, openapi: &Value) -> Result<String> {
     let mut endpoints_html = String::new();
     if let Some(paths) = openapi["paths"].as_object() {
         for (path, methods) in paths {
             if let Some(methods_obj) = methods.as_object() {
                 for (method, operation) in methods_obj {
-                    endpoints_html.push_str(&generate_endpoint_html(tt, path, method, operation));
+                    endpoints_html.push_str(&generate_endpoint_html(tt, path, method, operation)?);
                 }
             }
         }
     }
-    endpoints_html
+
+    Ok(endpoints_html)
 }
 
 fn create_docs_context<'a>(
@@ -147,9 +150,10 @@ fn create_docs_context<'a>(
         "title",
         info["title"].as_str().unwrap_or("API Documentation"),
     );
-    context.insert("version", info["version"].as_str().unwrap_or("1.0.0"));
+    context.insert("version", env!("CARGO_PKG_VERSION"));
     context.insert("description", info["description"].as_str().unwrap_or(""));
     context.insert("endpoints", endpoints_html);
+
     context
 }
 
@@ -158,7 +162,7 @@ fn generate_endpoint_html(
     path: &str,
     method: &str,
     operation: &Value,
-) -> String {
+) -> Result<String> {
     let status_codes_html = generate_status_codes(operation);
     let request_body_html = generate_request_body(operation);
     let context = create_endpoint_context(
@@ -168,7 +172,10 @@ fn generate_endpoint_html(
         &status_codes_html,
         &request_body_html,
     );
-    tt.render("endpoint", &context).unwrap()
+
+    tt.render("endpoint", &context).context(format!(
+        "failed to render endpoint template for {method} {path}"
+    ))
 }
 
 fn generate_status_codes(operation: &Value) -> String {
@@ -184,6 +191,7 @@ fn generate_status_codes(operation: &Value) -> String {
             ));
         }
     }
+
     html
 }
 
@@ -201,7 +209,19 @@ fn generate_request_body(operation: &Value) -> String {
             }
         }
     }
+
     String::new()
+}
+
+fn html_escape_value(input: &Value) -> String {
+    input
+        .as_str()
+        .unwrap_or("")
+        .replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
+        .replace('\'', "&#x27;")
 }
 
 fn create_endpoint_context<'a>(
@@ -217,14 +237,14 @@ fn create_endpoint_context<'a>(
     let mut context: HashMap<String, String> = HashMap::new();
     context.insert(
         "summary".to_string(),
-        operation["summary"].as_str().unwrap_or("").to_string(),
+        html_escape_value(&operation["summary"]),
     );
     context.insert("method_class".to_string(), method_class);
     context.insert("method_upper".to_string(), method_upper);
     context.insert("path".to_string(), path.to_string());
     context.insert(
         "description".to_string(),
-        operation["description"].as_str().unwrap_or("").to_string(),
+        html_escape_value(&operation["description"]),
     );
     context.insert("request_body".to_string(), request_body_html.to_string());
     context.insert("status_codes".to_string(), status_codes_html.to_string());
@@ -243,64 +263,42 @@ fn get_status_text(code: &str) -> &'static str {
     }
 }
 
-fn generate_static_html_files() {
+fn generate_static_html_files() -> Result<()> {
     let mut tt = TinyTemplate::new();
 
     let create_secret_template = fs::read_to_string("templates/create-secret.html")
-        .expect("Failed to read create-secret template");
+        .context("failed to read create-secret template")?;
     let get_secret_template = fs::read_to_string("templates/get-secret.html")
-        .expect("Failed to read get-secret template");
+        .context("failed to read get-secret template")?;
 
-    tt.add_template("create-secret", &create_secret_template)
-        .unwrap();
-    tt.add_template("get-secret", &get_secret_template).unwrap();
+    tt.add_template("create-secret", &create_secret_template)?;
+    tt.add_template("get-secret", &get_secret_template)?;
 
     let context = create_version_context();
+
     generate_html_file(
         &tt,
         "create-secret",
         &context,
         "src/includes/create-secret.html",
-    );
-    generate_html_file(&tt, "get-secret", &context, "src/includes/get-secret.html");
+    )?;
+    generate_html_file(&tt, "get-secret", &context, "src/includes/get-secret.html")
 }
 
 fn create_version_context() -> HashMap<&'static str, String> {
     let mut context = HashMap::new();
     context.insert("version", env!("CARGO_PKG_VERSION").to_string());
     context.insert("cache_buster", generate_cache_buster());
+
     context
 }
 
-fn generate_cache_buster() -> String {
-    use std::time::SystemTime;
-
+fn get_latest_modified_time(path: &str, ext: &str) -> SystemTime {
     let mut latest_time = SystemTime::UNIX_EPOCH;
 
-    // Check TypeScript source directory
-    if let Ok(entries) = fs::read_dir("src/typescript") {
+    if let Ok(entries) = fs::read_dir(path) {
         for entry in entries.filter_map(|e| e.ok()) {
-            if entry.path().extension().is_some_and(|ext| ext == "ts") {
-                if let Ok(metadata) = entry.metadata() {
-                    if let Ok(modified) = metadata.modified() {
-                        latest_time = latest_time.max(modified);
-                    }
-                }
-            }
-        }
-    }
-
-    // Check static assets
-    if let Ok(metadata) = fs::metadata("src/includes/style.css") {
-        if let Ok(modified) = metadata.modified() {
-            latest_time = latest_time.max(modified);
-        }
-    }
-
-    // Check templates
-    if let Ok(entries) = fs::read_dir("templates") {
-        for entry in entries.filter_map(|e| e.ok()) {
-            if entry.path().extension().is_some_and(|ext| ext == "html") {
+            if entry.path().extension().is_some_and(|e| e == ext) {
                 if let Ok(metadata) = entry.metadata() {
                     if let Ok(modified) = metadata.modified() {
                         latest_time = latest_time.max(modified);
@@ -311,6 +309,17 @@ fn generate_cache_buster() -> String {
     }
 
     latest_time
+}
+
+fn generate_cache_buster() -> String {
+    let typescript_modified = get_latest_modified_time("src/typescript", "ts");
+    let includes_modified = get_latest_modified_time("src/includes", "css");
+    let templates_modified = get_latest_modified_time("templates", "html");
+
+    vec![typescript_modified, includes_modified, templates_modified]
+        .iter()
+        .max()
+        .unwrap_or(&SystemTime::UNIX_EPOCH)
         .duration_since(SystemTime::UNIX_EPOCH)
         .unwrap_or_default()
         .as_secs()
@@ -322,7 +331,10 @@ fn generate_html_file(
     template_name: &str,
     context: &HashMap<&'static str, String>,
     output_path: &str,
-) {
-    let html = tt.render(template_name, context).unwrap();
-    fs::write(output_path, html).unwrap_or_else(|_| panic!("Failed to write {output_path}"));
+) -> Result<()> {
+    let html = tt
+        .render(template_name, context)
+        .context(format!("failed to render template {template_name}"))?;
+
+    fs::write(output_path, html).context(format!("failed to write {}", output_path))
 }
