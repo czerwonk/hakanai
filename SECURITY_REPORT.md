@@ -93,46 +93,6 @@ if !version.contains("5.") { // Expected major version
 
 **Impact:** Low - Requires compromised development environment, but good defense-in-depth practice.
 
-#### L8: Filename Sanitization Enhancement [RESOLVED ✅]
-**File:** `server/src/typescript/create-secret.ts:143-150`  
-**Status:** **RESOLVED** - Comprehensive filename sanitization implementation
-
-**Previous Assessment:** The security report noted that filename sanitization could be more robust against directory traversal attempts.
-
-**Current Implementation Analysis:**
-```typescript
-function sanitizeFileName(fileName: string): string | null {
-  const sanitized = fileName
-    .replace(/[<>:"/\\|?*\x00-\x1f]/g, "_")  // Remove dangerous chars + control chars
-    .replace(/^\.+/, "")                     // Remove leading dots
-    .substring(0, 255);                      // Limit to 255 chars
-
-  return sanitized.length > 0 ? sanitized : null;
-}
-
-function validateFilename(fileName: string): boolean {
-  return sanitizeFileName(fileName) !== null;
-}
-```
-
-**Security Analysis:**
-The current implementation is significantly more robust than initially reported:
-
-1. **Enhanced Character Filtering**: Now removes control characters (`\x00-\x1f`) in addition to dangerous path characters
-2. **Leading Dot Protection**: Explicitly removes leading dots (`.` and `..`) preventing directory traversal
-3. **Length Validation**: Enforces 255-character limit for filesystem compatibility
-4. **Null Handling**: Returns `null` for invalid filenames, enabling proper error handling
-5. **Validation Function**: Dedicated `validateFilename()` function for input validation
-6. **Error Handling**: Integrates with UI to show localized error messages for invalid filenames
-
-**Security Benefits:**
-- **Directory Traversal Prevention**: Leading dot removal prevents `../` attacks
-- **Control Character Protection**: Filters out potentially dangerous control characters
-- **Filesystem Compatibility**: Length limits prevent filesystem-specific issues
-- **Robust Error Handling**: Proper validation prevents malformed filename processing
-- **User Experience**: Clear error messages guide users to valid filenames
-
-**Impact:** **RESOLVED** - Current implementation provides comprehensive filename sanitization with multiple layers of protection.
 
 ## RESOLVED ISSUES
 
@@ -269,6 +229,47 @@ fn generate_cache_buster() -> String {
 - **Version Tracking**: Each build gets unique identifier for tracking
 
 **Impact:** Security improvement - ensures users always receive the latest code and security updates.
+
+#### L8: Filename Sanitization Enhancement [RESOLVED ✅]
+**File:** `server/src/typescript/create-secret.ts:143-150`  
+**Status:** **RESOLVED** - Comprehensive filename sanitization implementation
+
+**Previous Assessment:** The security report noted that filename sanitization could be more robust against directory traversal attempts.
+
+**Current Implementation Analysis:**
+```typescript
+function sanitizeFileName(fileName: string): string | null {
+  const sanitized = fileName
+    .replace(/[<>:"/\\|?*\x00-\x1f]/g, "_")  // Remove dangerous chars + control chars
+    .replace(/^\.+/, "")                     // Remove leading dots
+    .substring(0, 255);                      // Limit to 255 chars
+
+  return sanitized.length > 0 ? sanitized : null;
+}
+
+function validateFilename(fileName: string): boolean {
+  return sanitizeFileName(fileName) !== null;
+}
+```
+
+**Security Analysis:**
+The current implementation is significantly more robust than initially reported:
+
+1. **Enhanced Character Filtering**: Now removes control characters (`\x00-\x1f`) in addition to dangerous path characters
+2. **Leading Dot Protection**: Explicitly removes leading dots (`.` and `..`) preventing directory traversal
+3. **Length Validation**: Enforces 255-character limit for filesystem compatibility
+4. **Null Handling**: Returns `null` for invalid filenames, enabling proper error handling
+5. **Validation Function**: Dedicated `validateFilename()` function for input validation
+6. **Error Handling**: Integrates with UI to show localized error messages for invalid filenames
+
+**Security Benefits:**
+- **Directory Traversal Prevention**: Leading dot removal prevents `../` attacks
+- **Control Character Protection**: Filters out potentially dangerous control characters
+- **Filesystem Compatibility**: Length limits prevent filesystem-specific issues
+- **Robust Error Handling**: Proper validation prevents malformed filename processing
+- **User Experience**: Clear error messages guide users to valid filenames
+
+**Impact:** **RESOLVED** - Current implementation provides comprehensive filename sanitization with multiple layers of protection.
 
 #### L9: Nonce Size Implementation [RESOLVED in v1.3.2]
 **Status:** **RESOLVED** - No issue exists
