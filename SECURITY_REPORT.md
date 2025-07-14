@@ -16,7 +16,7 @@ Hakanai is a minimalist one-time secret sharing service implementing zero-knowle
 - **0 Critical severity** vulnerabilities
 - **0 High severity** vulnerabilities
 - **1 Medium severity** vulnerability identified
-- **3 Low severity** issues identified
+- **2 Low severity** issues identified
 - **Zero-knowledge architecture** properly implemented
 - **Strong cryptographic foundations** with industry-standard AES-256-GCM
 - **Comprehensive input validation** across all endpoints
@@ -93,35 +93,46 @@ if !version.contains("5.") { // Expected major version
 
 **Impact:** Low - Requires compromised development environment, but good defense-in-depth practice.
 
-#### L8: Filename Sanitization Enhancement
+#### L8: Filename Sanitization Enhancement [RESOLVED ✅]
 **File:** `server/src/typescript/create-secret.ts:143-150`  
-**Description:** Filename sanitization could be more robust against directory traversal attempts.
+**Status:** **RESOLVED** - Comprehensive filename sanitization implementation
 
-**Current Implementation:**
-```typescript
-// Simple character replacement
-filename = filename.replace(/[<>:"/\\|?*]/g, '_');
-```
+**Previous Assessment:** The security report noted that filename sanitization could be more robust against directory traversal attempts.
 
-**Recommendation:**
+**Current Implementation Analysis:**
 ```typescript
-// More comprehensive validation
-function sanitizeFilename(filename: string): string {
-  // Remove path separators and dangerous characters
-  let clean = filename.replace(/[<>:"/\\|?*]/g, '_');
-  
-  // Prevent directory traversal
-  clean = clean.replace(/\.\./g, '_');
-  
-  // Remove leading/trailing dots and spaces
-  clean = clean.replace(/^[.\s]+|[.\s]+$/g, '');
-  
-  // Ensure not empty
-  return clean || 'unnamed_file';
+function sanitizeFileName(fileName: string): string | null {
+  const sanitized = fileName
+    .replace(/[<>:"/\\|?*\x00-\x1f]/g, "_")  // Remove dangerous chars + control chars
+    .replace(/^\.+/, "")                     // Remove leading dots
+    .substring(0, 255);                      // Limit to 255 chars
+
+  return sanitized.length > 0 ? sanitized : null;
+}
+
+function validateFilename(fileName: string): boolean {
+  return sanitizeFileName(fileName) !== null;
 }
 ```
 
-**Impact:** Low - Defense-in-depth improvement for filename handling.
+**Security Analysis:**
+The current implementation is significantly more robust than initially reported:
+
+1. **Enhanced Character Filtering**: Now removes control characters (`\x00-\x1f`) in addition to dangerous path characters
+2. **Leading Dot Protection**: Explicitly removes leading dots (`.` and `..`) preventing directory traversal
+3. **Length Validation**: Enforces 255-character limit for filesystem compatibility
+4. **Null Handling**: Returns `null` for invalid filenames, enabling proper error handling
+5. **Validation Function**: Dedicated `validateFilename()` function for input validation
+6. **Error Handling**: Integrates with UI to show localized error messages for invalid filenames
+
+**Security Benefits:**
+- **Directory Traversal Prevention**: Leading dot removal prevents `../` attacks
+- **Control Character Protection**: Filters out potentially dangerous control characters
+- **Filesystem Compatibility**: Length limits prevent filesystem-specific issues
+- **Robust Error Handling**: Proper validation prevents malformed filename processing
+- **User Experience**: Clear error messages guide users to valid filenames
+
+**Impact:** **RESOLVED** - Current implementation provides comprehensive filename sanitization with multiple layers of protection.
 
 ## RESOLVED ISSUES
 
@@ -448,7 +459,6 @@ Hakanai version 1.6.4 maintains **excellent security architecture** with proper 
 - Path traversal protection for CLI filename handling (M3 - Medium)
 - User-Agent header anonymization (L5 - Low) 
 - TypeScript compiler validation (L7 - Low)
-- Enhanced filename sanitization (L8 - Low)
 
 With **A security rating**, Hakanai is excellent for production deployment. The sessionStorage implementation has eliminated the last major authentication security concerns, with only minor improvements remaining.
 
@@ -460,7 +470,6 @@ With **A security rating**, Hakanai is excellent for production deployment. The 
 ### Outstanding Low Priority Recommendations
 1. **Anonymize User-Agent logging** - Hash or anonymize user-agent strings (L5)
 2. **TypeScript compiler validation** - Add version checking for build security (L7)
-3. **Enhanced filename sanitization** - Improve directory traversal protection (L8)
 
 ### Completed Security Improvements ✅
 1. **Memory clearing** - Comprehensive zeroization implemented
@@ -478,6 +487,7 @@ With **A security rating**, Hakanai is excellent for production deployment. The 
 13. **Static asset cache optimization** - Implemented cache busting for secure asset delivery (L6)
 14. **localStorage token storage** - Migrated to sessionStorage with automatic session cleanup (M5)
 15. **JSON parsing validation** - Eliminated JSON parsing with direct string storage (M6)
+16. **Enhanced filename sanitization** - Comprehensive implementation with directory traversal protection (L8)
 
 ---
 
