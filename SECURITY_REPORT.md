@@ -69,42 +69,6 @@ fn validate_safe_path(path: &Path) -> Result<(), Error> {
 
 **Recommendation:** Hash or anonymize user-agent strings in logs for privacy.
 
-#### L6: Static Asset Cache Headers [RESOLVED ✅]
-**File:** `server/src/web_static.rs`  
-**Status:** **RESOLVED** - Cache busting implementation addresses this concern
-
-**Previous Issue:** Static assets included cache headers but could be optimized further.
-
-**Resolution Implemented:**
-```rust
-// Cache buster generation in build.rs
-fn generate_cache_buster() -> String {
-    use std::collections::hash_map::DefaultHasher;
-    use std::hash::{Hash, Hasher};
-    use std::time::{SystemTime, UNIX_EPOCH};
-
-    let mut hasher = DefaultHasher::new();
-    let timestamp = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_nanos();
-    timestamp.hash(&mut hasher);
-    std::process::id().hash(&mut hasher);
-    
-    format!("{:x}", hasher.finish())[..8].to_string()
-}
-
-// Applied to all assets in templates
-<link rel="stylesheet" href="/style.css?v={cache_buster}" />
-<script type="module" src="/i18n.js?v={cache_buster}"></script>
-```
-
-**Security Benefits:**
-- **Cache Poisoning Prevention**: Unique URLs prevent cache poisoning attacks
-- **Immediate Updates**: Users always receive latest security updates
-- **Version Tracking**: Each build gets unique identifier for tracking
-
-**Impact:** Security improvement - ensures users always receive the latest code and security updates.
 
 #### L7: Build System TypeScript Compiler Security
 **File:** `server/build.rs:60-77`  
@@ -258,6 +222,43 @@ return sessionStorage.getItem(AUTH_TOKEN_KEY);
 
 ### Previously Resolved Low Severity Issues (Continued) ✅
 
+#### L6: Static Asset Cache Headers [RESOLVED ✅]
+**File:** `server/src/web_static.rs`  
+**Status:** **RESOLVED** - Cache busting implementation addresses this concern
+
+**Previous Issue:** Static assets included cache headers but could be optimized further.
+
+**Resolution Implemented:**
+```rust
+// Cache buster generation in build.rs
+fn generate_cache_buster() -> String {
+    use std::collections::hash_map::DefaultHasher;
+    use std::hash::{Hash, Hasher};
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    let mut hasher = DefaultHasher::new();
+    let timestamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    timestamp.hash(&mut hasher);
+    std::process::id().hash(&mut hasher);
+    
+    format!("{:x}", hasher.finish())[..8].to_string()
+}
+
+// Applied to all assets in templates
+<link rel="stylesheet" href="/style.css?v={cache_buster}" />
+<script type="module" src="/i18n.js?v={cache_buster}"></script>
+```
+
+**Security Benefits:**
+- **Cache Poisoning Prevention**: Unique URLs prevent cache poisoning attacks
+- **Immediate Updates**: Users always receive latest security updates
+- **Version Tracking**: Each build gets unique identifier for tracking
+
+**Impact:** Security improvement - ensures users always receive the latest code and security updates.
+
 #### L9: Nonce Size Implementation [RESOLVED in v1.3.2]
 **Status:** **RESOLVED** - No issue exists
 - Implementation properly derives nonce size from cipher type
@@ -392,7 +393,6 @@ return sessionStorage.getItem(AUTH_TOKEN_KEY);
 
 ### Long-term (Low Priority)
 1. **Anonymize User-Agent logging** (L5)
-2. **Optimize static asset caching** (L6)
 
 ## Version 1.6.4 Updates
 
