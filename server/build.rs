@@ -55,11 +55,11 @@ fn ensure_typescript_is_installed() -> Result<()> {
 
     if is_installed {
         println!("cargo:warning=TypeScript compiler (tsc) is installed");
-        return Ok(());
+        Ok(())
     } else {
-        return Err(anyhow!(
+        Err(anyhow!(
             "TypeScript compiler not available. Install with: npm install -g typescript or set SKIP_TYPESCRIPT_BUILD=1"
-        ));
+        ))
     }
 }
 
@@ -316,7 +316,7 @@ fn generate_cache_buster() -> String {
     let includes_modified = get_latest_modified_time("src/includes", "css");
     let templates_modified = get_latest_modified_time("templates", "html");
 
-    vec![typescript_modified, includes_modified, templates_modified]
+    [typescript_modified, includes_modified, templates_modified]
         .iter()
         .max()
         .unwrap_or(&SystemTime::UNIX_EPOCH)
@@ -336,5 +336,5 @@ fn generate_html_file(
         .render(template_name, context)
         .context(format!("failed to render template {template_name}"))?;
 
-    fs::write(output_path, html).context(format!("failed to write {}", output_path))
+    fs::write(output_path, html).context(format!("failed to write {output_path}"))
 }
