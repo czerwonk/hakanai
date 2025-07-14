@@ -1,4 +1,10 @@
 // Error Types
+
+/**
+ * Custom error type for Hakanai-specific errors with error codes
+ * @interface HakanaiError
+ * @extends {Error}
+ */
 export interface HakanaiError extends Error {
   readonly name: "HakanaiError";
   readonly code: string;
@@ -19,6 +25,12 @@ export interface UnknownError {
 export type AppError = HakanaiError | StandardError | UnknownError;
 
 // Type guards for error handling
+
+/**
+ * Type guard to check if an error is a HakanaiError with error code
+ * @param error - Unknown error to check
+ * @returns True if error is HakanaiError with valid structure
+ */
 export function isHakanaiError(error: unknown): error is HakanaiError {
   return (
     typeof error === "object" &&
@@ -30,10 +42,20 @@ export function isHakanaiError(error: unknown): error is HakanaiError {
   );
 }
 
+/**
+ * Type guard to check if an error is a standard Error instance
+ * @param error - Unknown error to check
+ * @returns True if error is an Error instance
+ */
 export function isStandardError(error: unknown): error is StandardError {
   return error instanceof Error;
 }
 
+/**
+ * Type guard to check if an object has error-like properties
+ * @param error - Unknown value to check
+ * @returns True if object has message or name properties
+ */
 export function isErrorLike(error: unknown): error is UnknownError {
   return (
     typeof error === "object" &&
@@ -87,11 +109,20 @@ export interface CryptoKey {
   readonly length: number;
 }
 
+/**
+ * Represents secret payload data with optional file metadata
+ * @interface PayloadData
+ */
 export interface PayloadData {
+  /** Base64-encoded data */
   readonly data: string;
+  /** Optional filename for file payloads */
   readonly filename?: string;
+  /** Set data from raw bytes (automatically base64 encodes) */
   setFromBytes?(bytes: Uint8Array): void;
+  /** Decode data as UTF-8 text string */
   decode?(): string;
+  /** Decode data as raw bytes */
   decodeBytes?(): Uint8Array;
 }
 
@@ -133,6 +164,12 @@ export type NonNullable<T> = T extends null | undefined ? never : T;
 export type ElementGetter<T extends HTMLElement> = () => T | null;
 
 // Result Pattern for Error Handling
+
+/**
+ * Result pattern for type-safe error handling
+ * @template T - Success data type
+ * @template E - Error type (defaults to AppError)
+ */
 export type Result<T, E = AppError> =
   | { success: true; data: T }
   | { success: false; error: E };

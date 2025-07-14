@@ -279,6 +279,10 @@ const translations: Translations = {
 
 const LANGUAGE_STORAGE_KEY = "hakanai-lang";
 
+/**
+ * Internationalization system for multi-language support
+ * @class I18n
+ */
 class I18n {
   private currentLang: LanguageCode = "en";
 
@@ -314,10 +318,19 @@ class I18n {
     return lang === "en" || lang === "de";
   }
 
+  /**
+   * Get translated text for a given key
+   * @param key - Translation key to look up
+   * @returns Translated text in current language, English fallback, or key itself
+   */
   t(key: TranslationKey): string {
     return translations[this.currentLang][key] || translations.en[key] || key;
   }
 
+  /**
+   * Set the current language
+   * @param lang - Language code to switch to (en, de)
+   */
   setLanguage(lang: string): void {
     if (this.isValidLanguage(lang)) {
       this.currentLang = lang;
@@ -465,10 +478,18 @@ class I18n {
     });
   }
 
+  /**
+   * Get list of available language codes
+   * @returns Array of supported language codes
+   */
   getAvailableLanguages(): LanguageCode[] {
     return Object.keys(translations) as LanguageCode[];
   }
 
+  /**
+   * Get the current active language
+   * @returns Current language code
+   */
   getCurrentLanguage(): LanguageCode {
     return this.currentLang;
   }

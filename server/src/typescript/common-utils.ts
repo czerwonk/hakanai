@@ -6,6 +6,14 @@ const THEME_KEY = "hakanai-theme";
 type Theme = "light" | "dark";
 type ButtonClickHandler = (event: MouseEvent) => void;
 
+/**
+ * Create a button element with consistent styling and accessibility
+ * @param className - CSS class for the button
+ * @param text - Button text content
+ * @param ariaLabel - Accessible label for screen readers
+ * @param clickHandler - Click event handler
+ * @returns Configured button element
+ */
 export function createButton(
   className: string,
   text: string,
@@ -27,6 +35,14 @@ export function createButtonContainer(): HTMLDivElement {
   return container;
 }
 
+/**
+ * Copy text to clipboard with visual feedback
+ * @param text - Text to copy to clipboard
+ * @param button - Button element to show feedback on
+ * @param originalText - Original button text to restore
+ * @param successMessage - Message to show on successful copy
+ * @param failedMessage - Message to announce on failure
+ */
 export function copyToClipboard(
   text: string,
   button: HTMLButtonElement,
@@ -71,6 +87,10 @@ function showCopyFailure(
   }, COPY_FEEDBACK_TIMEOUT);
 }
 
+/**
+ * Securely clear sensitive input by overwriting with dummy data
+ * @param input - HTML input element containing sensitive data
+ */
 export function secureInputClear(input: HTMLInputElement): void {
   if (input.value.length > 0) {
     // Simple secure clear: overwrite then empty
@@ -79,6 +99,10 @@ export function secureInputClear(input: HTMLInputElement): void {
   }
 }
 
+/**
+ * Announce a message to screen readers using ARIA live regions
+ * @param message - Message to announce
+ */
 export function announceToScreenReader(message: string): void {
   const announcement = createScreenReaderAnnouncement(message);
   document.body.appendChild(announcement);
@@ -97,6 +121,13 @@ function createScreenReaderAnnouncement(message: string): HTMLDivElement {
   return announcement;
 }
 
+/**
+ * Create a debounced version of a function
+ * @template T - Function type to debounce
+ * @param func - Function to debounce
+ * @param wait - Milliseconds to wait before calling
+ * @returns Debounced function
+ */
 export function debounce<T extends (...args: any[]) => void>(
   func: T,
   wait: number,
@@ -128,6 +159,10 @@ function currentThemeIsDark(): boolean {
   return current === "dark" || (!current && getSystemPrefersDark());
 }
 
+/**
+ * Get the saved theme preference from localStorage
+ * @returns Saved theme or null if not set/invalid
+ */
 export function getTheme(): Theme | null {
   try {
     const saved = localStorage.getItem(THEME_KEY);
@@ -138,6 +173,10 @@ export function getTheme(): Theme | null {
   }
 }
 
+/**
+ * Apply theme to the document body
+ * @param theme - Theme to apply or null for system default
+ */
 export function applyTheme(theme: Theme | null): void {
   if (isValidTheme(theme)) {
     document.body.setAttribute("data-theme", theme);
@@ -146,6 +185,9 @@ export function applyTheme(theme: Theme | null): void {
   }
 }
 
+/**
+ * Toggle between light and dark theme
+ */
 export function toggleTheme(): void {
   const newTheme: Theme = currentThemeIsDark() ? "light" : "dark";
 
@@ -173,6 +215,9 @@ function getThemeToggleLabel(isDark: boolean): string {
   return isDark ? "Switch to light mode" : "Switch to dark mode";
 }
 
+/**
+ * Update theme toggle button appearance and accessibility
+ */
 export function updateThemeToggleButton(): void {
   const button = getThemeToggleButton();
   if (!button) return;
@@ -225,6 +270,9 @@ function setupSystemThemeListener(): void {
     });
 }
 
+/**
+ * Initialize theme system with saved preference and listeners
+ */
 export function initTheme(): void {
   const theme = getTheme();
   applyTheme(theme);
@@ -236,6 +284,12 @@ export function initTheme(): void {
 // SessionStorage management for auth tokens
 const AUTH_TOKEN_KEY = "hakanai-auth-token";
 
+/**
+ * Save authentication token to session storage
+ * @param token - Authentication token to save
+ * @returns True if saved successfully, false otherwise
+ * @description Token persists only for current browser session
+ */
 export function saveAuthTokenToStorage(token: string): boolean {
   if (!token.trim()) return false;
 
@@ -248,6 +302,10 @@ export function saveAuthTokenToStorage(token: string): boolean {
   }
 }
 
+/**
+ * Retrieve authentication token from session storage
+ * @returns Stored token or null if not found/error
+ */
 export function getAuthTokenFromStorage(): string | null {
   try {
     return sessionStorage.getItem(AUTH_TOKEN_KEY);
@@ -257,6 +315,9 @@ export function getAuthTokenFromStorage(): string | null {
   }
 }
 
+/**
+ * Clear authentication token from session storage
+ */
 export function clearAuthTokenStorage(): void {
   try {
     sessionStorage.removeItem(AUTH_TOKEN_KEY);

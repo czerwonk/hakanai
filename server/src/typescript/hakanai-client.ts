@@ -9,18 +9,26 @@ const KEY_LENGTH = 32; // 256 bits
 const NONCE_LENGTH = 12; // 96 bits for AES-GCM
 
 // Error code constants
+
+/**
+ * Error codes for Hakanai operations
+ * @readonly
+ * @enum {string}
+ */
 const HakanaiErrorCodes = {
-  // Authentication errors
+  /** Server requires authentication token */
   AUTHENTICATION_REQUIRED: "AUTHENTICATION_REQUIRED",
+  /** Provided authentication token is invalid */
   INVALID_TOKEN: "INVALID_TOKEN",
-
-  // Request/send errors
+  /** Failed to send secret to server */
   SEND_FAILED: "SEND_FAILED",
-
-  // Retrieval errors
+  /** Secret not found or has expired */
   SECRET_NOT_FOUND: "SECRET_NOT_FOUND",
+  /** Secret has already been accessed once */
   SECRET_ALREADY_ACCESSED: "SECRET_ALREADY_ACCESSED",
+  /** General failure retrieving secret */
   RETRIEVE_FAILED: "RETRIEVE_FAILED",
+  /** URL missing decryption key in fragment */
   MISSING_DECRYPTION_KEY: "MISSING_DECRYPTION_KEY",
 } as const;
 
@@ -34,7 +42,11 @@ interface CompatibilityCheck {
   readonly missingFeatures: readonly string[];
 }
 
-// Custom error class for Hakanai errors with error codes
+/**
+ * Custom error class for Hakanai operations with specific error codes
+ * @class HakanaiError
+ * @extends {Error}
+ */
 class HakanaiError extends Error {
   readonly code: HakanaiErrorCode;
   readonly statusCode?: number;
@@ -84,11 +96,15 @@ interface HakanaiCryptoKey {
 /**
  * Type-safe Base64 URL-Safe encoding utility
  * Uses modern browser APIs for better performance and reliability
+ * @class Base64UrlSafe
  */
 class Base64UrlSafe {
   /**
    * Encode Uint8Array to URL-safe base64 string
    * Uses chunked processing to handle large arrays safely
+   * @param data - Raw bytes to encode
+   * @returns URL-safe base64 string (no padding)
+   * @throws {Error} If input is not a Uint8Array
    */
   static encode(data: Uint8Array): string {
     if (!(data instanceof Uint8Array)) {
@@ -120,7 +136,9 @@ class Base64UrlSafe {
 
   /**
    * Decode URL-safe base64 string to Uint8Array
-   * More robust error handling and validation
+   * @param encoded - URL-safe base64 string to decode
+   * @returns Decoded bytes as Uint8Array
+   * @throws {Error} If input contains invalid characters or encoding
    */
   static decode(encoded: string): Uint8Array {
     if (typeof encoded !== "string") {
@@ -249,11 +267,13 @@ class BrowserCompatibility {
 }
 
 /**
- * Type-safe crypto operations
+ * Type-safe cryptographic operations using Web Crypto API
+ * @class CryptoOperations
  */
 class CryptoOperations {
   /**
    * Get crypto instance (browser environment)
+   * @private
    */
   private static getCrypto(): Crypto {
     const cryptoInstance = window?.crypto || crypto;
@@ -266,6 +286,7 @@ class CryptoOperations {
 
   /**
    * Generate a random 256-bit AES key
+   * @returns Cryptographic key with 32 random bytes
    */
   static generateKey(): HakanaiCryptoKey {
     const bytes = new Uint8Array(KEY_LENGTH);
@@ -295,7 +316,11 @@ class CryptoOperations {
   }
 
   /**
-   * Encrypt a message with AES-GCM
+   * Encrypt a message with AES-256-GCM
+   * @param plaintext - Text to encrypt
+   * @param key - 256-bit encryption key
+   * @returns Base64-encoded ciphertext with prepended nonce
+   * @throws {Error} If encryption fails
    */
   static async encrypt(
     plaintext: string,
@@ -338,7 +363,11 @@ class CryptoOperations {
   }
 
   /**
-   * Decrypt an encrypted message
+   * Decrypt an AES-256-GCM encrypted message
+   * @param encryptedData - Base64-encoded ciphertext with nonce
+   * @param key - 256-bit decryption key
+   * @returns Decrypted plaintext
+   * @throws {Error} If decryption fails or key is invalid
    */
   static async decrypt(
     encryptedData: string,
@@ -438,11 +467,17 @@ class PayloadDataImpl implements PayloadData {
 }
 
 /**
- * Main Hakanai client class
+ * Main Hakanai client for sending and receiving encrypted secrets
+ * @class HakanaiClient
  */
 class HakanaiClient {
   private readonly baseUrl: string;
 
+  /**
+   * Create a new Hakanai client
+   * @param baseUrl - Base URL of the Hakanai server (without trailing slash)
+   * @throws {Error} If browser lacks required crypto features
+   */
   constructor(baseUrl: string) {
     if (typeof baseUrl !== "string" || !baseUrl.trim()) {
       throw new Error("Base URL must be a non-empty string");
@@ -475,7 +510,15 @@ class HakanaiClient {
   }
 
   /**
-   * Send a payload to the server
+   * Encrypt and send a payload to the Hakanai server
+   * @param payload - Data to encrypt and send (must have non-empty data field)
+   * @param ttl - Time-to-live in seconds (default: 3600)
+   * @param authToken - Optional authentication token for server access
+   * @returns Full URL with secret ID and decryption key in fragment
+   * @throws {HakanaiError} With specific error codes:
+   *   - AUTHENTICATION_REQUIRED: Server requires auth token
+   *   - INVALID_TOKEN: Provided token is invalid
+   *   - SEND_FAILED: General send failure
    */
   async sendPayload(
     payload: PayloadData,
@@ -571,7 +614,15 @@ class HakanaiClient {
   }
 
   /**
-   * Receive a payload from the server
+   * Retrieve and decrypt a payload from the server
+   * @param url - Full URL with format: https://server/s/{id}#{key}
+   * @returns Decrypted payload data with optional filename
+   * @throws {HakanaiError} With specific error codes:
+   *   - MISSING_DECRYPTION_KEY: No key found in URL fragment
+   *   - SECRET_NOT_FOUND: Secret expired or doesn't exist
+   *   - SECRET_ALREADY_ACCESSED: Secret was already retrieved
+   *   - RETRIEVE_FAILED: General retrieval failure
+   * @throws {Error} For invalid URL format or decryption failures
    */
   async receivePayload(url: string): Promise<PayloadData> {
     if (typeof url !== "string" || !url.trim()) {
@@ -663,7 +714,9 @@ class HakanaiClient {
   }
 
   /**
-   * Create a new PayloadData object
+   * Create a new PayloadData object for building payloads
+   * @param filename - Optional filename for file payloads
+   * @returns Empty PayloadData object ready for data
    */
   createPayload(filename?: string): PayloadData {
     return new PayloadDataImpl("", filename);
