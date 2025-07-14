@@ -333,10 +333,10 @@ The server uses build-time template generation for consistent and efficient HTML
 *Note: These files are excluded from git and regenerated on every build.*
 
 **Source Templates (edit these):**
-- `server/templates/docs.html` - API documentation template
-- `server/templates/endpoint.html` - Individual endpoint template
-- `server/templates/create-secret.html` - Create secret page template
-- `server/templates/get-secret.html` - Retrieve secret page template
+- `server/src/templates/docs.html` - API documentation template
+- `server/src/templates/endpoint.html` - Individual endpoint template
+- `server/src/templates/create-secret.html` - Create secret page template
+- `server/src/templates/get-secret.html` - Retrieve secret page template
 
 **How it works:**
 1. `server/build.rs` runs during compilation
