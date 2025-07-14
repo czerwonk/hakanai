@@ -25,7 +25,7 @@ pub struct SendArgs {
         long,
         default_value = "http://localhost:8080",
         env = "HAKANAI_SERVER",
-        help = "Hakanai Server URL to send the secret to (eg. https://hakanai.routing.rocks)."
+        help = "Hakanai Server URL to send the secret to (eg. https://hakanai.link)."
     )]
     pub server: Url,
 
@@ -409,9 +409,9 @@ mod tests {
 
     #[test]
     fn test_send_command_with_custom_server() {
-        let send_args = SendArgs::builder().with_server("https://hakanai.routing.rocks");
+        let send_args = SendArgs::builder().with_server("https://hakanai.link");
 
-        assert_eq!(send_args.server.as_str(), "https://hakanai.routing.rocks/");
+        assert_eq!(send_args.server.as_str(), "https://hakanai.link/");
     }
 
     #[test]
