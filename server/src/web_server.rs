@@ -38,6 +38,9 @@ where
             .app_data(web::PayloadConfig::new(
                 args.upload_size_limit as usize * 1024 * 1024,
             ))
+            .app_data(
+                web::JsonConfig::default().limit(args.upload_size_limit as usize * 1024 * 1024),
+            )
             .wrap(Logger::new(
                 "%a %{X-Forwarded-For}i %t \"%r\" %s %b \"%{User-Agent}i\" %Ts",
             ))
