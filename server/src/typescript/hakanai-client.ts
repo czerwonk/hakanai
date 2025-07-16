@@ -399,7 +399,11 @@ class CryptoOperations {
     plaintextBytes: Uint8Array,
     key: HakanaiCryptoKey,
   ): Promise<string> {
-    if (!plaintextBytes || typeof plaintextBytes !== "object" || typeof plaintextBytes.byteLength !== "number") {
+    if (
+      !plaintextBytes ||
+      typeof plaintextBytes !== "object" ||
+      typeof plaintextBytes.byteLength !== "number"
+    ) {
       throw new Error("Plaintext must be a Uint8Array");
     }
 
@@ -433,10 +437,8 @@ class CryptoOperations {
 
       result = btoa(binaryString);
 
-      // Securely clear sensitive data
       SecureMemory.clearUint8Array(combined);
     } finally {
-      // Always clear sensitive data even if encryption fails
       SecureMemory.clearUint8Array(nonce);
     }
 
@@ -447,18 +449,23 @@ class CryptoOperations {
    * Decrypt an AES-256-GCM encrypted message
    * @param encryptedData - Base64-encoded ciphertext with nonce
    * @param key - 256-bit decryption key
-   * @returns Decrypted plaintext
+   * @returns Decrypted plaintext as bytes
    * @throws {Error} If decryption fails or key is invalid
    */
   static async decrypt(
     encryptedData: string,
     key: Uint8Array,
-  ): Promise<string> {
+  ): Promise<Uint8Array> {
     if (typeof encryptedData !== "string") {
       throw new Error("Encrypted data must be a string");
     }
 
-    if (!(key instanceof Uint8Array) || key.length !== KEY_LENGTH) {
+    if (
+      !key ||
+      typeof key !== "object" ||
+      typeof key.byteLength !== "number" ||
+      key.length !== KEY_LENGTH
+    ) {
       throw new Error(`Key must be a ${KEY_LENGTH}-byte Uint8Array`);
     }
 
@@ -480,7 +487,7 @@ class CryptoOperations {
 
     const cryptoKey = await CryptoOperations.importKey(key);
 
-    let result: string;
+    let result: Uint8Array;
     try {
       const plaintextBytes = await CryptoOperations.getCrypto().subtle.decrypt(
         { name: "AES-GCM", iv: nonce },
@@ -488,15 +495,10 @@ class CryptoOperations {
         ciphertext,
       );
 
-      const decoder = new TextDecoder();
-      result = decoder.decode(plaintextBytes);
-
-      // Clear sensitive plaintext bytes
-      SecureMemory.clearUint8Array(new Uint8Array(plaintextBytes));
+      result = new Uint8Array(plaintextBytes);
     } catch (error) {
       throw new Error("Decryption failed: invalid key or corrupted data");
     } finally {
-      // Always clear sensitive data even if decryption fails
       SecureMemory.clearArrays(combined, nonce, ciphertext);
     }
 
@@ -850,7 +852,11 @@ class HakanaiClient {
 
     let payload: PayloadData;
     try {
-      const decryptedJson = await CryptoOperations.decrypt(encryptedData, key);
+      const decryptedBytes = await CryptoOperations.decrypt(encryptedData, key);
+      const decryptedJson = new TextDecoder().decode(decryptedBytes);
+
+      // Clear decrypted bytes after converting to string
+      SecureMemory.clearUint8Array(decryptedBytes);
 
       try {
         payload = JSON.parse(decryptedJson);
@@ -919,7 +925,11 @@ class HakanaiClient {
    * @deprecated Use CryptoOperations.decrypt() instead
    */
   async decrypt(encryptedData: string, key: Uint8Array): Promise<string> {
-    return CryptoOperations.decrypt(encryptedData, key);
+    const decryptedBytes = await CryptoOperations.decrypt(encryptedData, key);
+    const result = new TextDecoder().decode(decryptedBytes);
+    // Clear decrypted bytes after converting to string
+    SecureMemory.clearUint8Array(decryptedBytes);
+    return result;
   }
 }
 

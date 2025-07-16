@@ -210,7 +210,8 @@ describe("CryptoOperations", () => {
     const originalBytes = new TextEncoder().encode(original);
 
     const encrypted = await CryptoOperations.encrypt(originalBytes, key);
-    const decrypted = await CryptoOperations.decrypt(encrypted, key.bytes);
+    const decryptedBytes = await CryptoOperations.decrypt(encrypted, key.bytes);
+    const decrypted = new TextDecoder().decode(decryptedBytes);
 
     expect(decrypted).toBe(original);
   });
@@ -227,8 +228,16 @@ describe("CryptoOperations", () => {
     expect(encrypted1).not.toBe(encrypted2);
 
     // But both should decrypt to same message
-    const decrypted1 = await CryptoOperations.decrypt(encrypted1, key.bytes);
-    const decrypted2 = await CryptoOperations.decrypt(encrypted2, key.bytes);
+    const decryptedBytes1 = await CryptoOperations.decrypt(
+      encrypted1,
+      key.bytes,
+    );
+    const decryptedBytes2 = await CryptoOperations.decrypt(
+      encrypted2,
+      key.bytes,
+    );
+    const decrypted1 = new TextDecoder().decode(decryptedBytes1);
+    const decrypted2 = new TextDecoder().decode(decryptedBytes2);
 
     expect(decrypted1).toBe(original);
     expect(decrypted2).toBe(original);
