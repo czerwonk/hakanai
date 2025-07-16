@@ -301,6 +301,45 @@ class ContentAnalysis {
 }
 
 /**
+ * Secure memory clearing utilities for sensitive data
+ * @class SecureMemory
+ */
+class SecureMemory {
+  /**
+   * Securely clear a Uint8Array with multiple overwrite passes
+   * @param array - Array to clear
+   */
+  static clearUint8Array(array: Uint8Array): void {
+    if (!(array instanceof Uint8Array)) {
+      return;
+    }
+
+    // Multiple overwrite passes with random data
+    for (let pass = 0; pass < 3; pass++) {
+      try {
+        crypto.getRandomValues(array);
+      } catch (error) {
+        // Fallback to manual random fill if crypto not available
+        for (let i = 0; i < array.length; i++) {
+          array[i] = Math.floor(Math.random() * 256);
+        }
+      }
+    }
+
+    // Final zero fill
+    array.fill(0);
+  }
+
+  /**
+   * Securely clear multiple Uint8Array objects
+   * @param arrays - Arrays to clear
+   */
+  static clearArrays(...arrays: Uint8Array[]): void {
+    arrays.forEach((array) => SecureMemory.clearUint8Array(array));
+  }
+}
+
+/**
  * Type-safe cryptographic operations using Web Crypto API
  * @class CryptoOperations
  */
@@ -373,27 +412,38 @@ class CryptoOperations {
 
     const cryptoKey = await CryptoOperations.importKey(key.bytes);
 
-    const ciphertext = await CryptoOperations.getCrypto().subtle.encrypt(
-      { name: "AES-GCM", iv: nonce },
-      cryptoKey,
-      plaintextBytes,
-    );
+    let result: string;
+    try {
+      const ciphertext = await CryptoOperations.getCrypto().subtle.encrypt(
+        { name: "AES-GCM", iv: nonce },
+        cryptoKey,
+        plaintextBytes,
+      );
 
-    // Combine nonce and ciphertext
-    const combined = new Uint8Array(nonce.length + ciphertext.byteLength);
-    combined.set(nonce);
-    combined.set(new Uint8Array(ciphertext), nonce.length);
+      // Combine nonce and ciphertext
+      const combined = new Uint8Array(nonce.length + ciphertext.byteLength);
+      combined.set(nonce);
+      combined.set(new Uint8Array(ciphertext), nonce.length);
 
-    // Encode to standard base64 using chunked approach
-    let binaryString = "";
-    const chunkSize = 8192;
+      // Encode to standard base64 using chunked approach
+      let binaryString = "";
+      const chunkSize = 8192;
 
-    for (let i = 0; i < combined.length; i += chunkSize) {
-      const chunk = combined.subarray(i, i + chunkSize);
-      binaryString += String.fromCharCode(...chunk);
+      for (let i = 0; i < combined.length; i += chunkSize) {
+        const chunk = combined.subarray(i, i + chunkSize);
+        binaryString += String.fromCharCode(...chunk);
+      }
+
+      result = btoa(binaryString);
+
+      // Securely clear sensitive data
+      SecureMemory.clearUint8Array(combined);
+    } finally {
+      // Always clear sensitive data even if encryption fails
+      SecureMemory.clearArrays(plaintextBytes, nonce);
     }
 
-    return btoa(binaryString);
+    return result;
   }
 
   /**
@@ -433,6 +483,7 @@ class CryptoOperations {
 
     const cryptoKey = await CryptoOperations.importKey(key);
 
+    let result: string;
     try {
       const plaintextBytes = await CryptoOperations.getCrypto().subtle.decrypt(
         { name: "AES-GCM", iv: nonce },
@@ -441,10 +492,18 @@ class CryptoOperations {
       );
 
       const decoder = new TextDecoder();
-      return decoder.decode(plaintextBytes);
+      result = decoder.decode(plaintextBytes);
+
+      // Clear sensitive plaintext bytes
+      SecureMemory.clearUint8Array(new Uint8Array(plaintextBytes));
     } catch (error) {
       throw new Error("Decryption failed: invalid key or corrupted data");
+    } finally {
+      // Always clear sensitive data even if decryption fails
+      SecureMemory.clearArrays(combined, nonce, ciphertext);
     }
+
+    return result;
   }
 }
 
@@ -544,21 +603,14 @@ class HakanaiClient {
   }
 
   /**
-   * Encrypt and send a payload to the Hakanai server
-   * @param payload - Data to encrypt and send (must have non-empty data field)
-   * @param ttl - Time-to-live in seconds (default: 3600)
-   * @param authToken - Optional authentication token for server access
-   * @returns Full URL with secret ID and decryption key in fragment
-   * @throws {HakanaiError} With specific error codes:
-   *   - AUTHENTICATION_REQUIRED: Server requires auth token
-   *   - INVALID_TOKEN: Provided token is invalid
-   *   - SEND_FAILED: General send failure
+   * Validate sendPayload parameters
+   * @private
    */
-  async sendPayload(
+  private validateSendPayloadParams(
     payload: PayloadData,
-    ttl: number = 3600,
+    ttl: number,
     authToken?: string,
-  ): Promise<string> {
+  ): void {
     if (!payload || typeof payload !== "object") {
       throw new Error("Payload must be an object");
     }
@@ -578,19 +630,46 @@ class HakanaiClient {
     if (authToken !== undefined && typeof authToken !== "string") {
       throw new Error("Auth token must be a string if provided");
     }
+  }
 
-    const key = CryptoOperations.generateKey();
+  /**
+   * Handle HTTP response errors for sendPayload
+   * @private
+   */
+  private handleSendPayloadError(response: Response): never {
+    if (response.status === 401) {
+      throw new HakanaiError(
+        HakanaiErrorCodes.AUTHENTICATION_REQUIRED,
+        "Authentication required: Please provide a valid authentication token",
+        response.status,
+      );
+    }
 
-    // Convert PayloadData to Rust-compatible Payload format
-    // The data field is already base64-encoded when using setFromBytes
-    const rustPayload = {
-      data: payload.data,
-      filename: payload.filename || null,
-    };
+    if (response.status === 403) {
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_TOKEN,
+        "Invalid authentication token: Please check your token and try again",
+        response.status,
+      );
+    }
 
-    const payloadJson = JSON.stringify(rustPayload);
-    const encryptedData = await CryptoOperations.encrypt(payloadJson, key);
+    // Generic error for other status codes
+    throw new HakanaiError(
+      HakanaiErrorCodes.SEND_FAILED,
+      `Failed to send secret: ${response.status} ${response.statusText}`,
+      response.status,
+    );
+  }
 
+  /**
+   * Send encrypted data to the server via HTTP
+   * @private
+   */
+  private async sendEncryptedData(
+    encryptedData: string,
+    ttl: number,
+    authToken?: string,
+  ): Promise<string> {
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
     };
@@ -611,54 +690,71 @@ class HakanaiClient {
     });
 
     if (!response.ok) {
-      // Handle authentication errors with specific messages
-      if (response.status === 401) {
-        throw new HakanaiError(
-          HakanaiErrorCodes.AUTHENTICATION_REQUIRED,
-          "Authentication required: Please provide a valid authentication token",
-          response.status,
-        );
-      }
-
-      if (response.status === 403) {
-        throw new HakanaiError(
-          HakanaiErrorCodes.INVALID_TOKEN,
-          "Invalid authentication token: Please check your token and try again",
-          response.status,
-        );
-      }
-
-      // Generic error for other status codes
-      throw new HakanaiError(
-        HakanaiErrorCodes.SEND_FAILED,
-        `Failed to send secret: ${response.status} ${response.statusText}`,
-        response.status,
-      );
+      this.handleSendPayloadError(response);
     }
 
-    const result: SecretResponse = await response.json();
-    if (!result.id || typeof result.id !== "string") {
+    const responseData: SecretResponse = await response.json();
+    if (!responseData.id || typeof responseData.id !== "string") {
       throw new Error("Invalid response: missing secret ID");
     }
 
-    const secretId = result.id;
-    const keyBase64 = Base64UrlSafe.encode(key.bytes);
-
-    return `${this.baseUrl}/s/${secretId}#${keyBase64}`;
+    return responseData.id;
   }
 
   /**
-   * Retrieve and decrypt a payload from the server
-   * @param url - Full URL with format: https://server/s/{id}#{key}
-   * @returns Decrypted payload data with optional filename
+   * Encrypt and send a payload to the Hakanai server
+   * @param payload - Data to encrypt and send (must have non-empty data field)
+   * @param ttl - Time-to-live in seconds (default: 3600)
+   * @param authToken - Optional authentication token for server access
+   * @returns Full URL with secret ID and decryption key in fragment
    * @throws {HakanaiError} With specific error codes:
-   *   - MISSING_DECRYPTION_KEY: No key found in URL fragment
-   *   - SECRET_NOT_FOUND: Secret expired or doesn't exist
-   *   - SECRET_ALREADY_ACCESSED: Secret was already retrieved
-   *   - RETRIEVE_FAILED: General retrieval failure
-   * @throws {Error} For invalid URL format or decryption failures
+   *   - AUTHENTICATION_REQUIRED: Server requires auth token
+   *   - INVALID_TOKEN: Provided token is invalid
+   *   - SEND_FAILED: General send failure
    */
-  async receivePayload(url: string): Promise<PayloadData> {
+  async sendPayload(
+    payload: PayloadData,
+    ttl: number = 3600,
+    authToken?: string,
+  ): Promise<string> {
+    this.validateSendPayloadParams(payload, ttl, authToken);
+
+    const key = CryptoOperations.generateKey();
+
+    let result: string;
+    try {
+      const secretPayload = {
+        data: payload.data,
+        filename: payload.filename || null,
+      };
+      const payloadJson = JSON.stringify(secretPayload);
+
+      const encryptedData = await CryptoOperations.encrypt(payloadJson, key);
+
+      const secretId = await this.sendEncryptedData(
+        encryptedData,
+        ttl,
+        authToken,
+      );
+
+      const keyBase64 = Base64UrlSafe.encode(key.bytes);
+
+      result = `${this.baseUrl}/s/${secretId}#${keyBase64}`;
+    } finally {
+      SecureMemory.clearUint8Array(key.bytes);
+    }
+
+    return result;
+  }
+
+  /**
+   * Validate and parse receive URL for secret retrieval
+   * @private
+   */
+  private validateAndParseReceiveUrl(url: string): {
+    secretId: string;
+    key: Uint8Array;
+  } {
     if (typeof url !== "string" || !url.trim()) {
       throw new Error("URL must be a non-empty string");
     }
@@ -697,28 +793,53 @@ class HakanaiClient {
       throw new Error("Invalid key length");
     }
 
+    return { secretId, key };
+  }
+
+  /**
+   * Handle HTTP response errors for receivePayload
+   * @private
+   */
+  private handleReceivePayloadError(response: Response): never {
+    if (response.status === 404) {
+      throw new HakanaiError(
+        HakanaiErrorCodes.SECRET_NOT_FOUND,
+        "Secret not found or has expired",
+        404,
+      );
+    }
+    if (response.status === 410) {
+      throw new HakanaiError(
+        HakanaiErrorCodes.SECRET_ALREADY_ACCESSED,
+        "Secret has been accessed and is no longer available",
+        410,
+      );
+    }
+    throw new HakanaiError(
+      HakanaiErrorCodes.RETRIEVE_FAILED,
+      `Failed to retrieve secret: ${response.status} ${response.statusText}`,
+      response.status,
+    );
+  }
+
+  /**
+   * Retrieve and decrypt a payload from the server
+   * @param url - Full URL with format: https://server/s/{id}#{key}
+   * @returns Decrypted payload data with optional filename
+   * @throws {HakanaiError} With specific error codes:
+   *   - MISSING_DECRYPTION_KEY: No key found in URL fragment
+   *   - SECRET_NOT_FOUND: Secret expired or doesn't exist
+   *   - SECRET_ALREADY_ACCESSED: Secret was already retrieved
+   *   - RETRIEVE_FAILED: General retrieval failure
+   * @throws {Error} For invalid URL format or decryption failures
+   */
+  async receivePayload(url: string): Promise<PayloadData> {
+    const { secretId, key } = this.validateAndParseReceiveUrl(url);
+
     const response = await fetch(`${this.baseUrl}/api/v1/secret/${secretId}`);
 
     if (!response.ok) {
-      if (response.status === 404) {
-        throw new HakanaiError(
-          HakanaiErrorCodes.SECRET_NOT_FOUND,
-          "Secret not found or has expired",
-          404,
-        );
-      }
-      if (response.status === 410) {
-        throw new HakanaiError(
-          HakanaiErrorCodes.SECRET_ALREADY_ACCESSED,
-          "Secret has been accessed and is no longer available",
-          410,
-        );
-      }
-      throw new HakanaiError(
-        HakanaiErrorCodes.RETRIEVE_FAILED,
-        `Failed to retrieve secret: ${response.status} ${response.statusText}`,
-        response.status,
-      );
+      this.handleReceivePayloadError(response);
     }
 
     const encryptedData = await response.text();
@@ -726,22 +847,27 @@ class HakanaiClient {
       throw new Error("Empty response from server");
     }
 
-    const decryptedJson = await CryptoOperations.decrypt(encryptedData, key);
-
     let payload: PayloadData;
     try {
-      payload = JSON.parse(decryptedJson);
-    } catch (error) {
-      throw new Error("Failed to parse decrypted payload");
-    }
+      const decryptedJson = await CryptoOperations.decrypt(encryptedData, key);
 
-    // Validate payload structure
-    if (
-      !payload ||
-      typeof payload !== "object" ||
-      typeof payload.data !== "string"
-    ) {
-      throw new Error("Invalid payload structure");
+      try {
+        payload = JSON.parse(decryptedJson);
+      } catch (error) {
+        throw new Error("Failed to parse decrypted payload");
+      }
+
+      // Validate payload structure
+      if (
+        !payload ||
+        typeof payload !== "object" ||
+        typeof payload.data !== "string"
+      ) {
+        throw new Error("Invalid payload structure");
+      }
+    } finally {
+      // Always clear the key after use
+      SecureMemory.clearUint8Array(key);
     }
 
     return new PayloadDataImpl(payload.data, payload.filename || undefined);

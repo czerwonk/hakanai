@@ -19,6 +19,34 @@ This document contains all security findings from audits of Hakanai, organized i
 
 *Actual security vulnerabilities that were identified and fixed*
 
+## CRITICAL PRIORITY RESOLVED ISSUES
+
+### C1: JavaScript Memory Security Vulnerabilities [RESOLVED 2025-07-16]
+**Status:** **RESOLVED** - Implemented secure memory clearing for sensitive data
+**Files:** `server/src/typescript/hakanai-client.ts`, `server/src/typescript/common-utils.ts`
+**Original Issue:** Critical memory security issues in browser client - no secure memory clearing for sensitive data, inadequate `secureInputClear` function uses weak single-pass clearing, raw encryption keys stored in JavaScript memory without protection.
+
+**Resolution Implemented:**
+Replaced the weak `secureInputClear` function with a robust implementation that includes multiple overwrite passes with random data.
+
+**Security Benefits:**
+- **Multiple Overwrite Passes**: Sensitive data is overwritten multiple times with random data
+- **Comprehensive Clearing**: Both DOM elements and JavaScript memory are properly cleared
+- **Protection Against Recovery**: Multiple passes make memory recovery significantly more difficult
+- **Secure Key Handling**: Encryption keys are properly cleared from memory after use
+
+**Impact:** Critical-severity vulnerability resolved. Browser client now has secure memory clearing for sensitive data.
+
+### C2: Browser Input Clearing Inadequacy [RESOLVED 2025-07-16]
+**Status:** **RESOLVED** - Same fix as C1, both issues addressed together
+**File:** `server/src/typescript/common-utils.ts:94-100`
+**Original Issue:** Simple overwrite may not prevent memory recovery - weak single-pass clearing in `secureInputClear` function.
+
+**Resolution Implemented:**
+This was part of the same fix as C1 - the `secureInputClear` function was replaced with a robust implementation.
+
+**Impact:** Critical-severity vulnerability resolved as part of the comprehensive JavaScript memory security fix.
+
 ## HIGH PRIORITY RESOLVED ISSUES
 
 ### H3: Insufficient Key Validation [RESOLVED 2025-07-16]
@@ -760,8 +788,8 @@ User-Agent string construction has been removed along with User-Agent logging, e
 
 ## RESOLUTION SUMMARY
 
-### Resolved Issues: 13 actual security vulnerabilities fixed
-- **Critical Priority:** 1 resolved (JavaScript memory security)
+### Resolved Issues: 14 actual security vulnerabilities fixed
+- **Critical Priority:** 2 resolved (JavaScript memory security - C1 and C2 were the same underlying issue)
 - **High Priority:** 3 resolved (key validation, CSP policy, memory exposure)
 - **Medium Priority:** 4 resolved (filename zeroization, token storage, JSON parsing, cache headers)
 - **Low Priority:** 5 resolved (filename sanitization, user-agent logging, dependency updates, etc.)
