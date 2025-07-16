@@ -55,6 +55,9 @@ impl Payload {
 impl Zeroize for Payload {
     fn zeroize(&mut self) {
         self.data.zeroize();
+        if let Some(ref mut filename) = self.filename {
+            filename.zeroize();
+        }
     }
 }
 
