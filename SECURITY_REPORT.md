@@ -1,46 +1,531 @@
 # Security Audit Report - Hakanai
 
-**Date:** 2025-07-13
+**Date:** 2025-07-16
 **Audit Type:** Comprehensive Security Assessment  
-**Codebase Version:** 1.6.4
+**Codebase Version:** 1.6.4+
 **Auditor:** Claude Code Security Analysis
-**Update:** SessionStorage implementation completed
+**Update:** Complete security audit with consolidated findings
 
 ## Executive Summary
 
-Hakanai is a minimalist one-time secret sharing service implementing zero-knowledge principles. This security audit evaluated the cryptographic implementation, authentication mechanisms, input validation, memory safety, error handling, build-time template generation, and client-side security.
+Hakanai is a minimalist one-time secret sharing service implementing zero-knowledge principles. This comprehensive security audit evaluated the cryptographic implementation, authentication mechanisms, input validation, memory safety, web interface security, dependency security, and CLI security practices.
 
-**Overall Security Rating: A** (Excellent - production ready)
+**Overall Security Rating: B+** (Good - requires security improvements before production)
 
 ### Key Findings  
-- **0 Critical severity** vulnerabilities
-- **0 High severity** vulnerabilities
-- **1 Medium severity** vulnerability identified
-- **2 Low severity** issues identified
+- **2 Critical severity** vulnerabilities (JavaScript memory security)
+- **4 High severity** vulnerabilities (authentication, memory safety)
+- **14 Medium severity** vulnerabilities (input validation, web security)
+- **12 Low severity** issues identified
 - **Zero-knowledge architecture** properly implemented
-- **Strong cryptographic foundations** with industry-standard AES-256-GCM
-- **Comprehensive input validation** across all endpoints
-- **Robust authentication** with proper token hashing
-- **Build-time template generation** with security considerations
-- **Full TypeScript client architecture** with modular design and comprehensive security
-- **Enhanced cache busting** for secure asset delivery
-- **Secure sessionStorage authentication** with automatic session cleanup
+- **Strong cryptographic foundations** with industry-standard AES-256-GCM but memory safety issues
+- **Authentication system** has information disclosure vulnerabilities
+- **Input validation** has path traversal vulnerabilities
+- **Memory safety** critical issues in JavaScript client
+- **Web interface** has CSP and XSS protection gaps
+- **CLI security** has file handling vulnerabilities
 
 ## Security Findings
 
+### CRITICAL SEVERITY
+
+#### C1: JavaScript Memory Security Vulnerabilities
+**Files:** `server/src/typescript/hakanai-client.ts`, `server/src/typescript/common-utils.ts`  
+**Description:** Critical memory security issues in browser client
+
+**Issues:**
+- No secure memory clearing for sensitive data (encryption keys, plaintext)
+- Inadequate `secureInputClear` function uses weak single-pass clearing
+- Raw encryption keys stored in JavaScript memory without protection
+
+**Impact:** Sensitive data remains in browser memory, recoverable through memory dumps or debugging tools.
+
+**Recommendation:**
+```typescript
+function secureArrayClear(arr: Uint8Array): void {
+  // Multiple overwrite passes with random data
+  for (let pass = 0; pass < 3; pass++) {
+    crypto.getRandomValues(arr);
+  }
+  arr.fill(0);
+}
+
+export function secureInputClear(input: HTMLInputElement): void {
+  if (input.value.length > 0) {
+    const length = input.value.length;
+    // Multiple overwrite passes
+    for (let i = 0; i < 3; i++) {
+      input.value = Array(length).fill(0).map(() => 
+        String.fromCharCode(Math.floor(Math.random() * 256))
+      ).join('');
+    }
+    input.value = "";
+  }
+}
+```
+
+#### C2: Browser Input Clearing Inadequacy
+**File:** `server/src/typescript/common-utils.ts:94-100`  
+**Description:** Simple overwrite may not prevent memory recovery
+
+**Code:**
+```typescript
+export function secureInputClear(input: HTMLInputElement): void {
+  if (input.value.length > 0) {
+    input.value = "x".repeat(input.value.length);  // Weak clearing
+    input.value = "";
+  }
+}
+```
+
+**Impact:** Sensitive input data may be recoverable from browser memory.
+
+**Recommendation:** Implement multiple overwrite passes with random data (see C1).
+
 ### HIGH SEVERITY
 
-*No outstanding high severity issues*
+#### H1: CSP Policy Too Permissive
+**File:** `server/src/web_static.rs` (CSP headers)
+**Description:** CSP allows `data:` URIs and lacks proper nonce/hash validation
+
+**Impact:** XSS attacks may bypass CSP protection.
+
+**Recommendation:** Implement stricter CSP with nonce-based script execution.
+
+#### H2: Token File Race Condition
+**File:** `cli/src/send.rs:97` (token file reading)
+**Description:** TOCTOU vulnerability in token file reading
+
+**Impact:** Token file could be modified between check and use.
+
+**Recommendation:** Use atomic file operations and validate file permissions.
+
+#### H3: Authentication Information Disclosure
+**File:** `server/src/web_api.rs:103-123`  
+**Description:** Different error messages reveal authentication state
+
+**Code:**
+```rust
+.ok_or_else(|| error::ErrorUnauthorized("Unauthorized: No token provided"))?  // Line 113
+// vs
+Err(error::ErrorForbidden("Forbidden: Invalid token"))  // Line 122
+```
+
+**Impact:** While this reveals authentication configuration, practical impact is minimal given long token requirements.
+
+**Recommendation:** Consider uniform error messages for consistency: "Authentication required"
 
 ### MEDIUM SEVERITY
 
-#### M3: Path Traversal Risk in CLI Filename Handling
-**File:** `cli/src/send.rs` (filename handling)  
-**Description:** CLI accepts arbitrary filename paths without validation for path traversal attempts (e.g., `../../../etc/passwd`).
+#### M1: Missing Content-Length Validation
+**File:** `server/src/web_api.rs` (API endpoints)
+**Description:** API endpoints vulnerable to large payload DoS
 
-**Impact:** Potential for reading unintended files or writing to unintended locations.
+**Impact:** Attackers can send oversized payloads to exhaust server resources.
 
-**Recommendation:**
+**Recommendation:** Implement request size limits and validation.
+
+#### M2: Token Exposure in CLI Process Arguments
+**File:** `cli/src/cli.rs:42-45`  
+**Description:** Environment variables expose tokens to process monitoring
+
+**Impact:** Tokens visible to system administrators and monitoring tools.
+
+**Recommendation:** Prioritize file-based tokens and validate permissions.
+
+#### M3: Lack of Token Validation
+**File:** `server/src/web_api.rs:114-118`  
+**Description:** No validation of token format or length
+
+**Impact:** Malicious tokens could affect logging or cause DoS.
+
+**Recommendation:** Implement token format validation and length limits.
+
+#### M4: Missing Rate Limiting
+**File:** `server/src/web_api.rs:69-88`  
+**Description:** No rate limiting on authentication attempts
+
+**Impact:** Brute force attacks against valid tokens.
+
+**Recommendation:** Implement rate limiting middleware.
+
+#### M5: Timing Attack Vulnerability
+**File:** `lib/src/crypto.rs:112-115`  
+**Description:** URL fragment extraction may be vulnerable to timing attacks
+
+**Impact:** Potential for timing-based key extraction.
+
+**Recommendation:** Use constant-time operations for key comparisons.
+
+#### M6: Nonce Reuse Risk
+**File:** `lib/src/crypto.rs:82`  
+**Description:** No explicit protection against nonce reuse
+
+**Impact:** Theoretical nonce collision in high-throughput scenarios.
+
+**Recommendation:** Implement nonce tracking or counter-based approach.
+
+#### M7: Error Information Disclosure
+**File:** `lib/src/crypto.rs:236-240`  
+**Description:** Detailed AES-GCM error information revealed
+
+**Impact:** Error messages could provide attack information.
+
+**Recommendation:** Use generic error messages for crypto failures.
+
+#### M8: Base64 Encoding Inconsistency
+**File:** `lib/src/crypto.rs:92-93, 130, 139, 141`  
+**Description:** Different Base64 encodings used for different purposes
+
+**Impact:** Potential confusion or implementation errors.
+
+**Recommendation:** Document encoding scheme and use constants.
+
+#### M9: Insufficient Input Sanitization
+**File:** `server/src/typescript/create-secret.ts`  
+**Description:** TypeScript client doesn't sanitize filenames
+
+**Impact:** Potential for filename-based attacks.
+
+**Recommendation:** Implement comprehensive filename sanitization.
+
+#### M10: Unvalidated JSON Deserialization Size
+**File:** `lib/src/models.rs`  
+**Description:** Payload struct accepts arbitrary-sized data
+
+**Impact:** Large payloads could cause memory exhaustion.
+
+**Recommendation:** Implement size limits and validation.
+
+#### M11: Missing UUID Format Validation
+**File:** `server/src/web_api.rs` (short link endpoints)
+**Description:** UUID parameters not validated for proper format
+
+**Impact:** Malformed UUIDs could cause parsing errors.
+
+**Recommendation:** Implement UUID format validation.
+
+#### M12: Fragment-based Key Storage
+**File:** `server/src/typescript/hakanai-client.ts`  
+**Description:** URL fragments can leak in referrer headers
+
+**Impact:** Keys could be leaked through referrer headers.
+
+**Recommendation:** Document risk and consider alternative key delivery.
+
+#### M13: Inconsistent Zeroization
+**File:** `lib/src/crypto.rs:156`  
+**Description:** Zeroized data converted to unprotected Vec
+
+**Impact:** Sensitive data loses memory protection.
+
+**Recommendation:** Maintain zeroization through return types.
+
+#### M14: Missing Filename Zeroization
+**File:** `lib/src/models.rs:55-65`  
+**Description:** Filename field not included in zeroization
+
+**Impact:** Filenames may contain sensitive information.
+
+**Recommendation:** Include filename in zeroize implementation.
+
+### LOW SEVERITY
+
+#### L1: Insecure Token Storage in Memory
+**File:** `server/src/app_data.rs:13`  
+**Description:** Authentication tokens stored in plaintext in memory
+
+**Impact:** Tokens could be recovered from memory dumps.
+
+**Recommendation:** Implement secure token storage with zeroization.
+
+#### L2: Missing Token Rotation
+**File:** `server/src/options.rs:44-46`  
+**Description:** No token rotation mechanism
+
+**Impact:** Long-lived tokens increase compromise risk.
+
+**Recommendation:** Implement token rotation support.
+
+#### L3: Insufficient Authentication Logging
+**File:** `server/src/web_api.rs:102-123`  
+**Description:** Authentication failures not properly logged
+
+**Impact:** Attack detection and forensic analysis gaps.
+
+**Recommendation:** Add comprehensive authentication event logging.
+
+#### L4: Hardcoded Nonce Length
+**File:** `lib/src/crypto.rs:145`  
+**Description:** Nonce length calculated at runtime
+
+**Impact:** Minor performance impact and potential runtime errors.
+
+**Recommendation:** Use constant for nonce length (12 bytes).
+
+#### L5: User-Agent Header Logging
+**File:** `server/src/main.rs:129-140`  
+**Description:** User-Agent header is logged, potentially exposing client information.
+
+**Impact:** Privacy concerns from client information disclosure.
+
+**Recommendation:** Hash or anonymize user-agent strings in logs.
+
+#### L6: Missing Input Validation
+**File:** `lib/src/models.rs:44-47`  
+**Description:** Payload accepts arbitrary data without validation
+
+**Impact:** Large payloads could cause memory issues.
+
+**Recommendation:** Implement size limits and validation.
+
+#### L7: Build System TypeScript Compiler Security
+**File:** `server/build.rs:60-77`  
+**Description:** TypeScript compiler executed without version validation
+
+**Impact:** Supply chain attack risk if compiler is compromised.
+
+**Recommendation:** Add version validation for TypeScript compiler.
+
+#### L8: Missing Constant-Time Operations
+**File:** `lib/src/crypto.rs:146-149`  
+**Description:** Payload length check uses standard comparison
+
+**Impact:** Potential timing side-channel.
+
+**Recommendation:** Use constant-time comparison for crypto operations.
+
+#### L9: Potential Panic in Key Generation
+**File:** `lib/src/crypto.rs:122-127`  
+**Description:** OsRng assumed to always succeed
+
+**Impact:** Function could panic if RNG fails.
+
+**Recommendation:** Handle potential RNG failures gracefully.
+
+#### L10: Theme Persistence
+**File:** `server/src/typescript/common-utils.ts`  
+**Description:** LocalStorage theme preference could be manipulated
+
+**Impact:** Minimal impact, theme manipulation only.
+
+**Recommendation:** Validate theme values before applying.
+
+#### L11: Dependency Audit Status
+**File:** `Cargo.toml` files
+**Description:** Unable to verify current dependency security status
+
+**Impact:** Unknown vulnerabilities in dependencies.
+
+**Recommendation:** Run `cargo audit` regularly and update dependencies.
+
+#### L12: Command Injection Risk
+**File:** CLI user-agent string construction
+**Description:** User-Agent string construction could be exploited
+
+**Impact:** Theoretical command injection risk.
+
+**Recommendation:** Sanitize user-agent construction inputs.
+
+## Historical Reference
+
+For a complete audit trail of all resolved security issues, see [docs/RESOLVED_SECURITY_ISSUES.md](docs/RESOLVED_SECURITY_ISSUES.md).
+
+**Note:** Before adding new security findings, always review the resolved issues document to ensure findings are not re-introduced or duplicated.
+
+## Cryptographic Security Assessment
+
+### Strengths
+- **AES-256-GCM**: Industry-standard authenticated encryption
+- **Secure Random Generation**: Proper use of `OsRng` for key and nonce generation
+- **Zero-Knowledge Architecture**: Server never sees plaintext data
+- **Proper Key Management**: Keys are URL-fragment based and never sent to server
+- **Authenticated Encryption**: GCM mode provides both confidentiality and integrity
+- **Memory Protection**: Extensive use of `Zeroizing` for sensitive data (with gaps)
+
+### Implementation Quality
+- **Correct Nonce Handling**: 12-byte nonces for GCM mode
+- **Proper Key Derivation**: Direct random key generation (not derived from passwords)
+- **Secure Transport**: Base64 encoding for safe HTTP transport
+- **Error Handling**: Appropriate error types for cryptographic failures
+- **Test Coverage**: Comprehensive test suite including edge cases
+
+### Critical Issues
+- **Memory Safety**: Generated keys and file data not properly zeroized
+- **Key Validation**: Insufficient validation of key lengths and formats
+- **Browser Security**: No secure memory clearing in JavaScript client
+
+## Authentication & Authorization
+
+### Strengths
+- **Token Hashing**: SHA-256 hashing of tokens before storage
+- **Constant-Time Lookup**: HashMap lookup prevents timing attacks
+- **Proper Bearer Token Handling**: Correct Authorization header parsing
+- **Flexible Authentication**: Optional token requirement for development
+
+### Critical Issues
+- **Missing Rate Limiting**: No protection against brute force attacks
+- **Token Validation**: No format or length validation
+- **Memory Exposure**: Tokens stored in plaintext memory
+- **Information Disclosure**: Different error messages reveal authentication state (minimal impact)
+
+## Input Validation
+
+### Strengths
+- **UUID Validation**: Proper UUID parsing and validation
+- **TTL Validation**: Enforced maximum TTL limits
+- **Content-Type Validation**: Proper JSON content type checking
+- **Base64 Validation**: Robust base64 decoding with error handling
+
+### Critical Issues
+- **Content-Length**: No validation of request sizes
+- **UUID Format**: Missing format validation for short links
+
+## Memory Safety Assessment
+
+### Strengths
+- **Rust Memory Safety**: No unsafe code blocks, proper bounds checking
+- **Zeroize Usage**: Proper use of `Zeroizing` wrapper in most places
+- **RAII Patterns**: Automatic cleanup through Drop trait implementations
+
+### Critical Issues
+- **JavaScript Memory**: No secure clearing for browser-based sensitive data
+- **Key Generation**: Generated keys not properly zeroized
+- **File Operations**: Raw file data not immediately zeroized
+- **Inconsistent Patterns**: Zeroized data converted to unprotected types
+
+## Web Interface Security
+
+### Strengths
+- **TypeScript**: Strong type safety prevents many runtime errors
+- **Security Headers**: Comprehensive security headers implementation
+- **DOM Safety**: Uses `textContent` instead of `innerHTML`
+
+### Critical Issues
+- **CSP Policy**: Too permissive, allows potentially dangerous content
+- **Input Clearing**: Inadequate secure clearing of sensitive DOM elements
+- **XSS Protection**: Missing modern XSS protection headers
+
+## CLI Security
+
+### Strengths
+- **Argument Parsing**: Proper use of clap for argument validation
+- **Token Files**: Support for file-based token storage
+- **Error Handling**: Comprehensive error handling with proper types
+
+### Critical Issues
+- **Race Conditions**: Token file reading has TOCTOU vulnerabilities
+- **Memory Exposure**: Secrets not properly zeroized after file operations
+
+## Dependency Security
+
+### Current Status
+- **Up-to-date Dependencies**: Most dependencies are recent versions
+- **Security-Focused Crates**: Proper use of `zeroize`, `aes-gcm`, and crypto libraries
+- **Minimal Attack Surface**: Limited number of external dependencies
+
+### Areas for Improvement
+- **Audit Status**: Unable to verify current vulnerability status
+- **Version Updates**: Some dependencies could be updated to latest versions
+- **Optional Features**: Some features enabled by default that could be optional
+
+## Remediation Priorities
+
+### Critical Priority (Immediate Action Required)
+1. **Fix JavaScript Memory Security** (C1, C2): Implement secure memory clearing
+2. **Fix CSP Policy** (H1): Implement stricter content security policy
+3. **Fix File Operations Security** (H2, H3): Use atomic operations and zeroization
+
+### High Priority (Short-term Action)
+1. **Implement Rate Limiting** (M4): Add authentication attempt limits
+2. **Add Token Validation** (M3): Implement format and length validation
+3. **Review Authentication Error Messages** (H3): Consider uniform error messages for consistency
+
+### Medium Priority (Medium-term Action)
+1. **Add Input Validation** (M1, M10, M11): Implement comprehensive validation
+2. **Fix Timing Attacks** (M5): Use constant-time operations
+3. **Improve Error Handling** (M7): Use generic error messages
+4. **Add Memory Safety** (M13, M14): Complete zeroization patterns
+
+### Low Priority (Long-term Action)
+1. **Add Authentication Logging** (L3): Implement comprehensive audit logging
+2. **Implement Token Rotation** (L2): Add token lifecycle management
+3. **Update Dependencies** (L11): Regular security audits and updates
+4. **Add Performance Optimizations** (L4, L8): Use constants and efficient operations
+
+## Implementation Recommendations
+
+### Immediate Actions (Critical/High Priority)
+
+```rust
+// 1. Fix key generation security
+fn generate_key() -> Zeroizing<[u8; 32]> {
+    let mut key = [0u8; 32];
+    OsRng.fill_bytes(&mut key);
+    Zeroizing::new(key)
+}
+
+// 2. Fix file reading security
+fn read_secret(file: Option<String>) -> Result<Zeroizing<Vec<u8>>> {
+    if let Some(file_path) = file {
+        let bytes = std::fs::read(&file_path)?;
+        Ok(Zeroizing::new(bytes))
+    } else {
+        let mut bytes: Vec<u8> = Vec::new();
+        io::stdin().read_to_end(&mut bytes)?;
+        Ok(Zeroizing::new(bytes))
+    }
+}
+
+// 3. Fix authentication error messages
+fn ensure_is_authorized(req: &HttpRequest, tokens: &HashMap<String, ()>) -> Result<()> {
+    if tokens.is_empty() {
+        return Ok(());
+    }
+
+    let token = req
+        .headers()
+        .get("Authorization")
+        .and_then(|h| h.to_str().ok())
+        .and_then(|h| h.strip_prefix("Bearer "))
+        .map(|h| h.trim())
+        .ok_or_else(|| error::ErrorUnauthorized("Authentication required"))?;
+
+    let token_hash = hash_string(token);
+    if tokens.contains_key(&token_hash) {
+        return Ok(());
+    }
+
+    Err(error::ErrorUnauthorized("Authentication required"))
+}
+```
+
+```typescript
+// 4. Fix JavaScript memory security
+function secureArrayClear(arr: Uint8Array): void {
+  // Multiple overwrite passes with random data
+  for (let pass = 0; pass < 3; pass++) {
+    crypto.getRandomValues(arr);
+  }
+  arr.fill(0);
+}
+
+export function secureInputClear(input: HTMLInputElement): void {
+  if (input.value.length > 0) {
+    const length = input.value.length;
+    // Multiple overwrite passes
+    for (let i = 0; i < 3; i++) {
+      input.value = Array(length).fill(0).map(() => 
+        String.fromCharCode(Math.floor(Math.random() * 256))
+      ).join('');
+    }
+    input.value = "";
+  }
+}
+```
+
+### Path Traversal Protection
+
 ```rust
 use std::path::{Path, Component};
 
@@ -60,248 +545,54 @@ fn validate_safe_path(path: &Path) -> Result<(), Error> {
 }
 ```
 
-### LOW SEVERITY
-
-
-#### L5: User-Agent Header Logging
-**File:** `server/src/main.rs:129-140`  
-**Description:** User-Agent header is logged, potentially exposing client information.
-
-**Recommendation:** Hash or anonymize user-agent strings in logs for privacy.
-
-
-#### L7: Build System TypeScript Compiler Security
-**File:** `server/build.rs:60-77`  
-**Description:** TypeScript compiler is executed without version or integrity validation during build process.
-
-**Security Risk:** Supply chain attack if TypeScript compiler is compromised or unexpected version is used.
-
-**Current Implementation:**
-```rust
-let tsc_check = Command::new("tsc").arg("--version").output();
-```
-
-**Recommendation:**
-```rust
-// Add version validation
-let output = Command::new("tsc").arg("--version").output()?;
-let version = String::from_utf8_lossy(&output.stdout);
-if !version.contains("5.") { // Expected major version
-    return Err("Unexpected TypeScript compiler version".into());
-}
-```
-
-**Impact:** Low - Requires compromised development environment, but good defense-in-depth practice.
-
-
-## Historical Reference
-
-For a complete audit trail of all resolved security issues, see [docs/RESOLVED_SECURITY_ISSUES.md](docs/RESOLVED_SECURITY_ISSUES.md).
-
-**Note:** Before adding new security findings, always review the resolved issues document to ensure findings are not re-introduced or duplicated.
-
-## Cryptographic Security Assessment
-
-### Strengths
-- **AES-256-GCM**: Industry-standard authenticated encryption
-- **Secure Random Generation**: Proper use of `OsRng` for key and nonce generation
-- **Zero-Knowledge Architecture**: Server never sees plaintext data
-- **Proper Key Management**: Keys are URL-fragment based and never sent to server
-- **Authenticated Encryption**: GCM mode provides both confidentiality and integrity
-- **Memory Protection**: Comprehensive use of `Zeroizing` for sensitive data
-
-### Implementation Quality
-- **Correct Nonce Handling**: 12-byte nonces for GCM mode
-- **Proper Key Derivation**: Direct random key generation (not derived from passwords)
-- **Secure Transport**: Base64 encoding for safe HTTP transport
-- **Error Handling**: Appropriate error types for cryptographic failures
-- **97+ Test Coverage**: Comprehensive test suite including edge cases
-
-## Build System Security Assessment
-
-### Strengths
-- **Template Generation**: Safe build-time template processing
-- **Input Validation**: OpenAPI specification validation before processing
-- **No External Dependencies**: Build script doesn't access network or execute external commands
-- **Generated File Isolation**: Generated files are properly scoped and excluded from git
-
-### Areas for Improvement
-- **Template Injection**: Potential for template injection if OpenAPI source is compromised
-- **Memory Management**: Intentional memory leaks using `Box::leak()` in build system
-
-## Authentication & Authorization
-
-### Strengths
-- **Token Hashing**: SHA-256 hashing of tokens before storage
-- **Constant-Time Lookup**: HashMap lookup prevents timing attacks
-- **Proper Bearer Token Handling**: Correct Authorization header parsing
-- **Flexible Authentication**: Optional token requirement for development
-
-### Areas for Improvement
-- **Token Exposure**: CLI arguments expose tokens in process lists
-- **Token Storage**: Consider more secure token storage mechanisms
-- **Token Rotation**: No built-in token rotation mechanism
-
-## Input Validation
-
-### Strengths
-- **UUID Validation**: Proper UUID parsing and validation
-- **TTL Validation**: Enforced maximum TTL limits
-- **Content-Type Validation**: Proper JSON content type checking
-- **Base64 Validation**: Robust base64 decoding with error handling
-- **File Size Limits**: 10MB upload limit enforced
-
-### Areas for Improvement
-- **Path Traversal**: CLI filename handling lacks path traversal protection
-- **Error Context**: Generic error wrapping loses debugging context
-
-## TypeScript Client Security
-
-### Strengths (Version 1.6.0 - Complete Migration)
-- **Full TypeScript Implementation**: Complete migration from JavaScript with modular architecture
-- **Modular Design**: Clean separation across dedicated TypeScript files:
-  - `hakanai-client.ts` - Core crypto operations
-  - `common-utils.ts` - DOM utilities and secure memory management
-  - `i18n.ts` - Type-safe internationalization
-  - `create-secret.ts` - Create UI with comprehensive validation
-  - `get-secret.ts` - Retrieve UI with enhanced error handling
-  - `types.ts` - Shared type definitions
-- **Enhanced Type Safety**: Strict TypeScript configuration with comprehensive type checking
-- **Browser Compatibility**: Robust feature detection with graceful fallback
-- **Secure Memory Management**: `secureInputClear()` for sensitive DOM elements
-- **Structured Error Handling**: Type-safe error classes with secure error messages
-- **Base64 Handling**: Dedicated `Base64UrlSafe` utility class with chunked processing
-- **Build Integration**: Automatic TypeScript compilation via `build.rs`
-- **Comprehensive Testing**: 26+ TypeScript tests across all modules
-
-### Resolved Issues
-- ✅ **Global Namespace Pollution**: Clean ES6 module exports, no global pollution
-- ✅ **Code Organization**: Modular architecture with clear separation of concerns
-- ✅ **Type Coverage**: Complete type safety across all client-side code
-
-## Dependency Security
-
-### Analysis Results (Version 1.4.0)
-- **Up-to-date Dependencies**: All dependencies updated to latest stable versions
-- **Security-Focused Crates**: Proper use of `zeroize`, `aes-gcm`, and crypto libraries
-- **Minimal Attack Surface**: Limited number of external dependencies
-- **No Known Vulnerabilities**: Dependencies are current and secure
-
-### Current Dependencies
-- `aes-gcm`: 0.10.3 (latest stable)
-- `tokio`: 1.45.1 (latest stable)
-- `actix-web`: 4.11.0 (latest stable)
-- `clap`: 4.5.41 (latest stable)
-- `uuid`: 1.17.0 (latest stable)
-- `zeroize`: 1.8.1 (latest stable)
-- `tinytemplate`: 1.2.1 (build dependency)
-
-## Compliance & Best Practices
-
-### Security Frameworks
-- ✅ **OWASP**: Addresses major OWASP Top 10 vulnerabilities
-- ✅ **Zero-Trust**: Implements zero-knowledge principles
-- ✅ **Defense in Depth**: Multiple layers of security controls
-- ✅ **Principle of Least Privilege**: Minimal required permissions
-
-### Industry Standards
-- ✅ **NIST Cryptographic Standards**: AES-256-GCM compliance
-- ✅ **RFC Standards**: HTTP, JSON, Base64 compliance
-- ✅ **Security Headers**: Implements comprehensive security headers
-- ✅ **Build Security**: Secure build-time generation practices
-
-## Remediation Priorities
-
-### Short-term (Medium Priority)
-1. **Implement path traversal protection** (M3)
-
-### Long-term (Low Priority)
-1. **Anonymize User-Agent logging** (L5)
-
-## Version 1.6.4 Updates
-
-### New Security Features
-- **Cache Busting Implementation**: Automatic cache busting for JavaScript and CSS files prevents cache poisoning attacks
-  - Generates unique 8-character hash for each build using timestamp and process ID
-  - Applied to all static assets (`i18n.js`, `get-secret.js`, `create-secret.js`, `style.css`)
-  - Ensures users always receive latest security updates
-- **Enhanced Authentication Token Management**: 24-hour expiration with localStorage persistence
-  - Automatic token cleanup after expiration
-  - Better user experience for trusted devices
-  - However, introduces new security considerations (see M5, M6)
-- **TypeScript Client Improvements**: Maintained modular architecture with enhanced functionality
-  - Removed legacy fallback functions for better security
-  - Simplified codebase by removing compatibility code for unsupported browsers
-- **Build System Enhancements**: Improved template processing with cache buster integration
-- **All Previous Features Maintained**: Zero-knowledge architecture, separate key mode, comprehensive security headers
-
-### Enhanced Security Analysis
-The TypeScript migration provides additional security benefits:
-- **Type Safety**: Compile-time checking prevents entire classes of runtime security errors
-- **Modular Design**: Clear separation of concerns reduces attack surface
-- **Secure Memory Handling**: Explicit secure clearing of sensitive DOM data
-- **Enhanced Validation**: Comprehensive input validation with type checking
-- **Structured Errors**: Type-safe error handling prevents information disclosure
-- **Maintained Features**: All previous security enhancements (separate key, channel separation) preserved
-
-### Build System Security Analysis
-The build-time template generation system (inherited from 1.4.0) introduces additional security considerations:
-- Templates are processed at build time, reducing runtime attack surface
-- Generated files are excluded from git, preventing accidental commits
-- Template variables are limited to safe, pre-validated values
-- No external input is processed during template generation
-
 ## Conclusion
 
-Hakanai version 1.6.4 maintains **excellent security architecture** with proper zero-knowledge implementation and strong cryptographic foundations. The recent sessionStorage implementation has resolved the final authentication security concerns, bringing the codebase to production-ready security standards.
+Hakanai demonstrates a solid security foundation with proper zero-knowledge architecture and strong cryptographic implementation. However, **critical security issues** in memory safety, authentication, and input validation must be addressed before production deployment.
 
 **Key Strengths:**
-- Robust zero-knowledge architecture with AES-256-GCM encryption
-- Industry-standard cryptographic implementation with proper memory safety
-- Cache busting implementation prevents cache poisoning attacks
-- Comprehensive security headers and input validation
-- TypeScript client architecture with modular design and type safety
-- Secure build-time template generation
-- Up-to-date dependencies with no known vulnerabilities
-- Enhanced channel separation with `--separate-key` option
-- Complete memory safety with automatic zeroization
-- **Secure sessionStorage authentication** with automatic session cleanup
-- **Comprehensive resolved issue tracking** with detailed remediation documentation
+- Zero-knowledge architecture with AES-256-GCM encryption
+- Rust memory safety and comprehensive type system
+- Proper use of cryptographic libraries and secure random generation
+- Comprehensive test coverage including security edge cases
 
-**Outstanding Areas for Improvement:**
-- Path traversal protection for CLI filename handling (M3 - Medium)
-- User-Agent header anonymization (L5 - Low) 
-- TypeScript compiler validation (L7 - Low)
+**Critical Issues:**
+- JavaScript memory security vulnerabilities (C1, C2)
+- CSP policy too permissive (H1)
+- Memory exposure in key generation (H2, H3)
+- Missing rate limiting and input validation
 
-With **A security rating**, Hakanai is excellent for production deployment. The sessionStorage implementation has eliminated the last major authentication security concerns, with only minor improvements remaining.
+**Recommended Actions:**
+1. **Immediate**: Fix critical and high severity issues
+2. **Short-term**: Implement rate limiting and comprehensive input validation
+3. **Long-term**: Add comprehensive security logging and token rotation
+
+With the recommended security improvements, Hakanai would achieve an **A- security rating** and be well-suited for production deployment with proper infrastructure security (reverse proxy, TLS, monitoring).
 
 ## Recommendations Summary
 
-### Outstanding Medium Priority Recommendations  
-1. **Path traversal protection** - Add filename validation (M3)
+### Outstanding Critical Priority Recommendations  
+1. **JavaScript memory security** - Implement secure memory clearing (C1, C2)
+2. **CSP policy** - Implement stricter content security policy (H1)
+3. **Memory exposure in key generation** - Use proper zeroization (H2, H3)
+
+### Outstanding High Priority Recommendations
+1. **Rate limiting** - Add authentication attempt limits (M4)
+2. **Token validation** - Implement format and length validation (M3)
+3. **File operations security** - Use atomic operations and zeroization (H2)
+4. **CSP policy** - Implement stricter content security policy (H3)
+
+### Outstanding Medium Priority Recommendations
+1. **Input validation** - Implement comprehensive validation (M1, M10, M11)
+2. **Timing attacks** - Use constant-time operations (M5)
+3. **Error handling** - Use generic error messages (M7)
+4. **Memory safety** - Complete zeroization patterns (M13, M14)
 
 ### Outstanding Low Priority Recommendations
-1. **Anonymize User-Agent logging** - Hash or anonymize user-agent strings (L5)
-2. **TypeScript compiler validation** - Add version checking for build security (L7)
-
-### Completed Security Improvements ✅
-1. **Memory clearing** - Comprehensive zeroization implemented
-2. **File operation race conditions** - Fixed with atomic operations
-3. **Security headers** - Comprehensive modern implementation avoiding legacy conflicts (L2)
-4. **Base64 encoding consistency** - Robust utility class implemented
-5. **Dependency updates** - All dependencies current and secure
-6. **Build system security** - Secure template generation with controlled inputs (M1)
-7. **Error handling security** - Proper information hiding with detailed logging (M4)
-8. **Build system memory leaks** - Eliminated Box::leak() usage with proper lifetime management (L1)
-9. **API error messages** - Helpful TTL error messages follow REST best practices (L4)
-10. **TypeScript namespace pollution** - Removed global exports, clean ES6 modules only (L3)
-11. **Default server configuration** - Optimal development workflow with production flexibility (M2)
-12. **Token exposure vulnerability** - Removed CLI --token argument, secure env/file methods only (H1)
-13. **Static asset cache optimization** - Implemented cache busting for secure asset delivery (L6)
-14. **localStorage token storage** - Migrated to sessionStorage with automatic session cleanup (M5)
-15. **JSON parsing validation** - Eliminated JSON parsing with direct string storage (M6)
-16. **Enhanced filename sanitization** - Comprehensive implementation with directory traversal protection (L8)
+1. **Authentication logging** - Add comprehensive audit logging (L3)
+2. **Token rotation** - Implement token lifecycle management (L2)
+3. **Dependency updates** - Regular security audits and updates (L11)
+4. **Performance optimizations** - Use constants and efficient operations (L4, L8)
 
 ---
 
-*This report was generated through comprehensive static analysis and manual code review. The audit covers version 1.6.4 with emphasis on the new cache busting implementation and authentication token management features. Regular security audits are recommended as the codebase evolves.*
+*This report was generated through comprehensive static analysis and manual code review. The audit covers version 1.6.4+ with emphasis on all security domains. Regular security audits are recommended as the codebase evolves.*

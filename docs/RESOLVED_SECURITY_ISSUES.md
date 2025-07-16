@@ -14,7 +14,82 @@ This document contains all security issues that have been identified and resolve
 
 ## HIGH PRIORITY RESOLVED ISSUES ✅
 
-### H2: Memory Exposure of Secrets [RESOLVED in v1.3.2]
+### H2: CLI Path Traversal Issues [RESOLVED - NOT A SECURITY ISSUE]
+**Status:** **RESOLVED** - Determined to be intended behavior, not a security vulnerability
+**Original Issues:** 
+- CLI `--filename` parameter allows path traversal attacks
+- CLI `--file` parameter allows reading arbitrary system files
+
+**Resolution Reasoning:**
+The CLI is the "professional version" of the tooling designed for advanced users who need full file system access. The identified "path traversal" issues are actually intended features:
+
+1. **`--filename` output path control**: Users should be able to specify where files are saved
+2. **`--file` input path access**: Users should be able to share any file they have OS-level access to
+3. **Security boundary**: The real security boundary is OS file permissions, not application-level path restrictions
+4. **Threat model**: If an attacker has CLI access, they already have user privileges - adding `--allow-foo` flags provides no additional security
+5. **User experience**: Path restrictions would significantly harm the CLI's utility without providing meaningful security benefits
+
+**CLI vs Web UI Security Models:**
+- **Web UI**: Restricted, sandboxed environment for casual users
+- **CLI**: Full user privileges for power users who understand the implications
+
+This is consistent with other CLI tools (rsync, scp, curl, etc.) that provide full file system access to users.
+
+**Impact:** No security issue exists. CLI behavior is correct and intentional.
+
+### H3: Insufficient Key Validation [RESOLVED 2025-07-16]
+**Status:** **RESOLVED** - Added comprehensive key and nonce length validation
+**File:** `lib/src/crypto.rs:139-143`
+**Original Issue:** Decrypt function accepts keys without length validation, could cause panics or undefined behavior with invalid key lengths.
+
+**Resolution Implemented:**
+- Added key length validation (32 bytes for AES-256) before cipher creation
+- Added nonce length validation to prevent invalid nonce sizes
+- Proper error handling for invalid key/nonce lengths
+- Validation occurs before any cryptographic operations
+
+**Security Benefits:**
+- **Prevents Panics**: Invalid keys now return proper errors instead of causing crashes
+- **Input Validation**: Comprehensive validation of all cryptographic inputs
+- **Error Handling**: Graceful handling of malformed cryptographic parameters
+- **Robustness**: Improved reliability under invalid input conditions
+
+**Impact:** High-severity vulnerability resolved. Cryptographic operations now properly validate inputs.
+
+### H4: File Reading Memory Exposure [RESOLVED 2025-07-16]
+**Status:** **RESOLVED** - Complete memory protection for both file and stdin reading
+**File:** `cli/src/send.rs:106-115`
+**Original Issue:** Raw file/stdin data not immediately zeroized after reading.
+
+**Resolution Implemented:**
+- `read_secret` function now returns `Zeroizing<Vec<u8>>` instead of `Vec<u8>`
+- File path reading (`std::fs::read`) properly wraps result in `Zeroizing::new()`
+- **Stdin reading now uses `Zeroizing<Vec<u8>>` from initial allocation**
+- Function signature updated to enforce zeroization at return boundary
+
+**Final Implementation:**
+```rust
+fn read_secret(file: Option<String>) -> Result<Zeroizing<Vec<u8>>> {
+    if let Some(file_path) = file {
+        let bytes = std::fs::read(&file_path)?;
+        Ok(Zeroizing::new(bytes))
+    } else {
+        let mut bytes = Zeroizing::new(Vec::new());  // Protected from allocation
+        io::stdin().read_to_end(&mut bytes)?;
+        Ok(bytes)
+    }
+}
+```
+
+**Security Benefits:**
+- **Complete Memory Protection**: Both file and stdin data are zeroized throughout their lifecycle
+- **No Memory Windows**: Sensitive data never exists in unprotected memory
+- **API Consistency**: All callers receive zeroized data with automatic cleanup
+- **Scope Protection**: Automatic memory clearing when data goes out of scope
+
+**Impact:** High-severity vulnerability completely resolved. All CLI secret reading operations now have comprehensive memory protection.
+
+### H5: Memory Exposure of Secrets [RESOLVED in v1.3.2]
 **Status:** **RESOLVED** - Comprehensive implementation of `Zeroizing` guards ensures automatic memory clearing
 - All encryption keys are wrapped in `Zeroizing::new()` guards
 - Decrypted plaintext is protected with `Zeroizing` wrappers
@@ -210,8 +285,8 @@ The current implementation is significantly more robust than initially reported:
 
 ## ISSUE RESOLUTION SUMMARY
 
-**Total Resolved Issues:** 11
-- **High Priority:** 1 resolved
+**Total Resolved Issues:** 13
+- **High Priority:** 3 resolved
 - **Medium Priority:** 4 resolved
 - **Low Priority:** 6 resolved
 

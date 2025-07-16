@@ -67,7 +67,7 @@ fn default_headers() -> DefaultHeaders {
             "Strict-Transport-Security",
             "max-age=31536000; includeSubDomains",
         ))
-        .add(("Content-Security-Policy", "default-src 'self'"))
+        .add(("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"))
         .add(("Referrer-Policy", "strict-origin-when-cross-origin"))
         .add((
             "Permissions-Policy",
