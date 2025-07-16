@@ -1,4 +1,8 @@
-import { HakanaiClient, type PayloadData } from "./hakanai-client.js";
+import {
+  HakanaiClient,
+  ContentAnalysis,
+  type PayloadData,
+} from "./hakanai-client.js";
 import {
   createButton,
   createButtonContainer,
@@ -260,17 +264,20 @@ function showKeyInput(
   keyInput.required = true;
 }
 
-function createTextSecret(payload: PayloadData): HTMLElement {
+function createTextSecret(
+  payload: PayloadData,
+  decodedBytes: Uint8Array,
+): HTMLElement {
   const secretId = "secret-" + Date.now();
   const container = document.createElement("div");
   container.className = "secret-container";
 
-  const textarea = createSecretTextarea(secretId, payload);
+  const textarea = createSecretTextarea(secretId, payload, decodedBytes);
   container.appendChild(textarea);
 
   const buttonsContainer = createButtonContainer();
   buttonsContainer.appendChild(createCopyButton(secretId));
-  buttonsContainer.appendChild(createDownloadButton(payload));
+  buttonsContainer.appendChild(createDownloadButton(payload, decodedBytes));
   container.appendChild(buttonsContainer);
 
   if (window.innerWidth > 640) {
@@ -284,13 +291,18 @@ function createTextSecret(payload: PayloadData): HTMLElement {
 function createSecretTextarea(
   secretId: string,
   payload: PayloadData,
+  decodedBytes: Uint8Array,
 ): HTMLTextAreaElement {
   const textarea = document.createElement("textarea");
   textarea.id = secretId;
   textarea.className = "secret-display";
   textarea.readOnly = true;
   textarea.setAttribute("aria-label", "Retrieved secret content");
-  textarea.value = payload.decode?.() || payload.data;
+
+  // Use TextDecoder with pre-decoded bytes for better performance
+  const decoder = new TextDecoder();
+  textarea.value = decoder.decode(decodedBytes);
+
   textarea.addEventListener("click", () => textarea.select());
   return textarea;
 }
@@ -305,7 +317,10 @@ function resizeTextarea(textarea: HTMLTextAreaElement): void {
     Math.min(Math.max(scrollHeight, minHeight), maxHeight) + "px";
 }
 
-function createBinarySecret(payload: PayloadData): HTMLElement {
+function createBinarySecret(
+  payload: PayloadData,
+  decodedBytes: Uint8Array,
+): HTMLElement {
   const container = document.createElement("div");
   container.className = "secret-container";
 
@@ -316,7 +331,9 @@ function createBinarySecret(payload: PayloadData): HTMLElement {
   container.appendChild(message);
 
   const buttonsContainer = createButtonContainer();
-  buttonsContainer.appendChild(createDownloadButton(payload));
+  buttonsContainer.appendChild(
+    createDownloadButton(payload, decodedBytes, true),
+  );
   container.appendChild(buttonsContainer);
 
   return container;
@@ -333,12 +350,16 @@ function createCopyButton(secretId: string): HTMLButtonElement {
   );
 }
 
-function createDownloadButton(payload: PayloadData): HTMLButtonElement {
+function createDownloadButton(
+  payload: PayloadData,
+  decodedBytes: Uint8Array,
+  isBinary: boolean = false,
+): HTMLButtonElement {
   return createButton(
     "download-button",
     UI_STRINGS.DOWNLOAD_TEXT,
     UI_STRINGS.DOWNLOAD_ARIA,
-    () => downloadSecret(payload),
+    () => downloadSecret(payload, decodedBytes, isBinary),
   );
 }
 
@@ -381,10 +402,13 @@ function showSuccess(payload: PayloadData): void {
   title.textContent = UI_STRINGS.SUCCESS_TITLE;
   resultDiv.appendChild(title);
 
-  const isBinaryFile = payload.filename != null;
+  const decodedBytes = payload.decodeBytes?.() || new Uint8Array();
+  const isBinaryFile =
+    payload.filename != null || ContentAnalysis.isBinary(decodedBytes);
+
   const container = isBinaryFile
-    ? createBinarySecret(payload)
-    : createTextSecret(payload);
+    ? createBinarySecret(payload, decodedBytes)
+    : createTextSecret(payload, decodedBytes);
   resultDiv.appendChild(container);
 
   if (payload.filename) {
@@ -430,23 +454,29 @@ function copySecret(secretId: string, button: HTMLButtonElement): void {
   );
 }
 
-function generateFilename(payload: PayloadData): string {
+function generateFilename(payload: PayloadData, isBinary: boolean): string {
   if (payload.filename) {
     return payload.filename;
   }
+
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-  return `hakanai-secret-${timestamp}.txt`;
+
+  const extension = isBinary ? ".bin" : ".txt";
+
+  return `hakanai-secret-${timestamp}${extension}`;
 }
 
-function downloadSecret(payload: PayloadData): void {
-  const filename = generateFilename(payload);
-  const blobData =
-    payload.decodeBytes?.() || new TextEncoder().encode(payload.data);
+function downloadSecret(
+  payload: PayloadData,
+  decodedBytes: Uint8Array,
+  isBinary: boolean,
+): void {
+  const filename = generateFilename(payload, isBinary);
   const mimeType = payload.filename
     ? "application/octet-stream"
     : "text/plain;charset=utf-8";
 
-  const blob = new Blob([blobData], { type: mimeType });
+  const blob = new Blob([decodedBytes], { type: mimeType });
   const url = window.URL.createObjectURL(blob);
 
   const anchor = document.createElement("a");
