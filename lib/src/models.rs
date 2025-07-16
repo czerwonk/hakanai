@@ -1,11 +1,13 @@
 use std::time::Duration;
 
+use base64::Engine;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
+use zeroize::Zeroize;
 
 /// Represents the data payload of a secret, which can be either a text message
 /// or a file with optional metadata.
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Payload {
     /// The base64-encoded data of the secret.
     pub data: String,
@@ -40,15 +42,28 @@ impl Payload {
     /// assert!(text_payload.filename.is_none());
     /// ```
     pub fn from_bytes(bytes: &[u8], filename: Option<String>) -> Self {
-        use base64::Engine;
         let data = base64::prelude::BASE64_STANDARD.encode(bytes);
-        Self { data, filename }
+        Self {
+            data: data,
+            filename,
+        }
     }
 
     /// Decodes the base64 data and returns it as bytes.
     pub fn decode_bytes(&self) -> Result<Vec<u8>, base64::DecodeError> {
-        use base64::Engine;
         base64::prelude::BASE64_STANDARD.decode(&self.data)
+    }
+}
+
+impl Zeroize for Payload {
+    fn zeroize(&mut self) {
+        self.data.zeroize();
+    }
+}
+
+impl Drop for Payload {
+    fn drop(&mut self) {
+        self.zeroize();
     }
 }
 
@@ -91,5 +106,29 @@ impl PostSecretResponse {
     /// * `id` - The unique identifier of the secret.
     pub fn new(id: uuid::Uuid) -> Self {
         Self { id }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_payload_from_bytes() {
+        let bytes = b"Hello, world!";
+        let payload = Payload::from_bytes(bytes, Some("greeting.txt".to_string()));
+        assert_eq!(payload.filename, Some("greeting.txt".to_string()));
+        assert_eq!(
+            payload.data.to_string(),
+            base64::prelude::BASE64_STANDARD.encode(bytes)
+        );
+    }
+
+    #[test]
+    fn test_payload_decode_bytes() {
+        let bytes = b"Hello, world!";
+        let payload = Payload::from_bytes(bytes, None);
+        let decoded = payload.decode_bytes().unwrap();
+        assert_eq!(decoded, bytes);
     }
 }

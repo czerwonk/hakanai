@@ -160,10 +160,7 @@ pub trait Client<T>: Send + Sync {
 ///
 /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
 /// let client = client::new();
-/// let payload = Payload {
-///     data: "Test secret".to_string(),
-///     filename: None,
-/// };
+/// let payload = Payload::from_bytes(b"Test secret", None);
 ///
 /// match client.send_secret(
 ///     Url::parse("https://api.example.com")?,
@@ -244,7 +241,7 @@ impl From<aes_gcm::Error> for ClientError {
 
 /// A client for sending and receiving `Payload` objects.
 ///
-/// This client acts as a layer over a `Client<String>`, handling the serialization
+/// This client acts as a layer over a `Client<Vec<u8>>`, handling the serialization
 /// and deserialization of `Payload` objects to and from JSON strings.
 ///
 /// **Note:** This is an internal implementation detail. Users should use `client::new()`
@@ -283,7 +280,7 @@ impl From<aes_gcm::Error> for ClientError {
 /// # }
 /// ```
 pub struct SecretClient {
-    client: Box<dyn Client<String>>,
+    client: Box<dyn Client<Vec<u8>>>,
 }
 
 #[async_trait]
@@ -296,7 +293,7 @@ impl Client<Payload> for SecretClient {
         token: String,
         options: Option<SecretSendOptions>,
     ) -> Result<Url, ClientError> {
-        let data = serde_json::to_string(&payload)?;
+        let data = serde_json::to_vec(&payload)?;
         let url = self
             .client
             .send_secret(base_url, data, ttl, token, options)
@@ -310,7 +307,7 @@ impl Client<Payload> for SecretClient {
         opts: Option<SecretReceiveOptions>,
     ) -> Result<Payload, ClientError> {
         let data = self.client.receive_secret(url, opts).await?;
-        let payload: Payload = serde_json::from_str(&data)?;
+        let payload: Payload = serde_json::from_slice(&data)?;
         Ok(payload)
     }
 }
@@ -359,14 +356,13 @@ pub fn new() -> impl Client<Payload> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use base64::Engine;
     use std::sync::{Arc, Mutex};
 
     #[derive(Clone)]
     struct MockClient {
-        sent_data: Arc<Mutex<Option<String>>>,
+        sent_data: Arc<Mutex<Option<Vec<u8>>>>,
         response_url: Option<Url>,
-        response_data: Option<String>,
+        response_data: Option<Vec<u8>>,
         fail_send: bool,
         fail_receive: bool,
     }
@@ -376,14 +372,14 @@ mod tests {
             Self {
                 sent_data: Arc::new(Mutex::new(None)),
                 response_url: Some(Url::parse("https://example.com/secret/123").unwrap()),
-                response_data: Some(r#"{"data":"test data","filename":null}"#.to_string()),
+                response_data: Some(r#"{"data":"test data","filename":null}"#.as_bytes().to_vec()),
                 fail_send: false,
                 fail_receive: false,
             }
         }
 
-        fn with_response_data(mut self, data: &str) -> Self {
-            self.response_data = Some(data.to_string());
+        fn with_response_data(mut self, data: Vec<u8>) -> Self {
+            self.response_data = Some(data);
             self
         }
 
@@ -397,17 +393,17 @@ mod tests {
             self
         }
 
-        fn get_sent_data(&self) -> Option<String> {
+        fn get_sent_data(&self) -> Option<Vec<u8>> {
             self.sent_data.lock().unwrap().clone()
         }
     }
 
     #[async_trait]
-    impl Client<String> for MockClient {
+    impl Client<Vec<u8>> for MockClient {
         async fn send_secret(
             &self,
             _base_url: Url,
-            payload: String,
+            payload: Vec<u8>,
             _ttl: Duration,
             _token: String,
             _opts: Option<SecretSendOptions>,
@@ -425,7 +421,7 @@ mod tests {
             &self,
             _url: Url,
             _opts: Option<SecretReceiveOptions>,
-        ) -> Result<String, ClientError> {
+        ) -> Result<Vec<u8>, ClientError> {
             if self.fail_receive {
                 return Err(ClientError::Custom("Receive failed".to_string()));
             }
@@ -443,10 +439,7 @@ mod tests {
             client: Box::new(mock_client),
         };
 
-        let payload = Payload {
-            data: "Hello, World!".to_string(),
-            filename: None,
-        };
+        let payload = Payload::from_bytes(b"Hello, World!", None);
 
         let base_url = Url::parse("https://example.com").unwrap();
         let ttl = Duration::from_secs(3600);
@@ -462,8 +455,8 @@ mod tests {
 
         // Verify the payload was serialized correctly
         let sent_data = mock_clone.get_sent_data().unwrap();
-        let sent_payload: Payload = serde_json::from_str(&sent_data).unwrap();
-        assert_eq!(sent_payload.data, "Hello, World!");
+        let sent_payload: Payload = serde_json::from_slice(&sent_data).unwrap();
+        assert_eq!(sent_payload.decode_bytes().unwrap(), b"Hello, World!");
         assert_eq!(sent_payload.filename, None);
     }
 
@@ -475,10 +468,8 @@ mod tests {
             client: Box::new(mock_client),
         };
 
-        let payload = Payload {
-            data: base64::prelude::BASE64_STANDARD.encode(b"Binary file content"),
-            filename: Some("document.pdf".to_string()),
-        };
+        let binary_data = b"Binary file content";
+        let payload = Payload::from_bytes(binary_data, Some("document.pdf".to_string()));
 
         let base_url = Url::parse("https://example.com").unwrap();
         let ttl = Duration::from_secs(3600);
@@ -492,18 +483,16 @@ mod tests {
 
         // Verify the payload was serialized correctly
         let sent_data = mock_clone.get_sent_data().unwrap();
-        let sent_payload: Payload = serde_json::from_str(&sent_data).unwrap();
-        assert_eq!(
-            sent_payload.data,
-            base64::prelude::BASE64_STANDARD.encode(b"Binary file content")
-        );
+        let sent_payload: Payload = serde_json::from_slice(&sent_data).unwrap();
+        let decoded = sent_payload.decode_bytes().unwrap();
+        assert_eq!(decoded, binary_data);
         assert_eq!(sent_payload.filename, Some("document.pdf".to_string()));
     }
 
     #[tokio::test]
     async fn test_secret_client_receive_text_payload() {
-        let response_json = r#"{"data":"Hello from server","filename":null}"#;
-        let mock_client = MockClient::new().with_response_data(response_json);
+        let response_json = r#"{"data":"SGVsbG8gZnJvbSBzZXJ2ZXI=","filename":null}"#;
+        let mock_client = MockClient::new().with_response_data(response_json.as_bytes().to_vec());
         let secret_client = SecretClient {
             client: Box::new(mock_client),
         };
@@ -513,14 +502,15 @@ mod tests {
 
         assert!(result.is_ok());
         let payload = result.unwrap();
-        assert_eq!(payload.data, "Hello from server");
+        let decoded = payload.decode_bytes().unwrap();
+        assert_eq!(decoded, b"Hello from server");
         assert_eq!(payload.filename, None);
     }
 
     #[tokio::test]
     async fn test_secret_client_receive_file_payload() {
         let response_json = r#"{"data":"U29tZSBiaW5hcnkgZGF0YQ==","filename":"test.bin"}"#;
-        let mock_client = MockClient::new().with_response_data(response_json);
+        let mock_client = MockClient::new().with_response_data(response_json.as_bytes().to_vec());
         let secret_client = SecretClient {
             client: Box::new(mock_client),
         };
@@ -530,7 +520,6 @@ mod tests {
 
         assert!(result.is_ok());
         let payload = result.unwrap();
-        assert_eq!(payload.data, "U29tZSBiaW5hcnkgZGF0YQ==");
         assert_eq!(payload.filename, Some("test.bin".to_string()));
 
         // Verify the data can be decoded
@@ -545,10 +534,7 @@ mod tests {
             client: Box::new(mock_client),
         };
 
-        let payload = Payload {
-            data: "test".to_string(),
-            filename: None,
-        };
+        let payload = Payload::from_bytes(b"test", None);
 
         let base_url = Url::parse("https://example.com").unwrap();
         let ttl = Duration::from_secs(3600);
@@ -585,7 +571,7 @@ mod tests {
     #[tokio::test]
     async fn test_secret_client_invalid_json_response() {
         let invalid_json = r#"{"data": "test", invalid json"#;
-        let mock_client = MockClient::new().with_response_data(invalid_json);
+        let mock_client = MockClient::new().with_response_data(invalid_json.as_bytes().to_vec());
         let secret_client = SecretClient {
             client: Box::new(mock_client),
         };
@@ -603,13 +589,10 @@ mod tests {
     #[tokio::test]
     async fn test_secret_client_payload_roundtrip() {
         // Test that a payload can be serialized and deserialized correctly
-        let original_payload = Payload {
-            data: base64::prelude::BASE64_STANDARD.encode(b"Test binary data"),
-            filename: Some("test.dat".to_string()),
-        };
+        let original_payload = Payload::from_bytes(b"Test binary data", None);
 
-        let json = serde_json::to_string(&original_payload).unwrap();
-        let mock_client = MockClient::new().with_response_data(&json);
+        let json = serde_json::to_vec(&original_payload).unwrap();
+        let mock_client = MockClient::new().with_response_data(json);
         let secret_client = SecretClient {
             client: Box::new(mock_client),
         };
@@ -634,10 +617,7 @@ mod tests {
         let client = new();
 
         // We can test that it implements the Client<Payload> trait
-        let payload = Payload {
-            data: "test".to_string(),
-            filename: None,
-        };
+        let payload = Payload::from_bytes(b"test", None);
 
         // This will fail since we don't have a real server, but it proves the client is constructed correctly
         let base_url = Url::parse("https://example.com").unwrap();
@@ -676,13 +656,10 @@ mod tests {
 
         // Verify the payload was serialized correctly
         let sent_data = mock_clone.get_sent_data().unwrap();
-        let sent_payload: Payload = serde_json::from_str(&sent_data).unwrap();
+        let sent_payload: Payload = serde_json::from_slice(&sent_data).unwrap();
 
         // Verify that the data is base64 encoded
-        assert_eq!(
-            sent_payload.data,
-            base64::prelude::BASE64_STANDARD.encode(binary_data)
-        );
+        assert_eq!(sent_payload.decode_bytes().unwrap(), binary_data);
         assert_eq!(sent_payload.filename, Some("binary.dat".to_string()));
 
         // Verify we can decode back to original bytes
@@ -714,7 +691,7 @@ mod tests {
 
         // Verify the payload was handled correctly
         let sent_data = mock_clone.get_sent_data().unwrap();
-        let sent_payload: Payload = serde_json::from_str(&sent_data).unwrap();
+        let sent_payload: Payload = serde_json::from_slice(&sent_data).unwrap();
 
         // Verify filename
         assert_eq!(sent_payload.filename, Some("large_file.bin".to_string()));
@@ -772,7 +749,7 @@ mod tests {
 
         // Verify the filename is preserved exactly
         let sent_data = mock_clone.get_sent_data().unwrap();
-        let sent_payload: Payload = serde_json::from_str(&sent_data).unwrap();
+        let sent_payload: Payload = serde_json::from_slice(&sent_data).unwrap();
         assert_eq!(
             sent_payload.filename,
             Some("file with spaces & special-chars!@#$%.txt".to_string())
@@ -788,7 +765,7 @@ mod tests {
         };
 
         // Create payload from bytes without filename (text mode)
-        let text_bytes = "Hello, this is text data".as_bytes();
+        let text_bytes = b"Hello, this is text data";
         let payload = Payload::from_bytes(text_bytes, None);
 
         let base_url = Url::parse("https://example.com").unwrap();
@@ -803,7 +780,7 @@ mod tests {
 
         // Verify the payload
         let sent_data = mock_clone.get_sent_data().unwrap();
-        let sent_payload: Payload = serde_json::from_str(&sent_data).unwrap();
+        let sent_payload: Payload = serde_json::from_slice(&sent_data).unwrap();
         assert_eq!(sent_payload.filename, None);
 
         // Verify we can decode back to original text

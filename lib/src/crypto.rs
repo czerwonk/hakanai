@@ -58,22 +58,22 @@ use crate::options::{SecretReceiveOptions, SecretSendOptions};
 /// # }
 /// ```
 pub struct CryptoClient {
-    inner_client: Box<dyn Client<String>>,
+    inner_client: Box<dyn Client<Vec<u8>>>,
 }
 
 impl CryptoClient {
     /// Creates a new instance of `CryptoClient`.
-    pub fn new(inner_client: Box<dyn Client<String>>) -> Self {
+    pub fn new(inner_client: Box<dyn Client<Vec<u8>>>) -> Self {
         CryptoClient { inner_client }
     }
 }
 
 #[async_trait]
-impl Client<String> for CryptoClient {
+impl Client<Vec<u8>> for CryptoClient {
     async fn send_secret(
         &self,
         base_url: Url,
-        data: String,
+        data: Vec<u8>,
         ttl: Duration,
         token: String,
         opts: Option<SecretSendOptions>,
@@ -83,13 +83,16 @@ impl Client<String> for CryptoClient {
 
         let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(key.as_ref()));
 
-        let ciphertext = cipher.encrypt(&nonce, data.as_bytes())?;
+        let ciphertext = cipher.encrypt(&nonce, &*data)?;
 
         // Prepend nonce to ciphertext
         let mut payload = nonce.to_vec();
         payload.extend_from_slice(&ciphertext);
 
-        let encoded_data = base64::prelude::BASE64_STANDARD.encode(&payload);
+        let encoded_data = base64::prelude::BASE64_STANDARD
+            .encode(&payload)
+            .as_bytes()
+            .to_vec();
 
         let res = self
             .inner_client
@@ -105,15 +108,14 @@ impl Client<String> for CryptoClient {
         &self,
         url: Url,
         opts: Option<SecretReceiveOptions>,
-    ) -> Result<String, ClientError> {
+    ) -> Result<Vec<u8>, ClientError> {
         let key_base64 = url
             .fragment()
             .ok_or(ClientError::Custom("No key in URL".to_string()))?
             .to_string();
 
         let encoded_data = self.inner_client.receive_secret(url, opts).await?;
-        let decrypted_data: String = decrypt(encoded_data, key_base64)?;
-        Ok(decrypted_data)
+        decrypt(encoded_data, key_base64)
     }
 }
 
@@ -133,7 +135,7 @@ fn append_key_to_link(url: Url, key: &[u8; 32]) -> Url {
     link
 }
 
-fn decrypt(encoded_data: String, key_base64: String) -> Result<String, ClientError> {
+fn decrypt(encoded_data: Vec<u8>, key_base64: String) -> Result<Vec<u8>, ClientError> {
     let key = Zeroizing::new(base64::prelude::BASE64_URL_SAFE_NO_PAD.decode(key_base64)?);
 
     let payload = base64::prelude::BASE64_STANDARD.decode(encoded_data)?;
@@ -151,10 +153,7 @@ fn decrypt(encoded_data: String, key_base64: String) -> Result<String, ClientErr
     let nonce = Nonce::from_slice(nonce_bytes);
 
     let plaintext = Zeroizing::new(cipher.decrypt(nonce, ciphertext)?);
-
-    let data = String::from_utf8(plaintext.as_slice().to_vec())?;
-
-    Ok(data)
+    Ok(plaintext.to_vec())
 }
 
 #[cfg(test)]
@@ -167,9 +166,9 @@ mod tests {
 
     #[derive(Clone)]
     struct MockClient {
-        sent_data: Arc<Mutex<Option<String>>>,
+        sent_data: Arc<Mutex<Option<Vec<u8>>>>,
         response_url: Option<Url>,
-        response_data: Option<String>,
+        response_data: Option<Vec<u8>>,
         should_error: bool,
         error_type: String,
     }
@@ -190,22 +189,22 @@ mod tests {
             self
         }
 
-        fn with_response_data(mut self, data: String) -> Self {
+        fn with_response_data(mut self, data: Vec<u8>) -> Self {
             self.response_data = Some(data);
             self
         }
 
-        fn get_sent_data(&self) -> Option<String> {
+        fn get_sent_data(&self) -> Option<Vec<u8>> {
             self.sent_data.lock().unwrap().clone()
         }
     }
 
     #[async_trait]
-    impl Client<String> for MockClient {
+    impl Client<Vec<u8>> for MockClient {
         async fn send_secret(
             &self,
             _base_url: Url,
-            data: String,
+            data: Vec<u8>,
             _ttl: Duration,
             _token: String,
             _opts: Option<SecretSendOptions>,
@@ -226,7 +225,7 @@ mod tests {
             &self,
             _url: Url,
             _opts: Option<SecretReceiveOptions>,
-        ) -> Result<String, ClientError> {
+        ) -> Result<Vec<u8>, ClientError> {
             if self.should_error {
                 return Err(ClientError::Custom(self.error_type.clone()));
             }
@@ -234,7 +233,7 @@ mod tests {
             Ok(self
                 .response_data
                 .clone()
-                .unwrap_or_else(|| "encrypted_data".to_string()))
+                .unwrap_or_else(|| "encrypted_data".as_bytes().to_vec()))
         }
     }
 
@@ -251,7 +250,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_receive_secret_invalid_base64_key() {
-        let mock_client = MockClient::new().with_response_data("some_data".to_string());
+        let mock_client = MockClient::new().with_response_data(b"some_data".to_vec());
         let crypto_client = CryptoClient::new(Box::new(mock_client));
 
         let mut url = Url::parse("https://example.com/secret/abc123").unwrap();
@@ -266,7 +265,7 @@ mod tests {
         let key = generate_key();
         let key_base64 = base64::prelude::BASE64_URL_SAFE_NO_PAD.encode(key);
 
-        let mock_client = MockClient::new().with_response_data("invalid_base64!@#$".to_string());
+        let mock_client = MockClient::new().with_response_data(b"invalid_base64!@#$".to_vec());
         let crypto_client = CryptoClient::new(Box::new(mock_client));
 
         let mut url = Url::parse("https://example.com/secret/abc123").unwrap();
@@ -285,7 +284,7 @@ mod tests {
         let short_payload = vec![1, 2, 3, 4, 5];
         let encoded_data = base64::prelude::BASE64_STANDARD.encode(&short_payload);
 
-        let mock_client = MockClient::new().with_response_data(encoded_data);
+        let mock_client = MockClient::new().with_response_data(encoded_data.as_bytes().to_vec());
         let crypto_client = CryptoClient::new(Box::new(mock_client));
 
         let mut url = Url::parse("https://example.com/secret/abc123").unwrap();
@@ -330,13 +329,13 @@ mod tests {
         let crypto_client = CryptoClient::new(Box::new(mock_client.clone()));
 
         let base_url = Url::parse("https://example.com").unwrap();
-        let secret_data = "This is a complete end-to-end test";
+        let secret_data = b"This is a complete end-to-end test";
         let ttl = Duration::from_secs(3600);
         let token = "test_token".to_string();
 
         // Send the secret
         let send_result = crypto_client
-            .send_secret(base_url, secret_data.to_string(), ttl, token, None)
+            .send_secret(base_url, secret_data.to_vec(), ttl, token, None)
             .await
             .unwrap();
 
@@ -365,7 +364,7 @@ mod tests {
         let invalid_aes_data = vec![0u8; 16]; // 16 bytes: 12 for nonce + 4 for invalid ciphertext
         let encoded_data = base64::prelude::BASE64_STANDARD.encode(&invalid_aes_data);
 
-        let mock_client = MockClient::new().with_response_data(encoded_data);
+        let mock_client = MockClient::new().with_response_data(encoded_data.as_bytes().to_vec());
         let crypto_client = CryptoClient::new(Box::new(mock_client));
 
         let mut url = Url::parse("https://example.com/secret/abc123").unwrap();

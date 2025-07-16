@@ -32,17 +32,19 @@ impl WebClient {
 }
 
 #[async_trait]
-impl Client<String> for WebClient {
+impl Client<Vec<u8>> for WebClient {
     async fn send_secret(
         &self,
         base_url: Url,
-        data: String,
+        data: Vec<u8>,
         ttl: Duration,
         token: String,
         opts: Option<SecretSendOptions>,
     ) -> Result<Url, ClientError> {
         let url = base_url.join(API_SECRET_PATH)?;
-        let req = PostSecretRequest::new(data, ttl);
+
+        let secret = String::from_utf8(data)?;
+        let req = PostSecretRequest::new(secret, ttl);
 
         let opt = opts.unwrap_or_default();
 
@@ -83,7 +85,7 @@ impl Client<String> for WebClient {
         &self,
         url: Url,
         opts: Option<SecretReceiveOptions>,
-    ) -> Result<String, ClientError> {
+    ) -> Result<Vec<u8>, ClientError> {
         if !url.path().starts_with(&format!("/{SHORT_SECRET_PATH}/"))
             && !url.path().starts_with(&format!("/{API_SECRET_PATH}/"))
         {
@@ -113,10 +115,7 @@ impl Client<String> for WebClient {
         }
 
         let observer = opt.observer.clone();
-        let bytes = self.read_body_in_chunks(&mut resp, observer).await?;
-        let secret = String::from_utf8(bytes).map_err(|e| {
-            ClientError::Custom(format!("Failed to decode response body as UTF-8: {e}"))
-        })?;
+        let secret = self.read_body_in_chunks(&mut resp, observer).await?;
 
         Ok(secret)
     }
@@ -214,7 +213,7 @@ mod tests {
         let result = client
             .send_secret(
                 base_url.clone(),
-                "test_secret".to_string(),
+                b"test_secret".to_vec(),
                 Duration::from_secs(3600),
                 "".to_string(),
                 None,
@@ -244,7 +243,7 @@ mod tests {
         let result = client
             .send_secret(
                 base_url,
-                "test_secret".to_string(),
+                b"test_secret".to_vec(),
                 Duration::from_secs(3600),
                 "".to_string(),
                 None,
@@ -260,7 +259,7 @@ mod tests {
         let client = WebClient::new();
 
         let secret_id = Uuid::new_v4();
-        let secret_data = "my_secret_data";
+        let secret_data = b"my_secret_data";
 
         let _m = server
             .mock("GET", format!("/s/{secret_id}").as_str())
@@ -313,7 +312,7 @@ mod tests {
         let result = client
             .send_secret(
                 base_url,
-                "test_secret".to_string(),
+                b"test_secret".to_vec(),
                 Duration::from_secs(3600),
                 "".to_string(),
                 None,
