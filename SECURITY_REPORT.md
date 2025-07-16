@@ -16,7 +16,7 @@ Hakanai is a minimalist one-time secret sharing service implementing zero-knowle
 - **2 Critical severity** vulnerabilities (JavaScript memory security)
 - **0 High severity** vulnerabilities
 - **0 Medium severity** vulnerabilities
-- **10 Low severity** issues identified
+- **5 Low severity** issues identified
 - **Zero-knowledge architecture** properly implemented
 - **Strong cryptographic foundations** with industry-standard AES-256-GCM but memory safety issues
 - **Authentication system** has information disclosure vulnerabilities
@@ -100,39 +100,7 @@ No medium severity vulnerabilities remain after analysis and resolution of previ
 
 **Recommendation:** Implement token rotation support.
 
-#### L3: Insufficient Authentication Logging
-**File:** `server/src/web_api.rs:102-123`  
-**Description:** Authentication failures not properly logged
-
-**Impact:** Attack detection and forensic analysis gaps.
-
-**Recommendation:** Add comprehensive authentication event logging.
-
-#### L4: Hardcoded Nonce Length
-**File:** `lib/src/crypto.rs:145`  
-**Description:** Nonce length calculated at runtime
-
-**Impact:** Minor performance impact and potential runtime errors.
-
-**Recommendation:** Use constant for nonce length (12 bytes).
-
-#### L5: User-Agent Header Logging
-**File:** `server/src/main.rs:129-140`  
-**Description:** User-Agent header is logged, potentially exposing client information.
-
-**Impact:** Privacy concerns from client information disclosure.
-
-**Recommendation:** Hash or anonymize user-agent strings in logs.
-
-#### L6: Missing Input Validation
-**File:** `lib/src/models.rs:44-47`  
-**Description:** Payload accepts arbitrary data without validation
-
-**Impact:** Large payloads could cause memory issues.
-
-**Recommendation:** Implement size limits and validation.
-
-#### L7: Build System TypeScript Compiler Security
+#### L3: Build System TypeScript Compiler Security
 **File:** `server/build.rs:60-77`  
 **Description:** TypeScript compiler executed without version validation
 
@@ -140,7 +108,7 @@ No medium severity vulnerabilities remain after analysis and resolution of previ
 
 **Recommendation:** Add version validation for TypeScript compiler.
 
-#### L8: Missing Constant-Time Operations
+#### L4: Missing Constant-Time Operations
 **File:** `lib/src/crypto.rs:146-149`  
 **Description:** Payload length check uses standard comparison
 
@@ -148,7 +116,7 @@ No medium severity vulnerabilities remain after analysis and resolution of previ
 
 **Recommendation:** Use constant-time comparison for crypto operations.
 
-#### L9: Potential Panic in Key Generation
+#### L5: Potential Panic in Key Generation
 **File:** `lib/src/crypto.rs:122-127`  
 **Description:** OsRng assumed to always succeed
 
@@ -156,7 +124,7 @@ No medium severity vulnerabilities remain after analysis and resolution of previ
 
 **Recommendation:** Handle potential RNG failures gracefully.
 
-#### L10: Theme Persistence
+#### L6: Theme Persistence
 **File:** `server/src/typescript/common-utils.ts`  
 **Description:** LocalStorage theme preference could be manipulated
 
@@ -164,13 +132,6 @@ No medium severity vulnerabilities remain after analysis and resolution of previ
 
 **Recommendation:** Validate theme values before applying.
 
-#### L11: Command Injection Risk
-**File:** CLI user-agent string construction
-**Description:** User-Agent string construction could be exploited
-
-**Impact:** Theoretical command injection risk.
-
-**Recommendation:** Sanitize user-agent construction inputs.
 
 ## Historical Reference
 
@@ -419,9 +380,8 @@ None - all high priority issues have been resolved or reclassified.
 None - all medium priority issues have been resolved or reclassified.
 
 ### Outstanding Low Priority Recommendations
-1. **Authentication logging** - Add comprehensive audit logging (L3)
-2. **Token rotation** - Implement token lifecycle management (L1)
-3. **Performance optimizations** - Use constants and efficient operations (L3, L7)
+1. **Token rotation** - Implement token lifecycle management (L1)
+2. **Performance optimizations** - Use constants and efficient operations (L4, L5)
 
 ---
 
