@@ -93,8 +93,14 @@ function showCopyFailure(
  */
 export function secureInputClear(input: HTMLInputElement): void {
   if (input.value.length > 0) {
-    // Simple secure clear: overwrite then empty
-    input.value = "x".repeat(input.value.length);
+    const length = input.value.length;
+    // Multiple overwrite passes
+    for (let i = 0; i < 3; i++) {
+      input.value = Array(length)
+        .fill(0)
+        .map(() => String.fromCharCode(Math.floor(Math.random() * 256)))
+        .join("");
+    }
     input.value = "";
   }
 }
