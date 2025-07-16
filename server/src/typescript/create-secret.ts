@@ -43,10 +43,6 @@ interface UIStrings {
 // Use the RequiredElements type from types.ts
 type Elements = RequiredElements;
 
-const FILE_LIMITS = {
-  MAX_SIZE: 10 * 1024 * 1024,
-} as const;
-
 const UI_STRINGS: UIStrings = {
   EMPTY_SECRET: "Please enter a secret to share",
   EMPTY_FILE: "Please select a file to share",
@@ -166,10 +162,6 @@ function readFileAsBytes(file: File): Promise<Uint8Array> {
   });
 }
 
-function validateFileSize(file: File): boolean {
-  return file.size <= FILE_LIMITS.MAX_SIZE;
-}
-
 function validateFilename(fileName: string): boolean {
   return sanitizeFileName(fileName) !== null;
 }
@@ -180,12 +172,6 @@ async function validateAndProcessFileInput(
   const file = fileInput.files?.[0];
   if (!file) {
     showError(UI_STRINGS.EMPTY_FILE);
-    fileInput.focus();
-    return null;
-  }
-
-  if (!validateFileSize(file)) {
-    showError(UI_STRINGS.FILE_TOO_LARGE);
     fileInput.focus();
     return null;
   }
@@ -681,13 +667,7 @@ function showFileInfo(file: File, elements: FileElements): void {
   fileNameSpan.textContent = sanitizedName || "Invalid filename";
   fileSizeSpan.textContent = formatFileSize(file.size);
   fileInfoDiv.classList.remove("hidden");
-
-  if (file.size > FILE_LIMITS.MAX_SIZE) {
-    fileInfoDiv.className = "file-info error";
-    fileSizeSpan.textContent = formatFileSize(file.size) + " (Too large!)";
-  } else {
-    fileInfoDiv.className = "file-info";
-  }
+  fileInfoDiv.className = "file-info";
 }
 
 function hideFileInfo(elements: FileElements): void {
@@ -856,7 +836,6 @@ document.addEventListener("DOMContentLoaded", () => {
 // Export functions for testing
 export {
   sanitizeFileName,
-  validateFileSize,
   formatFileSize,
   createSecret,
   showError,

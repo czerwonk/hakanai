@@ -31,6 +31,7 @@ pub async fn send<T: Factory>(factory: T, args: SendArgs) -> Result<()> {
             "No secret provided. Please input a secret to send."
         ));
     }
+
     let mut as_file = args.as_file;
     if args.file.is_some() && !as_file && content_analysis::is_binary(&bytes) {
         println!(

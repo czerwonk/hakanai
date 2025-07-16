@@ -114,7 +114,6 @@ describe("create-secret.ts", () => {
           "msg.createFailed": "Failed to create secret",
           "msg.successTitle": "Secret Created Successfully",
           "msg.errorTitle": "Error",
-          "msg.fileTooLarge": "File size exceeds 10MB limit",
           "msg.fileReadError": "Error reading file",
           "msg.invalidFilename": "Invalid filename",
           "error.AUTHENTICATION_REQUIRED":
@@ -152,20 +151,6 @@ describe("create-secret.ts", () => {
       expect(sanitizeFileName(".hidden")).toBe("hidden");
       expect(sanitizeFileName("normal.txt")).toBe("normal.txt");
       expect(sanitizeFileName("")).toBe(null);
-    });
-
-    test("validateFileSize rejects files over 10MB", () => {
-      const { validateFileSize } = createSecretModule;
-
-      const smallFile = new File(["small content"], "small.txt", {
-        type: "text/plain",
-      });
-      const largeFile = new File(["x".repeat(11 * 1024 * 1024)], "large.txt", {
-        type: "text/plain",
-      });
-
-      expect(validateFileSize(smallFile)).toBe(true);
-      expect(validateFileSize(largeFile)).toBe(false);
     });
 
     test("formatFileSize returns correct formatted sizes", () => {

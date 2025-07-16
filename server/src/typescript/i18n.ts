@@ -42,8 +42,7 @@ const translations: Translations = {
     "helper.url": "The decryption key after # is never sent to the server",
     "helper.secret":
       "Your message will be encrypted before leaving your browser",
-    "helper.fileSelect":
-      "Maximum file size: 10MB. File will be encrypted before upload.",
+    "helper.fileSelect": "File will be encrypted before upload.",
     "helper.token": "Leave empty if no authentication is required",
     "helper.key": "Base64-encoded decryption key (shared separately)",
     "helper.separateKey":
@@ -80,7 +79,6 @@ const translations: Translations = {
     "msg.emptySecret": "Please enter a secret to share",
     "msg.emptyFile": "Please select a file to share",
     "msg.createFailed": "Failed to create secret",
-    "msg.fileTooLarge": "File size exceeds 10MB limit",
     "msg.fileReadError": "Error reading file",
     "msg.invalidFilename":
       "Invalid filename. Please select a file with a valid name.",
@@ -174,8 +172,7 @@ const translations: Translations = {
       "Der geheime Schlüssel nach dem # wird niemals an den Server gesendet",
     "helper.secret":
       "Die Nachricht wird verschlüsselt, bevor sie Ihren Browser verlässt",
-    "helper.fileSelect":
-      "Maximale Dateigröße: 10MB. Die Datei wird vor dem Upload verschlüsselt.",
+    "helper.fileSelect": "Die Datei wird vor dem Upload verschlüsselt.",
     "helper.token":
       "Kann leer gelassen werden, wenn keine Authentifizierung erforderlich ist",
     "helper.key": "Base64-kodierter geheimer Schlüssel (separat geteilt)",
@@ -214,7 +211,6 @@ const translations: Translations = {
     "msg.emptySecret": "Bitte den Text für das Secret eingeben",
     "msg.emptyFile": "Bitte eine Datei zum Teilen auswählen",
     "msg.createFailed": "Fehler beim Erstellen des Secrets",
-    "msg.fileTooLarge": "Dateigröße überschreitet das 10MB Limit",
     "msg.fileReadError": "Fehler beim Lesen der Datei",
     "msg.invalidFilename":
       "Ungültiger Dateiname. Bitte eine Datei mit einem gültigen Namen auswählen.",
