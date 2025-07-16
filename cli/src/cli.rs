@@ -59,7 +59,11 @@ pub struct SendArgs {
     )]
     pub file: Option<String>,
 
-    #[arg(short, long, help = "Send the secret as a file.")]
+    #[arg(
+        short,
+        long,
+        help = "Send the secret as a file. If not specified the type is auto determined based on the content."
+    )]
     pub as_file: bool,
 
     #[arg(

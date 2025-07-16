@@ -2,6 +2,7 @@ use std::io::{self, Read};
 
 use anyhow::{Result, anyhow};
 use colored::Colorize;
+use hakanai_lib::utils::content_analysis;
 use url::Url;
 use zeroize::Zeroizing;
 
@@ -12,8 +13,6 @@ use hakanai_lib::options::SecretSendOptions;
 use crate::cli::SendArgs;
 use crate::factory::Factory;
 use crate::helper::get_user_agent_name;
-
-const MAX_SECRET_SIZE_MB: usize = 10; // 10 MB
 
 pub async fn send<T: Factory>(factory: T, args: SendArgs) -> Result<()> {
     if args.ttl.as_secs() == 0 {
@@ -32,14 +31,17 @@ pub async fn send<T: Factory>(factory: T, args: SendArgs) -> Result<()> {
             "No secret provided. Please input a secret to send."
         ));
     }
-
-    if bytes.len() > MAX_SECRET_SIZE_MB * 1024 * 1024 {
-        return Err(anyhow!(
-            "Secret size exceeds the maximum limit of {MAX_SECRET_SIZE_MB} megabytes."
-        ));
+    let mut as_file = args.as_file;
+    if args.file.is_some() && !as_file && content_analysis::is_binary(&bytes) {
+        println!(
+            "{}",
+            "Sending binary files as text may lead to data corruption. Sending as file instead."
+                .yellow()
+        );
+        as_file = true;
     }
 
-    let filename = get_filename(args.file, args.as_file, args.filename)?;
+    let filename = get_filename(args.file, as_file, args.filename)?;
     let payload = Payload::from_bytes(&bytes, filename);
 
     let user_agent = get_user_agent_name();
@@ -250,32 +252,6 @@ mod tests {
                 .unwrap_err()
                 .to_string()
                 .contains("No secret provided")
-        );
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn test_send_oversized_secret() -> Result<()> {
-        let factory = MockFactory::new();
-        let temp_dir = TempDir::new()?;
-        let file_path = temp_dir.path().join("large.txt");
-        // Create file larger than 10MB
-        let large_content = vec![b'A'; (MAX_SECRET_SIZE_MB * 1024 * 1024) + 1];
-        fs::write(&file_path, large_content)?;
-
-        let args = SendArgs::builder()
-            .with_server("https://example.com")
-            .with_ttl(Duration::from_secs(3600))
-            .with_token("token")
-            .with_file(file_path.to_string_lossy().as_ref());
-        let result = send(factory, args).await;
-
-        assert!(result.is_err());
-        assert!(
-            result
-                .unwrap_err()
-                .to_string()
-                .contains("Secret size exceeds")
         );
         Ok(())
     }
