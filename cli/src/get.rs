@@ -89,6 +89,7 @@ fn write_to_timestamped_file(filename: String, bytes: &[u8]) -> Result<()> {
 mod tests {
     use super::*;
     use crate::factory_mock::test_utils::MockFactory;
+    use anyhow::Result;
     use hakanai_lib::models::Payload;
     use std::fs;
     use tempfile::TempDir;
@@ -96,23 +97,23 @@ mod tests {
     use hakanai_lib::client_mock::MockClient;
 
     #[test]
-    fn test_print_to_stdout_with_text() {
+    fn test_print_to_stdout_with_text() -> anyhow::Result<()> {
         let text = "Hello, World!";
-        let result = print_to_stdout(text.as_bytes());
-        assert!(result.is_ok());
+        print_to_stdout(text.as_bytes())?;
+        Ok(())
     }
 
     #[test]
-    fn test_print_to_stdout_with_binary() {
+    fn test_print_to_stdout_with_binary() -> anyhow::Result<()> {
         let binary_data = vec![0x00, 0x01, 0x02, 0xFF, 0xFE, 0xFD];
-        let result = print_to_stdout(&binary_data);
-        assert!(result.is_ok());
+        print_to_stdout(&binary_data)?;
+        Ok(())
     }
 
     #[test]
-    fn test_print_to_stdout_empty() {
-        let result = print_to_stdout(&[]);
-        assert!(result.is_ok());
+    fn test_print_to_stdout_empty() -> anyhow::Result<()> {
+        print_to_stdout(&[])?;
+        Ok(())
     }
 
     #[test]
@@ -245,8 +246,7 @@ mod tests {
     #[test]
     fn test_output_secret_to_stdout() -> Result<()> {
         let content = b"secret content";
-        let result = output_secret(content, true, None);
-        assert!(result.is_ok());
+        output_secret(content, true, None)?;
         Ok(())
     }
 
@@ -256,12 +256,11 @@ mod tests {
         let file_path = temp_dir.path().join("output.txt");
         let content = b"secret content";
 
-        let result = output_secret(
+        output_secret(
             content,
             false,
             Some(file_path.to_string_lossy().to_string()),
-        );
-        assert!(result.is_ok());
+        )?;
 
         let read_content = fs::read(&file_path)?;
         assert_eq!(read_content, content);
@@ -271,8 +270,7 @@ mod tests {
     #[test]
     fn test_output_secret_defaults_to_stdout() -> Result<()> {
         let content = b"secret content";
-        let result = output_secret(content, false, None);
-        assert!(result.is_ok());
+        output_secret(content, false, None)?;
         Ok(())
     }
 
@@ -284,9 +282,7 @@ mod tests {
         let factory = MockFactory::new().with_client(client);
 
         let args = GetArgs::builder("https://example.com/s/test123#key").with_to_stdout();
-        let result = get(factory, args).await;
-
-        assert!(result.is_ok());
+        get(factory, args).await?;
         Ok(())
     }
 
@@ -304,9 +300,7 @@ mod tests {
             .to_string_lossy()
             .to_string();
         let args = GetArgs::builder("https://example.com/s/test123#key").with_filename(&filename);
-        let result = get(factory, args).await;
-
-        assert!(result.is_ok());
+        get(factory, args).await?;
 
         // Check that file was created with payload filename
         let file_path = temp_dir.path().join("document.txt");
@@ -329,9 +323,7 @@ mod tests {
             .to_string();
         let args =
             GetArgs::builder("https://example.com/s/test123#key").with_filename(&custom_filename);
-        let result = get(factory, args).await;
-
-        assert!(result.is_ok());
+        get(factory, args).await?;
 
         // Check that file was created with custom filename
         let file_path = temp_dir.path().join("custom.bin");
@@ -354,9 +346,7 @@ mod tests {
             .to_string_lossy()
             .to_string();
         let args = GetArgs::builder("https://example.com/s/test123#key").with_filename(&filename);
-        let result = get(factory, args).await;
-
-        assert!(result.is_ok());
+        get(factory, args).await?;
 
         let file_path = temp_dir.path().join("output.dat");
         let content = fs::read(&file_path)?;
@@ -384,9 +374,7 @@ mod tests {
         let factory = MockFactory::new().with_client(client);
 
         let args = GetArgs::builder("https://example.com/s/test123#key").with_to_stdout();
-        let result = get(factory, args).await;
-
-        assert!(result.is_ok());
+        get(factory, args).await?;
         Ok(())
     }
 
@@ -404,9 +392,7 @@ mod tests {
 
         let args = GetArgs::builder("https://example.com/s/test123#key")
             .with_filename(file_path.to_string_lossy().as_ref());
-        let result = get(factory, args).await;
-
-        assert!(result.is_ok());
+        get(factory, args).await?;
 
         // Original file should be unchanged
         let original_content = fs::read_to_string(&file_path)?;

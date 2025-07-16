@@ -122,35 +122,35 @@ mod tests {
     use hakanai_lib::client_mock::MockClient;
 
     #[test]
-    fn test_get_filename_not_as_file() {
-        let result = get_filename(Some("test.txt".to_string()), false, None);
-        assert!(result.is_ok());
-        assert_eq!(result.unwrap(), None);
+    fn test_get_filename_not_as_file() -> Result<()> {
+        let result = get_filename(Some("test.txt".to_string()), false, None)?;
+        assert_eq!(result, None);
+        Ok(())
     }
 
     #[test]
-    fn test_get_filename_with_explicit_filename() {
+    fn test_get_filename_with_explicit_filename() -> Result<()> {
         let result = get_filename(
             Some("path/to/test.txt".to_string()),
             true,
             Some("custom.txt".to_string()),
-        );
-        assert!(result.is_ok());
-        assert_eq!(result.unwrap(), Some("custom.txt".to_string()));
+        )?;
+        assert_eq!(result, Some("custom.txt".to_string()));
+        Ok(())
     }
 
     #[test]
-    fn test_get_filename_from_file_path() {
-        let result = get_filename(Some("/path/to/test.txt".to_string()), true, None);
-        assert!(result.is_ok());
-        assert_eq!(result.unwrap(), Some("test.txt".to_string()));
+    fn test_get_filename_from_file_path() -> Result<()> {
+        let result = get_filename(Some("/path/to/test.txt".to_string()), true, None)?;
+        assert_eq!(result, Some("test.txt".to_string()));
+        Ok(())
     }
 
     #[test]
-    fn test_get_filename_from_file_path_no_extension() {
-        let result = get_filename(Some("/path/to/testfile".to_string()), true, None);
-        assert!(result.is_ok());
-        assert_eq!(result.unwrap(), Some("testfile".to_string()));
+    fn test_get_filename_from_file_path_no_extension() -> Result<()> {
+        let result = get_filename(Some("/path/to/testfile".to_string()), true, None)?;
+        assert_eq!(result, Some("testfile".to_string()));
+        Ok(())
     }
 
     #[test]
@@ -317,9 +317,8 @@ mod tests {
             .with_ttl(Duration::from_secs(3600))
             .with_token("token123")
             .with_file(file_path.to_string_lossy().as_ref());
-        let result = send(factory, args).await;
+        send(factory, args).await?;
 
-        assert!(result.is_ok());
         Ok(())
     }
 
@@ -339,9 +338,8 @@ mod tests {
             .with_token("token456")
             .with_file(file_path.to_string_lossy().as_ref())
             .with_as_file();
-        let result = send(factory, args).await;
+        send(factory, args).await?;
 
-        assert!(result.is_ok());
         Ok(())
     }
 
@@ -362,9 +360,8 @@ mod tests {
             .with_file(file_path.to_string_lossy().as_ref())
             .with_as_file()
             .with_filename("custom_name.txt");
-        let result = send(factory, args).await;
+        send(factory, args).await?;
 
-        assert!(result.is_ok());
         Ok(())
     }
 

@@ -204,9 +204,12 @@ where
 mod tests {
     use super::*;
     use crate::models::Payload;
+    use std::error::Error;
+
+    type Result<T> = std::result::Result<T, Box<dyn Error>>;
 
     #[tokio::test]
-    async fn test_mock_client_vec_u8_send_success() {
+    async fn test_mock_client_vec_u8_send_success() -> Result<()> {
         let mock = MockClient::<Vec<u8>>::new()
             .with_send_success(Url::parse("https://test.com/secret/456").unwrap());
 
@@ -221,13 +224,14 @@ mod tests {
             )
             .await;
 
-        assert!(result.is_ok());
-        assert_eq!(result.unwrap().as_str(), "https://test.com/secret/456");
+        let url = result?;
+        assert_eq!(url.as_str(), "https://test.com/secret/456");
         assert_eq!(mock.get_sent_data(), Some(test_data));
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_mock_client_vec_u8_send_failure() {
+    async fn test_mock_client_vec_u8_send_failure() -> Result<()> {
         let mock = MockClient::<Vec<u8>>::new().with_send_failure("Network error".to_string());
 
         let test_data = b"test data".to_vec();
@@ -247,10 +251,11 @@ mod tests {
             _ => panic!("Expected Custom error"),
         }
         assert_eq!(mock.get_sent_data(), Some(test_data));
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_mock_client_vec_u8_receive_success() {
+    async fn test_mock_client_vec_u8_receive_success() -> Result<()> {
         let response_data = b"response data".to_vec();
         let mock = MockClient::<Vec<u8>>::new().with_receive_success(response_data.clone());
 
@@ -258,12 +263,13 @@ mod tests {
             .receive_secret(Url::parse("https://example.com/secret/123").unwrap(), None)
             .await;
 
-        assert!(result.is_ok());
-        assert_eq!(result.unwrap(), response_data);
+        let data = result?;
+        assert_eq!(data, response_data);
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_mock_client_vec_u8_receive_failure() {
+    async fn test_mock_client_vec_u8_receive_failure() -> Result<()> {
         let mock = MockClient::<Vec<u8>>::new().with_receive_failure("Not found".to_string());
 
         let result = mock
@@ -275,10 +281,11 @@ mod tests {
             ClientError::Custom(msg) => assert_eq!(msg, "Not found"),
             _ => panic!("Expected Custom error"),
         }
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_mock_client_payload_type() {
+    async fn test_mock_client_payload_type() -> Result<()> {
         let payload = Payload::from_bytes(b"test payload", Some("test.txt".to_string()));
         let mock = MockClient::<Payload>::new().with_receive_success(payload.clone());
 
@@ -286,14 +293,14 @@ mod tests {
             .receive_secret(Url::parse("https://example.com/secret/123").unwrap(), None)
             .await;
 
-        assert!(result.is_ok());
-        let received = result.unwrap();
+        let received = result?;
         assert_eq!(received.data, payload.data);
         assert_eq!(received.filename, payload.filename);
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_mock_client_builder_pattern() {
+    async fn test_mock_client_builder_pattern() -> Result<()> {
         let test_url = Url::parse("https://test.com/secret/abc").unwrap();
         let test_data = b"test response".to_vec();
 
@@ -310,20 +317,21 @@ mod tests {
             )
             .await;
 
-        assert!(send_result.is_ok());
-        assert_eq!(send_result.unwrap(), test_url);
+        let send_url = send_result?;
+        assert_eq!(send_url, test_url);
 
         // Test receive
         let receive_result = mock
             .receive_secret(Url::parse("https://example.com/secret/123").unwrap(), None)
             .await;
 
-        assert!(receive_result.is_ok());
-        assert_eq!(receive_result.unwrap(), test_data);
+        let receive_data = receive_result?;
+        assert_eq!(receive_data, test_data);
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_mock_client_all_failures() {
+    async fn test_mock_client_all_failures() -> Result<()> {
         let mock = MockClient::<Vec<u8>>::new().with_all_failures("Everything fails".to_string());
 
         // Test send failure
@@ -345,10 +353,11 @@ mod tests {
             .await;
 
         assert!(receive_result.is_err());
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_mock_client_data_capture() {
+    async fn test_mock_client_data_capture() -> Result<()> {
         let mock = MockClient::<Vec<u8>>::new();
 
         assert!(!mock.was_send_called());
@@ -371,10 +380,11 @@ mod tests {
         mock.clear_sent_data();
         assert!(!mock.was_send_called());
         assert_eq!(mock.get_sent_data(), None);
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_mock_client_default_impl() {
+    async fn test_mock_client_default_impl() -> Result<()> {
         let mock = MockClient::<Vec<u8>>::default();
 
         let result = mock
@@ -387,7 +397,8 @@ mod tests {
             )
             .await;
 
-        assert!(result.is_ok());
-        assert_eq!(result.unwrap().as_str(), "https://example.com/secret/123");
+        let url = result?;
+        assert_eq!(url.as_str(), "https://example.com/secret/123");
+        Ok(())
     }
 }

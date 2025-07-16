@@ -357,9 +357,24 @@ pub fn new() -> impl Client<Payload> {
 mod tests {
     use super::*;
     use crate::client_mock::MockClient;
+    use std::error::Error;
+    use std::fmt;
+
+    #[derive(Debug)]
+    struct TestError(String);
+
+    impl fmt::Display for TestError {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            write!(f, "Test error: {}", self.0)
+        }
+    }
+
+    impl Error for TestError {}
+
+    type Result<T> = std::result::Result<T, Box<dyn Error>>;
 
     #[tokio::test]
-    async fn test_secret_client_send_text_payload() {
+    async fn test_secret_client_send_text_payload() -> Result<()> {
         let mock_client = MockClient::new()
             .with_send_success(Url::parse("https://example.com/secret/123").unwrap());
         let mock_clone = mock_client.clone();
@@ -377,19 +392,19 @@ mod tests {
             .send_secret(base_url, payload, ttl, token, None)
             .await;
 
-        assert!(result.is_ok());
-        let url = result.unwrap();
+        let url = result?;
         assert_eq!(url.as_str(), "https://example.com/secret/123");
 
         // Verify the payload was serialized correctly
-        let sent_data = mock_clone.get_sent_data().unwrap();
-        let sent_payload: Payload = serde_json::from_slice(&sent_data).unwrap();
-        assert_eq!(sent_payload.decode_bytes().unwrap(), b"Hello, World!");
+        let sent_data = mock_clone.get_sent_data().ok_or(TestError("No sent data".to_string()))?;
+        let sent_payload: Payload = serde_json::from_slice(&sent_data)?;
+        assert_eq!(sent_payload.decode_bytes()?, b"Hello, World!");
         assert_eq!(sent_payload.filename, None);
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_secret_client_send_file_payload() {
+    async fn test_secret_client_send_file_payload() -> Result<()> {
         let mock_client = MockClient::new();
         let mock_clone = mock_client.clone();
         let secret_client = SecretClient {
@@ -407,18 +422,19 @@ mod tests {
             .send_secret(base_url, payload, ttl, token, None)
             .await;
 
-        assert!(result.is_ok());
+        result?;
 
         // Verify the payload was serialized correctly
-        let sent_data = mock_clone.get_sent_data().unwrap();
-        let sent_payload: Payload = serde_json::from_slice(&sent_data).unwrap();
-        let decoded = sent_payload.decode_bytes().unwrap();
+        let sent_data = mock_clone.get_sent_data().ok_or(TestError("No sent data".to_string()))?;
+        let sent_payload: Payload = serde_json::from_slice(&sent_data)?;
+        let decoded = sent_payload.decode_bytes()?;
         assert_eq!(decoded, binary_data);
         assert_eq!(sent_payload.filename, Some("document.pdf".to_string()));
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_secret_client_receive_text_payload() {
+    async fn test_secret_client_receive_text_payload() -> Result<()> {
         let response_json = r#"{"data":"SGVsbG8gZnJvbSBzZXJ2ZXI=","filename":null}"#;
         let mock_client = MockClient::new().with_receive_success(response_json.as_bytes().to_vec());
         let secret_client = SecretClient {
@@ -428,15 +444,15 @@ mod tests {
         let url = Url::parse("https://example.com/secret/123").unwrap();
         let result = secret_client.receive_secret(url, None).await;
 
-        assert!(result.is_ok());
-        let payload = result.unwrap();
-        let decoded = payload.decode_bytes().unwrap();
+        let payload = result?;
+        let decoded = payload.decode_bytes()?;
         assert_eq!(decoded, b"Hello from server");
         assert_eq!(payload.filename, None);
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_secret_client_receive_file_payload() {
+    async fn test_secret_client_receive_file_payload() -> Result<()> {
         let response_json = r#"{"data":"U29tZSBiaW5hcnkgZGF0YQ==","filename":"test.bin"}"#;
         let mock_client = MockClient::new().with_receive_success(response_json.as_bytes().to_vec());
         let secret_client = SecretClient {
@@ -446,17 +462,17 @@ mod tests {
         let url = Url::parse("https://example.com/secret/123").unwrap();
         let result = secret_client.receive_secret(url, None).await;
 
-        assert!(result.is_ok());
-        let payload = result.unwrap();
+        let payload = result?;
         assert_eq!(payload.filename, Some("test.bin".to_string()));
 
         // Verify the data can be decoded
-        let decoded = payload.decode_bytes().unwrap();
+        let decoded = payload.decode_bytes()?;
         assert_eq!(decoded, b"Some binary data");
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_secret_client_send_error_propagation() {
+    async fn test_secret_client_send_error_propagation() -> Result<()> {
         let mock_client = MockClient::new().with_send_failure("Send failed".to_string());
         let secret_client = SecretClient {
             client: Box::new(mock_client),
@@ -477,10 +493,11 @@ mod tests {
             ClientError::Custom(msg) => assert_eq!(msg, "Send failed"),
             _ => panic!("Expected Custom error"),
         }
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_secret_client_receive_error_propagation() {
+    async fn test_secret_client_receive_error_propagation() -> Result<()> {
         let mock_client = MockClient::new().with_receive_failure("Receive failed".to_string());
         let secret_client = SecretClient {
             client: Box::new(mock_client),
@@ -494,10 +511,11 @@ mod tests {
             ClientError::Custom(msg) => assert_eq!(msg, "Receive failed"),
             _ => panic!("Expected Custom error"),
         }
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_secret_client_invalid_json_response() {
+    async fn test_secret_client_invalid_json_response() -> Result<()> {
         let invalid_json = r#"{"data": "test", invalid json"#;
         let mock_client = MockClient::new().with_receive_success(invalid_json.as_bytes().to_vec());
         let secret_client = SecretClient {
@@ -512,14 +530,15 @@ mod tests {
             ClientError::Json(_) => (),
             _ => panic!("Expected Json error"),
         }
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_secret_client_payload_roundtrip() {
+    async fn test_secret_client_payload_roundtrip() -> Result<()> {
         // Test that a payload can be serialized and deserialized correctly
         let original_payload = Payload::from_bytes(b"Test binary data", None);
 
-        let json = serde_json::to_vec(&original_payload).unwrap();
+        let json = serde_json::to_vec(&original_payload)?;
         let mock_client = MockClient::new().with_receive_success(json);
         let secret_client = SecretClient {
             client: Box::new(mock_client),
@@ -528,19 +547,19 @@ mod tests {
         let url = Url::parse("https://example.com/secret/123").unwrap();
         let result = secret_client.receive_secret(url, None).await;
 
-        assert!(result.is_ok());
-        let received_payload = result.unwrap();
+        let received_payload = result?;
         assert_eq!(received_payload.data, original_payload.data);
         assert_eq!(received_payload.filename, original_payload.filename);
 
         // Verify the binary data is preserved
-        let original_bytes = original_payload.decode_bytes().unwrap();
-        let received_bytes = received_payload.decode_bytes().unwrap();
+        let original_bytes = original_payload.decode_bytes()?;
+        let received_bytes = received_payload.decode_bytes()?;
         assert_eq!(original_bytes, received_bytes);
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_new_creates_correct_client_stack() {
+    async fn test_new_creates_correct_client_stack() -> Result<()> {
         // This test verifies that the new() function creates the expected client stack
         let client = new();
 
@@ -558,10 +577,11 @@ mod tests {
 
         // We expect this to fail with a network error since there's no real server
         assert!(result.is_err());
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_secret_client_send_from_bytes() {
+    async fn test_secret_client_send_from_bytes() -> Result<()> {
         let mock_client = MockClient::new();
         let mock_clone = mock_client.clone();
         let secret_client = SecretClient {
@@ -580,23 +600,24 @@ mod tests {
             .send_secret(base_url, payload, ttl, token, None)
             .await;
 
-        assert!(result.is_ok());
+        result?;
 
         // Verify the payload was serialized correctly
-        let sent_data = mock_clone.get_sent_data().unwrap();
-        let sent_payload: Payload = serde_json::from_slice(&sent_data).unwrap();
+        let sent_data = mock_clone.get_sent_data().ok_or(TestError("No sent data".to_string()))?;
+        let sent_payload: Payload = serde_json::from_slice(&sent_data)?;
 
         // Verify that the data is base64 encoded
-        assert_eq!(sent_payload.decode_bytes().unwrap(), binary_data);
+        assert_eq!(sent_payload.decode_bytes()?, binary_data);
         assert_eq!(sent_payload.filename, Some("binary.dat".to_string()));
 
         // Verify we can decode back to original bytes
-        let decoded = sent_payload.decode_bytes().unwrap();
+        let decoded = sent_payload.decode_bytes()?;
         assert_eq!(decoded, binary_data);
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_secret_client_large_binary_file() {
+    async fn test_secret_client_large_binary_file() -> Result<()> {
         let mock_client = MockClient::new();
         let mock_clone = mock_client.clone();
         let secret_client = SecretClient {
@@ -615,23 +636,24 @@ mod tests {
             .send_secret(base_url, payload, ttl, token, None)
             .await;
 
-        assert!(result.is_ok());
+        result?;
 
         // Verify the payload was handled correctly
-        let sent_data = mock_clone.get_sent_data().unwrap();
-        let sent_payload: Payload = serde_json::from_slice(&sent_data).unwrap();
+        let sent_data = mock_clone.get_sent_data().ok_or(TestError("No sent data".to_string()))?;
+        let sent_payload: Payload = serde_json::from_slice(&sent_data)?;
 
         // Verify filename
         assert_eq!(sent_payload.filename, Some("large_file.bin".to_string()));
 
         // Verify we can decode back to original bytes
-        let decoded = sent_payload.decode_bytes().unwrap();
+        let decoded = sent_payload.decode_bytes()?;
         assert_eq!(decoded.len(), large_data.len());
         assert_eq!(decoded, large_data);
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_secret_client_empty_payload() {
+    async fn test_secret_client_empty_payload() -> Result<()> {
         let mock_client = MockClient::new();
         let secret_client = SecretClient {
             client: Box::new(mock_client),
@@ -648,11 +670,12 @@ mod tests {
             .send_secret(base_url, payload, ttl, token, None)
             .await;
 
-        assert!(result.is_ok());
+        result?;
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_secret_client_special_filename_characters() {
+    async fn test_secret_client_special_filename_characters() -> Result<()> {
         let mock_client = MockClient::new();
         let mock_clone = mock_client.clone();
         let secret_client = SecretClient {
@@ -673,19 +696,20 @@ mod tests {
             .send_secret(base_url, payload, ttl, token, None)
             .await;
 
-        assert!(result.is_ok());
+        result?;
 
         // Verify the filename is preserved exactly
-        let sent_data = mock_clone.get_sent_data().unwrap();
-        let sent_payload: Payload = serde_json::from_slice(&sent_data).unwrap();
+        let sent_data = mock_clone.get_sent_data().ok_or(TestError("No sent data".to_string()))?;
+        let sent_payload: Payload = serde_json::from_slice(&sent_data)?;
         assert_eq!(
             sent_payload.filename,
             Some("file with spaces & special-chars!@#$%.txt".to_string())
         );
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_secret_client_from_bytes_without_filename() {
+    async fn test_secret_client_from_bytes_without_filename() -> Result<()> {
         let mock_client = MockClient::new();
         let mock_clone = mock_client.clone();
         let secret_client = SecretClient {
@@ -704,19 +728,20 @@ mod tests {
             .send_secret(base_url, payload, ttl, token, None)
             .await;
 
-        assert!(result.is_ok());
+        result?;
 
         // Verify the payload
-        let sent_data = mock_clone.get_sent_data().unwrap();
-        let sent_payload: Payload = serde_json::from_slice(&sent_data).unwrap();
+        let sent_data = mock_clone.get_sent_data().ok_or(TestError("No sent data".to_string()))?;
+        let sent_payload: Payload = serde_json::from_slice(&sent_data)?;
         assert_eq!(sent_payload.filename, None);
 
         // Verify we can decode back to original text
-        let decoded = sent_payload.decode_bytes().unwrap();
+        let decoded = sent_payload.decode_bytes()?;
         assert_eq!(decoded, text_bytes);
         assert_eq!(
-            String::from_utf8(decoded).unwrap(),
+            String::from_utf8(decoded)?,
             "Hello, this is text data"
         );
+        Ok(())
     }
 }

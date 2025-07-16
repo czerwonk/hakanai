@@ -223,8 +223,7 @@ mod tests {
         if let Err(e) = &result {
             eprintln!("Error in test_send_secret_success: {e:?}");
         }
-        assert!(result.is_ok());
-        let url = result.unwrap();
+        let url = result.unwrap_or_else(|e| panic!("Failed to send secret to mock server: {e:?}"));
         assert_eq!(url.as_str(), format!("{base_url}s/{secret_id}"));
     }
 
@@ -272,8 +271,8 @@ mod tests {
         let url = base_url.join(&format!("/s/{secret_id}")).unwrap();
         let result = client.receive_secret(url, None).await;
 
-        assert!(result.is_ok());
-        assert_eq!(result.unwrap(), secret_data);
+        let data = result.unwrap_or_else(|e| panic!("Failed to receive secret from mock server: {e:?}"));
+        assert_eq!(data, secret_data);
     }
 
     #[tokio::test]
