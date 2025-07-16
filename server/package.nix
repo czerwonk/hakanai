@@ -8,15 +8,18 @@
   typescript,
 }:
 
+let
+  workspace = import ../workspace.nix;
+in
 rustPlatform.buildRustPackage {
   pname = "hakanai-server";
-  version = "1.7.1";
+  version = workspace.version;
 
   src = lib.cleanSource ../.;
 
   cargoBuildCommand = "cargo build --release --package server";
   cargoTestCommand = "cargo test --release --package server";
-  cargoHash = "sha256-PVJ8dIez+PnZfSXOIRbwQeZRj6v8LOm4aZsRoTh+AuQ=";
+  cargoHash = workspace.cargoHash;
 
   nativeBuildInputs = [
     pkg-config
