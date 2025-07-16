@@ -43,10 +43,7 @@ impl Payload {
     /// ```
     pub fn from_bytes(bytes: &[u8], filename: Option<String>) -> Self {
         let data = base64::prelude::BASE64_STANDARD.encode(bytes);
-        Self {
-            data: data,
-            filename,
-        }
+        Self { data, filename }
     }
 
     /// Decodes the base64 data and returns it as bytes.
