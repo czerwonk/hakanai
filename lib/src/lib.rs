@@ -117,4 +117,5 @@ pub mod models;
 pub mod observer;
 pub mod options;
 pub mod timestamp;
+pub mod utils;
 mod web;
