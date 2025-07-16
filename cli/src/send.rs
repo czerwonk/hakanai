@@ -1,3 +1,4 @@
+use core::convert::AsRef;
 use std::io::{self, Read};
 
 use anyhow::{Result, anyhow};
@@ -24,7 +25,7 @@ pub async fn send<T: Factory>(factory: T, args: SendArgs) -> Result<()> {
         eprintln!("{}", "Warning: No token provided.".yellow());
     }
 
-    let bytes = Zeroizing::new(read_secret(args.file.clone())?);
+    let bytes = read_secret(args.file.clone())?;
 
     if bytes.is_empty() {
         return Err(anyhow!(
@@ -33,7 +34,7 @@ pub async fn send<T: Factory>(factory: T, args: SendArgs) -> Result<()> {
     }
 
     let mut as_file = args.as_file;
-    if args.file.is_some() && !as_file && content_analysis::is_binary(&bytes) {
+    if args.file.is_some() && !as_file && content_analysis::is_binary(bytes.as_ref()) {
         println!(
             "{}",
             "Sending binary files as text may lead to data corruption. Sending as file instead."
@@ -43,7 +44,7 @@ pub async fn send<T: Factory>(factory: T, args: SendArgs) -> Result<()> {
     }
 
     let filename = get_filename(args.file, as_file, args.filename)?;
-    let payload = Payload::from_bytes(&bytes, filename);
+    let payload = Payload::from_bytes(bytes.as_ref(), filename);
 
     let user_agent = get_user_agent_name();
     let observer = factory.new_observer("Sending secret...")?;
@@ -103,12 +104,11 @@ fn get_filename(
     }
 }
 
-fn read_secret(file: Option<String>) -> Result<Vec<u8>> {
+fn read_secret(file: Option<String>) -> Result<Zeroizing<Vec<u8>>> {
     if let Some(file_path) = file {
-        let bytes = std::fs::read(&file_path)?;
-        Ok(bytes)
+        Ok(Zeroizing::new(std::fs::read(&file_path)?))
     } else {
-        let mut bytes: Vec<u8> = Vec::new();
+        let mut bytes = Zeroizing::new(Vec::new());
         io::stdin().read_to_end(&mut bytes)?;
         Ok(bytes)
     }
@@ -176,7 +176,7 @@ mod tests {
         fs::write(&file_path, test_content)?;
 
         let result = read_secret(Some(file_path.to_string_lossy().to_string()))?;
-        assert_eq!(result, test_content);
+        assert_eq!(result.to_vec(), test_content);
         Ok(())
     }
 
@@ -193,7 +193,7 @@ mod tests {
         fs::write(&file_path, b"")?;
 
         let result = read_secret(Some(file_path.to_string_lossy().to_string()))?;
-        assert_eq!(result, b"");
+        assert_eq!(result.to_vec(), b"");
         Ok(())
     }
 
@@ -205,7 +205,7 @@ mod tests {
         fs::write(&file_path, &binary_content)?;
 
         let result = read_secret(Some(file_path.to_string_lossy().to_string()))?;
-        assert_eq!(result, binary_content);
+        assert_eq!(result.to_vec(), binary_content);
         Ok(())
     }
 

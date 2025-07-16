@@ -78,7 +78,7 @@ impl Client<Vec<u8>> for CryptoClient {
         token: String,
         opts: Option<SecretSendOptions>,
     ) -> Result<Url, ClientError> {
-        let key = Zeroizing::new(generate_key());
+        let key = generate_key();
         let nonce = Aes256Gcm::generate_nonce(&mut OsRng);
 
         let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(key.as_ref()));
@@ -119,11 +119,11 @@ impl Client<Vec<u8>> for CryptoClient {
     }
 }
 
-fn generate_key() -> [u8; 32] {
+fn generate_key() -> Zeroizing<[u8; 32]> {
     let mut key = [0u8; 32];
     OsRng.fill_bytes(&mut key);
 
-    key
+    Zeroizing::new(key)
 }
 
 fn append_key_to_link(url: Url, key: &[u8; 32]) -> Url {
@@ -137,6 +137,11 @@ fn append_key_to_link(url: Url, key: &[u8; 32]) -> Url {
 
 fn decrypt(encoded_data: Vec<u8>, key_base64: String) -> Result<Vec<u8>, ClientError> {
     let key = Zeroizing::new(base64::prelude::BASE64_URL_SAFE_NO_PAD.decode(key_base64)?);
+    if key.len() != 32 {
+        return Err(ClientError::DecryptionError(
+            "Invalid key length".to_string(),
+        ));
+    }
 
     let payload = base64::prelude::BASE64_STANDARD.decode(encoded_data)?;
 
