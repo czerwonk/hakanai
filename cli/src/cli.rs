@@ -82,11 +82,10 @@ pub struct SendArgs {
 impl SendArgs {
     /// Get the processed token, reading from file if needed
     pub fn token(&self) -> Result<Option<String>> {
-        if self.token.is_some() {
-            // Environment variable takes precedence
-            Ok(self.token.clone())
-        } else if let Some(path) = self.token_file.clone() {
+        if let Some(path) = self.token_file.clone() {
             let token = self.read_token_from_file(path)?;
+            Ok(Some(token))
+        } else if let Some(token) = self.token.clone() {
             Ok(Some(token))
         } else {
             Ok(None)
