@@ -191,12 +191,15 @@ impl WebClient {
 mod tests {
     use super::*;
 
+    use std::error::Error;
     use std::time::Duration;
     use url::Url;
     use uuid::Uuid;
 
+    type Result<T> = std::result::Result<T, Box<dyn Error>>;
+
     #[tokio::test]
-    async fn test_send_secret_success() {
+    async fn test_send_secret_success() -> Result<()> {
         let mut server = mockito::Server::new_async().await;
         let client = WebClient::new();
 
@@ -209,7 +212,7 @@ mod tests {
             .create_async()
             .await;
 
-        let base_url = Url::parse(&server.url()).unwrap();
+        let base_url = Url::parse(&server.url())?;
         let result = client
             .send_secret(
                 base_url.clone(),
@@ -220,15 +223,13 @@ mod tests {
             )
             .await;
 
-        if let Err(e) = &result {
-            eprintln!("Error in test_send_secret_success: {e:?}");
-        }
-        let url = result.unwrap_or_else(|e| panic!("Failed to send secret to mock server: {e:?}"));
+        let url = result?;
         assert_eq!(url.as_str(), format!("{base_url}s/{secret_id}"));
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_send_secret_server_error() {
+    async fn test_send_secret_server_error() -> Result<()> {
         let mut server = mockito::Server::new_async().await;
         let client = WebClient::new();
 
@@ -238,7 +239,7 @@ mod tests {
             .create_async()
             .await;
 
-        let base_url = Url::parse(&server.url()).unwrap();
+        let base_url = Url::parse(&server.url())?;
         let result = client
             .send_secret(
                 base_url,
@@ -250,10 +251,11 @@ mod tests {
             .await;
 
         assert!(result.is_err());
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_receive_secret_success() {
+    async fn test_receive_secret_success() -> Result<()> {
         let mut server = mockito::Server::new_async().await;
         let client = WebClient::new();
 
@@ -267,16 +269,17 @@ mod tests {
             .create_async()
             .await;
 
-        let base_url = Url::parse(&server.url()).unwrap();
-        let url = base_url.join(&format!("/s/{secret_id}")).unwrap();
+        let base_url = Url::parse(&server.url())?;
+        let url = base_url.join(&format!("/s/{secret_id}"))?;
         let result = client.receive_secret(url, None).await;
 
-        let data = result.unwrap_or_else(|e| panic!("Failed to receive secret from mock server: {e:?}"));
+        let data = result?;
         assert_eq!(data, secret_data);
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_receive_secret_not_found() {
+    async fn test_receive_secret_not_found() -> Result<()> {
         let mut server = mockito::Server::new_async().await;
         let client = WebClient::new();
 
@@ -288,14 +291,15 @@ mod tests {
             .create_async()
             .await;
 
-        let base_url = Url::parse(&server.url()).unwrap();
-        let url = base_url.join(&format!("/s/{secret_id}")).unwrap();
+        let base_url = Url::parse(&server.url())?;
+        let url = base_url.join(&format!("/s/{secret_id}"))?;
         let result = client.receive_secret(url, None).await;
         assert!(result.is_err());
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_send_secret_invalid_json_response() {
+    async fn test_send_secret_invalid_json_response() -> Result<()> {
         let mut server = mockito::Server::new_async().await;
         let client = WebClient::new();
 
@@ -307,7 +311,7 @@ mod tests {
             .create_async()
             .await;
 
-        let base_url = Url::parse(&server.url()).unwrap();
+        let base_url = Url::parse(&server.url())?;
         let result = client
             .send_secret(
                 base_url,
@@ -319,5 +323,6 @@ mod tests {
             .await;
 
         assert!(result.is_err());
+        Ok(())
     }
 }

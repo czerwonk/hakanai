@@ -109,9 +109,12 @@ impl PostSecretResponse {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::error::Error;
+
+    type Result<T> = std::result::Result<T, Box<dyn Error>>;
 
     #[test]
-    fn test_payload_from_bytes() {
+    fn test_payload_from_bytes() -> Result<()> {
         let bytes = b"Hello, world!";
         let payload = Payload::from_bytes(bytes, Some("greeting.txt".to_string()));
         assert_eq!(payload.filename, Some("greeting.txt".to_string()));
@@ -119,13 +122,15 @@ mod tests {
             payload.data.to_string(),
             base64::prelude::BASE64_STANDARD.encode(bytes)
         );
+        Ok(())
     }
 
     #[test]
-    fn test_payload_decode_bytes() {
+    fn test_payload_decode_bytes() -> Result<()> {
         let bytes = b"Hello, world!";
         let payload = Payload::from_bytes(bytes, None);
-        let decoded = payload.decode_bytes().unwrap();
+        let decoded = payload.decode_bytes()?;
         assert_eq!(decoded, bytes);
+        Ok(())
     }
 }

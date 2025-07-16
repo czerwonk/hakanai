@@ -160,48 +160,54 @@ fn decrypt(encoded_data: Vec<u8>, key_base64: String) -> Result<Vec<u8>, ClientE
 mod tests {
     use super::*;
     use crate::client_mock::MockClient;
+    use std::error::Error;
     use url::Url;
 
+    type Result<T> = std::result::Result<T, Box<dyn Error>>;
+
     #[tokio::test]
-    async fn test_receive_secret_missing_key_fragment() {
+    async fn test_receive_secret_missing_key_fragment() -> Result<()> {
         let mock_client = MockClient::new();
         let crypto_client = CryptoClient::new(Box::new(mock_client));
 
-        let url = Url::parse("https://example.com/secret/abc123").unwrap();
+        let url = Url::parse("https://example.com/secret/abc123")?;
 
         let result = crypto_client.receive_secret(url, None).await;
         assert!(matches!(result, Err(ClientError::Custom(msg)) if msg == "No key in URL"));
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_receive_secret_invalid_base64_key() {
+    async fn test_receive_secret_invalid_base64_key() -> Result<()> {
         let mock_client = MockClient::new().with_receive_success(b"some_data".to_vec());
         let crypto_client = CryptoClient::new(Box::new(mock_client));
 
-        let mut url = Url::parse("https://example.com/secret/abc123").unwrap();
+        let mut url = Url::parse("https://example.com/secret/abc123")?;
         url.set_fragment(Some("invalid_base64!@#$"));
 
         let result = crypto_client.receive_secret(url, None).await;
         assert!(matches!(result, Err(ClientError::Base64DecodeError(_))));
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_receive_secret_invalid_encrypted_data() {
+    async fn test_receive_secret_invalid_encrypted_data() -> Result<()> {
         let key = generate_key();
         let key_base64 = base64::prelude::BASE64_URL_SAFE_NO_PAD.encode(key);
 
         let mock_client = MockClient::new().with_receive_success(b"invalid_base64!@#$".to_vec());
         let crypto_client = CryptoClient::new(Box::new(mock_client));
 
-        let mut url = Url::parse("https://example.com/secret/abc123").unwrap();
+        let mut url = Url::parse("https://example.com/secret/abc123")?;
         url.set_fragment(Some(&key_base64));
 
         let result = crypto_client.receive_secret(url, None).await;
         assert!(matches!(result, Err(ClientError::Base64DecodeError(_))));
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_receive_secret_payload_too_short() {
+    async fn test_receive_secret_payload_too_short() -> Result<()> {
         let key = generate_key();
         let key_base64 = base64::prelude::BASE64_URL_SAFE_NO_PAD.encode(key);
 
@@ -212,28 +218,30 @@ mod tests {
         let mock_client = MockClient::new().with_receive_success(encoded_data.as_bytes().to_vec());
         let crypto_client = CryptoClient::new(Box::new(mock_client));
 
-        let mut url = Url::parse("https://example.com/secret/abc123").unwrap();
+        let mut url = Url::parse("https://example.com/secret/abc123")?;
         url.set_fragment(Some(&key_base64));
 
         let result = crypto_client.receive_secret(url, None).await;
         assert!(
             matches!(result, Err(ClientError::DecryptionError(msg)) if msg == "Payload too short")
         );
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_generate_key_produces_32_bytes() {
+    async fn test_generate_key_produces_32_bytes() -> Result<()> {
         let key = generate_key();
         assert_eq!(key.len(), 32);
 
         // Test that keys are different each time
         let key2 = generate_key();
         assert_ne!(key, key2);
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_append_key_to_link() {
-        let url = Url::parse("https://example.com/secret/abc123").unwrap();
+    async fn test_append_key_to_link() -> Result<()> {
+        let url = Url::parse("https://example.com/secret/abc123")?;
         let key = [42u8; 32];
 
         let result = append_key_to_link(url.clone(), &key);
@@ -245,15 +253,16 @@ mod tests {
                 .contains(&base64::prelude::BASE64_URL_SAFE_NO_PAD.encode(key))
         );
         assert_eq!(result.host_str(), url.host_str());
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_end_to_end_encryption_decryption() {
-        let mock_client = MockClient::new()
-            .with_send_success(Url::parse("https://example.com/secret/test123").unwrap());
+    async fn test_end_to_end_encryption_decryption() -> Result<()> {
+        let mock_client =
+            MockClient::new().with_send_success(Url::parse("https://example.com/secret/test123")?);
         let crypto_client = CryptoClient::new(Box::new(mock_client.clone()));
 
-        let base_url = Url::parse("https://example.com").unwrap();
+        let base_url = Url::parse("https://example.com")?;
         let secret_data = b"This is a complete end-to-end test";
         let ttl = Duration::from_secs(3600);
         let token = "test_token".to_string();
@@ -261,11 +270,10 @@ mod tests {
         // Send the secret
         let send_result = crypto_client
             .send_secret(base_url, secret_data.to_vec(), ttl, token, None)
-            .await
-            .unwrap();
+            .await?;
 
         // Extract the encrypted data that was sent
-        let encrypted_data = mock_client.get_sent_data().unwrap();
+        let encrypted_data = mock_client.get_sent_data().ok_or("No sent data")?;
 
         // Create a new mock client for receiving
         let mock_client_receive = MockClient::new().with_receive_success(encrypted_data);
@@ -274,14 +282,14 @@ mod tests {
         // Receive the secret using the URL with key
         let receive_result = crypto_client_receive
             .receive_secret(send_result, None)
-            .await
-            .unwrap();
+            .await?;
 
         assert_eq!(receive_result, secret_data);
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_receive_secret_invalid_aes_gcm_data() {
+    async fn test_receive_secret_invalid_aes_gcm_data() -> Result<()> {
         let key = generate_key();
         let key_base64 = base64::prelude::BASE64_URL_SAFE_NO_PAD.encode(key);
 
@@ -292,12 +300,13 @@ mod tests {
         let mock_client = MockClient::new().with_receive_success(encoded_data.as_bytes().to_vec());
         let crypto_client = CryptoClient::new(Box::new(mock_client));
 
-        let mut url = Url::parse("https://example.com/secret/abc123").unwrap();
+        let mut url = Url::parse("https://example.com/secret/abc123")?;
         url.set_fragment(Some(&key_base64));
 
         let result = crypto_client.receive_secret(url, None).await;
         assert!(
             matches!(result, Err(ClientError::CryptoError(msg)) if msg.contains("AES-GCM error"))
         );
+        Ok(())
     }
 }
