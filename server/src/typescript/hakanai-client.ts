@@ -389,22 +389,19 @@ class CryptoOperations {
   }
 
   /**
-   * Encrypt a message with AES-256-GCM
-   * @param plaintext - Text to encrypt
+   * Encrypt data with AES-256-GCM
+   * @param plaintextBytes - Raw bytes to encrypt
    * @param key - 256-bit encryption key
    * @returns Base64-encoded ciphertext with prepended nonce
    * @throws {Error} If encryption fails
    */
   static async encrypt(
-    plaintext: string,
+    plaintextBytes: Uint8Array,
     key: HakanaiCryptoKey,
   ): Promise<string> {
-    if (typeof plaintext !== "string") {
-      throw new Error("Plaintext must be a string");
+    if (!plaintextBytes || typeof plaintextBytes !== "object" || typeof plaintextBytes.byteLength !== "number") {
+      throw new Error("Plaintext must be a Uint8Array");
     }
-
-    const encoder = new TextEncoder();
-    const plaintextBytes = encoder.encode(plaintext);
 
     // Generate random nonce
     const nonce = new Uint8Array(NONCE_LENGTH);
@@ -440,7 +437,7 @@ class CryptoOperations {
       SecureMemory.clearUint8Array(combined);
     } finally {
       // Always clear sensitive data even if encryption fails
-      SecureMemory.clearArrays(plaintextBytes, nonce);
+      SecureMemory.clearUint8Array(nonce);
     }
 
     return result;
@@ -728,8 +725,12 @@ class HakanaiClient {
         filename: payload.filename || null,
       };
       const payloadJson = JSON.stringify(secretPayload);
+      const payloadBytes = new TextEncoder().encode(payloadJson);
 
-      const encryptedData = await CryptoOperations.encrypt(payloadJson, key);
+      const encryptedData = await CryptoOperations.encrypt(payloadBytes, key);
+
+      // Clear payload bytes after encryption
+      SecureMemory.clearUint8Array(payloadBytes);
 
       const secretId = await this.sendEncryptedData(
         encryptedData,
@@ -904,10 +905,14 @@ class HakanaiClient {
    * @deprecated Use CryptoOperations.encrypt() instead
    */
   async encrypt(plaintext: string, key: Uint8Array): Promise<string> {
-    return CryptoOperations.encrypt(plaintext, {
+    const plaintextBytes = new TextEncoder().encode(plaintext);
+    const result = await CryptoOperations.encrypt(plaintextBytes, {
       bytes: key,
       length: KEY_LENGTH,
     });
+    // Clear plaintext bytes after encryption
+    SecureMemory.clearUint8Array(plaintextBytes);
+    return result;
   }
 
   /**

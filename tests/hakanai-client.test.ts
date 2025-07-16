@@ -207,8 +207,9 @@ describe("CryptoOperations", () => {
   test("encrypt and decrypt round trip", async () => {
     const original = "Secret message for encryption test";
     const key = CryptoOperations.generateKey();
+    const originalBytes = new TextEncoder().encode(original);
 
-    const encrypted = await CryptoOperations.encrypt(original, key);
+    const encrypted = await CryptoOperations.encrypt(originalBytes, key);
     const decrypted = await CryptoOperations.decrypt(encrypted, key.bytes);
 
     expect(decrypted).toBe(original);
@@ -217,9 +218,10 @@ describe("CryptoOperations", () => {
   test("encrypt produces different results with same input", async () => {
     const original = "Same message";
     const key = CryptoOperations.generateKey();
+    const originalBytes = new TextEncoder().encode(original);
 
-    const encrypted1 = await CryptoOperations.encrypt(original, key);
-    const encrypted2 = await CryptoOperations.encrypt(original, key);
+    const encrypted1 = await CryptoOperations.encrypt(originalBytes, key);
+    const encrypted2 = await CryptoOperations.encrypt(originalBytes, key);
 
     // Should be different due to random nonce
     expect(encrypted1).not.toBe(encrypted2);
@@ -236,8 +238,9 @@ describe("CryptoOperations", () => {
     const original = "Secret message";
     const key1 = CryptoOperations.generateKey();
     const key2 = CryptoOperations.generateKey();
+    const originalBytes = new TextEncoder().encode(original);
 
-    const encrypted = await CryptoOperations.encrypt(original, key1);
+    const encrypted = await CryptoOperations.encrypt(originalBytes, key1);
 
     await expect(
       CryptoOperations.decrypt(encrypted, key2.bytes),
