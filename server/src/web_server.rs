@@ -41,9 +41,7 @@ where
             .app_data(
                 web::JsonConfig::default().limit(args.upload_size_limit as usize * 1024 * 1024),
             )
-            .wrap(Logger::new(
-                "%a %{X-Forwarded-For}i %t \"%r\" %s %b \"%{User-Agent}i\" %Ts",
-            ))
+            .wrap(Logger::new("%a %{X-Forwarded-For}i %t \"%r\" %s %b %Ts"))
             .wrap(RequestTracing::new())
             .wrap(RequestMetrics::default())
             .wrap(default_headers())
