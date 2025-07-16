@@ -159,83 +159,8 @@ fn decrypt(encoded_data: Vec<u8>, key_base64: String) -> Result<Vec<u8>, ClientE
 #[cfg(test)]
 mod tests {
     use super::*;
-    use async_trait::async_trait;
-    use std::sync::Arc;
-    use std::sync::Mutex;
+    use crate::client_mock::MockClient;
     use url::Url;
-
-    #[derive(Clone)]
-    struct MockClient {
-        sent_data: Arc<Mutex<Option<Vec<u8>>>>,
-        response_url: Option<Url>,
-        response_data: Option<Vec<u8>>,
-        should_error: bool,
-        error_type: String,
-    }
-
-    impl MockClient {
-        fn new() -> Self {
-            Self {
-                sent_data: Arc::new(Mutex::new(None)),
-                response_url: None,
-                response_data: None,
-                should_error: false,
-                error_type: String::new(),
-            }
-        }
-
-        fn with_response_url(mut self, url: Url) -> Self {
-            self.response_url = Some(url);
-            self
-        }
-
-        fn with_response_data(mut self, data: Vec<u8>) -> Self {
-            self.response_data = Some(data);
-            self
-        }
-
-        fn get_sent_data(&self) -> Option<Vec<u8>> {
-            self.sent_data.lock().unwrap().clone()
-        }
-    }
-
-    #[async_trait]
-    impl Client<Vec<u8>> for MockClient {
-        async fn send_secret(
-            &self,
-            _base_url: Url,
-            data: Vec<u8>,
-            _ttl: Duration,
-            _token: String,
-            _opts: Option<SecretSendOptions>,
-        ) -> Result<Url, ClientError> {
-            *self.sent_data.lock().unwrap() = Some(data);
-
-            if self.should_error {
-                return Err(ClientError::Custom(self.error_type.clone()));
-            }
-
-            Ok(self
-                .response_url
-                .clone()
-                .unwrap_or_else(|| Url::parse("https://example.com/secret/12345").unwrap()))
-        }
-
-        async fn receive_secret(
-            &self,
-            _url: Url,
-            _opts: Option<SecretReceiveOptions>,
-        ) -> Result<Vec<u8>, ClientError> {
-            if self.should_error {
-                return Err(ClientError::Custom(self.error_type.clone()));
-            }
-
-            Ok(self
-                .response_data
-                .clone()
-                .unwrap_or_else(|| "encrypted_data".as_bytes().to_vec()))
-        }
-    }
 
     #[tokio::test]
     async fn test_receive_secret_missing_key_fragment() {
@@ -250,7 +175,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_receive_secret_invalid_base64_key() {
-        let mock_client = MockClient::new().with_response_data(b"some_data".to_vec());
+        let mock_client = MockClient::new().with_receive_success(b"some_data".to_vec());
         let crypto_client = CryptoClient::new(Box::new(mock_client));
 
         let mut url = Url::parse("https://example.com/secret/abc123").unwrap();
@@ -265,7 +190,7 @@ mod tests {
         let key = generate_key();
         let key_base64 = base64::prelude::BASE64_URL_SAFE_NO_PAD.encode(key);
 
-        let mock_client = MockClient::new().with_response_data(b"invalid_base64!@#$".to_vec());
+        let mock_client = MockClient::new().with_receive_success(b"invalid_base64!@#$".to_vec());
         let crypto_client = CryptoClient::new(Box::new(mock_client));
 
         let mut url = Url::parse("https://example.com/secret/abc123").unwrap();
@@ -284,7 +209,7 @@ mod tests {
         let short_payload = vec![1, 2, 3, 4, 5];
         let encoded_data = base64::prelude::BASE64_STANDARD.encode(&short_payload);
 
-        let mock_client = MockClient::new().with_response_data(encoded_data.as_bytes().to_vec());
+        let mock_client = MockClient::new().with_receive_success(encoded_data.as_bytes().to_vec());
         let crypto_client = CryptoClient::new(Box::new(mock_client));
 
         let mut url = Url::parse("https://example.com/secret/abc123").unwrap();
@@ -325,7 +250,7 @@ mod tests {
     #[tokio::test]
     async fn test_end_to_end_encryption_decryption() {
         let mock_client = MockClient::new()
-            .with_response_url(Url::parse("https://example.com/secret/test123").unwrap());
+            .with_send_success(Url::parse("https://example.com/secret/test123").unwrap());
         let crypto_client = CryptoClient::new(Box::new(mock_client.clone()));
 
         let base_url = Url::parse("https://example.com").unwrap();
@@ -343,7 +268,7 @@ mod tests {
         let encrypted_data = mock_client.get_sent_data().unwrap();
 
         // Create a new mock client for receiving
-        let mock_client_receive = MockClient::new().with_response_data(encrypted_data);
+        let mock_client_receive = MockClient::new().with_receive_success(encrypted_data);
         let crypto_client_receive = CryptoClient::new(Box::new(mock_client_receive));
 
         // Receive the secret using the URL with key
@@ -364,7 +289,7 @@ mod tests {
         let invalid_aes_data = vec![0u8; 16]; // 16 bytes: 12 for nonce + 4 for invalid ciphertext
         let encoded_data = base64::prelude::BASE64_STANDARD.encode(&invalid_aes_data);
 
-        let mock_client = MockClient::new().with_response_data(encoded_data.as_bytes().to_vec());
+        let mock_client = MockClient::new().with_receive_success(encoded_data.as_bytes().to_vec());
         let crypto_client = CryptoClient::new(Box::new(mock_client));
 
         let mut url = Url::parse("https://example.com/secret/abc123").unwrap();

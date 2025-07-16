@@ -1,8 +1,8 @@
 mod cli;
 mod factory;
+mod factory_mock;
 mod get;
 mod helper;
-mod mock_client;
 mod observer;
 mod send;
 

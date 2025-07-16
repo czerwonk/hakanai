@@ -88,10 +88,12 @@ fn write_to_timestamped_file(filename: String, bytes: &[u8]) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::mock_client::test_utils::{MockClient, MockFactory};
+    use crate::factory_mock::test_utils::MockFactory;
     use hakanai_lib::models::Payload;
     use std::fs;
     use tempfile::TempDir;
+
+    use hakanai_lib::client_mock::MockClient;
 
     #[test]
     fn test_print_to_stdout_with_text() {

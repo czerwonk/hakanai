@@ -110,6 +110,8 @@
 //!
 
 pub mod client;
+#[cfg(any(test, feature = "testing"))]
+pub mod client_mock;
 mod crypto;
 pub mod models;
 pub mod observer;

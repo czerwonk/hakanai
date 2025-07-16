@@ -114,10 +114,12 @@ fn read_secret(file: Option<String>) -> Result<Vec<u8>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::mock_client::test_utils::{MockClient, MockFactory};
+    use crate::factory_mock::test_utils::MockFactory;
     use std::fs;
     use std::time::Duration;
     use tempfile::TempDir;
+
+    use hakanai_lib::client_mock::MockClient;
 
     #[test]
     fn test_get_filename_not_as_file() {

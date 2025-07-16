@@ -356,84 +356,12 @@ pub fn new() -> impl Client<Payload> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::{Arc, Mutex};
-
-    #[derive(Clone)]
-    struct MockClient {
-        sent_data: Arc<Mutex<Option<Vec<u8>>>>,
-        response_url: Option<Url>,
-        response_data: Option<Vec<u8>>,
-        fail_send: bool,
-        fail_receive: bool,
-    }
-
-    impl MockClient {
-        fn new() -> Self {
-            Self {
-                sent_data: Arc::new(Mutex::new(None)),
-                response_url: Some(Url::parse("https://example.com/secret/123").unwrap()),
-                response_data: Some(r#"{"data":"test data","filename":null}"#.as_bytes().to_vec()),
-                fail_send: false,
-                fail_receive: false,
-            }
-        }
-
-        fn with_response_data(mut self, data: Vec<u8>) -> Self {
-            self.response_data = Some(data);
-            self
-        }
-
-        fn with_send_failure(mut self) -> Self {
-            self.fail_send = true;
-            self
-        }
-
-        fn with_receive_failure(mut self) -> Self {
-            self.fail_receive = true;
-            self
-        }
-
-        fn get_sent_data(&self) -> Option<Vec<u8>> {
-            self.sent_data.lock().unwrap().clone()
-        }
-    }
-
-    #[async_trait]
-    impl Client<Vec<u8>> for MockClient {
-        async fn send_secret(
-            &self,
-            _base_url: Url,
-            payload: Vec<u8>,
-            _ttl: Duration,
-            _token: String,
-            _opts: Option<SecretSendOptions>,
-        ) -> Result<Url, ClientError> {
-            if self.fail_send {
-                return Err(ClientError::Custom("Send failed".to_string()));
-            }
-            *self.sent_data.lock().unwrap() = Some(payload);
-            self.response_url
-                .clone()
-                .ok_or(ClientError::Custom("No response URL".to_string()))
-        }
-
-        async fn receive_secret(
-            &self,
-            _url: Url,
-            _opts: Option<SecretReceiveOptions>,
-        ) -> Result<Vec<u8>, ClientError> {
-            if self.fail_receive {
-                return Err(ClientError::Custom("Receive failed".to_string()));
-            }
-            self.response_data
-                .clone()
-                .ok_or(ClientError::Custom("No response data".to_string()))
-        }
-    }
+    use crate::client_mock::MockClient;
 
     #[tokio::test]
     async fn test_secret_client_send_text_payload() {
-        let mock_client = MockClient::new();
+        let mock_client = MockClient::new()
+            .with_send_success(Url::parse("https://example.com/secret/123").unwrap());
         let mock_clone = mock_client.clone();
         let secret_client = SecretClient {
             client: Box::new(mock_client),
@@ -492,7 +420,7 @@ mod tests {
     #[tokio::test]
     async fn test_secret_client_receive_text_payload() {
         let response_json = r#"{"data":"SGVsbG8gZnJvbSBzZXJ2ZXI=","filename":null}"#;
-        let mock_client = MockClient::new().with_response_data(response_json.as_bytes().to_vec());
+        let mock_client = MockClient::new().with_receive_success(response_json.as_bytes().to_vec());
         let secret_client = SecretClient {
             client: Box::new(mock_client),
         };
@@ -510,7 +438,7 @@ mod tests {
     #[tokio::test]
     async fn test_secret_client_receive_file_payload() {
         let response_json = r#"{"data":"U29tZSBiaW5hcnkgZGF0YQ==","filename":"test.bin"}"#;
-        let mock_client = MockClient::new().with_response_data(response_json.as_bytes().to_vec());
+        let mock_client = MockClient::new().with_receive_success(response_json.as_bytes().to_vec());
         let secret_client = SecretClient {
             client: Box::new(mock_client),
         };
@@ -529,7 +457,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_secret_client_send_error_propagation() {
-        let mock_client = MockClient::new().with_send_failure();
+        let mock_client = MockClient::new().with_send_failure("Send failed".to_string());
         let secret_client = SecretClient {
             client: Box::new(mock_client),
         };
@@ -553,7 +481,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_secret_client_receive_error_propagation() {
-        let mock_client = MockClient::new().with_receive_failure();
+        let mock_client = MockClient::new().with_receive_failure("Receive failed".to_string());
         let secret_client = SecretClient {
             client: Box::new(mock_client),
         };
@@ -571,7 +499,7 @@ mod tests {
     #[tokio::test]
     async fn test_secret_client_invalid_json_response() {
         let invalid_json = r#"{"data": "test", invalid json"#;
-        let mock_client = MockClient::new().with_response_data(invalid_json.as_bytes().to_vec());
+        let mock_client = MockClient::new().with_receive_success(invalid_json.as_bytes().to_vec());
         let secret_client = SecretClient {
             client: Box::new(mock_client),
         };
@@ -592,7 +520,7 @@ mod tests {
         let original_payload = Payload::from_bytes(b"Test binary data", None);
 
         let json = serde_json::to_vec(&original_payload).unwrap();
-        let mock_client = MockClient::new().with_response_data(json);
+        let mock_client = MockClient::new().with_receive_success(json);
         let secret_client = SecretClient {
             client: Box::new(mock_client),
         };
