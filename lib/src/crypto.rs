@@ -1,16 +1,112 @@
+use core::convert::TryInto;
 use std::time::Duration;
 
 use aes_gcm::aead::rand_core::RngCore;
-use aes_gcm::aead::{Aead, AeadCore, OsRng};
+use aes_gcm::aead::{Aead, OsRng};
 use aes_gcm::{Aes256Gcm, Key, KeyInit, Nonce};
 
 use async_trait::async_trait;
 use base64::Engine;
 use reqwest::Url;
-use zeroize::Zeroizing;
+use zeroize::{Zeroize, Zeroizing};
 
 use crate::client::{Client, ClientError};
 use crate::options::{SecretReceiveOptions, SecretSendOptions};
+
+const AES_GCM_KEY_SIZE: usize = 32; // AES-256 requires a 32-byte key
+const AES_GCM_NONCE_SIZE: usize = 12; // AES-GCM uses a 12-byte nonce
+
+struct CryptoContext {
+    key: Vec<u8>,
+    nonce: Vec<u8>,
+}
+
+impl CryptoContext {
+    /// Creates a new `CryptoContext` with a randomly generated key and nonce.
+    fn generate() -> Self {
+        let mut key = [0u8; AES_GCM_KEY_SIZE];
+        OsRng.fill_bytes(&mut key);
+
+        let mut nonce = [0u8; AES_GCM_NONCE_SIZE];
+        OsRng.fill_bytes(&mut nonce);
+
+        CryptoContext {
+            key: key.to_vec(),
+            nonce: nonce.to_vec(),
+        }
+    }
+
+    /// Creates a `CryptoContext` from a base64-encoded fragment.
+    fn from_key_base64(fragment: &str) -> Result<Self, ClientError> {
+        let key = Zeroizing::new(base64::prelude::BASE64_URL_SAFE_NO_PAD.decode(fragment)?);
+        if key.len() != AES_GCM_KEY_SIZE {
+            return Err(ClientError::CryptoError("Invalid key length".to_string()));
+        }
+
+        Ok(Self {
+            key: key.to_vec(),
+            nonce: vec![0; AES_GCM_NONCE_SIZE], // nonce will be set later
+        })
+    }
+
+    fn key_as_base64(&self) -> String {
+        base64::prelude::BASE64_URL_SAFE_NO_PAD.encode(&self.key)
+    }
+
+    fn import_nonce(&mut self, payload: &[u8]) -> Result<(), ClientError> {
+        if payload.len() < AES_GCM_NONCE_SIZE {
+            return Err(ClientError::CryptoError("Payload too short".to_string()));
+        }
+
+        let nonce = &payload[..AES_GCM_NONCE_SIZE];
+        self.nonce = nonce.to_vec();
+        Ok(())
+    }
+
+    fn prepend_nonce_to_ciphertext(&self, ciphertext: &[u8]) -> Vec<u8> {
+        let mut result = self.nonce.to_vec();
+        result.extend_from_slice(ciphertext);
+        result
+    }
+
+    fn encrypt(&self, plaintext: &[u8]) -> Result<Vec<u8>, ClientError> {
+        let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(self.key.as_ref()));
+        let nonce = Nonce::from_slice(&self.nonce);
+        Ok(cipher.encrypt(nonce, plaintext)?)
+    }
+
+    fn decrypt(&self, ciphertext: &[u8]) -> Result<Vec<u8>, ClientError> {
+        let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(self.key.as_ref()));
+        let nonce = Nonce::from_slice(&self.nonce);
+        Ok(cipher.decrypt(nonce, ciphertext)?)
+    }
+
+    #[cfg(test)]
+    fn key(&self) -> &[u8] {
+        &self.key
+    }
+}
+
+impl Zeroize for CryptoContext {
+    fn zeroize(&mut self) {
+        self.key.zeroize();
+        self.nonce.zeroize();
+    }
+}
+
+impl Drop for CryptoContext {
+    fn drop(&mut self) {
+        self.zeroize();
+    }
+}
+
+impl TryFrom<&str> for CryptoContext {
+    type Error = ClientError;
+
+    fn try_from(fragment: &str) -> Result<Self, Self::Error> {
+        CryptoContext::from_key_base64(fragment)
+    }
+}
 
 /// A client that wraps another `Client` to provide cryptographic functionalities.
 ///
@@ -78,16 +174,10 @@ impl Client<Vec<u8>> for CryptoClient {
         token: String,
         opts: Option<SecretSendOptions>,
     ) -> Result<Url, ClientError> {
-        let key = generate_key();
-        let nonce = Aes256Gcm::generate_nonce(&mut OsRng);
+        let crypto_context = CryptoContext::generate();
+        let ciphertext = crypto_context.encrypt(&*data)?;
 
-        let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(key.as_ref()));
-
-        let ciphertext = cipher.encrypt(&nonce, &*data)?;
-
-        // Prepend nonce to ciphertext
-        let mut payload = nonce.to_vec();
-        payload.extend_from_slice(&ciphertext);
+        let payload = crypto_context.prepend_nonce_to_ciphertext(&ciphertext);
 
         let encoded_data = base64::prelude::BASE64_STANDARD
             .encode(&payload)
@@ -99,7 +189,7 @@ impl Client<Vec<u8>> for CryptoClient {
             .send_secret(base_url, encoded_data, ttl, token, opts)
             .await?;
 
-        let url = append_key_to_link(res, &key);
+        let url = append_key_to_link(res, &crypto_context);
 
         Ok(url)
     }
@@ -109,55 +199,34 @@ impl Client<Vec<u8>> for CryptoClient {
         url: Url,
         opts: Option<SecretReceiveOptions>,
     ) -> Result<Vec<u8>, ClientError> {
-        let key_base64 = url
+        let crypto_context: CryptoContext = url
             .fragment()
             .ok_or(ClientError::Custom("No key in URL".to_string()))?
-            .to_string();
+            .try_into()?;
 
         let encoded_data = self.inner_client.receive_secret(url, opts).await?;
-        decrypt(encoded_data, key_base64)
+        decrypt(encoded_data, crypto_context)
     }
 }
 
-fn generate_key() -> Zeroizing<[u8; 32]> {
-    let mut key = [0u8; 32];
-    OsRng.fill_bytes(&mut key);
-
-    Zeroizing::new(key)
-}
-
-fn append_key_to_link(url: Url, key: &[u8; 32]) -> Url {
-    let key_base64 = base64::prelude::BASE64_URL_SAFE_NO_PAD.encode(key);
-
+fn append_key_to_link(url: Url, crypto_context: &CryptoContext) -> Url {
     let mut link = url.clone();
+
+    let key_base64 = crypto_context.key_as_base64();
     link.set_fragment(Some(&key_base64));
 
     link
 }
 
-fn decrypt(encoded_data: Vec<u8>, key_base64: String) -> Result<Vec<u8>, ClientError> {
-    let key = Zeroizing::new(base64::prelude::BASE64_URL_SAFE_NO_PAD.decode(key_base64)?);
-    if key.len() != 32 {
-        return Err(ClientError::DecryptionError(
-            "Invalid key length".to_string(),
-        ));
-    }
+fn decrypt(
+    encoded_data: Vec<u8>,
+    mut crypto_context: CryptoContext,
+) -> Result<Vec<u8>, ClientError> {
+    let payload = Zeroizing::new(base64::prelude::BASE64_STANDARD.decode(encoded_data)?);
 
-    let payload = base64::prelude::BASE64_STANDARD.decode(encoded_data)?;
-
-    let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(&key));
-
-    let nonce_len = aes_gcm::Nonce::<<Aes256Gcm as AeadCore>::NonceSize>::default().len();
-    if payload.len() < nonce_len {
-        return Err(ClientError::DecryptionError(
-            "Payload too short".to_string(),
-        ));
-    }
-
-    let (nonce_bytes, ciphertext) = payload.split_at(nonce_len);
-    let nonce = Nonce::from_slice(nonce_bytes);
-
-    let plaintext = Zeroizing::new(cipher.decrypt(nonce, ciphertext)?);
+    crypto_context.import_nonce(&payload)?;
+    let ciphertext = &payload[AES_GCM_NONCE_SIZE..];
+    let plaintext = Zeroizing::new(crypto_context.decrypt(ciphertext)?);
     Ok(plaintext.to_vec())
 }
 
@@ -197,8 +266,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_receive_secret_invalid_encrypted_data() -> Result<()> {
-        let key = generate_key();
-        let key_base64 = base64::prelude::BASE64_URL_SAFE_NO_PAD.encode(key);
+        let crypto_context = CryptoContext::generate();
+        let key_base64 = base64::prelude::BASE64_URL_SAFE_NO_PAD.encode(crypto_context.key());
 
         let mock_client = MockClient::new().with_receive_success(b"invalid_base64!@#$".to_vec());
         let crypto_client = CryptoClient::new(Box::new(mock_client));
@@ -213,8 +282,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_receive_secret_payload_too_short() -> Result<()> {
-        let key = generate_key();
-        let key_base64 = base64::prelude::BASE64_URL_SAFE_NO_PAD.encode(key);
+        let crypto_context = CryptoContext::generate();
+        let key_base64 = base64::prelude::BASE64_URL_SAFE_NO_PAD.encode(crypto_context.key());
 
         // Create a payload that's too short (less than 12 bytes for nonce)
         let short_payload = vec![1, 2, 3, 4, 5];
@@ -227,29 +296,28 @@ mod tests {
         url.set_fragment(Some(&key_base64));
 
         let result = crypto_client.receive_secret(url, None).await;
-        assert!(
-            matches!(result, Err(ClientError::DecryptionError(msg)) if msg == "Payload too short")
-        );
+        assert!(matches!(result, Err(ClientError::CryptoError(msg)) if msg == "Payload too short"));
         Ok(())
     }
 
     #[tokio::test]
     async fn test_generate_key_produces_32_bytes() -> Result<()> {
-        let key = generate_key();
-        assert_eq!(key.len(), 32);
+        let crypto_context = CryptoContext::generate();
+        assert_eq!(crypto_context.key().len(), 32);
 
         // Test that keys are different each time
-        let key2 = generate_key();
-        assert_ne!(key, key2);
+        let crypto_context2 = CryptoContext::generate();
+        assert_ne!(crypto_context.key(), crypto_context2.key());
         Ok(())
     }
 
     #[tokio::test]
     async fn test_append_key_to_link() -> Result<()> {
         let url = Url::parse("https://example.com/secret/abc123")?;
-        let key = [42u8; 32];
+        let crypto_context = CryptoContext::generate();
 
-        let result = append_key_to_link(url.clone(), &key);
+        let key = crypto_context.key();
+        let result = append_key_to_link(url.clone(), &crypto_context);
 
         assert!(
             result
@@ -295,8 +363,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_receive_secret_invalid_aes_gcm_data() -> Result<()> {
-        let key = generate_key();
-        let key_base64 = base64::prelude::BASE64_URL_SAFE_NO_PAD.encode(key);
+        let crypto_context = CryptoContext::generate();
+        let key_base64 = crypto_context.key_as_base64();
 
         // Create a valid base64 payload but with invalid AES-GCM data
         let invalid_aes_data = vec![0u8; 16]; // 16 bytes: 12 for nonce + 4 for invalid ciphertext

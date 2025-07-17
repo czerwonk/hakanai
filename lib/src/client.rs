@@ -172,7 +172,7 @@ pub trait Client<T>: Send + Sync {
 ///     Ok(url) => println!("Secret stored at: {}", url),
 ///     Err(ClientError::Web(e)) => eprintln!("Network error: {}", e),
 ///     Err(ClientError::Http(msg)) => eprintln!("Server error: {}", msg),
-///     Err(ClientError::DecryptionError(msg)) => eprintln!("Decryption failed: {}", msg),
+///     Err(ClientError::CryptoError(msg)) => eprintln!("Decryption failed: {}", msg),
 ///     Err(e) => eprintln!("Other error: {}", e),
 /// }
 /// # Ok(())
@@ -219,10 +219,6 @@ pub enum ClientError {
     /// Cryptographic error.
     #[error("crypto error")]
     CryptoError(String),
-
-    /// Decryption failed due to invalid data or key.
-    #[error("decryption error")]
-    DecryptionError(String),
 
     /// Error converting bytes to UTF-8.
     #[error("UTF-8 decoding error")]
@@ -396,7 +392,9 @@ mod tests {
         assert_eq!(url.as_str(), "https://example.com/secret/123");
 
         // Verify the payload was serialized correctly
-        let sent_data = mock_clone.get_sent_data().ok_or(TestError("No sent data".to_string()))?;
+        let sent_data = mock_clone
+            .get_sent_data()
+            .ok_or(TestError("No sent data".to_string()))?;
         let sent_payload: Payload = serde_json::from_slice(&sent_data)?;
         assert_eq!(sent_payload.decode_bytes()?, b"Hello, World!");
         assert_eq!(sent_payload.filename, None);
@@ -425,7 +423,9 @@ mod tests {
         result?;
 
         // Verify the payload was serialized correctly
-        let sent_data = mock_clone.get_sent_data().ok_or(TestError("No sent data".to_string()))?;
+        let sent_data = mock_clone
+            .get_sent_data()
+            .ok_or(TestError("No sent data".to_string()))?;
         let sent_payload: Payload = serde_json::from_slice(&sent_data)?;
         let decoded = sent_payload.decode_bytes()?;
         assert_eq!(decoded, binary_data);
@@ -603,7 +603,9 @@ mod tests {
         result?;
 
         // Verify the payload was serialized correctly
-        let sent_data = mock_clone.get_sent_data().ok_or(TestError("No sent data".to_string()))?;
+        let sent_data = mock_clone
+            .get_sent_data()
+            .ok_or(TestError("No sent data".to_string()))?;
         let sent_payload: Payload = serde_json::from_slice(&sent_data)?;
 
         // Verify that the data is base64 encoded
@@ -639,7 +641,9 @@ mod tests {
         result?;
 
         // Verify the payload was handled correctly
-        let sent_data = mock_clone.get_sent_data().ok_or(TestError("No sent data".to_string()))?;
+        let sent_data = mock_clone
+            .get_sent_data()
+            .ok_or(TestError("No sent data".to_string()))?;
         let sent_payload: Payload = serde_json::from_slice(&sent_data)?;
 
         // Verify filename
@@ -699,7 +703,9 @@ mod tests {
         result?;
 
         // Verify the filename is preserved exactly
-        let sent_data = mock_clone.get_sent_data().ok_or(TestError("No sent data".to_string()))?;
+        let sent_data = mock_clone
+            .get_sent_data()
+            .ok_or(TestError("No sent data".to_string()))?;
         let sent_payload: Payload = serde_json::from_slice(&sent_data)?;
         assert_eq!(
             sent_payload.filename,
@@ -731,17 +737,16 @@ mod tests {
         result?;
 
         // Verify the payload
-        let sent_data = mock_clone.get_sent_data().ok_or(TestError("No sent data".to_string()))?;
+        let sent_data = mock_clone
+            .get_sent_data()
+            .ok_or(TestError("No sent data".to_string()))?;
         let sent_payload: Payload = serde_json::from_slice(&sent_data)?;
         assert_eq!(sent_payload.filename, None);
 
         // Verify we can decode back to original text
         let decoded = sent_payload.decode_bytes()?;
         assert_eq!(decoded, text_bytes);
-        assert_eq!(
-            String::from_utf8(decoded)?,
-            "Hello, this is text data"
-        );
+        assert_eq!(String::from_utf8(decoded)?, "Hello, this is text data");
         Ok(())
     }
 }
