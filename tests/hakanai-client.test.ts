@@ -7,7 +7,6 @@ import {
   HakanaiClient,
   HakanaiErrorCodes,
   Base64UrlSafe,
-  CryptoOperations,
   ContentAnalysis,
 } from "../server/src/typescript/hakanai-client";
 
@@ -188,72 +187,6 @@ describe("ContentAnalysis", () => {
     largeWithNull.fill(65); // Fill with 'A' (ASCII 65)
     largeWithNull[5000] = 0; // Add null byte in the middle
     expect(ContentAnalysis.isBinary(largeWithNull)).toBe(true);
-  });
-});
-
-describe("CryptoOperations", () => {
-  test("generateKey produces 32-byte keys", () => {
-    const key1 = CryptoOperations.generateKey();
-    const key2 = CryptoOperations.generateKey();
-
-    expect(key1.bytes).toHaveLength(32);
-    expect(key2.bytes).toHaveLength(32);
-    expect(key1.length).toBe(32);
-
-    // Keys should be different
-    expect(key1.bytes).not.toEqual(key2.bytes);
-  });
-
-  test("encrypt and decrypt round trip", async () => {
-    const original = "Secret message for encryption test";
-    const key = CryptoOperations.generateKey();
-    const originalBytes = new TextEncoder().encode(original);
-
-    const encrypted = await CryptoOperations.encrypt(originalBytes, key);
-    const decryptedBytes = await CryptoOperations.decrypt(encrypted, key.bytes);
-    const decrypted = new TextDecoder().decode(decryptedBytes);
-
-    expect(decrypted).toBe(original);
-  });
-
-  test("encrypt produces different results with same input", async () => {
-    const original = "Same message";
-    const key = CryptoOperations.generateKey();
-    const originalBytes = new TextEncoder().encode(original);
-
-    const encrypted1 = await CryptoOperations.encrypt(originalBytes, key);
-    const encrypted2 = await CryptoOperations.encrypt(originalBytes, key);
-
-    // Should be different due to random nonce
-    expect(encrypted1).not.toBe(encrypted2);
-
-    // But both should decrypt to same message
-    const decryptedBytes1 = await CryptoOperations.decrypt(
-      encrypted1,
-      key.bytes,
-    );
-    const decryptedBytes2 = await CryptoOperations.decrypt(
-      encrypted2,
-      key.bytes,
-    );
-    const decrypted1 = new TextDecoder().decode(decryptedBytes1);
-    const decrypted2 = new TextDecoder().decode(decryptedBytes2);
-
-    expect(decrypted1).toBe(original);
-    expect(decrypted2).toBe(original);
-  });
-
-  test("decrypt fails with wrong key", async () => {
-    const original = "Secret message";
-    const key1 = CryptoOperations.generateKey();
-    const key2 = CryptoOperations.generateKey();
-    const originalBytes = new TextEncoder().encode(original);
-
-    const encrypted = await CryptoOperations.encrypt(originalBytes, key1);
-
-    await expect(
-      CryptoOperations.decrypt(encrypted, key2.bytes),
-    ).rejects.toThrow("Decryption failed");
   });
 });
 

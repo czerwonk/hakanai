@@ -941,7 +941,6 @@ if (typeof module !== "undefined" && module.exports) {
     HakanaiError,
     HakanaiErrorCodes,
     Base64UrlSafe,
-    CryptoOperations,
     ContentAnalysis,
   };
 }
@@ -951,7 +950,6 @@ export {
   HakanaiError,
   HakanaiErrorCodes,
   Base64UrlSafe,
-  CryptoOperations,
   ContentAnalysis,
   type PayloadData,
   type CompatibilityCheck,
