@@ -15,7 +15,17 @@ rustPlatform.buildRustPackage {
   version = workspace.version;
 
   src = lib.cleanSource ../.;
-
+  postPatch = ''
+    # Create a minimal workspace that only includes lib and cli
+    cat > Cargo.toml << EOF
+    [workspace]
+    resolver = "3"
+    members = [
+      "lib",
+      "cli"
+    ]
+    EOF
+  '';
   cargoBuildCommand = "cargo build --release --package hakanai";
   cargoTestCommand = "cargo test --release --package hakanai";
   cargoHash = workspace.cargoHash;
