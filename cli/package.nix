@@ -16,8 +16,8 @@ rustPlatform.buildRustPackage {
 
   src = lib.cleanSource ../.;
 
-  cargoBuildCommand = "cargo build --release --package hakanai";
-  cargoTestCommand = "cargo test --release --package hakanai";
+  cargoBuildCommand = "cd cli && cargo build --release";
+  cargoTestCommand = "cd cli && cargo test --release";
   cargoHash = workspace.cargoHash;
 
   nativeBuildInputs = [
