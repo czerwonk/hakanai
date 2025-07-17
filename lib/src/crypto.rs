@@ -26,10 +26,10 @@ impl CryptoContext {
     /// Creates a new `CryptoContext` with a randomly generated key and nonce.
     fn generate() -> Self {
         let mut key = Zeroizing::new([0u8; AES_GCM_KEY_SIZE]);
-        OsRng.fill_bytes(&mut key.as_mut_slice());
+        OsRng.fill_bytes(key.as_mut_slice());
 
         let mut nonce = Zeroizing::new([0u8; AES_GCM_NONCE_SIZE]);
-        OsRng.fill_bytes(&mut nonce.as_mut_slice());
+        OsRng.fill_bytes(nonce.as_mut_slice());
 
         CryptoContext {
             key: key.to_vec(),
@@ -177,7 +177,7 @@ impl Client<Payload> for CryptoClient {
     ) -> Result<Url, ClientError> {
         let crypto_context = CryptoContext::generate();
         let data = Zeroizing::new(payload.serialize()?);
-        let ciphertext = crypto_context.encrypt(&*data)?;
+        let ciphertext = crypto_context.encrypt(&data)?;
 
         let payload = crypto_context.prepend_nonce_to_ciphertext(&ciphertext);
 
