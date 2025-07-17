@@ -5,7 +5,6 @@
   openssl,
   darwin,
   stdenv,
-  typescript,
 }:
 
 let
@@ -23,7 +22,6 @@ rustPlatform.buildRustPackage {
 
   nativeBuildInputs = [
     pkg-config
-    typescript
   ];
 
   buildInputs =
