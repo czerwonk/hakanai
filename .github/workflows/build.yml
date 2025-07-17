@@ -24,4 +24,4 @@ jobs:
       - name: Install TypeScript
         run: npm install -g typescript
       - name: Build
-        run: cargo build  --workspace --verbose
+        run: cargo build --workspace --verbose
