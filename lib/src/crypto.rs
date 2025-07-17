@@ -11,6 +11,7 @@ use reqwest::Url;
 use zeroize::{Zeroize, Zeroizing};
 
 use crate::client::{Client, ClientError};
+use crate::models::Payload;
 use crate::options::{SecretReceiveOptions, SecretSendOptions};
 
 const AES_GCM_KEY_SIZE: usize = 32; // AES-256 requires a 32-byte key
@@ -165,16 +166,17 @@ impl CryptoClient {
 }
 
 #[async_trait]
-impl Client<Vec<u8>> for CryptoClient {
+impl Client<Payload> for CryptoClient {
     async fn send_secret(
         &self,
         base_url: Url,
-        data: Vec<u8>,
+        payload: Payload,
         ttl: Duration,
         token: String,
         opts: Option<SecretSendOptions>,
     ) -> Result<Url, ClientError> {
         let crypto_context = CryptoContext::generate();
+        let data = Zeroizing::new(payload.serialize()?);
         let ciphertext = crypto_context.encrypt(&*data)?;
 
         let payload = crypto_context.prepend_nonce_to_ciphertext(&ciphertext);
@@ -198,7 +200,7 @@ impl Client<Vec<u8>> for CryptoClient {
         &self,
         url: Url,
         opts: Option<SecretReceiveOptions>,
-    ) -> Result<Vec<u8>, ClientError> {
+    ) -> Result<Payload, ClientError> {
         let crypto_context: CryptoContext = url
             .fragment()
             .ok_or(ClientError::Custom("No key in URL".to_string()))?
@@ -221,13 +223,15 @@ fn append_key_to_link(url: Url, crypto_context: &CryptoContext) -> Url {
 fn decrypt(
     encoded_data: Vec<u8>,
     mut crypto_context: CryptoContext,
-) -> Result<Vec<u8>, ClientError> {
+) -> Result<Payload, ClientError> {
     let payload = Zeroizing::new(base64::prelude::BASE64_STANDARD.decode(encoded_data)?);
 
     crypto_context.import_nonce(&payload)?;
     let ciphertext = &payload[AES_GCM_NONCE_SIZE..];
     let plaintext = Zeroizing::new(crypto_context.decrypt(ciphertext)?);
-    Ok(plaintext.to_vec())
+
+    let payload = Payload::deserialize(&plaintext)?;
+    Ok(payload)
 }
 
 #[cfg(test)]
@@ -340,9 +344,11 @@ mod tests {
         let ttl = Duration::from_secs(3600);
         let token = "test_token".to_string();
 
+        let payload = Payload::from_bytes(secret_data, None);
+
         // Send the secret
         let send_result = crypto_client
-            .send_secret(base_url, secret_data.to_vec(), ttl, token, None)
+            .send_secret(base_url, payload, ttl, token, None)
             .await?;
 
         // Extract the encrypted data that was sent
@@ -357,7 +363,7 @@ mod tests {
             .receive_secret(send_result, None)
             .await?;
 
-        assert_eq!(receive_result, secret_data);
+        assert_eq!(receive_result.decode_bytes()?, secret_data);
         Ok(())
     }
 

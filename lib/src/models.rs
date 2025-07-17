@@ -50,6 +50,14 @@ impl Payload {
     pub fn decode_bytes(&self) -> Result<Vec<u8>, base64::DecodeError> {
         base64::prelude::BASE64_STANDARD.decode(&self.data)
     }
+
+    pub fn serialize(&self) -> Result<Vec<u8>, serde_json::Error> {
+        serde_json::to_vec(self)
+    }
+
+    pub fn deserialize(bytes: &[u8]) -> Result<Self, serde_json::Error> {
+        serde_json::from_slice(bytes)
+    }
 }
 
 impl Zeroize for Payload {
@@ -135,5 +143,164 @@ mod tests {
         let decoded = payload.decode_bytes()?;
         assert_eq!(decoded, bytes);
         Ok(())
+    }
+
+    #[test]
+    fn test_payload_serialization_roundtrip() -> Result<()> {
+        let payload = Payload {
+            data: "test data".to_string(),
+            filename: Some("test.txt".to_string()),
+        };
+
+        let serialized = payload.serialize()?;
+        let deserialized = Payload::deserialize(&serialized)?;
+
+        assert_eq!(deserialized.data, payload.data);
+        assert_eq!(deserialized.filename, payload.filename);
+        Ok(())
+    }
+
+    #[test]
+    fn test_payload_serialize_text_no_filename() -> Result<()> {
+        let payload = Payload {
+            data: base64::prelude::BASE64_STANDARD.encode(b"Hello, world!"),
+            filename: None,
+        };
+
+        let serialized = payload.serialize()?;
+        let deserialized = Payload::deserialize(&serialized)?;
+
+        assert_eq!(deserialized.data, payload.data);
+        assert_eq!(deserialized.filename, None);
+        Ok(())
+    }
+
+    #[test]
+    fn test_payload_serialize_empty() -> Result<()> {
+        let payload = Payload {
+            data: String::new(),
+            filename: None,
+        };
+
+        let serialized = payload.serialize()?;
+        let deserialized = Payload::deserialize(&serialized)?;
+
+        assert_eq!(deserialized.data, "");
+        assert_eq!(deserialized.filename, None);
+        Ok(())
+    }
+
+    #[test]
+    fn test_payload_serialize_special_filename_characters() -> Result<()> {
+        let special_filenames = vec![
+            "file with spaces.txt",
+            "file-with-dashes.pdf",
+            "file_with_underscores.doc",
+            "file.with.multiple.dots.tar.gz",
+            "ファイル.txt", // Japanese characters
+            "файл.txt",     // Cyrillic characters
+            "🎉emoji.txt",  // Emoji
+            "file@symbol.txt",
+            "file#hash.txt",
+            "file$dollar.txt",
+            "file%percent.txt",
+            "file&ampersand.txt",
+            "file(parentheses).txt",
+            "file[brackets].txt",
+            "file{braces}.txt",
+            "file+plus.txt",
+            "file=equals.txt",
+            "file'quote.txt",
+            "file\"doublequote.txt",
+        ];
+
+        for filename in special_filenames {
+            let payload = Payload {
+                data: base64::prelude::BASE64_STANDARD.encode(b"test content"),
+                filename: Some(filename.to_string()),
+            };
+
+            let serialized = payload.serialize()?;
+            let deserialized = Payload::deserialize(&serialized)?;
+
+            assert_eq!(deserialized.filename, Some(filename.to_string()));
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn test_payload_serialize_large_binary() -> Result<()> {
+        // Create a large binary payload (1MB)
+        let large_data = vec![0xDEu8; 1024 * 1024];
+        let payload = Payload::from_bytes(&large_data, Some("large_file.bin".to_string()));
+
+        let serialized = payload.serialize()?;
+        let deserialized = Payload::deserialize(&serialized)?;
+
+        assert_eq!(deserialized.filename, Some("large_file.bin".to_string()));
+        let decoded = deserialized.decode_bytes()?;
+        assert_eq!(decoded.len(), large_data.len());
+        assert_eq!(decoded, large_data);
+        Ok(())
+    }
+
+    #[test]
+    fn test_payload_deserialize_invalid_json() {
+        let invalid_json = b"{ invalid json }";
+        let result = Payload::deserialize(invalid_json);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_payload_deserialize_missing_fields() {
+        // JSON with missing required field
+        let incomplete_json = br#"{"filename": "test.txt"}"#;
+        let result = Payload::deserialize(incomplete_json);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_payload_deserialize_wrong_type() {
+        // JSON with wrong type for data field
+        let wrong_type_json = br#"{"data": 123, "filename": "test.txt"}"#;
+        let result = Payload::deserialize(wrong_type_json);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_payload_from_bytes_without_filename() -> Result<()> {
+        let bytes = b"Secret message";
+        let payload = Payload::from_bytes(bytes, None);
+
+        assert!(payload.filename.is_none());
+        assert_eq!(payload.decode_bytes()?, bytes);
+        Ok(())
+    }
+
+    #[test]
+    fn test_payload_serialize_preserves_base64() -> Result<()> {
+        // Test that serialization preserves the exact base64 encoding
+        let original_bytes = b"Binary\x00\x01\x02\x03data";
+        let payload = Payload::from_bytes(original_bytes, Some("binary.dat".to_string()));
+
+        let serialized = payload.serialize()?;
+        let deserialized = Payload::deserialize(&serialized)?;
+
+        assert_eq!(payload.data, deserialized.data);
+        assert_eq!(deserialized.decode_bytes()?, original_bytes);
+        Ok(())
+    }
+
+    #[test]
+    fn test_payload_zeroize() {
+        let mut payload = Payload {
+            data: "sensitive data".to_string(),
+            filename: Some("secret.txt".to_string()),
+        };
+
+        payload.zeroize();
+
+        assert_eq!(payload.data, "");
+        assert_eq!(payload.filename, Some("".to_string()));
     }
 }
