@@ -20,6 +20,7 @@ const AES_GCM_NONCE_SIZE: usize = 12; // AES-GCM uses a 12-byte nonce
 struct CryptoContext {
     key: Vec<u8>,
     nonce: Vec<u8>,
+    used: bool,
 }
 
 impl CryptoContext {
@@ -34,6 +35,7 @@ impl CryptoContext {
         CryptoContext {
             key: key.to_vec(),
             nonce: nonce.to_vec(),
+            used: false,
         }
     }
 
@@ -47,6 +49,7 @@ impl CryptoContext {
         Ok(Self {
             key: key.to_vec(),
             nonce: vec![0; AES_GCM_NONCE_SIZE], // nonce will be set later
+            used: false,
         })
     }
 
@@ -70,7 +73,17 @@ impl CryptoContext {
         result
     }
 
-    fn encrypt(&self, plaintext: &[u8]) -> Result<Vec<u8>, ClientError> {
+    fn encrypt(&mut self, plaintext: &[u8]) -> Result<Vec<u8>, ClientError> {
+        if self.used {
+            return Err(ClientError::CryptoError(
+                "CryptoContext has already been used for encryption. Create a new context to prevent nonce reuse."
+                    .to_string(),
+            ));
+        }
+
+        // Mark context as used to prevent nonce reuse
+        self.used = true;
+
         let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(self.key.as_ref()));
         let nonce = Nonce::from_slice(&self.nonce);
         Ok(cipher.encrypt(nonce, plaintext)?)
@@ -92,6 +105,7 @@ impl Zeroize for CryptoContext {
     fn zeroize(&mut self) {
         self.key.zeroize();
         self.nonce.zeroize();
+        self.used = false;
     }
 }
 
@@ -175,7 +189,7 @@ impl Client<Payload> for CryptoClient {
         token: String,
         opts: Option<SecretSendOptions>,
     ) -> Result<Url, ClientError> {
-        let crypto_context = CryptoContext::generate();
+        let mut crypto_context = CryptoContext::generate();
         let data = Zeroizing::new(payload.serialize()?);
         let ciphertext = crypto_context.encrypt(&data)?;
 

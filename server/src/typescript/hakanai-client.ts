@@ -88,11 +88,6 @@ interface SecretRequest {
   expires_in: number;
 }
 
-interface HakanaiCryptoKey {
-  readonly bytes: Uint8Array;
-  readonly length: number;
-}
-
 /**
  * Type-safe Base64 URL-Safe encoding utility
  * Uses modern browser APIs for better performance and reliability
@@ -340,10 +335,27 @@ class SecureMemory {
 }
 
 /**
- * Type-safe cryptographic operations using Web Crypto API
- * @class CryptoOperations
+ * Cryptographic context that encapsulates all crypto operations and automatically cleans up sensitive data
+ * Similar to Rust's CryptoContext pattern - all crypto state is contained and automatically disposed
+ * @class CryptoContext
  */
-class CryptoOperations {
+class CryptoContext {
+  private readonly keyBytes: Uint8Array;
+  private readonly cryptoKey: CryptoKey;
+  private nonce: Uint8Array;
+  private isDisposed = false;
+  private isUsed = false;
+
+  private constructor(
+    keyBytes: Uint8Array,
+    cryptoKey: CryptoKey,
+    nonce: Uint8Array,
+  ) {
+    this.keyBytes = keyBytes;
+    this.cryptoKey = cryptoKey;
+    this.nonce = nonce;
+  }
+
   /**
    * Get crypto instance (browser environment)
    * @private
@@ -358,118 +370,119 @@ class CryptoOperations {
   }
 
   /**
-   * Generate a random 256-bit AES key
-   * @returns Cryptographic key with 32 random bytes
+   * Create a new CryptoContext with a randomly generated key and nonce
+   * @returns Promise resolving to a new CryptoContext
+   * @throws {Error} If crypto operations fail
    */
-  static generateKey(): HakanaiCryptoKey {
-    const bytes = new Uint8Array(KEY_LENGTH);
-    CryptoOperations.getCrypto().getRandomValues(bytes);
-    return Object.freeze({ bytes, length: KEY_LENGTH });
-  }
+  static async generate(): Promise<CryptoContext> {
+    const keyBytes = new Uint8Array(KEY_LENGTH);
+    CryptoContext.getCrypto().getRandomValues(keyBytes);
 
-  /**
-   * Import a raw key for use with WebCrypto API
-   */
-  static async importKey(rawKey: Uint8Array): Promise<CryptoKey> {
-    if (!(rawKey instanceof Uint8Array)) {
-      throw new Error("Key must be a Uint8Array");
-    }
+    const nonce = new Uint8Array(NONCE_LENGTH);
+    CryptoContext.getCrypto().getRandomValues(nonce);
 
-    if (rawKey.length !== KEY_LENGTH) {
-      throw new Error(`Invalid key length: must be ${KEY_LENGTH} bytes`);
-    }
-
-    return CryptoOperations.getCrypto().subtle.importKey(
+    const cryptoKey = await CryptoContext.getCrypto().subtle.importKey(
       "raw",
-      rawKey,
+      keyBytes,
       { name: "AES-GCM", length: KEY_LENGTH * 8 },
       false,
       ["encrypt", "decrypt"],
     );
+
+    return new CryptoContext(keyBytes, cryptoKey, nonce);
   }
 
   /**
-   * Encrypt data with AES-256-GCM
-   * @param plaintextBytes - Raw bytes to encrypt
-   * @param key - 256-bit encryption key
-   * @returns Base64-encoded ciphertext with prepended nonce
-   * @throws {Error} If encryption fails
+   * Create a CryptoContext from an existing key (for decryption)
+   * @param keyBytes - 32-byte encryption key
+   * @returns Promise resolving to a new CryptoContext
+   * @throws {Error} If key is invalid or crypto operations fail
    */
-  static async encrypt(
-    plaintextBytes: Uint8Array,
-    key: HakanaiCryptoKey,
-  ): Promise<string> {
-    if (
-      !plaintextBytes ||
-      typeof plaintextBytes !== "object" ||
-      typeof plaintextBytes.byteLength !== "number"
-    ) {
+  static async fromKey(keyBytes: Uint8Array): Promise<CryptoContext> {
+    if (!(keyBytes instanceof Uint8Array)) {
+      throw new Error("Key must be a Uint8Array");
+    }
+
+    if (keyBytes.length !== KEY_LENGTH) {
+      throw new Error(`Invalid key length: must be ${KEY_LENGTH} bytes`);
+    }
+
+    // Create a copy to avoid external modification
+    const keyCopy = new Uint8Array(keyBytes);
+
+    // For decryption, nonce will be extracted from encrypted data
+    const nonce = new Uint8Array(NONCE_LENGTH);
+
+    const cryptoKey = await CryptoContext.getCrypto().subtle.importKey(
+      "raw",
+      keyCopy,
+      { name: "AES-GCM", length: KEY_LENGTH * 8 },
+      false,
+      ["encrypt", "decrypt"],
+    );
+
+    return new CryptoContext(keyCopy, cryptoKey, nonce);
+  }
+
+  /**
+   * Encrypt data with AES-256-GCM using the context's nonce
+   * @param plaintextBytes - Raw bytes to encrypt
+   * @returns Base64-encoded ciphertext with prepended nonce
+   * @throws {Error} If encryption fails, context is disposed, or context already used
+   */
+  async encrypt(plaintextBytes: Uint8Array): Promise<string> {
+    this.checkDisposed();
+
+    if (this.isUsed) {
+      throw new Error(
+        "CryptoContext has already been used for encryption. Create a new context to prevent nonce reuse.",
+      );
+    }
+
+    if (!(plaintextBytes instanceof Uint8Array)) {
       throw new Error("Plaintext must be a Uint8Array");
     }
 
-    // Generate random nonce
-    const nonce = new Uint8Array(NONCE_LENGTH);
-    CryptoOperations.getCrypto().getRandomValues(nonce);
+    // Mark context as used to prevent nonce reuse
+    this.isUsed = true;
 
-    const cryptoKey = await CryptoOperations.importKey(key.bytes);
+    const ciphertext = await CryptoContext.getCrypto().subtle.encrypt(
+      { name: "AES-GCM", iv: this.nonce },
+      this.cryptoKey,
+      plaintextBytes,
+    );
 
-    let result: string;
-    try {
-      const ciphertext = await CryptoOperations.getCrypto().subtle.encrypt(
-        { name: "AES-GCM", iv: nonce },
-        cryptoKey,
-        plaintextBytes,
-      );
+    // Combine nonce and ciphertext
+    const combined = new Uint8Array(this.nonce.length + ciphertext.byteLength);
+    combined.set(this.nonce);
+    combined.set(new Uint8Array(ciphertext), this.nonce.length);
 
-      // Combine nonce and ciphertext
-      const combined = new Uint8Array(nonce.length + ciphertext.byteLength);
-      combined.set(nonce);
-      combined.set(new Uint8Array(ciphertext), nonce.length);
+    // Encode to standard base64 using chunked approach
+    let binaryString = "";
+    const chunkSize = 8192;
 
-      // Encode to standard base64 using chunked approach
-      let binaryString = "";
-      const chunkSize = 8192;
-
-      for (let i = 0; i < combined.length; i += chunkSize) {
-        const chunk = combined.subarray(i, i + chunkSize);
-        binaryString += String.fromCharCode(...chunk);
-      }
-
-      result = btoa(binaryString);
-
-      SecureMemory.clearUint8Array(combined);
-    } finally {
-      SecureMemory.clearUint8Array(nonce);
+    for (let i = 0; i < combined.length; i += chunkSize) {
+      const chunk = combined.subarray(i, i + chunkSize);
+      binaryString += String.fromCharCode(...chunk);
     }
 
-    return result;
+    return btoa(binaryString);
   }
 
   /**
-   * Decrypt an AES-256-GCM encrypted message
+   * Decrypt AES-256-GCM encrypted data
    * @param encryptedData - Base64-encoded ciphertext with nonce
-   * @param key - 256-bit decryption key
    * @returns Decrypted plaintext as bytes
-   * @throws {Error} If decryption fails or key is invalid
+   * @throws {Error} If decryption fails or context is disposed
    */
-  static async decrypt(
-    encryptedData: string,
-    key: Uint8Array,
-  ): Promise<Uint8Array> {
+  async decrypt(encryptedData: string): Promise<Uint8Array> {
+    this.checkDisposed();
+
     if (typeof encryptedData !== "string") {
       throw new Error("Encrypted data must be a string");
     }
 
-    if (
-      !key ||
-      typeof key !== "object" ||
-      typeof key.byteLength !== "number" ||
-      key.length !== KEY_LENGTH
-    ) {
-      throw new Error(`Key must be a ${KEY_LENGTH}-byte Uint8Array`);
-    }
-
-    // Decode from standard base64 more efficiently
+    // Decode from standard base64
     const binaryString = atob(encryptedData);
     const combined = new Uint8Array(binaryString.length);
 
@@ -481,28 +494,52 @@ class CryptoOperations {
       throw new Error("Invalid encrypted data: too short");
     }
 
-    // Extract nonce and ciphertext
-    const nonce = combined.slice(0, NONCE_LENGTH);
+    // Extract nonce and update context nonce
+    this.nonce.set(combined.slice(0, NONCE_LENGTH));
     const ciphertext = combined.slice(NONCE_LENGTH);
 
-    const cryptoKey = await CryptoOperations.importKey(key);
-
-    let result: Uint8Array;
     try {
-      const plaintextBytes = await CryptoOperations.getCrypto().subtle.decrypt(
-        { name: "AES-GCM", iv: nonce },
-        cryptoKey,
+      const plaintextBytes = await CryptoContext.getCrypto().subtle.decrypt(
+        { name: "AES-GCM", iv: this.nonce },
+        this.cryptoKey,
         ciphertext,
       );
 
-      result = new Uint8Array(plaintextBytes);
+      return new Uint8Array(plaintextBytes);
     } catch (error) {
       throw new Error("Decryption failed: invalid key or corrupted data");
-    } finally {
-      SecureMemory.clearArrays(combined, nonce, ciphertext);
     }
+  }
 
-    return result;
+  /**
+   * Get the encryption key as URL-safe base64 string
+   * @returns Base64url-encoded key
+   * @throws {Error} If context is disposed
+   */
+  getKeyBase64(): string {
+    this.checkDisposed();
+    return Base64UrlSafe.encode(this.keyBytes);
+  }
+
+  /**
+   * Dispose of the crypto context and clear all sensitive data
+   * After calling this method, the context cannot be used for crypto operations
+   */
+  dispose(): void {
+    if (!this.isDisposed) {
+      SecureMemory.clearArrays(this.keyBytes, this.nonce);
+      this.isDisposed = true;
+    }
+  }
+
+  /**
+   * Check if the context has been disposed
+   * @private
+   */
+  private checkDisposed(): void {
+    if (this.isDisposed) {
+      throw new Error("CryptoContext has been disposed and cannot be used");
+    }
   }
 }
 
@@ -718,18 +755,20 @@ class HakanaiClient {
   ): Promise<string> {
     this.validateSendPayloadParams(payload, ttl, authToken);
 
-    const key = CryptoOperations.generateKey();
-
-    let result: string;
+    const cryptoContext = await CryptoContext.generate();
     try {
       const secretPayload = {
         data: payload.data,
         filename: payload.filename || null,
       };
       const payloadJson = JSON.stringify(secretPayload);
-      const payloadBytes = new TextEncoder().encode(payloadJson);
+      const encodedBytes = new TextEncoder().encode(payloadJson);
+      const payloadBytes =
+        encodedBytes instanceof Uint8Array
+          ? encodedBytes
+          : new Uint8Array(encodedBytes);
 
-      const encryptedData = await CryptoOperations.encrypt(payloadBytes, key);
+      const encryptedData = await cryptoContext.encrypt(payloadBytes);
 
       // Clear payload bytes after encryption
       SecureMemory.clearUint8Array(payloadBytes);
@@ -740,14 +779,10 @@ class HakanaiClient {
         authToken,
       );
 
-      const keyBase64 = Base64UrlSafe.encode(key.bytes);
-
-      result = `${this.baseUrl}/s/${secretId}#${keyBase64}`;
+      return `${this.baseUrl}/s/${secretId}#${cryptoContext.getKeyBase64()}`;
     } finally {
-      SecureMemory.clearUint8Array(key.bytes);
+      cryptoContext.dispose();
     }
-
-    return result;
   }
 
   /**
@@ -850,14 +885,15 @@ class HakanaiClient {
       throw new Error("Empty response from server");
     }
 
-    let payload: PayloadData;
+    const cryptoContext = await CryptoContext.fromKey(key);
     try {
-      const decryptedBytes = await CryptoOperations.decrypt(encryptedData, key);
+      const decryptedBytes = await cryptoContext.decrypt(encryptedData);
       const decryptedJson = new TextDecoder().decode(decryptedBytes);
 
       // Clear decrypted bytes after converting to string
       SecureMemory.clearUint8Array(decryptedBytes);
 
+      let payload: PayloadData;
       try {
         payload = JSON.parse(decryptedJson);
       } catch (error) {
@@ -872,12 +908,11 @@ class HakanaiClient {
       ) {
         throw new Error("Invalid payload structure");
       }
-    } finally {
-      // Always clear the key after use
-      SecureMemory.clearUint8Array(key);
-    }
 
-    return new PayloadDataImpl(payload.data, payload.filename || undefined);
+      return new PayloadDataImpl(payload.data, payload.filename || undefined);
+    } finally {
+      cryptoContext.dispose();
+    }
   }
 
   /**
@@ -887,49 +922,6 @@ class HakanaiClient {
    */
   createPayload(filename?: string): PayloadData {
     return new PayloadDataImpl("", filename);
-  }
-
-  /**
-   * Legacy methods for backward compatibility
-   */
-
-  /**
-   * @deprecated Use CryptoOperations.generateKey() instead
-   */
-  async generateKey(): Promise<Uint8Array> {
-    return CryptoOperations.generateKey().bytes;
-  }
-
-  /**
-   * @deprecated Use CryptoOperations.importKey() instead
-   */
-  async importKey(rawKey: Uint8Array): Promise<CryptoKey> {
-    return CryptoOperations.importKey(rawKey);
-  }
-
-  /**
-   * @deprecated Use CryptoOperations.encrypt() instead
-   */
-  async encrypt(plaintext: string, key: Uint8Array): Promise<string> {
-    const plaintextBytes = new TextEncoder().encode(plaintext);
-    const result = await CryptoOperations.encrypt(plaintextBytes, {
-      bytes: key,
-      length: KEY_LENGTH,
-    });
-    // Clear plaintext bytes after encryption
-    SecureMemory.clearUint8Array(plaintextBytes);
-    return result;
-  }
-
-  /**
-   * @deprecated Use CryptoOperations.decrypt() instead
-   */
-  async decrypt(encryptedData: string, key: Uint8Array): Promise<string> {
-    const decryptedBytes = await CryptoOperations.decrypt(encryptedData, key);
-    const result = new TextDecoder().decode(decryptedBytes);
-    // Clear decrypted bytes after converting to string
-    SecureMemory.clearUint8Array(decryptedBytes);
-    return result;
   }
 }
 
@@ -952,5 +944,4 @@ export {
   Base64UrlSafe,
   ContentAnalysis,
   type PayloadData,
-  type CompatibilityCheck,
 };

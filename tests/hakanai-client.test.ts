@@ -348,6 +348,7 @@ describe("HakanaiClient Integration", () => {
     expect(keyBytes).toHaveLength(32);
   });
 
+
   test("PayloadData decode() method works correctly", async () => {
     const originalText = "Test message with unicode: 🔐 åëïöü";
     const filename = "test.txt";
