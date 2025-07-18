@@ -103,12 +103,6 @@ impl DataStore for RedisClient {
 #[async_trait]
 impl TokenStore for RedisClient {
     #[instrument(skip(self), err)]
-    async fn is_empty(&self) -> Result<bool, TokenError> {
-        let keys: Vec<String> = self.con.clone().keys("token:*").await?;
-        Ok(keys.is_empty())
-    }
-
-    #[instrument(skip(self), err)]
     async fn get_token(&self, token_hash: &str) -> Result<Option<TokenData>, TokenError> {
         let key = self.token_key(token_hash);
         let value: Option<String> = self.con.clone().get(key).await?;
@@ -162,7 +156,7 @@ impl TokenStore for RedisClient {
     }
 
     #[instrument(skip(self), err)]
-    async fn token_count(&self) -> Result<usize, TokenError> {
+    async fn user_token_count(&self) -> Result<usize, TokenError> {
         let keys: Vec<String> = self.con.clone().keys("token:*").await?;
         Ok(keys.len())
     }

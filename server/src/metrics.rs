@@ -56,7 +56,7 @@ impl MetricsCollector {
             loop {
                 interval.tick().await;
 
-                match token_store.token_count().await {
+                match token_store.user_token_count().await {
                     Ok(count) => {
                         token_count_gauge.record(count as u64, &[]);
                         debug!("Updated token count metric: {}", count);
@@ -78,7 +78,7 @@ impl MetricsCollector {
         &self,
         token_store: &T,
     ) -> Result<(), TokenError> {
-        let count = token_store.token_count().await?;
+        let count = token_store.user_token_count().await?;
         self.token_count_gauge.record(count as u64, &[]);
         debug!("Manually updated token count metric: {}", count);
         Ok(())

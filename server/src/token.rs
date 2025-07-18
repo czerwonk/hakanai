@@ -53,9 +53,6 @@ impl TokenData {
 /// Abstraction for token storage operations.
 #[async_trait]
 pub trait TokenStore: Send + Sync {
-    /// Check if token store is empty.
-    async fn is_empty(&self) -> Result<bool, TokenError>;
-
     /// Gets token metadata by its hash.
     async fn get_token(&self, token_hash: &str) -> Result<Option<TokenData>, TokenError>;
 
@@ -80,7 +77,7 @@ pub trait TokenStore: Send + Sync {
     async fn store_admin_token(&self, token_hash: &str) -> Result<(), TokenError>;
 
     /// Count the number of active user tokens.
-    async fn token_count(&self) -> Result<usize, TokenError>;
+    async fn user_token_count(&self) -> Result<usize, TokenError>;
 }
 
 #[async_trait]
@@ -116,7 +113,7 @@ impl<T: TokenStore> TokenManager<T> {
 
     /// Create default token if store is empty.
     pub async fn create_default_token_if_none(&self) -> Result<Option<String>, TokenError> {
-        if !self.token_store.is_empty().await? {
+        if self.token_store.user_token_count().await? > 0 {
             return Ok(None);
         }
 
@@ -271,13 +268,6 @@ mod tests {
 
     #[async_trait]
     impl TokenStore for MockTokenStore {
-        async fn is_empty(&self) -> Result<bool, TokenError> {
-            if *self.should_fail.lock().await {
-                return Err(TokenError::Custom("Mock failure".to_string()));
-            }
-            Ok(self.tokens.lock().await.is_empty())
-        }
-
         async fn get_token(&self, token_hash: &str) -> Result<Option<TokenData>, TokenError> {
             if *self.should_fail.lock().await {
                 return Err(TokenError::Custom("Mock failure".to_string()));
@@ -337,7 +327,7 @@ mod tests {
             Ok(())
         }
 
-        async fn token_count(&self) -> Result<usize, TokenError> {
+        async fn user_token_count(&self) -> Result<usize, TokenError> {
             if *self.should_fail.lock().await {
                 return Err(TokenError::Custom("Mock failure".to_string()));
             }
@@ -382,7 +372,7 @@ mod tests {
         assert!(result.is_none());
 
         // Verify no additional token was created
-        assert_eq!(mock_store.token_count().await, 1);
+        assert_eq!(mock_store.user_token_count().await.unwrap(), 1);
         Ok(())
     }
 

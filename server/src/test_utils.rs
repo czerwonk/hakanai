@@ -248,13 +248,6 @@ impl Default for MockTokenStore {
 
 #[async_trait]
 impl TokenStore for MockTokenStore {
-    async fn is_empty(&self) -> Result<bool, TokenError> {
-        if *self.should_fail.lock().unwrap() {
-            return Err(TokenError::Custom("Mock failure".to_string()));
-        }
-        Ok(*self.is_empty.lock().unwrap())
-    }
-
     async fn get_token(&self, token_hash: &str) -> Result<Option<TokenData>, TokenError> {
         if *self.should_fail.lock().unwrap() {
             return Err(TokenError::Custom("Mock failure".to_string()));
@@ -310,7 +303,7 @@ impl TokenStore for MockTokenStore {
         Ok(())
     }
 
-    async fn token_count(&self) -> Result<usize, TokenError> {
+    async fn user_token_count(&self) -> Result<usize, TokenError> {
         if *self.should_fail.lock().unwrap() {
             return Err(TokenError::Custom("Mock failure".to_string()));
         }
@@ -416,7 +409,7 @@ mod tests {
             );
 
         // Test token count
-        let count = mock.token_count().await.unwrap();
+        let count = mock.user_token_count().await.unwrap();
         assert_eq!(count, 5);
 
         // Test admin token
@@ -430,8 +423,8 @@ mod tests {
         let token_data = mock.get_token("token_hash").await.unwrap().unwrap();
         assert_eq!(token_data.upload_size_limit, Some(1024));
 
-        // Test is_empty
-        assert!(!mock.is_empty().await.unwrap());
+        // Test is_empty (token count > 0)
+        assert!(mock.user_token_count().await.unwrap() > 0);
     }
 
     #[tokio::test]
@@ -439,8 +432,7 @@ mod tests {
         let mock = MockTokenStore::new().with_failures();
 
         // All operations should fail
-        assert!(mock.token_count().await.is_err());
-        assert!(mock.is_empty().await.is_err());
+        assert!(mock.user_token_count().await.is_err());
         assert!(mock.get_token("any").await.is_err());
         assert!(
             mock.store_token(
@@ -460,16 +452,15 @@ mod tests {
     async fn test_mock_token_store_empty_store() {
         let mock = MockTokenStore::new().with_empty_store();
 
-        assert!(mock.is_empty().await.unwrap());
-        assert_eq!(mock.token_count().await.unwrap(), 0);
+        assert_eq!(mock.user_token_count().await.unwrap(), 0);
     }
 
     #[tokio::test]
     async fn test_mock_token_store_non_empty_store() {
         let mock = MockTokenStore::new().with_non_empty_store(10);
 
-        assert!(!mock.is_empty().await.unwrap());
-        assert_eq!(mock.token_count().await.unwrap(), 10);
+        assert!(mock.user_token_count().await.unwrap() > 0);
+        assert_eq!(mock.user_token_count().await.unwrap(), 10);
     }
 
     #[tokio::test]
@@ -482,15 +473,14 @@ mod tests {
         );
 
         // Verify initial state
-        assert_eq!(mock.token_count().await.unwrap(), 5);
+        assert_eq!(mock.user_token_count().await.unwrap(), 5);
         assert!(mock.get_token("token1").await.unwrap().is_some());
 
         // Clear tokens
         mock.clear_all_user_tokens().await.unwrap();
 
         // Verify cleared state
-        assert_eq!(mock.token_count().await.unwrap(), 0);
-        assert!(mock.is_empty().await.unwrap());
+        assert_eq!(mock.user_token_count().await.unwrap(), 0);
     }
 
     #[tokio::test]
@@ -499,12 +489,12 @@ mod tests {
 
         // Test dynamic updates
         mock.set_token_count(15);
-        assert_eq!(mock.token_count().await.unwrap(), 15);
+        assert_eq!(mock.user_token_count().await.unwrap(), 15);
 
         mock.set_should_fail(true);
-        assert!(mock.token_count().await.is_err());
+        assert!(mock.user_token_count().await.is_err());
 
         mock.set_should_fail(false);
-        assert_eq!(mock.token_count().await.unwrap(), 15);
+        assert_eq!(mock.user_token_count().await.unwrap(), 15);
     }
 }
