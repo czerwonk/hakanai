@@ -31,6 +31,7 @@ docker-compose.override.yml
 server/src/includes/docs_generated.html
 server/src/includes/create-secret.html
 server/src/includes/get-secret.html
+server/src/includes/homepage.html
 
 # TypeScript compiled JavaScript files
 server/src/includes/hakanai-client.js
@@ -39,3 +40,4 @@ server/src/includes/i18n.js
 server/src/includes/get-secret.js
 server/src/includes/create-secret.js
 server/src/includes/types.js
+server/src/includes/homepage.js

@@ -14,10 +14,12 @@ const translations: Translations = {
     // Page titles
     "page.create.title": "Hakanai - Create Secret",
     "page.get.title": "Hakanai - Retrieve Secret",
+    "page.homepage.title": "Hakanai - One-Time Secret Sharing",
 
     // Headers
     "header.create": "Create One-Time Secret",
     "header.get": "One-Time Secret",
+    "header.homepage": "Hakanai - One-Time Secret Sharing",
 
     // Labels
     "label.secret": "Secret message:",
@@ -126,6 +128,29 @@ const translations: Translations = {
       "Create and share one-time secrets securely with Hakanai - zero-knowledge secret sharing",
     "meta.get":
       "Retrieve your one-time secret securely with Hakanai - zero-knowledge secret sharing",
+    "meta.homepage": "Hakanai - Zero-knowledge one-time secret sharing service",
+
+    // Homepage content
+    "homepage.tagline": "Share secrets securely with zero-knowledge encryption",
+    "homepage.create.description":
+      "Share text messages or files securely. All encryption happens in your browser.",
+    "homepage.create.button": "Create Secret",
+    "homepage.retrieve.description":
+      "Have a secret URL? Enter it here to decrypt and view your one-time secret.",
+    "homepage.retrieve.button": "Retrieve Secret",
+    "homepage.how.feature1.title": "Zero-Knowledge",
+    "homepage.how.feature1.description":
+      "Your secrets are encrypted in your browser before being sent",
+    "homepage.how.feature2.title": "One-Time",
+    "homepage.how.feature2.description":
+      "Secrets are destroyed after being viewed once",
+    "homepage.how.feature3.title": "Secure",
+    "homepage.how.feature3.description":
+      "AES-256-GCM encryption with secure key generation",
+    "homepage.how.feature4.title": "Private",
+    "homepage.how.feature4.description":
+      "The server never sees your unencrypted data",
+    "homepage.docs.link": "View API Documentation",
 
     // Error codes
     "error.SEND_FAILED": "Failed to send secret",
@@ -143,10 +168,12 @@ const translations: Translations = {
     // Page titles
     "page.create.title": "Hakanai - Secret erstellen",
     "page.get.title": "Hakanai - Secret abrufen",
+    "page.homepage.title": "Hakanai - Einmal-Secret-Sharing",
 
     // Headers
     "header.create": "Einmal-Secret erstellen",
     "header.get": "Einmal-Secret",
+    "header.homepage": "Hakanai - Einmal-Secret-Sharing",
 
     // Labels
     "label.secret": "Text:",
@@ -172,7 +199,7 @@ const translations: Translations = {
     "helper.url":
       "Der geheime Schlüssel nach dem # wird niemals an den Server gesendet",
     "helper.secret":
-      "Die Nachricht wird verschlüsselt, bevor sie Ihren Browser verlässt",
+      "Die Nachricht wird verschlüsselt, bevor sie den Browser verlässt",
     "helper.fileSelect": "Die Datei wird vor dem Upload verschlüsselt.",
     "helper.token":
       "Kann leer gelassen werden, wenn keine Authentifizierung erforderlich ist",
@@ -208,7 +235,7 @@ const translations: Translations = {
     "msg.retrieving": "Secret wird abgerufen...",
     "msg.jsRequired": "JavaScript erforderlich",
     "msg.jsRequiredDetail":
-      "Diese Anwendung benötigt JavaScript, um Secrets sicher in Ihrem Browser zu verschlüsseln.",
+      "Diese Anwendung benötigt JavaScript, um Secrets sicher im Browser zu verschlüsseln.",
     "msg.emptySecret": "Bitte den Text für das Secret eingeben",
     "msg.emptyFile": "Bitte eine Datei zum Teilen auswählen",
     "msg.createFailed": "Fehler beim Erstellen des Secrets",
@@ -260,6 +287,30 @@ const translations: Translations = {
     // Meta descriptions
     "meta.create": "One-Time-Secrets sicher erstellen und teilen mit Hakanai",
     "meta.get": "One-Time-Secrets sicher teilen mit Hakanai",
+    "meta.homepage": "Hakanai - Zero-Knowledge One-Time Secret-Sharing Service",
+
+    // Homepage content
+    "homepage.tagline":
+      "Secrets sicher teilen mit Zero-Knowledge-Verschlüsselung",
+    "homepage.create.description":
+      "Textnachrichten oder Dateien sicher teilen. Die Verschlüsselung erfolgt im Browser.",
+    "homepage.create.button": "Secret erstellen",
+    "homepage.retrieve.description":
+      "Hier kann der Secret-Link eingegeben werden, um das Einmal-Secret zu entschlüsseln und anzuzeigen.",
+    "homepage.retrieve.button": "Secret abrufen",
+    "homepage.how.feature1.title": "Zero-Knowledge",
+    "homepage.how.feature1.description":
+      "Die Secrets werden im Browser verschlüsselt, bevor sie gesendet werden",
+    "homepage.how.feature2.title": "Einmalig",
+    "homepage.how.feature2.description":
+      "Secrets werden nach dem ersten Abruf gelöscht",
+    "homepage.how.feature3.title": "Sicher",
+    "homepage.how.feature3.description":
+      "AES-256-GCM-Verschlüsselung mit sicherer Schlüsselerzeugung",
+    "homepage.how.feature4.title": "Privat",
+    "homepage.how.feature4.description":
+      "Der Server sieht niemals die unverschlüsselten Daten",
+    "homepage.docs.link": "API-Dokumentation anzeigen",
 
     // Error codes
     "error.SEND_FAILED": "Fehler beim Senden des Secrets",
@@ -353,6 +404,7 @@ class I18n {
 
   private translateElements(): void {
     this.translateTextContent();
+    this.translateHtmlContent();
     this.translatePlaceholders();
     this.translateAriaLabels();
   }
@@ -365,6 +417,18 @@ class I18n {
         element.classList.add("i18n-loaded");
       }
     });
+  }
+
+  private translateHtmlContent(): void {
+    document
+      .querySelectorAll<HTMLElement>("[data-i18n-html]")
+      .forEach((element) => {
+        const key = element.getAttribute("data-i18n-html");
+        if (key) {
+          element.innerHTML = this.t(key);
+          element.classList.add("i18n-loaded");
+        }
+      });
   }
 
   private translatePlaceholders(): void {
@@ -386,6 +450,17 @@ class I18n {
       .querySelectorAll<HTMLElement>("[data-i18n-aria-label]")
       .forEach((element) => {
         const key = element.getAttribute("data-i18n-aria-label");
+        if (key) {
+          element.setAttribute("aria-label", this.t(key));
+          element.classList.add("i18n-loaded");
+        }
+      });
+
+    // Also handle data-i18n-aria attributes
+    document
+      .querySelectorAll<HTMLElement>("[data-i18n-aria]")
+      .forEach((element) => {
+        const key = element.getAttribute("data-i18n-aria");
         if (key) {
           element.setAttribute("aria-label", this.t(key));
           element.classList.add("i18n-loaded");

@@ -272,9 +272,12 @@ fn generate_static_html_files() -> Result<()> {
         .context("failed to read create-secret template")?;
     let get_secret_template = fs::read_to_string("src/templates/get-secret.html")
         .context("failed to read get-secret template")?;
+    let homepage_template = fs::read_to_string("src/templates/homepage.html")
+        .context("failed to read homepage template")?;
 
     tt.add_template("create-secret", &create_secret_template)?;
     tt.add_template("get-secret", &get_secret_template)?;
+    tt.add_template("homepage", &homepage_template)?;
 
     let context = create_version_context();
 
@@ -284,7 +287,8 @@ fn generate_static_html_files() -> Result<()> {
         &context,
         "src/includes/create-secret.html",
     )?;
-    generate_html_file(&tt, "get-secret", &context, "src/includes/get-secret.html")
+    generate_html_file(&tt, "get-secret", &context, "src/includes/get-secret.html")?;
+    generate_html_file(&tt, "homepage", &context, "src/includes/homepage.html")
 }
 
 fn create_version_context() -> HashMap<&'static str, String> {

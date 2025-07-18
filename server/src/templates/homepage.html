@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Hakanai - Zero-knowledge one-time secret sharing service"
+      data-i18n-content="meta.homepage"
+    />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <title data-i18n-title="page.homepage.title">
+      Hakanai - One-Time Secret Sharing
+    </title>
+    <link rel="stylesheet" href="/style.css?v={cache_buster}" />
+    <script type="module" src="/i18n.js?v={cache_buster}"></script>
+  </head>
+  <body>
+    <main class="container homepage-container">
+      <header class="header">
+        <div class="homepage-logo-section">
+          <a href="/" data-i18n-aria="aria.logoHome">
+            <img src="/logo.svg" alt="Logo" width="140" height="110" />
+          </a>
+          <div class="header-text">
+            <h1 id="main-heading" data-i18n="header.homepage">
+              Hakanai - One-Time Secret Sharing
+            </h1>
+            <p class="tagline" data-i18n="homepage.tagline">
+              Share secrets securely with zero-knowledge encryption
+            </p>
+          </div>
+        </div>
+        <select id="language-switcher" aria-label="Language"></select>
+      </header>
+      <section aria-labelledby="main-heading" class="homepage-content">
+        <div class="action-cards">
+          <div class="action-card">
+            <a
+              href="/create"
+              class="button primary"
+              data-i18n="homepage.create.button"
+            >
+              Create Secret
+            </a>
+            <p data-i18n="homepage.create.description">
+              Share text messages or files securely. All encryption happens in
+              your browser.
+            </p>
+          </div>
+
+          <div class="action-card">
+            <a
+              href="/get"
+              class="button secondary"
+              data-i18n="homepage.retrieve.button"
+            >
+              Retrieve Secret
+            </a>
+            <p data-i18n="homepage.retrieve.description">
+              Have a secret URL? Enter it here to decrypt and view your one-time
+              secret.
+            </p>
+          </div>
+        </div>
+
+        <div class="info-section">
+          <dl class="feature-list">
+            <dt data-i18n="homepage.how.feature1.title">Zero-Knowledge</dt>
+            <dd data-i18n="homepage.how.feature1.description">
+              Your secrets are encrypted in your browser before being sent
+            </dd>
+
+            <dt data-i18n="homepage.how.feature2.title">One-Time</dt>
+            <dd data-i18n="homepage.how.feature2.description">
+              Secrets are destroyed after being viewed once
+            </dd>
+
+            <dt data-i18n="homepage.how.feature3.title">Secure</dt>
+            <dd data-i18n="homepage.how.feature3.description">
+              AES-256-GCM encryption with secure key generation
+            </dd>
+
+            <dt data-i18n="homepage.how.feature4.title">Private</dt>
+            <dd data-i18n="homepage.how.feature4.description">
+              The server never sees your unencrypted data
+            </dd>
+          </dl>
+        </div>
+
+        <div class="docs-link">
+          <a href="/docs" data-i18n="homepage.docs.link">
+            View API Documentation
+          </a>
+        </div>
+      </section>
+      <footer class="footer">
+        <div class="footer-content">
+          <div class="footer-line">
+            <span class="project-name">Hakanai</span>
+            <span class="version">v{version}</span>
+          </div>
+          <div class="footer-line">
+            <a href="https://github.com/czerwonk/hakanai" class="github-link"
+              >Github</a
+            >
+          </div>
+        </div>
+      </footer>
+    </main>
+    <noscript>
+      <div class="container">
+        <div class="result error">
+          <h3 data-i18n="msg.jsRequired">JavaScript Required</h3>
+          <p data-i18n="msg.jsRequiredDetail">
+            This application requires JavaScript to encrypt secrets securely in
+            your browser.
+          </p>
+        </div>
+      </div>
+    </noscript>
+
+    <script type="module" src="/homepage.js?v={cache_buster}"></script>
+  </body>
+</html>

@@ -8,7 +8,8 @@ const DEFAULT_CACHE_MAX_AGE: u64 = 604800; // 7 days
 /// This function registers the API routes and sets up the application data,
 /// including the data store that will be shared across all handlers.
 pub fn configure(cfg: &mut web::ServiceConfig) {
-    cfg.route("/", web::get().to(serve_get_secret_html))
+    cfg.route("/", web::get().to(serve_homepage))
+        .route("/get", web::get().to(serve_get_secret_html))
         .route("/common-utils.js", web::get().to(serve_common_utils_js))
         .route("/create", web::get().to(serve_create_secret_html))
         .route("/create-secret.js", web::get().to(serve_create_secret_js))
@@ -20,7 +21,8 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
         .route("/logo.svg", web::get().to(serve_logo))
         .route("/openapi.json", web::get().to(serve_openapi_json))
         .route("/style.css", web::get().to(serve_css))
-        .route("/types.js", web::get().to(serve_types_js));
+        .route("/types.js", web::get().to(serve_types_js))
+        .route("/homepage.js", web::get().to(serve_homepage_js));
 }
 
 fn serve_with_caching_header(content: &[u8], content_type: &str, max_age: u64) -> HttpResponse {
@@ -133,6 +135,23 @@ async fn serve_openapi_json() -> impl Responder {
 async fn serve_types_js() -> impl Responder {
     serve_with_caching_header(
         include_bytes!("includes/types.js"),
+        "application/javascript",
+        DEFAULT_CACHE_MAX_AGE,
+    )
+}
+
+/// Serves the homepage HTML
+async fn serve_homepage() -> HttpResponse {
+    serve_with_caching_header(
+        include_bytes!("includes/homepage.html"),
+        "text/html",
+        DEFAULT_CACHE_MAX_AGE,
+    )
+}
+
+async fn serve_homepage_js() -> impl Responder {
+    serve_with_caching_header(
+        include_bytes!("includes/homepage.js"),
         "application/javascript",
         DEFAULT_CACHE_MAX_AGE,
     )
