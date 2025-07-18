@@ -7,41 +7,39 @@ use opentelemetry_instrumentation_actix_web::{RequestMetrics, RequestTracing};
 
 use tracing::{error, info, instrument};
 
+use crate::admin_api;
 use crate::app_data::{AnonymousOptions, AppData};
 use crate::data_store::DataStore;
 use crate::options::Args;
-use crate::token::TokenValidator;
+use crate::token::{TokenCreator, TokenValidator};
 use crate::web_api;
 use crate::web_static;
 
 /// Starts the web server with the provided data store and tokens.
-pub async fn run<D, T>(data_store: D, token_validator: T, args: Args) -> Result<()>
+pub async fn run<D, T>(data_store: D, token_manager: T, args: Args) -> Result<()>
 where
     D: DataStore + Clone + 'static,
-    T: TokenValidator + Clone + 'static,
+    T: TokenValidator + TokenCreator + Clone + 'static,
 {
     info!("Starting server on {}:{}", args.listen_address, args.port);
 
     let anonymous_usage = AnonymousOptions {
         allowed: args.allow_anonymous,
-        upload_size_limit: args.anonymous_upload_size_limit * 1024,
+        upload_size_limit: args.anonymous_upload_size_limit,
     };
 
     HttpServer::new(move || {
         let app_data = AppData {
             data_store: Box::new(data_store.clone()),
-            token_validator: Box::new(token_validator.clone()),
+            token_validator: Box::new(token_manager.clone()),
+            token_creator: Box::new(token_manager.clone()),
             max_ttl: args.max_ttl,
             anonymous_usage: anonymous_usage.clone(),
         };
         App::new()
             .app_data(web::Data::new(app_data))
-            .app_data(web::PayloadConfig::new(
-                args.upload_size_limit as usize * 1024,
-            ))
-            .app_data(
-                web::JsonConfig::default().limit(args.upload_size_limit as usize * 1024 * 1024),
-            )
+            .app_data(web::PayloadConfig::new(args.upload_size_limit as usize))
+            .app_data(web::JsonConfig::default().limit(args.upload_size_limit as usize))
             .wrap(Logger::new("%a %{X-Forwarded-For}i %t \"%r\" %s %b %Ts"))
             .wrap(RequestTracing::new())
             .wrap(RequestMetrics::default())
@@ -51,7 +49,12 @@ where
             .route("/healthy", web::get().to(healthy))
             .route("/ready", web::get().to(ready))
             .configure(web_static::configure)
-            .service(web::scope("/api/v1").configure(web_api::configure))
+            .service(web::scope("/api/v1").configure(|cfg| {
+                web_api::configure(cfg);
+                if args.enable_admin_token {
+                    admin_api::configure_routes(cfg);
+                }
+            }))
     })
     .bind((args.listen_address, args.port))?
     .run()

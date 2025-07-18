@@ -114,18 +114,49 @@ hakanai-server --port 3000 --listen 0.0.0.0 --redis-dsn redis://redis.example.co
 # Enable anonymous access (allows public secret creation with size limits)
 hakanai-server --allow-anonymous
 
-# Configure anonymous size limits (in KB)
-hakanai-server --allow-anonymous --anonymous-size-limit 64
+# Configure anonymous size limits (humanized format)
+hakanai-server --allow-anonymous --anonymous-size-limit 64k
 
-# Production setup with anonymous access and monitoring
-hakanai-server --allow-anonymous --anonymous-size-limit 32 --upload-size-limit 10240
+# Enable admin token system for token management
+hakanai-server --enable-admin-token
+
+# Combined: admin system + anonymous access
+hakanai-server --enable-admin-token --allow-anonymous --anonymous-size-limit 32k
+
+# Production setup with admin token and monitoring
+hakanai-server --enable-admin-token --allow-anonymous --anonymous-size-limit 32k --upload-size-limit 10m
 ```
 
 **v2.0 Token System:**
-- **Admin token**: Automatically generated on first startup and logged to console
-- **User tokens**: Future admin API will allow generating user tokens
+- **Admin token**: 
+  - **Optional**: Only created with `--enable-admin-token` flag
+  - **No expiration**: Permanent tokens since they're not recoverable
+  - **Purpose**: Future admin API for token management
+  - **Recovery**: `--reset-admin-token` flag (requires server restart)
+- **User tokens**: 
+  - **Default behavior**: Always created on first startup
+  - **30-day TTL**: Automatic expiration for security
+  - **Recovery**: `--reset-default-token` flag (clears all user tokens)
 - **Anonymous access**: Optional public access with configurable size limits
 - **⚠️ BREAKING**: `HAKANAI_TOKENS` environment variable removed in v2.0
+
+**Token Recovery Options:**
+```bash
+# Reset admin token (creates new admin token)
+hakanai-server --enable-admin-token --reset-admin-token
+
+# Reset user token (clears all user tokens, creates new default)
+hakanai-server --reset-default-token
+
+# Emergency: Direct Redis access
+redis-cli DEL admin_token
+```
+
+**Configuration Validation:**
+The server validates flag combinations on startup to prevent invalid configurations:
+- `--reset-admin-token` requires `--enable-admin-token`
+- `--anonymous-size-limit` cannot exceed `--upload-size-limit`
+- Invalid combinations result in startup failure with clear error messages
 
 ### CLI
 
@@ -174,6 +205,27 @@ hakanai get https://hakanai.example.com/s/550e8400-e29b-41d4-a716-446655440000 -
 
 # Secret is displayed and immediately destroyed on server
 ```
+
+#### Creating User Tokens (Admin Only)
+
+```bash
+# Create a user token with admin privileges
+hakanai token --limit 5m --ttl 7d
+
+# Create token with humanized size limits
+hakanai token --limit 500k    # 500 KB
+hakanai token --limit 1m      # 1 MB
+hakanai token --limit 1024    # 1024 bytes
+
+# Create token with custom server and settings
+hakanai token --server https://hakanai.example.com --limit 2m --ttl 30d
+```
+
+**Size Format Options:**
+- Plain numbers: bytes (e.g., `1024`)
+- 'k' suffix: kilobytes (e.g., `500k`)
+- 'm' suffix: megabytes (e.g., `1m`)
+- Decimal values supported (e.g., `1.5m`, `2.5k`)
 
 **Note**: You can also retrieve secrets using a web browser by visiting the server URL and pasting the secret link.
 
@@ -288,6 +340,31 @@ Auto-generated API documentation page - comprehensive reference for developers u
 
 ### GET /openapi.json
 OpenAPI 3.0 specification file - the source of truth for API documentation and tooling integration (Postman, code generators, etc.).
+
+### POST /api/v1/admin/tokens
+Create user tokens (admin authentication required).
+
+**Headers:**
+- `Authorization: Bearer {admin-token}` (required)
+
+**Request:**
+```json
+{
+  "upload_size_limit": 5242880,  // optional, in bytes
+  "ttl_seconds": 2592000         // optional, default 30 days
+}
+```
+
+**Response:**
+```json
+{
+  "token": "user-token-string"
+}
+```
+
+**Error Responses:**
+- `401 Unauthorized`: Invalid or missing admin token
+- `400 Bad Request`: Invalid request body
 
 ### GET /ready
 Readiness check endpoint - returns 200 OK when the server is ready to accept requests.
@@ -482,7 +559,7 @@ For production deployments:
 - ✅ Short link format (`/s/{id}`) for easier sharing
 - ✅ Internationalization support (English and German)
 - ✅ OpenTelemetry integration for comprehensive observability
-- ✅ Comprehensive test coverage (190+ total tests: 120+ Rust, 70+ TypeScript including comprehensive serialization tests)
+- ✅ Comprehensive test coverage (195+ total tests: 125+ Rust, 70+ TypeScript including comprehensive serialization tests)
 - ✅ Docker deployment with Valkey/Redis included
 - ✅ **Enhanced TypeScript Client**: Bytes-based PayloadData interface with type safety
 - ✅ **Unified Data Handling**: Consistent approach for text and binary data across all clients
@@ -508,9 +585,10 @@ For production deployments:
 - `HAKANAI_PORT`: Server port (default: 8080)
 - `HAKANAI_LISTEN_ADDRESS`: Bind address (default: 0.0.0.0)
 - `HAKANAI_REDIS_DSN`: Redis connection string (default: redis://127.0.0.1:6379/)
-- `HAKANAI_UPLOAD_SIZE_LIMIT`: Maximum upload size in KB (default: 10240, 10MB)
+- `HAKANAI_UPLOAD_SIZE_LIMIT`: Maximum upload size (default: 10m, supports humanized format like 1m, 500k, 1024)
 - `HAKANAI_ALLOW_ANONYMOUS`: Allow anonymous access (default: false)
-- `HAKANAI_ANONYMOUS_UPLOAD_SIZE_LIMIT`: Upload size limit for anonymous users in KB (default: 32KB)
+- `HAKANAI_ANONYMOUS_UPLOAD_SIZE_LIMIT`: Upload size limit for anonymous users (default: 32k, supports humanized format)
+- `HAKANAI_ENABLE_ADMIN_TOKEN`: Enable admin token system (default: false)
 - `HAKANAI_CORS_ALLOWED_ORIGINS`: Comma-separated allowed CORS origins (default: none)
 - `HAKANAI_MAX_TTL`: Maximum allowed TTL in seconds (default: 604800, 7 days)
 - `OTEL_EXPORTER_OTLP_ENDPOINT`: OpenTelemetry collector endpoint (optional, enables OTEL when set)
@@ -521,7 +599,10 @@ For production deployments:
 - `--listen`: Override the listen address
 - `--redis-dsn`: Override the Redis connection string
 - `--allow-anonymous`: Allow anonymous access without authentication
-- `--anonymous-size-limit`: Set upload size limit for anonymous users in KB
+- `--anonymous-size-limit`: Set upload size limit for anonymous users (supports humanized format like 32k, 1m)
+- `--enable-admin-token`: Enable admin token system for token management
+- `--reset-admin-token`: Force regenerate admin token (requires --enable-admin-token)
+- `--reset-user-tokens`: Clear all user tokens and create new default token
 
 ### Security Features
 

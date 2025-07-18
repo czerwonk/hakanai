@@ -1,7 +1,7 @@
 use std::time;
 
 use crate::data_store::DataStore;
-use crate::token::TokenValidator;
+use crate::token::{TokenCreator, TokenValidator};
 
 #[derive(Clone, Debug)]
 pub struct AnonymousOptions {
@@ -18,6 +18,9 @@ pub struct AppData {
 
     /// The token validator for authentication.
     pub token_validator: Box<dyn TokenValidator>,
+
+    /// The token creator for admin API.
+    pub token_creator: Box<dyn TokenCreator>,
 
     /// The maximum time-to-live (TTL) for secrets
     pub max_ttl: time::Duration,

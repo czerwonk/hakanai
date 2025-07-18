@@ -101,7 +101,7 @@ async fn authorize_request(
     if let Some(mut token) = token_header {
         token = token.trim_start_matches("Bearer ").trim();
 
-        match app_data.token_validator.validate_token(token).await {
+        match app_data.token_validator.validate_user_token(token).await {
             Ok(token_data) => {
                 return Ok(Some(token_data));
             }
@@ -170,7 +170,8 @@ mod tests {
 
     use crate::app_data::AnonymousOptions;
     use crate::data_store::{DataStore, DataStoreError};
-    use crate::token::{TokenData, TokenError, TokenValidator};
+    use crate::test_utils::MockTokenManager;
+    use crate::token::TokenData;
 
     struct MockDataStore {
         pop_result: DataStorePopResult,
@@ -235,49 +236,16 @@ mod tests {
         }
     }
 
-    // Mock TokenValidator for testing
-    struct MockTokenValidator {
-        valid_tokens: Arc<Mutex<Vec<(String, TokenData)>>>,
-    }
-
-    impl MockTokenValidator {
-        fn new() -> Self {
-            Self {
-                valid_tokens: Arc::new(Mutex::new(Vec::new())),
-            }
-        }
-
-        fn with_token(self, token: &str, data: TokenData) -> Self {
-            self.valid_tokens
-                .lock()
-                .unwrap()
-                .push((token.to_string(), data));
-            self
-        }
-    }
-
-    #[async_trait]
-    impl TokenValidator for MockTokenValidator {
-        async fn validate_token(&self, token: &str) -> Result<TokenData, TokenError> {
-            let tokens = self.valid_tokens.lock().unwrap();
-            for (valid_token, data) in tokens.iter() {
-                if valid_token == token {
-                    return Ok(data.clone());
-                }
-            }
-            Err(TokenError::InvalidToken)
-        }
-    }
-
     // Helper function to create test AppData with default values
     fn create_test_app_data(
         data_store: Box<dyn DataStore>,
-        token_validator: Box<dyn TokenValidator>,
+        token_manager: MockTokenManager,
         allow_anonymous: bool,
     ) -> AppData {
         AppData {
             data_store,
-            token_validator,
+            token_validator: Box::new(token_manager.clone()),
+            token_creator: Box::new(token_manager),
             max_ttl: Duration::from_secs(7200),
             anonymous_usage: AnonymousOptions {
                 allowed: allow_anonymous,
@@ -290,11 +258,7 @@ mod tests {
     async fn test_get_secret_found() {
         let mock_store = MockDataStore::new()
             .with_pop_result(DataStorePopResult::Found("test_secret".to_string()));
-        let app_data = create_test_app_data(
-            Box::new(mock_store),
-            Box::new(MockTokenValidator::new()),
-            true,
-        );
+        let app_data = create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
 
         let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
             |cfg| {
@@ -317,11 +281,7 @@ mod tests {
     #[actix_web::test]
     async fn test_get_secret_not_found() {
         let mock_store = MockDataStore::new().with_pop_result(DataStorePopResult::NotFound);
-        let app_data = create_test_app_data(
-            Box::new(mock_store),
-            Box::new(MockTokenValidator::new()),
-            true,
-        );
+        let app_data = create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
 
         let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
             |cfg| {
@@ -341,11 +301,7 @@ mod tests {
     #[actix_web::test]
     async fn test_get_secret_already_accessed() {
         let mock_store = MockDataStore::new().with_pop_result(DataStorePopResult::AlreadyAccessed);
-        let app_data = create_test_app_data(
-            Box::new(mock_store),
-            Box::new(MockTokenValidator::new()),
-            true,
-        );
+        let app_data = create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
 
         let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
             |cfg| {
@@ -365,11 +321,7 @@ mod tests {
     #[actix_web::test]
     async fn test_get_secret_error() {
         let mock_store = MockDataStore::new().with_get_error();
-        let app_data = create_test_app_data(
-            Box::new(mock_store),
-            Box::new(MockTokenValidator::new()),
-            true,
-        );
+        let app_data = create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
 
         let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
             |cfg| {
@@ -392,7 +344,7 @@ mod tests {
         let stored_data = mock_store.stored_data.clone();
         let app_data = create_test_app_data(
             Box::new(mock_store),
-            Box::new(MockTokenValidator::new()),
+            MockTokenManager::new(),
             true, // Allow anonymous
         );
 
@@ -428,11 +380,7 @@ mod tests {
     #[actix_web::test]
     async fn test_post_secret_error() {
         let mock_store = MockDataStore::new().with_put_error();
-        let app_data = create_test_app_data(
-            Box::new(mock_store),
-            Box::new(MockTokenValidator::new()),
-            true,
-        );
+        let app_data = create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
 
         let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
             |cfg| {
@@ -459,13 +407,13 @@ mod tests {
     async fn test_post_secret_with_valid_token() {
         let mock_store = MockDataStore::new();
         let stored_data = mock_store.stored_data.clone();
-        let token_validator = MockTokenValidator::new().with_token(
+        let token_manager = MockTokenManager::new().with_user_token(
             "valid_token_123",
             TokenData {
                 upload_size_limit: None,
             },
         );
-        let app_data = create_test_app_data(Box::new(mock_store), Box::new(token_validator), true);
+        let app_data = create_test_app_data(Box::new(mock_store), token_manager, true);
 
         let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
             |cfg| {
@@ -500,7 +448,7 @@ mod tests {
         let mock_store = MockDataStore::new();
         let app_data = create_test_app_data(
             Box::new(mock_store),
-            Box::new(MockTokenValidator::new()),
+            MockTokenManager::new(),
             false, // Don't allow anonymous
         );
 
@@ -530,7 +478,7 @@ mod tests {
         let mock_store = MockDataStore::new();
         let app_data = create_test_app_data(
             Box::new(mock_store),
-            Box::new(MockTokenValidator::new()), // No valid tokens
+            MockTokenManager::new(), // No valid tokens
             true,
         );
 
@@ -560,11 +508,8 @@ mod tests {
     async fn test_post_secret_invalid_ttl() {
         let mock_store = MockDataStore::new();
         let max_ttl = Duration::from_secs(30);
-        let mut app_data = create_test_app_data(
-            Box::new(mock_store),
-            Box::new(MockTokenValidator::new()),
-            true,
-        );
+        let mut app_data =
+            create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
         app_data.max_ttl = max_ttl; // Override the default TTL
 
         let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
@@ -593,7 +538,7 @@ mod tests {
         let mock_store = MockDataStore::new();
         let app_data = create_test_app_data(
             Box::new(mock_store),
-            Box::new(MockTokenValidator::new()),
+            MockTokenManager::new(),
             true, // Allow anonymous
         );
 
@@ -623,13 +568,13 @@ mod tests {
     #[actix_web::test]
     async fn test_post_secret_token_size_limit_exceeded() {
         let mock_store = MockDataStore::new();
-        let token_validator = MockTokenValidator::new().with_token(
+        let token_manager = MockTokenManager::new().with_user_token(
             "limited_token",
             TokenData {
                 upload_size_limit: Some(1024), // 1KB limit
             },
         );
-        let app_data = create_test_app_data(Box::new(mock_store), Box::new(token_validator), true);
+        let app_data = create_test_app_data(Box::new(mock_store), token_manager, true);
 
         let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
             |cfg| {
@@ -660,7 +605,7 @@ mod tests {
         let mock_store = MockDataStore::new();
         let app_data = create_test_app_data(
             Box::new(mock_store),
-            Box::new(MockTokenValidator::new()),
+            MockTokenManager::new(),
             false, // Don't allow anonymous
         );
 

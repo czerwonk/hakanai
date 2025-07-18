@@ -5,6 +5,7 @@ mod get;
 mod helper;
 mod observer;
 mod send;
+mod token;
 
 use std::process::ExitCode;
 
@@ -15,6 +16,7 @@ use colored::Colorize;
 use crate::cli::Args;
 use crate::get::get;
 use crate::send::send;
+use crate::token::token;
 
 #[tokio::main]
 async fn main() -> ExitCode {
@@ -33,5 +35,6 @@ async fn process_command(args: Args) -> Result<()> {
     match args.command {
         cli::Command::Get(get_args) => get(app_factory, get_args).await,
         cli::Command::Send(send_args) => send(app_factory, send_args).await,
+        cli::Command::Token(token_args) => token(token_args).await,
     }
 }
