@@ -15,12 +15,12 @@ use crate::token::{TokenData, TokenError};
 
 /// Configure admin API routes
 pub fn configure_routes(cfg: &mut web::ServiceConfig) {
-    cfg.service(web::scope("/admin").route("/tokens", web::post().to(create_token)));
+    cfg.service(web::scope("/api/v1/admin").route("/tokens", web::post().to(create_token)));
 }
 
 /// Create a new user token
 ///
-/// POST /admin/tokens
+/// POST /api/v1/admin/tokens
 ///
 /// Requires admin authentication via Authorization header.
 /// Creates a new user token with optional size limit and TTL.
@@ -149,7 +149,7 @@ mod tests {
         };
 
         let req = test::TestRequest::post()
-            .uri("/admin/tokens")
+            .uri("/api/v1/admin/tokens")
             .insert_header(("Authorization", "Bearer admin_token"))
             .set_json(&request_body)
             .to_request();
@@ -179,7 +179,7 @@ mod tests {
         };
 
         let req = test::TestRequest::post()
-            .uri("/admin/tokens")
+            .uri("/api/v1/admin/tokens")
             .set_json(&request_body)
             .to_request();
 
@@ -209,7 +209,7 @@ mod tests {
         };
 
         let req = test::TestRequest::post()
-            .uri("/admin/tokens")
+            .uri("/api/v1/admin/tokens")
             .insert_header(("Authorization", "Bearer invalid_admin_token"))
             .set_json(&request_body)
             .to_request();
@@ -240,7 +240,7 @@ mod tests {
         };
 
         let req = test::TestRequest::post()
-            .uri("/admin/tokens")
+            .uri("/api/v1/admin/tokens")
             .insert_header(("Authorization", "admin_token")) // Missing "Bearer " prefix
             .set_json(&request_body)
             .to_request();
@@ -273,7 +273,7 @@ mod tests {
         };
 
         let req = test::TestRequest::post()
-            .uri("/admin/tokens")
+            .uri("/api/v1/admin/tokens")
             .insert_header(("Authorization", "Bearer admin_token"))
             .set_json(&request_body)
             .to_request();
@@ -311,7 +311,7 @@ mod tests {
         };
 
         let req = test::TestRequest::post()
-            .uri("/admin/tokens")
+            .uri("/api/v1/admin/tokens")
             .insert_header(("Authorization", "Bearer admin_token"))
             .set_json(&request_body)
             .to_request();
@@ -337,7 +337,7 @@ mod tests {
         .await;
 
         let req = test::TestRequest::post()
-            .uri("/admin/tokens")
+            .uri("/api/v1/admin/tokens")
             .insert_header(("Authorization", "Bearer admin_token"))
             .insert_header(("Content-Type", "application/json"))
             .set_payload(r#"{"invalid": json}"#) // Invalid JSON
@@ -361,7 +361,7 @@ mod tests {
         .await;
 
         let req = test::TestRequest::post()
-            .uri("/admin/tokens")
+            .uri("/api/v1/admin/tokens")
             .insert_header(("Authorization", "Bearer admin_token"))
             .set_json(serde_json::json!({
                 "upload_size_limit": 1024
@@ -394,7 +394,7 @@ mod tests {
         };
 
         let req = test::TestRequest::post()
-            .uri("/admin/tokens")
+            .uri("/api/v1/admin/tokens")
             .insert_header(("Authorization", "Bearer admin_token"))
             .set_json(&request_body)
             .to_request();

@@ -144,7 +144,7 @@
         }
       }
     },
-    "/admin/tokens": {
+    "/api/v1/admin/tokens": {
       "post": {
         "summary": "Create a new user token",
         "description": "Creates a new user token with optional size limit and TTL. Requires admin authentication.",
