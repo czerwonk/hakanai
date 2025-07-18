@@ -9,7 +9,6 @@ pub struct AppData {
     /// The data store for persisting application data.
     pub data_store: Box<dyn DataStore>,
 
-    /// A list of valid authentication tokens.
     pub tokens: HashMap<String, ()>,
 
     /// The maximum time-to-live (TTL) for secrets

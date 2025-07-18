@@ -1,10 +1,10 @@
 mod app_data;
-mod auth;
 mod data_store;
 mod hash;
 mod options;
 mod otel;
 mod redis_client;
+mod token;
 mod web_api;
 mod web_server;
 mod web_static;

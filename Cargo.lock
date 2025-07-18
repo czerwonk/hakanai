@@ -1024,7 +1024,7 @@ dependencies = [
 
 [[package]]
 name = "hakanai"
-version = "1.8.2"
+version = "2.0.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1041,7 +1041,7 @@ dependencies = [
 
 [[package]]
 name = "hakanai-lib"
-version = "1.8.2"
+version = "2.0.0"
 dependencies = [
  "aes-gcm",
  "async-stream",
@@ -1063,12 +1063,13 @@ dependencies = [
 
 [[package]]
 name = "hakanai-server"
-version = "1.8.2"
+version = "2.0.0"
 dependencies = [
  "actix-cors",
  "actix-web",
  "anyhow",
  "async-trait",
+ "base64",
  "clap",
  "hakanai-lib",
  "humantime",
@@ -1078,6 +1079,7 @@ dependencies = [
  "opentelemetry-otlp",
  "opentelemetry-resource-detectors",
  "opentelemetry_sdk",
+ "rand",
  "redis",
  "serde",
  "serde_json",
