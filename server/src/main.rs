@@ -1,8 +1,10 @@
 mod app_data;
+mod auth;
 mod data_store;
 mod hash;
 mod options;
 mod otel;
+mod redis_client;
 mod web_api;
 mod web_server;
 mod web_static;
@@ -12,8 +14,8 @@ use std::io::Result;
 use clap::Parser;
 use tracing::{info, warn};
 
-use crate::data_store::RedisDataStore;
 use crate::options::Args;
+use crate::redis_client::RedisClient;
 
 #[actix_web::main]
 async fn main() -> Result<()> {
@@ -28,7 +30,7 @@ async fn main() -> Result<()> {
     };
 
     info!("Connecting to Redis");
-    let data_store = match RedisDataStore::new(&args.redis_dsn, args.max_ttl).await {
+    let data_store = match RedisClient::new(&args.redis_dsn, args.max_ttl).await {
         Ok(store) => store,
         Err(e) => {
             eprintln!("Failed to create Redis data store: {e}");
