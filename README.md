@@ -206,6 +206,27 @@ hakanai get https://hakanai.example.com/s/550e8400-e29b-41d4-a716-446655440000 -
 # Secret is displayed and immediately destroyed on server
 ```
 
+#### Creating User Tokens (Admin Only)
+
+```bash
+# Create a user token with admin privileges
+hakanai token --limit 5m --ttl 7d
+
+# Create token with humanized size limits
+hakanai token --limit 500k    # 500 KB
+hakanai token --limit 1m      # 1 MB
+hakanai token --limit 1024    # 1024 bytes
+
+# Create token with custom server and settings
+hakanai token --server https://hakanai.example.com --limit 2m --ttl 30d
+```
+
+**Size Format Options:**
+- Plain numbers: bytes (e.g., `1024`)
+- 'k' suffix: kilobytes (e.g., `500k`)
+- 'm' suffix: megabytes (e.g., `1m`)
+- Decimal values supported (e.g., `1.5m`, `2.5k`)
+
 **Note**: You can also retrieve secrets using a web browser by visiting the server URL and pasting the secret link.
 
 ## Web Interface
@@ -319,6 +340,31 @@ Auto-generated API documentation page - comprehensive reference for developers u
 
 ### GET /openapi.json
 OpenAPI 3.0 specification file - the source of truth for API documentation and tooling integration (Postman, code generators, etc.).
+
+### POST /api/v1/admin/tokens
+Create user tokens (admin authentication required).
+
+**Headers:**
+- `Authorization: Bearer {admin-token}` (required)
+
+**Request:**
+```json
+{
+  "upload_size_limit": 5242880,  // optional, in bytes
+  "ttl_seconds": 2592000         // optional, default 30 days
+}
+```
+
+**Response:**
+```json
+{
+  "token": "user-token-string"
+}
+```
+
+**Error Responses:**
+- `401 Unauthorized`: Invalid or missing admin token
+- `400 Bad Request`: Invalid request body
 
 ### GET /ready
 Readiness check endpoint - returns 200 OK when the server is ready to accept requests.
@@ -513,7 +559,7 @@ For production deployments:
 - ✅ Short link format (`/s/{id}`) for easier sharing
 - ✅ Internationalization support (English and German)
 - ✅ OpenTelemetry integration for comprehensive observability
-- ✅ Comprehensive test coverage (190+ total tests: 120+ Rust, 70+ TypeScript including comprehensive serialization tests)
+- ✅ Comprehensive test coverage (195+ total tests: 125+ Rust, 70+ TypeScript including comprehensive serialization tests)
 - ✅ Docker deployment with Valkey/Redis included
 - ✅ **Enhanced TypeScript Client**: Bytes-based PayloadData interface with type safety
 - ✅ **Unified Data Handling**: Consistent approach for text and binary data across all clients

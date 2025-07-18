@@ -4,6 +4,8 @@ use anyhow::{Result, anyhow};
 use clap::{Parser, Subcommand};
 use url::Url;
 
+use crate::utils::size_parser::parse_size_limit;
+
 /// Represents the command-line arguments for the application.
 #[derive(Parser)]
 #[command(
@@ -177,6 +179,36 @@ pub struct GetArgs {
     pub filename: Option<String>,
 }
 
+/// Represents the arguments for the `token` command.
+#[derive(Debug, Clone, Parser)]
+pub struct TokenArgs {
+    #[arg(
+        short,
+        long,
+        default_value = "http://localhost:8080",
+        env = "HAKANAI_SERVER",
+        help = "Hakanai Server URL to request the token from (eg. https://hakanai.link)."
+    )]
+    pub server: Url,
+
+    #[arg(
+        long,
+        default_value = "30d",
+        env = "HAKANAI_TOKEN_TTL",
+        help = "Time until the token expires.",
+        value_parser = humantime::parse_duration,
+    )]
+    pub ttl: Duration,
+
+    #[arg(
+        short,
+        long,
+        help = "Optional upload size limit for the token (e.g., 1m, 500k, 1024).",
+        value_parser = parse_size_limit
+    )]
+    pub limit: Option<i64>,
+}
+
 impl GetArgs {
     pub fn secret_url(&self) -> Result<Url> {
         let mut url = self.link.clone();
@@ -232,6 +264,9 @@ pub enum Command {
     /// Send a secret to the server.
     /// Content is either read from stdin or from file (if --file is specified).
     Send(SendArgs),
+
+    /// Create a new user token (requires admin privileges).
+    Token(TokenArgs),
 }
 
 #[cfg(test)]
@@ -659,5 +694,50 @@ mod tests {
         assert_eq!(send_args.file, Some("/home/user/secret.bin".to_string()));
         assert!(send_args.as_file);
         assert_eq!(send_args.filename, Some("renamed_secret.bin".to_string()));
+    }
+
+    #[test]
+    fn test_token_command_parsing() {
+        let args = Args::try_parse_from([
+            "hakanai",
+            "token",
+            "--server",
+            "https://example.com",
+            "--ttl",
+            "7d",
+            "--limit",
+            "1048576",
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Token(token_args) => {
+                assert_eq!(token_args.server.as_str(), "https://example.com/");
+                assert_eq!(token_args.ttl, Duration::from_secs(7 * 24 * 60 * 60));
+                assert_eq!(token_args.limit, Some(1048576));
+            }
+            _ => panic!("Expected Token command"),
+        }
+    }
+
+    #[test]
+    fn test_token_command_with_short_flags() {
+        let args = Args::try_parse_from([
+            "hakanai",
+            "token",
+            "-s",
+            "https://hakanai.link",
+            "-l",
+            "5242880",
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Token(token_args) => {
+                assert_eq!(token_args.server.as_str(), "https://hakanai.link/");
+                assert_eq!(token_args.limit, Some(5242880));
+            }
+            _ => panic!("Expected Token command"),
+        }
     }
 }

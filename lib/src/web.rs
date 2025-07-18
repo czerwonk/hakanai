@@ -53,17 +53,20 @@ impl Client<Vec<u8>> for WebClient {
         let timeout = opt.timeout.unwrap_or(DEFAULT_REQUEST_TIMEOUT);
         let user_agent = opt.user_agent.unwrap_or(DEFAULT_USER_AGENT.to_string());
 
-        let resp = self
+        let mut req = self
             .web_client
             .post(url.to_string())
-            .header("Authorization", format!("Bearer {token}"))
             .header("User-Agent", user_agent)
             .header("Content-Type", "application/json")
             .header("Content-Length", content_length.to_string())
-            .timeout(timeout)
             .body(body)
-            .send()
-            .await?;
+            .timeout(timeout);
+
+        if !token.is_empty() {
+            req = req.header("Authorization", format!("Bearer {token}"));
+        }
+
+        let resp = req.send().await?;
 
         if resp.status() != reqwest::StatusCode::OK {
             let mut err_msg = format!("HTTP error: {}", resp.status());
