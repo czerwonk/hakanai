@@ -4,6 +4,14 @@
 
 A minimalist one-time secret sharing service built on zero-knowledge principles.
 
+## Version 2.0 Changes
+
+**⚠️ BREAKING CHANGES:**
+- **Redis-based token system**: Token authentication now uses Redis instead of files/environment variables
+- **Anonymous access support**: New `--allow-anonymous` option enables public access with size limits
+- **Configuration changes**: Size limits now specified in KB instead of MB
+- **Automatic token generation**: Admin token automatically created on first startup
+
 ## Philosophy
 
 Hakanai embodies the Japanese concept of transience - secrets that exist only for a moment before vanishing forever. No accounts, no tracking, no persistence. Just ephemeral data transfer with mathematical privacy guarantees.
@@ -87,7 +95,8 @@ For production deployment, create your own `docker-compose.override.yml`:
 services:
   hakanai:
     environment:
-      HAKANAI_TOKENS: "your-secret-token-here"
+      HAKANAI_ALLOW_ANONYMOUS: "true"
+      HAKANAI_ANONYMOUS_UPLOAD_SIZE_LIMIT: "64"
 ```
 
 ## Usage
@@ -96,16 +105,27 @@ services:
 
 ```bash
 # Start with default settings (port 8080, Redis on localhost)
+# Admin token will be generated and logged on first startup
 hakanai-server
 
 # Or with custom configuration
 hakanai-server --port 3000 --listen 0.0.0.0 --redis-dsn redis://redis.example.com:6379/
 
-# Start with authentication tokens (recommended for production)
-hakanai-server --tokens secret-token-1 --tokens secret-token-2
+# Enable anonymous access (allows public secret creation with size limits)
+hakanai-server --allow-anonymous
 
-# Note: If no tokens are provided, anyone can create secrets (not recommended for production)
+# Configure anonymous size limits (in KB)
+hakanai-server --allow-anonymous --anonymous-size-limit 64
+
+# Production setup with anonymous access and monitoring
+hakanai-server --allow-anonymous --anonymous-size-limit 32 --upload-size-limit 10240
 ```
+
+**v2.0 Token System:**
+- **Admin token**: Automatically generated on first startup and logged to console
+- **User tokens**: Future admin API will allow generating user tokens
+- **Anonymous access**: Optional public access with configurable size limits
+- **⚠️ BREAKING**: `HAKANAI_TOKENS` environment variable removed in v2.0
 
 ### CLI
 
@@ -488,8 +508,9 @@ For production deployments:
 - `HAKANAI_PORT`: Server port (default: 8080)
 - `HAKANAI_LISTEN_ADDRESS`: Bind address (default: 0.0.0.0)
 - `HAKANAI_REDIS_DSN`: Redis connection string (default: redis://127.0.0.1:6379/)
-- `HAKANAI_TOKENS`: Comma-separated authentication tokens (default: none, open access)
-- `HAKANAI_UPLOAD_SIZE_LIMIT`: Maximum upload size in bytes (default: 10485760, 10MB)
+- `HAKANAI_UPLOAD_SIZE_LIMIT`: Maximum upload size in KB (default: 10240, 10MB)
+- `HAKANAI_ALLOW_ANONYMOUS`: Allow anonymous access (default: false)
+- `HAKANAI_ANONYMOUS_UPLOAD_SIZE_LIMIT`: Upload size limit for anonymous users in KB (default: 32KB)
 - `HAKANAI_CORS_ALLOWED_ORIGINS`: Comma-separated allowed CORS origins (default: none)
 - `HAKANAI_MAX_TTL`: Maximum allowed TTL in seconds (default: 604800, 7 days)
 - `OTEL_EXPORTER_OTLP_ENDPOINT`: OpenTelemetry collector endpoint (optional, enables OTEL when set)
@@ -499,14 +520,15 @@ For production deployments:
 - `--port`: Override the port number
 - `--listen`: Override the listen address
 - `--redis-dsn`: Override the Redis connection string
-- `--tokens`: Add authentication tokens (can be specified multiple times)
+- `--allow-anonymous`: Allow anonymous access without authentication
+- `--anonymous-size-limit`: Set upload size limit for anonymous users in KB
 
 ### Security Features
 
 - **Zero-Knowledge Architecture**: All encryption/decryption happens client-side
 - **AES-256-GCM Encryption**: Industry-standard authenticated encryption
 - **Secure Random Generation**: Cryptographically secure nonce generation with OsRng
-- **Authentication Token Whitelist**: When tokens are provided via `--tokens`, only requests with valid Bearer tokens can create secrets
+- **Token-based Authentication**: Redis-backed token system with automatic admin token generation
 - **SHA-256 Token Hashing**: Authentication tokens are securely hashed before storage
 - **Request Logging**: Built-in request logging middleware for monitoring and debugging
 - **One-time Access**: Secrets are automatically deleted after first retrieval
