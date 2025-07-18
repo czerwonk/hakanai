@@ -41,17 +41,13 @@ pub struct Args {
     )]
     pub redis_dsn: String,
 
-    /// List of tokens allowed to create new secrets. If empty anyone can create secrets.
-    #[arg(short, long, value_name = "TOKENS", env = "HAKANAI_TOKENS")]
-    pub tokens: Option<Vec<String>>,
-
     #[arg(
         short,
         long,
         value_name = "UPLOAD_SIZE_LIMIT",
         env = "HAKANAI_UPLOAD_SIZE_LIMIT",
-        default_value = "10",
-        help = "Upload size limit in megabytes. Defaults to 10 MB."
+        default_value = "10240",
+        help = "Upload size limit in kilobytes. Defaults to 10 MB."
     )]
     pub upload_size_limit: u64,
 
@@ -72,4 +68,20 @@ pub struct Args {
         value_parser = humantime::parse_duration,
     )]
     pub max_ttl: Duration,
+
+    #[arg(
+        long,
+        default_value = "false",
+        env = "HAKANAI_ALLOW_ANONYMOUS",
+        help = "Allow anonymous access to the server. If set, users can create and view secrets without authentication."
+    )]
+    pub allow_anonymous: bool,
+
+    #[arg(
+        long,
+        default_value = "32",
+        env = "HAKANAI_ANONYMOUS_UPLOAD_SIZE_LIMIT",
+        help = "Upload size limit for anonymous users in kilobytes. Defaults to 32KB"
+    )]
+    pub anonymous_upload_size_limit: u64,
 }
