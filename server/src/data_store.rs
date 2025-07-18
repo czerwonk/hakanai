@@ -82,4 +82,10 @@ pub trait DataStore: Send + Sync {
     /// # Returns
     /// true if the data store is healthy, false otherwise.
     async fn is_healthy(&self) -> Result<(), DataStoreError>;
+
+    /// Returns the count of active secrets in the data store.
+    ///
+    /// # Returns
+    /// The number of secrets currently stored (not yet retrieved).
+    async fn active_secret_count(&self) -> Result<usize, DataStoreError>;
 }

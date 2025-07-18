@@ -12,6 +12,7 @@ use crate::data_store::{DataStore, DataStoreError, DataStorePopResult};
 use crate::token::{TokenData, TokenError, TokenStore};
 
 const ADMIN_TOKEN_KEY: &str = "admin_token";
+const SECRET_PREFIX: &str = "secret:";
 
 /// An implementation of the `DataStore` trait that uses Redis as its backend.
 /// This struct holds a `ConnectionManager` for interacting with the Redis
@@ -31,6 +32,10 @@ impl RedisClient {
 }
 
 impl RedisClient {
+    fn secret_key(&self, id: Uuid) -> String {
+        format!("{SECRET_PREFIX}{id}")
+    }
+
     fn accessed_key(&self, id: Uuid) -> String {
         format!("accessed:{id}")
     }
@@ -64,7 +69,8 @@ impl RedisClient {
 impl DataStore for RedisClient {
     #[instrument(skip(self), err)]
     async fn pop(&self, id: Uuid) -> Result<DataStorePopResult, DataStoreError> {
-        let value = self.con.clone().get_del(id.to_string()).await?;
+        let secret_key = self.secret_key(id);
+        let value = self.con.clone().get_del(secret_key).await?;
 
         if let Some(secret) = value {
             self.mark_as_accessed(id).await?;
@@ -85,10 +91,11 @@ impl DataStore for RedisClient {
         data: String,
         expires_in: Duration,
     ) -> Result<(), DataStoreError> {
+        let secret_key = self.secret_key(id);
         let _: () = self
             .con
             .clone()
-            .set_ex(id.to_string(), data, expires_in.as_secs())
+            .set_ex(secret_key, data, expires_in.as_secs())
             .await?;
         Ok(())
     }
@@ -97,6 +104,13 @@ impl DataStore for RedisClient {
     async fn is_healthy(&self) -> Result<(), DataStoreError> {
         let _: () = self.con.clone().ping().await?;
         Ok(())
+    }
+
+    #[instrument(skip(self), err)]
+    async fn active_secret_count(&self) -> Result<usize, DataStoreError> {
+        let pattern = format!("{SECRET_PREFIX}*");
+        let keys: Vec<String> = self.con.clone().keys(pattern).await?;
+        Ok(keys.len())
     }
 }
 

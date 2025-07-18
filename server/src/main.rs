@@ -13,7 +13,6 @@ mod web_api;
 mod web_server;
 mod web_static;
 
-use core::result::Result::Ok;
 use std::io::Result;
 use std::sync::Arc;
 use std::time::Duration;
@@ -118,8 +117,13 @@ async fn initialize_admin_token(
 
 fn initialize_metrics(redis_client: &RedisClient) {
     info!("Initializing metrics collection with 30s interval");
-    let redis_arc = Arc::new(redis_client.clone());
+    let redis_token_store = Arc::new(redis_client.clone());
+    let redis_data_store = Arc::new(redis_client.clone());
     let collection_interval = Duration::from_secs(30); // Collect metrics every 30 seconds
 
-    crate::metrics::init_metrics_collection(redis_arc, collection_interval);
+    crate::metrics::init_metrics_collection(
+        redis_token_store,
+        redis_data_store,
+        collection_interval,
+    );
 }

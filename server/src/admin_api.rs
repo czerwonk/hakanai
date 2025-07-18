@@ -113,6 +113,10 @@ mod tests {
         async fn is_healthy(&self) -> Result<(), DataStoreError> {
             Ok(())
         }
+
+        async fn active_secret_count(&self) -> Result<usize, DataStoreError> {
+            Ok(0)
+        }
     }
 
     fn create_test_app_data(token_manager: MockTokenManager) -> AppData {

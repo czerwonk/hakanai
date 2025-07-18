@@ -163,78 +163,12 @@ fn enforce_size_limit(
 mod tests {
     use super::*;
     use actix_web::{App, test};
-    use async_trait::async_trait;
-    use std::sync::{Arc, Mutex};
     use std::time::Duration;
-    use uuid::Uuid;
 
     use crate::app_data::AnonymousOptions;
-    use crate::data_store::{DataStore, DataStoreError};
-    use crate::test_utils::MockTokenManager;
+    use crate::data_store::DataStore;
+    use crate::test_utils::{MockDataStore, MockTokenManager};
     use crate::token::TokenData;
-
-    struct MockDataStore {
-        pop_result: DataStorePopResult,
-        pop_error: bool,
-        put_error: bool,
-        stored_data: Arc<Mutex<Vec<(Uuid, String, Duration)>>>,
-    }
-
-    impl MockDataStore {
-        fn new() -> Self {
-            MockDataStore {
-                pop_result: DataStorePopResult::NotFound,
-                pop_error: false,
-                put_error: false,
-                stored_data: Arc::new(Mutex::new(Vec::new())),
-            }
-        }
-
-        fn with_pop_result(mut self, result: DataStorePopResult) -> Self {
-            self.pop_result = result;
-            self
-        }
-
-        fn with_get_error(mut self) -> Self {
-            self.pop_error = true;
-            self
-        }
-
-        fn with_put_error(mut self) -> Self {
-            self.put_error = true;
-            self
-        }
-    }
-
-    #[async_trait]
-    impl DataStore for MockDataStore {
-        async fn pop(&self, _id: Uuid) -> Result<DataStorePopResult, DataStoreError> {
-            if self.pop_error {
-                Err(DataStoreError::InternalError("mock error".to_string()))
-            } else {
-                Ok(self.pop_result.clone())
-            }
-        }
-
-        async fn put(
-            &self,
-            id: Uuid,
-            data: String,
-            expires_in: Duration,
-        ) -> Result<(), DataStoreError> {
-            if self.put_error {
-                Err(DataStoreError::InternalError("mock error".to_string()))
-            } else {
-                let mut stored = self.stored_data.lock().unwrap();
-                stored.push((id, data, expires_in));
-                Ok(())
-            }
-        }
-
-        async fn is_healthy(&self) -> Result<(), DataStoreError> {
-            Ok(())
-        }
-    }
 
     // Helper function to create test AppData with default values
     fn create_test_app_data(
@@ -341,9 +275,8 @@ mod tests {
     #[actix_web::test]
     async fn test_post_secret_success() {
         let mock_store = MockDataStore::new();
-        let stored_data = mock_store.stored_data.clone();
         let app_data = create_test_app_data(
-            Box::new(mock_store),
+            Box::new(mock_store.clone()),
             MockTokenManager::new(),
             true, // Allow anonymous
         );
@@ -371,10 +304,10 @@ mod tests {
         let body: PostSecretResponse = test::read_body_json(resp).await;
         assert!(!body.id.is_nil());
 
-        let stored = stored_data.lock().unwrap();
-        assert_eq!(stored.len(), 1);
-        assert_eq!(stored[0].1, "test_secret");
-        assert_eq!(stored[0].2, Duration::from_secs(3600));
+        let put_ops = mock_store.get_put_operations();
+        assert_eq!(put_ops.len(), 1);
+        assert_eq!(put_ops[0].1, "test_secret");
+        assert_eq!(put_ops[0].2, Duration::from_secs(3600));
     }
 
     #[actix_web::test]
@@ -406,14 +339,13 @@ mod tests {
     #[actix_web::test]
     async fn test_post_secret_with_valid_token() {
         let mock_store = MockDataStore::new();
-        let stored_data = mock_store.stored_data.clone();
         let token_manager = MockTokenManager::new().with_user_token(
             "valid_token_123",
             TokenData {
                 upload_size_limit: None,
             },
         );
-        let app_data = create_test_app_data(Box::new(mock_store), token_manager, true);
+        let app_data = create_test_app_data(Box::new(mock_store.clone()), token_manager, true);
 
         let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
             |cfg| {
@@ -439,8 +371,8 @@ mod tests {
         let body: PostSecretResponse = test::read_body_json(resp).await;
         assert!(!body.id.is_nil());
 
-        let stored = stored_data.lock().unwrap();
-        assert_eq!(stored.len(), 1);
+        let put_ops = mock_store.get_put_operations();
+        assert_eq!(put_ops.len(), 1);
     }
 
     #[actix_web::test]
