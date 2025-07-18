@@ -119,6 +119,7 @@ const translations: Translations = {
     "aria.themeToggle": "Switch between light and dark mode",
     "aria.switchToLight": "Switch to light mode",
     "aria.switchToDark": "Switch to dark mode",
+    "aria.logoHome": "Go to home page",
 
     // Meta descriptions
     "meta.create":
@@ -254,6 +255,7 @@ const translations: Translations = {
     "aria.themeToggle": "Zwischen hellem und dunklem Modus wechseln",
     "aria.switchToLight": "Zum hellen Modus wechseln",
     "aria.switchToDark": "Zum dunklen Modus wechseln",
+    "aria.logoHome": "Zur Startseite gehen",
 
     // Meta descriptions
     "meta.create": "One-Time-Secrets sicher erstellen und teilen mit Hakanai",
