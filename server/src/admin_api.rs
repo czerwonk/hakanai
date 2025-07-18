@@ -15,7 +15,7 @@ use crate::token::{TokenData, TokenError};
 
 /// Configure admin API routes
 pub fn configure_routes(cfg: &mut web::ServiceConfig) {
-    cfg.service(web::scope("/api/v1/admin").route("/tokens", web::post().to(create_token)));
+    cfg.service(web::scope("/admin").route("/tokens", web::post().to(create_token)));
 }
 
 /// Create a new user token
@@ -139,7 +139,7 @@ mod tests {
         let app = test::init_service(
             App::new()
                 .app_data(web::Data::new(app_data))
-                .configure(configure_routes),
+                .service(web::scope("/api/v1").configure(configure_routes)),
         )
         .await;
 
@@ -169,7 +169,7 @@ mod tests {
         let app = test::init_service(
             App::new()
                 .app_data(web::Data::new(app_data))
-                .configure(configure_routes),
+                .service(web::scope("/api/v1").configure(configure_routes)),
         )
         .await;
 
@@ -199,7 +199,7 @@ mod tests {
         let app = test::init_service(
             App::new()
                 .app_data(web::Data::new(app_data))
-                .configure(configure_routes),
+                .service(web::scope("/api/v1").configure(configure_routes)),
         )
         .await;
 
@@ -230,7 +230,7 @@ mod tests {
         let app = test::init_service(
             App::new()
                 .app_data(web::Data::new(app_data))
-                .configure(configure_routes),
+                .service(web::scope("/api/v1").configure(configure_routes)),
         )
         .await;
 
@@ -263,7 +263,7 @@ mod tests {
         let app = test::init_service(
             App::new()
                 .app_data(web::Data::new(app_data))
-                .configure(configure_routes),
+                .service(web::scope("/api/v1").configure(configure_routes)),
         )
         .await;
 
@@ -301,7 +301,7 @@ mod tests {
         let app = test::init_service(
             App::new()
                 .app_data(web::Data::new(app_data))
-                .configure(configure_routes),
+                .service(web::scope("/api/v1").configure(configure_routes)),
         )
         .await;
 
@@ -332,7 +332,7 @@ mod tests {
         let app = test::init_service(
             App::new()
                 .app_data(web::Data::new(app_data))
-                .configure(configure_routes),
+                .service(web::scope("/api/v1").configure(configure_routes)),
         )
         .await;
 
@@ -356,7 +356,7 @@ mod tests {
         let app = test::init_service(
             App::new()
                 .app_data(web::Data::new(app_data))
-                .configure(configure_routes),
+                .service(web::scope("/api/v1").configure(configure_routes)),
         )
         .await;
 
@@ -384,7 +384,7 @@ mod tests {
         let app = test::init_service(
             App::new()
                 .app_data(web::Data::new(app_data))
-                .configure(configure_routes),
+                .service(web::scope("/api/v1").configure(configure_routes)),
         )
         .await;
 

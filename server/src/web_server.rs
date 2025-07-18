@@ -36,7 +36,7 @@ where
             max_ttl: args.max_ttl,
             anonymous_usage: anonymous_usage.clone(),
         };
-        let mut app = App::new()
+        App::new()
             .app_data(web::Data::new(app_data))
             .app_data(web::PayloadConfig::new(
                 args.upload_size_limit as usize * 1024,
@@ -53,13 +53,12 @@ where
             .route("/healthy", web::get().to(healthy))
             .route("/ready", web::get().to(ready))
             .configure(web_static::configure)
-            .service(web::scope("/api/v1").configure(web_api::configure));
-
-        if args.enable_admin_token {
-            app = app.configure(admin_api::configure_routes);
-        }
-
-        app
+            .service(web::scope("/api/v1").configure(|cfg| {
+                web_api::configure(cfg);
+                if args.enable_admin_token {
+                    admin_api::configure_routes(cfg);
+                }
+            }))
     })
     .bind((args.listen_address, args.port))?
     .run()
