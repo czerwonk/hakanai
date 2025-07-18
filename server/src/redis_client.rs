@@ -13,6 +13,8 @@ use crate::token::{TokenData, TokenError, TokenStore};
 
 const ADMIN_TOKEN_KEY: &str = "admin_token";
 const SECRET_PREFIX: &str = "secret:";
+const TOKEN_PREFIX: &str = "token:";
+const ACCESSED_PREFIX: &str = "accessed:";
 
 /// An implementation of the `DataStore` trait that uses Redis as its backend.
 /// This struct holds a `ConnectionManager` for interacting with the Redis
@@ -37,11 +39,11 @@ impl RedisClient {
     }
 
     fn accessed_key(&self, id: Uuid) -> String {
-        format!("accessed:{id}")
+        format!("{ACCESSED_PREFIX}{id}")
     }
 
     fn token_key(&self, hash: &str) -> String {
-        format!("token:{hash}")
+        format!("{TOKEN_PREFIX}{hash}")
     }
 
     #[instrument(skip(self), err)]
@@ -144,7 +146,7 @@ impl TokenStore for RedisClient {
 
     #[instrument(skip(self), err)]
     async fn clear_all_user_tokens(&self) -> Result<(), TokenError> {
-        let keys: Vec<String> = self.con.clone().keys("token:*").await?;
+        let keys: Vec<String> = self.con.clone().keys(format!("{TOKEN_PREFIX}*")).await?;
         if !keys.is_empty() {
             let _: () = self.con.clone().del(keys).await?;
         }
@@ -171,7 +173,7 @@ impl TokenStore for RedisClient {
 
     #[instrument(skip(self), err)]
     async fn user_token_count(&self) -> Result<usize, TokenError> {
-        let keys: Vec<String> = self.con.clone().keys("token:*").await?;
+        let keys: Vec<String> = self.con.clone().keys(format!("{TOKEN_PREFIX}*")).await?;
         Ok(keys.len())
     }
 }
