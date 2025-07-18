@@ -77,7 +77,6 @@
   /* Layout */
   --max-width: 600px;
   --max-width-expanded: 900px;
-  --max-width-homepage: 1200px;
   --border-radius-sm: 0.125rem;
   --border-radius: 0.25rem;
   --border-radius-lg: 0.5rem;
@@ -168,6 +167,11 @@ body {
   color: var(--color-text);
   line-height: 1.6;
   transition: max-width var(--transition-normal) ease-in-out;
+}
+
+/* Homepage-specific body styling */
+body:has(.homepage-container) {
+  max-width: var(--max-width-expanded);
 }
 
 /* Expanded layout for secret display */
