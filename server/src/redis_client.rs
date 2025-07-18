@@ -9,6 +9,7 @@ use uuid::Uuid;
 use hakanai_lib::timestamp;
 
 use crate::data_store::{DataStore, DataStoreError, DataStorePopResult};
+use crate::token::{TokenData, TokenError, TokenStore};
 
 /// An implementation of the `DataStore` trait that uses Redis as its backend.
 /// This struct holds a `ConnectionManager` for interacting with the Redis
@@ -24,6 +25,36 @@ impl RedisClient {
         let client = redis::Client::open(redis_url)?;
         let con = ConnectionManager::new(client).await?;
         Ok(Self { con, max_ttl })
+    }
+}
+
+impl RedisClient {
+    fn accessed_key(&self, id: Uuid) -> String {
+        format!("accessed:{id}")
+    }
+
+    fn token_key(&self, hash: &str) -> String {
+        format!("token:{hash}")
+    }
+
+    #[instrument(skip(self), err)]
+    async fn was_accessed(&self, id: Uuid) -> Result<bool, DataStoreError> {
+        let key = self.accessed_key(id);
+        let exists: bool = self.con.clone().exists(key).await?;
+        return Ok(exists);
+    }
+
+    #[instrument(skip(self), err)]
+    async fn mark_as_accessed(&self, id: Uuid) -> Result<(), DataStoreError> {
+        let key = self.accessed_key(id);
+        let value = timestamp::now_string()?;
+
+        let _: () = self
+            .con
+            .clone()
+            .set_ex(key, value, self.max_ttl.as_secs())
+            .await?;
+        Ok(())
     }
 }
 
@@ -67,28 +98,37 @@ impl DataStore for RedisClient {
     }
 }
 
-impl RedisClient {
-    fn accessed_key(&self, id: Uuid) -> String {
-        format!("accessed:{id}")
+#[async_trait]
+impl TokenStore for RedisClient {
+    #[instrument(skip(self), err)]
+    async fn is_empty(&self) -> Result<bool, TokenError> {
+        let keys: Vec<String> = self.con.clone().keys("token:*").await?;
+        Ok(keys.is_empty())
     }
 
     #[instrument(skip(self), err)]
-    async fn was_accessed(&self, id: Uuid) -> Result<bool, DataStoreError> {
-        let key = self.accessed_key(id);
-        let exists: bool = self.con.clone().exists(key).await?;
-        return Ok(exists);
+    async fn get_token(&self, token_hash: &str) -> Result<Option<TokenData>, TokenError> {
+        let key = self.token_key(token_hash);
+        let value: Option<String> = self.con.clone().get(key).await?;
+
+        if let Some(data) = value {
+            let token_data = TokenData::deserialize(&data)?;
+            return Ok(Some(token_data));
+        }
+
+        Ok(None)
     }
 
     #[instrument(skip(self), err)]
-    async fn mark_as_accessed(&self, id: Uuid) -> Result<(), DataStoreError> {
-        let key = self.accessed_key(id);
-        let value = timestamp::now_string()?;
-
-        let _: () = self
-            .con
-            .clone()
-            .set_ex(key, value, self.max_ttl.as_secs())
-            .await?;
+    async fn store_token(
+        &self,
+        token_hash: &str,
+        ttl: Duration,
+        token_data: TokenData,
+    ) -> Result<(), TokenError> {
+        let data = token_data.serialize()?;
+        let key = self.token_key(token_hash);
+        let _: () = self.con.clone().set_ex(key, data, ttl.as_secs()).await?;
         Ok(())
     }
 }

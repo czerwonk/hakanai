@@ -1,16 +1,27 @@
 use std::time;
 
-use std::collections::HashMap;
-
 use crate::data_store::DataStore;
+use crate::token::TokenValidator;
+
+#[derive(Clone, Debug)]
+pub struct AnonymousOptions {
+    pub allowed: bool,
+
+    /// The maximum size of uploads allowed for anonymous users, in bytes.
+    pub upload_size_limit: u64,
+}
 
 /// AppData stores the application's shared state.
 pub struct AppData {
     /// The data store for persisting application data.
     pub data_store: Box<dyn DataStore>,
 
-    pub tokens: HashMap<String, ()>,
+    /// The token validator for authentication.
+    pub token_validator: Box<dyn TokenValidator>,
 
     /// The maximum time-to-live (TTL) for secrets
     pub max_ttl: time::Duration,
+
+    /// Defines whether the application can be used without authentication and limits for anonymous users.
+    pub anonymous_usage: AnonymousOptions,
 }

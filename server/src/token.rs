@@ -3,6 +3,8 @@
 //! Provides token generation, validation, and storage abstraction.
 //! Tokens are SHA-256 hashed before storage for security.
 
+use core::time::Duration;
+
 use async_trait::async_trait;
 use base64::Engine;
 use rand::{TryRngCore, rngs::OsRng};
@@ -11,6 +13,8 @@ use thiserror::Error;
 
 use crate::hash::hash_string;
 
+const DEFAULT_TOKEN_TTL: u64 = 60 * 60 * 24 * 30; // 30 days in seconds
+
 /// Token operation errors.
 #[derive(Debug, Error)]
 pub enum TokenError {
@@ -18,16 +22,32 @@ pub enum TokenError {
     #[error("data store access error: {0}")]
     Redis(#[from] redis::RedisError),
 
+    #[error("error while JSON processing: {0}")]
+    Serialization(#[from] serde_json::Error),
+
     /// Generic token error.
     #[error("token error: {0}")]
     Custom(String),
+
+    #[error("token is invalid or expired")]
+    InvalidToken,
 }
 
 /// Token metadata stored in Redis.
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct TokenData {
     /// Optional upload size limit in bytes.
-    pub upload_limit: Option<i64>,
+    pub upload_size_limit: Option<i64>,
+}
+
+impl TokenData {
+    pub fn serialize(&self) -> Result<String, serde_json::Error> {
+        serde_json::to_string(self)
+    }
+
+    pub fn deserialize(str: &str) -> Result<Self, serde_json::Error> {
+        serde_json::from_str(str)
+    }
 }
 
 /// Abstraction for token storage operations.
@@ -36,14 +56,26 @@ pub trait TokenStore: Send + Sync {
     /// Check if token store is empty.
     async fn is_empty(&self) -> Result<bool, TokenError>;
 
-    /// Validate token and return metadata.
-    async fn validate_token(&self, token_hash: &str) -> Result<TokenData, TokenError>;
+    /// Gets token metadata by its hash.
+    async fn get_token(&self, token_hash: &str) -> Result<Option<TokenData>, TokenError>;
 
     /// Store token with metadata.
-    async fn store_token(&self, token_hash: &str, token_data: TokenData) -> Result<(), TokenError>;
+    async fn store_token(
+        &self,
+        token_hash: &str,
+        ttl: Duration,
+        token_data: TokenData,
+    ) -> Result<(), TokenError>;
+}
+
+#[async_trait]
+pub trait TokenValidator: Send + Sync {
+    /// Validate token and return metadata.
+    async fn validate_token(&self, token: &str) -> Result<TokenData, TokenError>;
 }
 
 /// Manages token operations with hashing and validation.
+#[derive(Clone)]
 pub struct TokenManager<T: TokenStore> {
     token_store: T,
 }
@@ -55,7 +87,7 @@ impl<T: TokenStore> TokenManager<T> {
     }
 
     /// Create default token if store is empty.
-    pub async fn create_defualt_token_if_none(&self) -> Result<Option<String>, TokenError> {
+    pub async fn create_default_token_if_none(&self) -> Result<Option<String>, TokenError> {
         if !self.token_store.is_empty().await? {
             return Ok(None);
         }
@@ -63,16 +95,16 @@ impl<T: TokenStore> TokenManager<T> {
         let token = Self::generate_token()?;
         let token_hash = hash_string(&token);
         self.token_store
-            .store_token(&token_hash, TokenData { upload_limit: None })
+            .store_token(
+                &token_hash,
+                Duration::from_secs(DEFAULT_TOKEN_TTL),
+                TokenData {
+                    upload_size_limit: None,
+                },
+            )
             .await?;
 
         Ok(Some(token))
-    }
-
-    /// Validate token and return metadata.
-    pub async fn validate_token(&self, token: &str) -> Result<TokenData, TokenError> {
-        let token_hash = hash_string(token);
-        self.token_store.validate_token(&token_hash).await
     }
 
     /// Generate 32-byte cryptographically secure token.
@@ -81,13 +113,25 @@ impl<T: TokenStore> TokenManager<T> {
 
         if let Err(err) = OsRng.try_fill_bytes(&mut bytes) {
             return Err(TokenError::Custom(format!(
-                "Failed to generate random bytes: {}",
-                err
+                "Failed to generate random bytes: {err}"
             )));
         }
 
         let token = base64::prelude::BASE64_URL_SAFE_NO_PAD.encode(bytes);
         Ok(token)
+    }
+}
+
+#[async_trait]
+impl<T: TokenStore> TokenValidator for TokenManager<T> {
+    /// Validate token and return metadata.
+    async fn validate_token(&self, token: &str) -> Result<TokenData, TokenError> {
+        let token_hash = hash_string(token);
+
+        match self.token_store.get_token(&token_hash).await? {
+            Some(token_data) => Ok(token_data),
+            None => Err(TokenError::InvalidToken),
+        }
     }
 }
 
@@ -136,22 +180,18 @@ mod tests {
             Ok(self.tokens.lock().await.is_empty())
         }
 
-        async fn validate_token(&self, token_hash: &str) -> Result<TokenData, TokenError> {
+        async fn get_token(&self, token_hash: &str) -> Result<Option<TokenData>, TokenError> {
             if *self.should_fail.lock().await {
                 return Err(TokenError::Custom("Mock failure".to_string()));
             }
 
-            self.tokens
-                .lock()
-                .await
-                .get(token_hash)
-                .cloned()
-                .ok_or_else(|| TokenError::Custom("Token not found".to_string()))
+            Ok(self.tokens.lock().await.get(token_hash).cloned())
         }
 
         async fn store_token(
             &self,
             token_hash: &str,
+            _ttl: Duration,
             token_data: TokenData,
         ) -> Result<(), TokenError> {
             if *self.should_fail.lock().await {
@@ -171,7 +211,7 @@ mod tests {
         let mock_store = MockTokenStore::new();
         let manager = TokenManager::new(mock_store.clone());
 
-        let result = manager.create_defualt_token_if_none().await?;
+        let result = manager.create_default_token_if_none().await?;
         assert!(result.is_some());
 
         // Verify token was stored
@@ -193,12 +233,12 @@ mod tests {
             .insert_token(
                 "existing_hash",
                 TokenData {
-                    upload_limit: Some(1000),
+                    upload_size_limit: Some(1000),
                 },
             )
             .await;
 
-        let result = manager.create_defualt_token_if_none().await?;
+        let result = manager.create_default_token_if_none().await?;
         assert!(result.is_none());
 
         // Verify no additional token was created
@@ -214,13 +254,13 @@ mod tests {
         let test_token = "test_token_123";
         let test_hash = hash_string(test_token);
         let test_data = TokenData {
-            upload_limit: Some(5000),
+            upload_size_limit: Some(5000),
         };
 
         mock_store.insert_token(&test_hash, test_data.clone()).await;
 
         let token_data = manager.validate_token(test_token).await?;
-        assert_eq!(token_data.upload_limit, Some(5000));
+        assert_eq!(token_data.upload_size_limit, Some(5000));
         Ok(())
     }
 
@@ -232,7 +272,7 @@ mod tests {
         let result = manager.validate_token("nonexistent_token").await;
 
         assert!(result.is_err());
-        assert!(matches!(result.err().unwrap(), TokenError::Custom(_)));
+        assert!(matches!(result.err().unwrap(), TokenError::InvalidToken));
     }
 
     #[tokio::test]
@@ -262,7 +302,7 @@ mod tests {
         mock_store.set_should_fail(true).await;
         let manager = TokenManager::new(mock_store);
 
-        let result = manager.create_defualt_token_if_none().await;
+        let result = manager.create_default_token_if_none().await;
 
         assert!(result.is_err());
         assert!(matches!(result.err().unwrap(), TokenError::Custom(_)));
@@ -283,7 +323,7 @@ mod tests {
     #[tokio::test]
     async fn test_token_data_serialization() -> Result<(), Box<dyn std::error::Error>> {
         let token_data = TokenData {
-            upload_limit: Some(1024),
+            upload_size_limit: Some(1024),
         };
 
         // Test serialization
@@ -292,17 +332,19 @@ mod tests {
 
         // Test deserialization
         let deserialized: TokenData = serde_json::from_str(&serialized)?;
-        assert_eq!(deserialized.upload_limit, Some(1024));
+        assert_eq!(deserialized.upload_size_limit, Some(1024));
         Ok(())
     }
 
     #[tokio::test]
     async fn test_token_data_none_upload_limit() -> Result<(), Box<dyn std::error::Error>> {
-        let token_data = TokenData { upload_limit: None };
+        let token_data = TokenData {
+            upload_size_limit: None,
+        };
 
         let serialized = serde_json::to_string(&token_data)?;
         let deserialized: TokenData = serde_json::from_str(&serialized)?;
-        assert_eq!(deserialized.upload_limit, None);
+        assert_eq!(deserialized.upload_size_limit, None);
         Ok(())
     }
 }

@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::io::Result;
 
 use actix_cors::Cors;
@@ -8,35 +7,37 @@ use opentelemetry_instrumentation_actix_web::{RequestMetrics, RequestTracing};
 
 use tracing::{error, info, instrument};
 
-use crate::app_data::AppData;
+use crate::app_data::{AnonymousOptions, AppData};
 use crate::data_store::DataStore;
-use crate::hash::hash_string;
 use crate::options::Args;
+use crate::token::TokenValidator;
 use crate::web_api;
 use crate::web_static;
 
 /// Starts the web server with the provided data store and tokens.
-pub async fn run<T>(data_store: T, tokens: Vec<String>, args: Args) -> Result<()>
+pub async fn run<D, T>(data_store: D, token_validator: T, args: Args) -> Result<()>
 where
-    T: DataStore + Clone + 'static,
+    D: DataStore + Clone + 'static,
+    T: TokenValidator + Clone + 'static,
 {
     info!("Starting server on {}:{}", args.listen_address, args.port);
 
+    let anonymous_usage = AnonymousOptions {
+        allowed: args.allow_anonymous,
+        upload_size_limit: args.anonymous_upload_size_limit * 1024,
+    };
+
     HttpServer::new(move || {
-        let tokens_map: HashMap<String, ()> = tokens
-            .clone()
-            .into_iter()
-            .map(|t| (hash_string(&t), ()))
-            .collect();
         let app_data = AppData {
             data_store: Box::new(data_store.clone()),
-            tokens: tokens_map,
+            token_validator: Box::new(token_validator.clone()),
             max_ttl: args.max_ttl,
+            anonymous_usage: anonymous_usage.clone(),
         };
         App::new()
             .app_data(web::Data::new(app_data))
             .app_data(web::PayloadConfig::new(
-                args.upload_size_limit as usize * 1024 * 1024,
+                args.upload_size_limit as usize * 1024,
             ))
             .app_data(
                 web::JsonConfig::default().limit(args.upload_size_limit as usize * 1024 * 1024),
