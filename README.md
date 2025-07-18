@@ -114,17 +114,17 @@ hakanai-server --port 3000 --listen 0.0.0.0 --redis-dsn redis://redis.example.co
 # Enable anonymous access (allows public secret creation with size limits)
 hakanai-server --allow-anonymous
 
-# Configure anonymous size limits (in KB)
-hakanai-server --allow-anonymous --anonymous-size-limit 64
+# Configure anonymous size limits (humanized format)
+hakanai-server --allow-anonymous --anonymous-size-limit 64k
 
 # Enable admin token system for token management
 hakanai-server --enable-admin-token
 
 # Combined: admin system + anonymous access
-hakanai-server --enable-admin-token --allow-anonymous --anonymous-size-limit 32
+hakanai-server --enable-admin-token --allow-anonymous --anonymous-size-limit 32k
 
 # Production setup with admin token and monitoring
-hakanai-server --enable-admin-token --allow-anonymous --anonymous-size-limit 32 --upload-size-limit 10240
+hakanai-server --enable-admin-token --allow-anonymous --anonymous-size-limit 32k --upload-size-limit 10m
 ```
 
 **v2.0 Token System:**
@@ -585,9 +585,9 @@ For production deployments:
 - `HAKANAI_PORT`: Server port (default: 8080)
 - `HAKANAI_LISTEN_ADDRESS`: Bind address (default: 0.0.0.0)
 - `HAKANAI_REDIS_DSN`: Redis connection string (default: redis://127.0.0.1:6379/)
-- `HAKANAI_UPLOAD_SIZE_LIMIT`: Maximum upload size in KB (default: 10240, 10MB)
+- `HAKANAI_UPLOAD_SIZE_LIMIT`: Maximum upload size (default: 10m, supports humanized format like 1m, 500k, 1024)
 - `HAKANAI_ALLOW_ANONYMOUS`: Allow anonymous access (default: false)
-- `HAKANAI_ANONYMOUS_UPLOAD_SIZE_LIMIT`: Upload size limit for anonymous users in KB (default: 32KB)
+- `HAKANAI_ANONYMOUS_UPLOAD_SIZE_LIMIT`: Upload size limit for anonymous users (default: 32k, supports humanized format)
 - `HAKANAI_ENABLE_ADMIN_TOKEN`: Enable admin token system (default: false)
 - `HAKANAI_CORS_ALLOWED_ORIGINS`: Comma-separated allowed CORS origins (default: none)
 - `HAKANAI_MAX_TTL`: Maximum allowed TTL in seconds (default: 604800, 7 days)
@@ -599,7 +599,7 @@ For production deployments:
 - `--listen`: Override the listen address
 - `--redis-dsn`: Override the Redis connection string
 - `--allow-anonymous`: Allow anonymous access without authentication
-- `--anonymous-size-limit`: Set upload size limit for anonymous users in KB
+- `--anonymous-size-limit`: Set upload size limit for anonymous users (supports humanized format like 32k, 1m)
 - `--enable-admin-token`: Enable admin token system for token management
 - `--reset-admin-token`: Force regenerate admin token (requires --enable-admin-token)
 - `--reset-user-tokens`: Clear all user tokens and create new default token

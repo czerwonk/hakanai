@@ -25,7 +25,7 @@ where
 
     let anonymous_usage = AnonymousOptions {
         allowed: args.allow_anonymous,
-        upload_size_limit: args.anonymous_upload_size_limit * 1024,
+        upload_size_limit: args.anonymous_upload_size_limit,
     };
 
     HttpServer::new(move || {
@@ -38,12 +38,8 @@ where
         };
         App::new()
             .app_data(web::Data::new(app_data))
-            .app_data(web::PayloadConfig::new(
-                args.upload_size_limit as usize * 1024,
-            ))
-            .app_data(
-                web::JsonConfig::default().limit(args.upload_size_limit as usize * 1024 * 1024),
-            )
+            .app_data(web::PayloadConfig::new(args.upload_size_limit as usize))
+            .app_data(web::JsonConfig::default().limit(args.upload_size_limit as usize))
             .wrap(Logger::new("%a %{X-Forwarded-For}i %t \"%r\" %s %b %Ts"))
             .wrap(RequestTracing::new())
             .wrap(RequestMetrics::default())

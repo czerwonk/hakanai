@@ -6,7 +6,6 @@ mod helper;
 mod observer;
 mod send;
 mod token;
-mod utils;
 
 use std::process::ExitCode;
 

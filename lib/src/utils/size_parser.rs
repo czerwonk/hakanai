@@ -28,7 +28,7 @@
 /// # Examples
 ///
 /// ```
-/// use hakanai::utils::size_parser::parse_size_limit;
+/// use hakanai_lib::utils::size_parser::parse_size_limit;
 ///
 /// // Plain bytes
 /// assert_eq!(parse_size_limit("1024"), Ok(1024));
@@ -159,4 +159,3 @@ mod tests {
         assert_eq!(parse_size_limit("9999k"), Ok(10238976));
     }
 }
-

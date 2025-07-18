@@ -1,6 +1,13 @@
 use std::time::Duration;
 
 use clap::Parser;
+use hakanai_lib::utils::size_parser::parse_size_limit;
+
+/// Parse a size limit for server configuration, returns value in bytes
+fn parse_size_limit_bytes(s: &str) -> Result<u64, String> {
+    let bytes = parse_size_limit(s)?;
+    Ok(bytes.max(1) as u64)
+}
 
 /// Represents the command-line arguments for the server.
 #[derive(Parser)]
@@ -46,8 +53,9 @@ pub struct Args {
         long,
         value_name = "UPLOAD_SIZE_LIMIT",
         env = "HAKANAI_UPLOAD_SIZE_LIMIT",
-        default_value = "10240",
-        help = "Upload size limit in kilobytes. Defaults to 10 MB."
+        default_value = "10m",
+        help = "Upload size limit (e.g., 10m, 1024k, 5242880). Defaults to 10 MB.",
+        value_parser = parse_size_limit_bytes
     )]
     pub upload_size_limit: u64,
 
@@ -79,9 +87,10 @@ pub struct Args {
 
     #[arg(
         long,
-        default_value = "32",
+        default_value = "32k",
         env = "HAKANAI_ANONYMOUS_UPLOAD_SIZE_LIMIT",
-        help = "Upload size limit for anonymous users in kilobytes. Defaults to 32KB"
+        help = "Upload size limit for anonymous users (e.g., 32k, 1m, 2048). Defaults to 32KB.",
+        value_parser = parse_size_limit_bytes
     )]
     pub anonymous_upload_size_limit: u64,
 
@@ -134,11 +143,11 @@ mod tests {
             port: 8080,
             listen_address: "127.0.0.1".to_string(),
             redis_dsn: "redis://127.0.0.1:6379/".to_string(),
-            upload_size_limit: 10240,
+            upload_size_limit: 10 * 1024 * 1024, // 10MB in bytes
             cors_allowed_origins: None,
             max_ttl: Duration::from_secs(604800),
             allow_anonymous: false,
-            anonymous_upload_size_limit: 32,
+            anonymous_upload_size_limit: 32 * 1024, // 32KB in bytes
             enable_admin_token: false,
             reset_admin_token: false,
             reset_user_tokens: false,
@@ -177,8 +186,8 @@ mod tests {
     #[test]
     fn test_validate_anonymous_size_limit_too_large() {
         let args = Args {
-            anonymous_upload_size_limit: 100,
-            upload_size_limit: 50,
+            anonymous_upload_size_limit: 100 * 1024, // 100KB in bytes
+            upload_size_limit: 50 * 1024,            // 50KB in bytes
             ..create_test_args()
         };
 
@@ -194,8 +203,8 @@ mod tests {
     #[test]
     fn test_validate_valid_size_limits() {
         let args = Args {
-            anonymous_upload_size_limit: 32,
-            upload_size_limit: 10240,
+            anonymous_upload_size_limit: 32 * 1024, // 32KB in bytes
+            upload_size_limit: 10 * 1024 * 1024,    // 10MB in bytes
             ..create_test_args()
         };
 
@@ -208,8 +217,8 @@ mod tests {
         let args = Args {
             enable_admin_token: true,
             reset_admin_token: true,
-            anonymous_upload_size_limit: 32,
-            upload_size_limit: 10240,
+            anonymous_upload_size_limit: 32 * 1024, // 32KB in bytes
+            upload_size_limit: 10 * 1024 * 1024,    // 10MB in bytes
             allow_anonymous: true,
             ..create_test_args()
         };
@@ -221,8 +230,8 @@ mod tests {
     #[test]
     fn test_validate_edge_case_equal_limits() {
         let args = Args {
-            anonymous_upload_size_limit: 1024,
-            upload_size_limit: 1024,
+            anonymous_upload_size_limit: 1024 * 1024, // 1MB in bytes
+            upload_size_limit: 1024 * 1024,           // 1MB in bytes
             ..create_test_args()
         };
 

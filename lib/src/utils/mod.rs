@@ -7,6 +7,8 @@
 //! # Submodules
 //!
 //! - [`content_analysis`] - Functions for analyzing content types (binary vs text detection)
+//! - [`size_parser`] - Functions for parsing human-readable size strings
 //!
 
 pub mod content_analysis;
+pub mod size_parser;

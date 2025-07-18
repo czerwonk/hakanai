@@ -4,7 +4,7 @@ use anyhow::{Result, anyhow};
 use clap::{Parser, Subcommand};
 use url::Url;
 
-use crate::utils::size_parser::parse_size_limit;
+use hakanai_lib::utils::size_parser::parse_size_limit;
 
 /// Represents the command-line arguments for the application.
 #[derive(Parser)]
