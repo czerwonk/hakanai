@@ -84,7 +84,8 @@ async fn initialize_user_tokens(
 ) -> anyhow::Result<()> {
     if args.reset_user_tokens {
         info!("Resetting user tokens");
-        token_manager.reset_user_tokens().await?;
+        let default_token = token_manager.reset_user_tokens().await?;
+        info!("Default user token: {default_token}");
     }
 
     if let Some(default_token) = token_manager.create_default_token_if_none().await? {
