@@ -133,6 +133,18 @@ pub struct CreateTokenResponse {
     pub token: String,
 }
 
+impl Zeroize for CreateTokenResponse {
+    fn zeroize(&mut self) {
+        self.token.zeroize();
+    }
+}
+
+impl Drop for CreateTokenResponse {
+    fn drop(&mut self) {
+        self.zeroize();
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
