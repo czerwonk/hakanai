@@ -1,0 +1,10 @@
+User-agent: *
+Disallow: /
+
+# Only allow homepage, docs, and logos
+Allow: /$
+Allow: /docs
+Allow: /*.svg
+
+# Crawl delay to reduce server load
+Crawl-delay: 5

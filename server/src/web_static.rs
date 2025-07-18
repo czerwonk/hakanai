@@ -20,6 +20,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
         .route("/icon.svg", web::get().to(serve_icon))
         .route("/logo.svg", web::get().to(serve_logo))
         .route("/openapi.json", web::get().to(serve_openapi_json))
+        .route("/robots.txt", web::get().to(serve_robots_txt))
         .route("/style.css", web::get().to(serve_css))
         .route("/types.js", web::get().to(serve_types_js))
         .route("/homepage.js", web::get().to(serve_homepage_js));
@@ -153,6 +154,14 @@ async fn serve_homepage_js() -> impl Responder {
     serve_with_caching_header(
         include_bytes!("includes/homepage.js"),
         "application/javascript",
+        DEFAULT_CACHE_MAX_AGE,
+    )
+}
+
+async fn serve_robots_txt() -> impl Responder {
+    serve_with_caching_header(
+        include_bytes!("includes/robots.txt"),
+        "text/plain",
         DEFAULT_CACHE_MAX_AGE,
     )
 }
