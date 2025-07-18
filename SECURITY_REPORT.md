@@ -1,10 +1,10 @@
 # Security Audit Report - Hakanai
 
-**Date:** 2025-07-17
+**Date:** 2025-07-18
 **Audit Type:** Comprehensive Security Assessment  
-**Codebase Version:** 1.6.5+
+**Codebase Version:** 2.0.0
 **Auditor:** Claude Code Security Analysis
-**Update:** Post-refactoring security audit with memory safety improvements
+**Update:** Security review of Token API and version 2.0 release
 
 ## Executive Summary
 
@@ -16,7 +16,7 @@ Hakanai is a minimalist one-time secret sharing service implementing zero-knowle
 - **0 Critical severity** vulnerabilities
 - **0 High severity** vulnerabilities
 - **0 Medium severity** vulnerabilities
-- **3 Low severity** issues identified
+- **2 Low severity** issues identified
 - **Zero-knowledge architecture** properly implemented
 - **Comprehensive memory safety** with automatic zeroization and secure cleanup
 - **Strong cryptographic foundations** with industry-standard AES-256-GCM
@@ -42,12 +42,12 @@ No medium severity vulnerabilities remain after analysis and resolution of previ
 ### LOW SEVERITY
 
 #### L1: Missing Token Rotation
-**File:** `server/src/options.rs:44-46`  
-**Description:** No token rotation mechanism
+**File:** `server/src/token.rs:16`  
+**Description:** No token rotation mechanism for long-lived tokens
 
-**Impact:** Long-lived tokens increase compromise risk.
+**Impact:** Long-lived tokens increase compromise risk over time.
 
-**Recommendation:** Implement token rotation support.
+**Recommendation:** Implement token rotation support for production deployments.
 
 #### L2: Build System TypeScript Compiler Security
 **File:** `server/build.rs:60-77`  
@@ -55,15 +55,7 @@ No medium severity vulnerabilities remain after analysis and resolution of previ
 
 **Impact:** Supply chain attack risk if compiler is compromised.
 
-**Recommendation:** Add version validation for TypeScript compiler.
-
-#### L3: Theme Persistence
-**File:** `server/src/typescript/common-utils.ts`  
-**Description:** LocalStorage theme preference could be manipulated
-
-**Impact:** Minimal impact, theme manipulation only.
-
-**Recommendation:** Validate theme values before applying.
+**Recommendation:** Add version validation for TypeScript compiler during build process.
 
 
 ## Historical Reference
@@ -71,6 +63,33 @@ No medium severity vulnerabilities remain after analysis and resolution of previ
 For a complete audit trail of all resolved security issues, see [docs/RESOLVED_SECURITY_ISSUES.md](docs/RESOLVED_SECURITY_ISSUES.md).
 
 **Note:** Before adding new security findings, always review the resolved issues document to ensure findings are not re-introduced or duplicated.
+
+## Version 2.0 Security Improvements
+
+### Token API System Security (NEW)
+**Version 2.0** introduces a comprehensive Redis-based token management system with significant security enhancements:
+
+**Security Strengths:**
+- **Redis-based Storage**: All tokens stored in Redis with proper TTL management
+- **SHA-256 Hashing**: All tokens hashed before storage, preventing plaintext exposure
+- **Dual Token System**: Separate admin and user token namespaces with different privileges
+- **Anonymous Access Control**: Configurable anonymous access with separate size limits
+- **Token Validation**: Comprehensive validation with proper error handling
+- **Secure Token Generation**: 32-byte cryptographically secure tokens using `OsRng`
+- **URL-Safe Encoding**: Tokens encoded with Base64 URL-safe format
+- **Admin API Security**: Admin endpoints properly protected with token validation
+- **Token Metadata**: Support for per-token upload size limits
+
+**Architecture Security:**
+- **Trait-based Design**: Clean separation with `TokenStore`, `TokenValidator`, and `TokenCreator` traits
+- **Memory Safety**: Token generation using `Zeroizing` containers
+- **Error Handling**: Proper error types without information disclosure
+- **Concurrent Safety**: Thread-safe token operations with proper Redis connection management
+
+**Breaking Changes Security Benefits:**
+- **Removed Environment Variables**: Eliminated `HAKANAI_TOKENS` environment variable exposure
+- **Mandatory Redis**: Centralized token storage eliminates file-based token vulnerabilities
+- **Enhanced Configuration**: Humanized size limits prevent configuration errors
 
 ## Cryptographic Security Assessment
 
@@ -239,7 +258,6 @@ Hakanai demonstrates exceptional security with a comprehensive zero-knowledge ar
 **Remaining Low-Priority Items:**
 1. **Token Rotation**: Add token lifecycle management (L1)
 2. **Build Security**: Add TypeScript compiler validation (L2)
-3. **Theme Security**: Validate theme values (L3)
 
 **Production Readiness:**
 Hakanai achieves an **A- security rating** and is well-suited for production deployment with proper infrastructure security (reverse proxy, TLS, monitoring). The remaining low-priority items are operational improvements that don't affect core security.
@@ -258,8 +276,7 @@ None - all medium priority issues have been resolved or reclassified.
 ### Outstanding Low Priority Recommendations
 1. **Token rotation** - Implement token lifecycle management (L1)
 2. **TypeScript compiler validation** - Add version validation for build security (L2)
-3. **Theme validation** - Validate theme values before applying (L3)
 
 ---
 
-*This report was generated through comprehensive static analysis and manual code review. The audit covers version 1.6.5+ with emphasis on all security domains, including the major crypto architecture refactoring. Regular security audits are recommended as the codebase evolves.*
+*This report was generated through comprehensive static analysis and manual code review. The audit covers version 2.0.0 with emphasis on the new Token API system and Redis-based architecture. Regular security audits are recommended as the codebase evolves.*
