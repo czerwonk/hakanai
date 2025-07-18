@@ -84,4 +84,149 @@ pub struct Args {
         help = "Upload size limit for anonymous users in kilobytes. Defaults to 32KB"
     )]
     pub anonymous_upload_size_limit: u64,
+
+    #[arg(
+        long,
+        default_value = "false",
+        env = "HAKANAI_ENABLE_ADMIN_TOKEN",
+        help = "Enable admin token and token management API"
+    )]
+    pub enable_admin_token: bool,
+
+    #[arg(
+        long,
+        default_value = "false",
+        help = "Force regenerate admin token (overwrites existing). Requires --enable-admin-token."
+    )]
+    pub reset_admin_token: bool,
+
+    #[arg(
+        long,
+        default_value = "false",
+        help = "Clear all user tokens and regenerate a new default token."
+    )]
+    pub reset_user_tokens: bool,
+}
+
+impl Args {
+    /// Validates configuration parameters for compatibility and logical consistency.
+    pub fn validate(&self) -> Result<(), String> {
+        if self.reset_admin_token && !self.enable_admin_token {
+            return Err("--reset-admin-token requires --enable-admin-token".to_string());
+        }
+
+        if self.anonymous_upload_size_limit > self.upload_size_limit {
+            return Err(
+                "--anonymous-size-limit cannot be larger than --upload-size-limit".to_string(),
+            );
+        }
+
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn create_test_args() -> Args {
+        Args {
+            port: 8080,
+            listen_address: "127.0.0.1".to_string(),
+            redis_dsn: "redis://127.0.0.1:6379/".to_string(),
+            upload_size_limit: 10240,
+            cors_allowed_origins: None,
+            max_ttl: Duration::from_secs(604800),
+            allow_anonymous: false,
+            anonymous_upload_size_limit: 32,
+            enable_admin_token: false,
+            reset_admin_token: false,
+            reset_user_tokens: false,
+        }
+    }
+
+    #[test]
+    fn test_validate_reset_admin_token_without_enable() {
+        let args = Args {
+            reset_admin_token: true,
+            enable_admin_token: false,
+            ..create_test_args()
+        };
+
+        let result = args.validate();
+        assert!(result.is_err());
+        assert!(
+            result
+                .unwrap_err()
+                .contains("--reset-admin-token requires --enable-admin-token")
+        );
+    }
+
+    #[test]
+    fn test_validate_reset_admin_token_with_enable() {
+        let args = Args {
+            reset_admin_token: true,
+            enable_admin_token: true,
+            ..create_test_args()
+        };
+
+        let result = args.validate();
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_validate_anonymous_size_limit_too_large() {
+        let args = Args {
+            anonymous_upload_size_limit: 100,
+            upload_size_limit: 50,
+            ..create_test_args()
+        };
+
+        let result = args.validate();
+        assert!(result.is_err());
+        assert!(
+            result
+                .unwrap_err()
+                .contains("--anonymous-size-limit cannot be larger than --upload-size-limit")
+        );
+    }
+
+    #[test]
+    fn test_validate_valid_size_limits() {
+        let args = Args {
+            anonymous_upload_size_limit: 32,
+            upload_size_limit: 10240,
+            ..create_test_args()
+        };
+
+        let result = args.validate();
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_validate_all_valid() {
+        let args = Args {
+            enable_admin_token: true,
+            reset_admin_token: true,
+            anonymous_upload_size_limit: 32,
+            upload_size_limit: 10240,
+            allow_anonymous: true,
+            ..create_test_args()
+        };
+
+        let result = args.validate();
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_validate_edge_case_equal_limits() {
+        let args = Args {
+            anonymous_upload_size_limit: 1024,
+            upload_size_limit: 1024,
+            ..create_test_args()
+        };
+
+        let result = args.validate();
+        assert!(result.is_ok());
+    }
 }

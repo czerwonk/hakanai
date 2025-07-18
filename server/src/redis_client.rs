@@ -11,6 +11,8 @@ use hakanai_lib::timestamp;
 use crate::data_store::{DataStore, DataStoreError, DataStorePopResult};
 use crate::token::{TokenData, TokenError, TokenStore};
 
+const ADMIN_TOKEN_KEY: &str = "admin_token";
+
 /// An implementation of the `DataStore` trait that uses Redis as its backend.
 /// This struct holds a `ConnectionManager` for interacting with the Redis
 /// server. It is designed to be cloneable and thread-safe.
@@ -129,6 +131,33 @@ impl TokenStore for RedisClient {
         let data = token_data.serialize()?;
         let key = self.token_key(token_hash);
         let _: () = self.con.clone().set_ex(key, data, ttl.as_secs()).await?;
+        Ok(())
+    }
+
+    #[instrument(skip(self), err)]
+    async fn clear_all_user_tokens(&self) -> Result<(), TokenError> {
+        let keys: Vec<String> = self.con.clone().keys("token:*").await?;
+        if !keys.is_empty() {
+            let _: () = self.con.clone().del(keys).await?;
+        }
+        Ok(())
+    }
+
+    #[instrument(skip(self), err)]
+    async fn admin_token_exists(&self) -> Result<bool, TokenError> {
+        let exists: bool = self.con.clone().exists(ADMIN_TOKEN_KEY).await?;
+        Ok(exists)
+    }
+
+    #[instrument(skip(self), err)]
+    async fn get_admin_token(&self) -> Result<Option<String>, TokenError> {
+        let value: Option<String> = self.con.clone().get(ADMIN_TOKEN_KEY).await?;
+        Ok(value)
+    }
+
+    #[instrument(skip(self), err)]
+    async fn store_admin_token(&self, token_hash: &str) -> Result<(), TokenError> {
+        let _: () = self.con.clone().set(ADMIN_TOKEN_KEY, token_hash).await?;
         Ok(())
     }
 }

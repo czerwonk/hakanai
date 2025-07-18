@@ -101,7 +101,7 @@ async fn authorize_request(
     if let Some(mut token) = token_header {
         token = token.trim_start_matches("Bearer ").trim();
 
-        match app_data.token_validator.validate_token(token).await {
+        match app_data.token_validator.validate_user_token(token).await {
             Ok(token_data) => {
                 return Ok(Some(token_data));
             }
@@ -258,13 +258,18 @@ mod tests {
 
     #[async_trait]
     impl TokenValidator for MockTokenValidator {
-        async fn validate_token(&self, token: &str) -> Result<TokenData, TokenError> {
+        async fn validate_user_token(&self, token: &str) -> Result<TokenData, TokenError> {
             let tokens = self.valid_tokens.lock().unwrap();
             for (valid_token, data) in tokens.iter() {
                 if valid_token == token {
                     return Ok(data.clone());
                 }
             }
+            Err(TokenError::InvalidToken)
+        }
+
+        async fn validate_admin_token(&self, _token: &str) -> Result<(), TokenError> {
+            // Mock implementation - for tests, admin tokens are not used
             Err(TokenError::InvalidToken)
         }
     }

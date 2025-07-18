@@ -117,15 +117,46 @@ hakanai-server --allow-anonymous
 # Configure anonymous size limits (in KB)
 hakanai-server --allow-anonymous --anonymous-size-limit 64
 
-# Production setup with anonymous access and monitoring
-hakanai-server --allow-anonymous --anonymous-size-limit 32 --upload-size-limit 10240
+# Enable admin token system for token management
+hakanai-server --enable-admin-token
+
+# Combined: admin system + anonymous access
+hakanai-server --enable-admin-token --allow-anonymous --anonymous-size-limit 32
+
+# Production setup with admin token and monitoring
+hakanai-server --enable-admin-token --allow-anonymous --anonymous-size-limit 32 --upload-size-limit 10240
 ```
 
 **v2.0 Token System:**
-- **Admin token**: Automatically generated on first startup and logged to console
-- **User tokens**: Future admin API will allow generating user tokens
+- **Admin token**: 
+  - **Optional**: Only created with `--enable-admin-token` flag
+  - **No expiration**: Permanent tokens since they're not recoverable
+  - **Purpose**: Future admin API for token management
+  - **Recovery**: `--reset-admin-token` flag (requires server restart)
+- **User tokens**: 
+  - **Default behavior**: Always created on first startup
+  - **30-day TTL**: Automatic expiration for security
+  - **Recovery**: `--reset-default-token` flag (clears all user tokens)
 - **Anonymous access**: Optional public access with configurable size limits
 - **⚠️ BREAKING**: `HAKANAI_TOKENS` environment variable removed in v2.0
+
+**Token Recovery Options:**
+```bash
+# Reset admin token (creates new admin token)
+hakanai-server --enable-admin-token --reset-admin-token
+
+# Reset user token (clears all user tokens, creates new default)
+hakanai-server --reset-default-token
+
+# Emergency: Direct Redis access
+redis-cli DEL admin_token
+```
+
+**Configuration Validation:**
+The server validates flag combinations on startup to prevent invalid configurations:
+- `--reset-admin-token` requires `--enable-admin-token`
+- `--anonymous-size-limit` cannot exceed `--upload-size-limit`
+- Invalid combinations result in startup failure with clear error messages
 
 ### CLI
 
@@ -511,6 +542,7 @@ For production deployments:
 - `HAKANAI_UPLOAD_SIZE_LIMIT`: Maximum upload size in KB (default: 10240, 10MB)
 - `HAKANAI_ALLOW_ANONYMOUS`: Allow anonymous access (default: false)
 - `HAKANAI_ANONYMOUS_UPLOAD_SIZE_LIMIT`: Upload size limit for anonymous users in KB (default: 32KB)
+- `HAKANAI_ENABLE_ADMIN_TOKEN`: Enable admin token system (default: false)
 - `HAKANAI_CORS_ALLOWED_ORIGINS`: Comma-separated allowed CORS origins (default: none)
 - `HAKANAI_MAX_TTL`: Maximum allowed TTL in seconds (default: 604800, 7 days)
 - `OTEL_EXPORTER_OTLP_ENDPOINT`: OpenTelemetry collector endpoint (optional, enables OTEL when set)
@@ -522,6 +554,9 @@ For production deployments:
 - `--redis-dsn`: Override the Redis connection string
 - `--allow-anonymous`: Allow anonymous access without authentication
 - `--anonymous-size-limit`: Set upload size limit for anonymous users in KB
+- `--enable-admin-token`: Enable admin token system for token management
+- `--reset-admin-token`: Force regenerate admin token (requires --enable-admin-token)
+- `--reset-user-tokens`: Clear all user tokens and create new default token
 
 ### Security Features
 

@@ -66,12 +66,27 @@ pub trait TokenStore: Send + Sync {
         ttl: Duration,
         token_data: TokenData,
     ) -> Result<(), TokenError>;
+
+    /// Clear all user tokens (token:* keys).
+    async fn clear_all_user_tokens(&self) -> Result<(), TokenError>;
+
+    /// Check if admin token exists.
+    async fn admin_token_exists(&self) -> Result<bool, TokenError>;
+
+    /// Get admin token hash.
+    async fn get_admin_token(&self) -> Result<Option<String>, TokenError>;
+
+    /// Store admin token hash.
+    async fn store_admin_token(&self, token_hash: &str) -> Result<(), TokenError>;
 }
 
 #[async_trait]
 pub trait TokenValidator: Send + Sync {
     /// Validate token and return metadata.
-    async fn validate_token(&self, token: &str) -> Result<TokenData, TokenError>;
+    async fn validate_user_token(&self, token: &str) -> Result<TokenData, TokenError>;
+
+    /// Validate admin token.
+    async fn validate_admin_token(&self, token: &str) -> Result<(), TokenError>;
 }
 
 /// Manages token operations with hashing and validation.
@@ -92,6 +107,11 @@ impl<T: TokenStore> TokenManager<T> {
             return Ok(None);
         }
 
+        self.create_default_token().await.map(Some)
+    }
+
+    /// Create default token (always creates new token).
+    pub async fn create_default_token(&self) -> Result<String, TokenError> {
         let token = Self::generate_token()?;
         let token_hash = hash_string(&token);
         self.token_store
@@ -104,7 +124,31 @@ impl<T: TokenStore> TokenManager<T> {
             )
             .await?;
 
-        Ok(Some(token))
+        Ok(token)
+    }
+
+    /// Clear all user tokens and create new default token.
+    pub async fn reset_user_tokens(&self) -> Result<String, TokenError> {
+        self.token_store.clear_all_user_tokens().await?;
+        self.create_default_token().await
+    }
+
+    /// Create admin token if none exists.
+    pub async fn create_admin_token_if_none(&self) -> Result<Option<String>, TokenError> {
+        if self.token_store.admin_token_exists().await? {
+            return Ok(None);
+        }
+
+        self.create_admin_token().await.map(Some)
+    }
+
+    /// Create admin token (always creates new token).
+    pub async fn create_admin_token(&self) -> Result<String, TokenError> {
+        let token = Self::generate_token()?;
+        let token_hash = hash_string(&token);
+        self.token_store.store_admin_token(&token_hash).await?;
+
+        Ok(token)
     }
 
     /// Generate 32-byte cryptographically secure token.
@@ -125,12 +169,22 @@ impl<T: TokenStore> TokenManager<T> {
 #[async_trait]
 impl<T: TokenStore> TokenValidator for TokenManager<T> {
     /// Validate token and return metadata.
-    async fn validate_token(&self, token: &str) -> Result<TokenData, TokenError> {
+    async fn validate_user_token(&self, token: &str) -> Result<TokenData, TokenError> {
         let token_hash = hash_string(token);
 
         match self.token_store.get_token(&token_hash).await? {
             Some(token_data) => Ok(token_data),
             None => Err(TokenError::InvalidToken),
+        }
+    }
+
+    /// Validate admin token.
+    async fn validate_admin_token(&self, token: &str) -> Result<(), TokenError> {
+        let token_hash = hash_string(token);
+
+        match self.token_store.get_admin_token().await? {
+            Some(stored_hash) if stored_hash == token_hash => Ok(()),
+            _ => Err(TokenError::InvalidToken),
         }
     }
 }
@@ -147,6 +201,7 @@ mod tests {
     #[derive(Clone)]
     struct MockTokenStore {
         tokens: Arc<Mutex<HashMap<String, TokenData>>>,
+        admin_token: Arc<Mutex<Option<String>>>,
         should_fail: Arc<Mutex<bool>>,
     }
 
@@ -154,6 +209,7 @@ mod tests {
         fn new() -> Self {
             Self {
                 tokens: Arc::new(Mutex::new(HashMap::new())),
+                admin_token: Arc::new(Mutex::new(None)),
                 should_fail: Arc::new(Mutex::new(false)),
             }
         }
@@ -168,6 +224,14 @@ mod tests {
 
         async fn token_count(&self) -> usize {
             self.tokens.lock().await.len()
+        }
+
+        async fn set_admin_token(&self, hash: &str) {
+            *self.admin_token.lock().await = Some(hash.to_string());
+        }
+
+        async fn clear_admin_token(&self) {
+            *self.admin_token.lock().await = None;
         }
     }
 
@@ -202,6 +266,40 @@ mod tests {
                 .lock()
                 .await
                 .insert(token_hash.to_string(), token_data);
+            Ok(())
+        }
+
+        async fn clear_all_user_tokens(&self) -> Result<(), TokenError> {
+            if *self.should_fail.lock().await {
+                return Err(TokenError::Custom("Mock failure".to_string()));
+            }
+
+            self.tokens.lock().await.clear();
+            Ok(())
+        }
+
+        async fn admin_token_exists(&self) -> Result<bool, TokenError> {
+            if *self.should_fail.lock().await {
+                return Err(TokenError::Custom("Mock failure".to_string()));
+            }
+
+            Ok(self.admin_token.lock().await.is_some())
+        }
+
+        async fn get_admin_token(&self) -> Result<Option<String>, TokenError> {
+            if *self.should_fail.lock().await {
+                return Err(TokenError::Custom("Mock failure".to_string()));
+            }
+
+            Ok(self.admin_token.lock().await.clone())
+        }
+
+        async fn store_admin_token(&self, token_hash: &str) -> Result<(), TokenError> {
+            if *self.should_fail.lock().await {
+                return Err(TokenError::Custom("Mock failure".to_string()));
+            }
+
+            *self.admin_token.lock().await = Some(token_hash.to_string());
             Ok(())
         }
     }
@@ -259,7 +357,7 @@ mod tests {
 
         mock_store.insert_token(&test_hash, test_data.clone()).await;
 
-        let token_data = manager.validate_token(test_token).await?;
+        let token_data = manager.validate_user_token(test_token).await?;
         assert_eq!(token_data.upload_size_limit, Some(5000));
         Ok(())
     }
@@ -269,7 +367,7 @@ mod tests {
         let mock_store = MockTokenStore::new();
         let manager = TokenManager::new(mock_store);
 
-        let result = manager.validate_token("nonexistent_token").await;
+        let result = manager.validate_user_token("nonexistent_token").await;
 
         assert!(result.is_err());
         assert!(matches!(result.err().unwrap(), TokenError::InvalidToken));
@@ -314,7 +412,7 @@ mod tests {
         mock_store.set_should_fail(true).await;
         let manager = TokenManager::new(mock_store);
 
-        let result = manager.validate_token("any_token").await;
+        let result = manager.validate_user_token("any_token").await;
 
         assert!(result.is_err());
         assert!(matches!(result.err().unwrap(), TokenError::Custom(_)));
@@ -345,6 +443,89 @@ mod tests {
         let serialized = serde_json::to_string(&token_data)?;
         let deserialized: TokenData = serde_json::from_str(&serialized)?;
         assert_eq!(deserialized.upload_size_limit, None);
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_validate_admin_token_success() -> Result<(), Box<dyn std::error::Error>> {
+        let mock_store = MockTokenStore::new();
+        let manager = TokenManager::new(mock_store.clone());
+
+        let test_token = "admin_token_123";
+        let test_hash = hash_string(test_token);
+        mock_store.set_admin_token(&test_hash).await;
+
+        let result = manager.validate_admin_token(test_token).await;
+        assert!(result.is_ok());
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_validate_admin_token_not_found() {
+        let mock_store = MockTokenStore::new();
+        let manager = TokenManager::new(mock_store);
+
+        let result = manager
+            .validate_admin_token("nonexistent_admin_token")
+            .await;
+        assert!(result.is_err());
+        assert!(matches!(result.err().unwrap(), TokenError::InvalidToken));
+    }
+
+    #[tokio::test]
+    async fn test_validate_admin_token_wrong_hash() -> Result<(), Box<dyn std::error::Error>> {
+        let mock_store = MockTokenStore::new();
+        let manager = TokenManager::new(mock_store.clone());
+
+        let correct_token = "admin_token_123";
+        let wrong_token = "wrong_admin_token";
+        let correct_hash = hash_string(correct_token);
+        mock_store.set_admin_token(&correct_hash).await;
+
+        let result = manager.validate_admin_token(wrong_token).await;
+        assert!(result.is_err());
+        assert!(matches!(result.err().unwrap(), TokenError::InvalidToken));
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_create_admin_token_success() -> Result<(), Box<dyn std::error::Error>> {
+        let mock_store = MockTokenStore::new();
+        let manager = TokenManager::new(mock_store.clone());
+
+        let token = manager.create_admin_token().await?;
+
+        // Verify token is valid base64 URL-safe
+        base64::prelude::BASE64_URL_SAFE_NO_PAD.decode(&token)?;
+
+        // Verify token can be validated
+        let result = manager.validate_admin_token(&token).await;
+        assert!(result.is_ok());
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_create_admin_token_if_none_when_empty() -> Result<(), Box<dyn std::error::Error>>
+    {
+        let mock_store = MockTokenStore::new();
+        let manager = TokenManager::new(mock_store);
+
+        let result = manager.create_admin_token_if_none().await?;
+        assert!(result.is_some());
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_create_admin_token_if_none_when_exists() -> Result<(), Box<dyn std::error::Error>>
+    {
+        let mock_store = MockTokenStore::new();
+        let manager = TokenManager::new(mock_store.clone());
+
+        // Pre-populate with an admin token
+        mock_store.set_admin_token("existing_admin_hash").await;
+
+        let result = manager.create_admin_token_if_none().await?;
+        assert!(result.is_none());
         Ok(())
     }
 }
