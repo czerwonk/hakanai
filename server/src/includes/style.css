@@ -161,11 +161,13 @@ body {
   --container-shadow: var(--theme-container-shadow);
 
   font-family: var(--font-system);
-  margin: 0;
-  padding: 0;
+  max-width: var(--max-width);
+  margin: 3rem auto;
+  padding: var(--spacing-lg);
   background-color: var(--color-bg-main);
   color: var(--color-text);
   line-height: 1.6;
+  transition: max-width var(--transition-normal) ease-in-out;
 }
 
 /* Expanded layout for secret display */
@@ -174,9 +176,6 @@ body.expanded-view {
 }
 
 .container {
-  max-width: var(--max-width);
-  margin: 3rem auto;
-  padding: var(--spacing-lg);
   background-color: var(--color-bg-container);
   padding: var(--spacing-xl);
   border-radius: var(--border-radius-lg);
@@ -184,6 +183,8 @@ body.expanded-view {
 }
 
 .container.homepage-container {
+  margin: 3rem auto;
+  padding: var(--spacing-lg);
   max-width: var(--max-width-expanded);
 }
 
