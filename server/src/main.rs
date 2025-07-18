@@ -1,9 +1,12 @@
+mod admin_api;
 mod app_data;
 mod data_store;
 mod hash;
 mod options;
 mod otel;
 mod redis_client;
+#[cfg(test)]
+mod test_utils;
 mod token;
 mod web_api;
 mod web_server;
@@ -92,12 +95,11 @@ async fn initialize_admin_token(
         return Ok(());
     }
 
-    let new_admin_token: Option<String>;
-    if args.reset_admin_token {
-        new_admin_token = Some(token_manager.create_admin_token().await?);
+    let new_admin_token: Option<String> = if args.reset_admin_token {
+        Some(token_manager.create_admin_token().await?)
     } else {
-        new_admin_token = token_manager.create_admin_token_if_none().await?;
-    }
+        token_manager.create_admin_token_if_none().await?
+    };
 
     if let Some(admin_token) = new_admin_token {
         info!("Admin token: {admin_token}");

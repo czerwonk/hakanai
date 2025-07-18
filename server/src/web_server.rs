@@ -7,18 +7,19 @@ use opentelemetry_instrumentation_actix_web::{RequestMetrics, RequestTracing};
 
 use tracing::{error, info, instrument};
 
+use crate::admin_api;
 use crate::app_data::{AnonymousOptions, AppData};
 use crate::data_store::DataStore;
 use crate::options::Args;
-use crate::token::TokenValidator;
+use crate::token::{TokenCreator, TokenValidator};
 use crate::web_api;
 use crate::web_static;
 
 /// Starts the web server with the provided data store and tokens.
-pub async fn run<D, T>(data_store: D, token_validator: T, args: Args) -> Result<()>
+pub async fn run<D, T>(data_store: D, token_manager: T, args: Args) -> Result<()>
 where
     D: DataStore + Clone + 'static,
-    T: TokenValidator + Clone + 'static,
+    T: TokenValidator + TokenCreator + Clone + 'static,
 {
     info!("Starting server on {}:{}", args.listen_address, args.port);
 
@@ -30,11 +31,12 @@ where
     HttpServer::new(move || {
         let app_data = AppData {
             data_store: Box::new(data_store.clone()),
-            token_validator: Box::new(token_validator.clone()),
+            token_validator: Box::new(token_manager.clone()),
+            token_creator: Box::new(token_manager.clone()),
             max_ttl: args.max_ttl,
             anonymous_usage: anonymous_usage.clone(),
         };
-        App::new()
+        let mut app = App::new()
             .app_data(web::Data::new(app_data))
             .app_data(web::PayloadConfig::new(
                 args.upload_size_limit as usize * 1024,
@@ -51,7 +53,13 @@ where
             .route("/healthy", web::get().to(healthy))
             .route("/ready", web::get().to(ready))
             .configure(web_static::configure)
-            .service(web::scope("/api/v1").configure(web_api::configure))
+            .service(web::scope("/api/v1").configure(web_api::configure));
+
+        if args.enable_admin_token {
+            app = app.configure(admin_api::configure_routes);
+        }
+
+        app
     })
     .bind((args.listen_address, args.port))?
     .run()

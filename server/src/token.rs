@@ -89,6 +89,16 @@ pub trait TokenValidator: Send + Sync {
     async fn validate_admin_token(&self, token: &str) -> Result<(), TokenError>;
 }
 
+#[async_trait]
+pub trait TokenCreator: Send + Sync {
+    /// Create a new user token with specified metadata and TTL.
+    async fn create_user_token(
+        &self,
+        token_data: TokenData,
+        ttl: Duration,
+    ) -> Result<String, TokenError>;
+}
+
 /// Manages token operations with hashing and validation.
 #[derive(Clone)]
 pub struct TokenManager<T: TokenStore> {
@@ -112,16 +122,23 @@ impl<T: TokenStore> TokenManager<T> {
 
     /// Create default token (always creates new token).
     pub async fn create_default_token(&self) -> Result<String, TokenError> {
+        let token_data = TokenData {
+            upload_size_limit: None,
+        };
+        self.create_user_token(token_data, Duration::from_secs(DEFAULT_TOKEN_TTL))
+            .await
+    }
+
+    /// Create a new user token with specified metadata and TTL.
+    pub async fn create_user_token(
+        &self,
+        token_data: TokenData,
+        ttl: Duration,
+    ) -> Result<String, TokenError> {
         let token = Self::generate_token()?;
         let token_hash = hash_string(&token);
         self.token_store
-            .store_token(
-                &token_hash,
-                Duration::from_secs(DEFAULT_TOKEN_TTL),
-                TokenData {
-                    upload_size_limit: None,
-                },
-            )
+            .store_token(&token_hash, ttl, token_data)
             .await?;
 
         Ok(token)
@@ -189,6 +206,24 @@ impl<T: TokenStore> TokenValidator for TokenManager<T> {
     }
 }
 
+#[async_trait]
+impl<T: TokenStore> TokenCreator for TokenManager<T> {
+    /// Create a new user token with specified metadata and TTL.
+    async fn create_user_token(
+        &self,
+        token_data: TokenData,
+        ttl: Duration,
+    ) -> Result<String, TokenError> {
+        let token = Self::generate_token()?;
+        let token_hash = hash_string(&token);
+        self.token_store
+            .store_token(&token_hash, ttl, token_data)
+            .await?;
+
+        Ok(token)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -228,10 +263,6 @@ mod tests {
 
         async fn set_admin_token(&self, hash: &str) {
             *self.admin_token.lock().await = Some(hash.to_string());
-        }
-
-        async fn clear_admin_token(&self) {
-            *self.admin_token.lock().await = None;
         }
     }
 

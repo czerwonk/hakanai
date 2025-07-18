@@ -117,6 +117,22 @@ impl PostSecretResponse {
     }
 }
 
+/// Request model for creating user tokens via admin API
+#[derive(Serialize, Deserialize, Debug)]
+pub struct CreateTokenRequest {
+    /// Optional upload size limit in bytes
+    pub upload_size_limit: Option<i64>,
+    /// TTL in seconds
+    pub ttl_seconds: u64,
+}
+
+/// Response model for creating user tokens via admin API
+#[derive(Serialize, Deserialize, Debug)]
+pub struct CreateTokenResponse {
+    /// The generated token
+    pub token: String,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

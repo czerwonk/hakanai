@@ -143,6 +143,95 @@
           }
         }
       }
+    },
+    "/admin/tokens": {
+      "post": {
+        "summary": "Create a new user token",
+        "description": "Creates a new user token with optional size limit and TTL. Requires admin authentication.",
+        "operationId": "createUserToken",
+        "security": [
+          {
+            "adminAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTokenRequest"
+              },
+              "example": {
+                "upload_size_limit": 1048576,
+                "ttl_seconds": 2592000
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateTokenResponse"
+                },
+                "example": {
+                  "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid JSON or missing required fields",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - missing or invalid admin token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "error": "Invalid admin token"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error - failed to create token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -176,6 +265,35 @@
             "example": "550e8400-e29b-41d4-a716-446655440000"
           }
         }
+      },
+      "CreateTokenRequest": {
+        "type": "object",
+        "required": ["ttl_seconds"],
+        "properties": {
+          "upload_size_limit": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Optional upload size limit in bytes for the token",
+            "example": 1048576
+          },
+          "ttl_seconds": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Token time-to-live in seconds",
+            "example": 2592000
+          }
+        }
+      },
+      "CreateTokenResponse": {
+        "type": "object",
+        "required": ["token"],
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "The generated authentication token",
+            "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+          }
+        }
       }
     },
     "securitySchemes": {
@@ -183,9 +301,13 @@
         "type": "http",
         "scheme": "bearer",
         "description": "Authentication token (if required by server configuration)"
+      },
+      "adminAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Admin authentication token (required for admin operations)"
       }
     }
   },
   "tags": []
 }
-
