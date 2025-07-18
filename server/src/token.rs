@@ -78,6 +78,9 @@ pub trait TokenStore: Send + Sync {
 
     /// Store admin token hash.
     async fn store_admin_token(&self, token_hash: &str) -> Result<(), TokenError>;
+
+    /// Count the number of active user tokens.
+    async fn token_count(&self) -> Result<usize, TokenError>;
 }
 
 #[async_trait]
@@ -332,6 +335,14 @@ mod tests {
 
             *self.admin_token.lock().await = Some(token_hash.to_string());
             Ok(())
+        }
+
+        async fn token_count(&self) -> Result<usize, TokenError> {
+            if *self.should_fail.lock().await {
+                return Err(TokenError::Custom("Mock failure".to_string()));
+            }
+
+            Ok(self.tokens.lock().await.len())
         }
     }
 

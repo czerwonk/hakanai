@@ -2,6 +2,7 @@ mod admin_api;
 mod app_data;
 mod data_store;
 mod hash;
+mod metrics;
 mod options;
 mod otel;
 mod redis_client;
@@ -14,6 +15,8 @@ mod web_static;
 
 use core::result::Result::Ok;
 use std::io::Result;
+use std::sync::Arc;
+use std::time::Duration;
 
 use clap::Parser;
 use tracing::{info, warn};
@@ -52,6 +55,10 @@ async fn main() -> Result<()> {
     if let Err(e) = initialize_tokens(&token_manager, &args).await {
         eprintln!("Failed to initialize tokens: {e}");
         return Err(std::io::Error::other(e));
+    }
+
+    if otel_handler.is_some() {
+        initialize_metrics(&redis_client);
     }
 
     let res = web_server::run(redis_client, token_manager, args).await;
@@ -106,4 +113,12 @@ async fn initialize_admin_token(
     };
 
     Ok(())
+}
+
+fn initialize_metrics(redis_client: &RedisClient) {
+    info!("Initializing metrics collection with 30s interval");
+    let redis_arc = Arc::new(redis_client.clone());
+    let collection_interval = Duration::from_secs(30); // Collect metrics every 30 seconds
+
+    crate::metrics::init_metrics_collection(redis_arc, collection_interval);
 }

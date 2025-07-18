@@ -363,7 +363,7 @@ mod tests {
         let req = test::TestRequest::post()
             .uri("/admin/tokens")
             .insert_header(("Authorization", "Bearer admin_token"))
-            .set_json(&serde_json::json!({
+            .set_json(serde_json::json!({
                 "upload_size_limit": 1024
                 // Missing ttl_seconds field
             }))

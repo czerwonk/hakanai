@@ -160,4 +160,10 @@ impl TokenStore for RedisClient {
         let _: () = self.con.clone().set(ADMIN_TOKEN_KEY, token_hash).await?;
         Ok(())
     }
+
+    #[instrument(skip(self), err)]
+    async fn token_count(&self) -> Result<usize, TokenError> {
+        let keys: Vec<String> = self.con.clone().keys("token:*").await?;
+        Ok(keys.len())
+    }
 }
