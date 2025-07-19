@@ -31,9 +31,8 @@ const translations: Translations = {
     "label.expires": "Expires after:",
     "label.url": "Secret URL:",
     "label.key": "Decryption Key:",
-    "label.separateKey": "Show URL and key separately for enhanced security",
-    "label.saveToken":
-      "Remember authentication token (stored securely in browser)",
+    "label.separateKey": "Show Key separately",
+    "label.saveToken": "Remember authentication token",
     "label.filename": "Filename:",
 
     // Placeholders
@@ -185,10 +184,8 @@ const translations: Translations = {
     "label.expires": "Läuft ab nach:",
     "label.url": "Secret-URL:",
     "label.key": "Geheimer Schlüssel:",
-    "label.separateKey":
-      "URL und Schlüssel separat anzeigen für erweiterte Sicherheit",
-    "label.saveToken":
-      "Authentifizierungs-Token merken (sicher im Browser gespeichert)",
+    "label.separateKey": "Schlüssel separat anzeigen",
+    "label.saveToken": "Token merken",
     "label.filename": "Dateiname:",
 
     // Placeholders
