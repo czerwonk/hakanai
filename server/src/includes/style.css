@@ -507,6 +507,9 @@ body[data-theme="light"] #language-switcher {
   position: relative;
   overflow: hidden;
   z-index: 1;
+  border: 1px solid var(--theme-border);
+  border-radius: var(--border-radius);
+  background: var(--theme-bg-container);
 }
 
 /* Add ripple effect */
@@ -536,15 +539,13 @@ body[data-theme="light"] #language-switcher {
 
 .action-card:hover {
   transform: translateY(-2px);
-  box-shadow:
-    0 12px 30px var(--container-shadow),
-    0 0 0 1px color-mix(in srgb, var(--theme-primary) 5%, transparent);
-  border-color: color-mix(in srgb, var(--theme-primary) 20%, transparent);
+  box-shadow: 0 12px 30px var(--container-shadow);
+  border-color: var(--theme-primary);
 }
 
 /* Fix light theme action cards */
 body[data-theme="light"] .action-card {
-  background: #faf8f0 !important;
+  background: var(--light-bg-container);
 }
 
 .action-card p {
