@@ -1,0 +1,56 @@
+{
+  "name": "Hakanai",
+  "short_name": "Hakanai",
+  "description": "Zero-knowledge one-time secret sharing service",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1f1f1f",
+  "theme_color": "#7FB4CA",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "categories": ["security", "utilities", "productivity"],
+  "lang": "en",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Create Secret",
+      "short_name": "Create",
+      "description": "Create a new one-time secret",
+      "url": "/create",
+      "icons": [
+        {
+          "src": "/icon.svg",
+          "sizes": "any",
+          "type": "image/svg+xml"
+        }
+      ]
+    },
+    {
+      "name": "Retrieve Secret",
+      "short_name": "Retrieve",
+      "description": "Retrieve a one-time secret",
+      "url": "/get",
+      "icons": [
+        {
+          "src": "/icon.svg",
+          "sizes": "any",
+          "type": "image/svg+xml"
+        }
+      ]
+    }
+  ]
+}
+

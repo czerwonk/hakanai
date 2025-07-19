@@ -506,6 +506,7 @@ body[data-theme="light"] #language-switcher {
   transition: all var(--transition-slow);
   position: relative;
   overflow: hidden;
+  z-index: 1;
 }
 
 /* Add ripple effect */
@@ -524,6 +525,8 @@ body[data-theme="light"] #language-switcher {
   transition: all 0.8s ease-out;
   border-radius: 50%;
   transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 0;
 }
 
 .action-card:hover::before {
@@ -559,6 +562,8 @@ body[data-theme="light"] .action-card {
   min-width: 140px;
   padding: var(--spacing-md) var(--spacing-lg);
   font-size: var(--font-size-base);
+  position: relative;
+  z-index: 2;
 }
 
 .info-section {
@@ -595,11 +600,11 @@ body[data-theme="light"] .action-card {
   color: var(--theme-accent);
   position: absolute;
   left: var(--spacing-xs);
-  font-weight: normal;
-  font-size: 0.8em;
+  font-weight: bold;
+  font-size: 1.4em;
   top: 50%;
   transform: translateY(-50%);
-  opacity: 0.6;
+  opacity: 0.8;
 }
 
 .feature-list dt:first-child {
@@ -693,18 +698,21 @@ body[data-theme="light"] .action-card {
 }
 
 .action-card .button.secondary {
-  background: transparent;
-  color: var(--theme-primary);
+  background: var(--theme-primary);
+  color: var(--theme-bg-container);
   border: 1px solid var(--theme-primary);
-  box-shadow: none;
+  box-shadow: 0 2px 8px
+    color-mix(in srgb, var(--theme-primary) 10%, transparent);
+  font-weight: 500;
+  letter-spacing: 0.01em;
 }
 
 .action-card .button.secondary:hover {
-  background: color-mix(in srgb, var(--theme-primary) 5%, transparent);
-  color: var(--theme-primary);
+  background: var(--theme-primary-hover);
+  border-color: var(--theme-primary-hover);
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px
-    color-mix(in srgb, var(--theme-primary) 10%, transparent);
+  box-shadow: 0 4px 12px
+    color-mix(in srgb, var(--theme-primary) 15%, transparent);
 }
 
 /* Theme toggle button */
