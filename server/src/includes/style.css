@@ -513,17 +513,19 @@ body[data-theme="light"] .action-card {
   margin-top: var(--spacing-sm);
   margin-bottom: var(--spacing-xs);
   position: relative;
-  padding-left: var(--spacing-md);
+  padding-left: calc(var(--spacing-md) + var(--spacing-xs));
 }
 
 .feature-list dt::before {
-  content: "〜";
+  content: "•";
   color: var(--theme-accent);
   position: absolute;
-  left: 0;
-  font-weight: bold;
-  text-shadow: 0 0 10px color-mix(in srgb, var(--theme-accent) 50%, transparent);
-  font-size: 1.2em;
+  left: var(--spacing-xs);
+  font-weight: normal;
+  font-size: 0.8em;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0.6;
 }
 
 .feature-list dt:first-child {
