@@ -602,8 +602,8 @@ body[data-theme="light"] .action-card {
   left: var(--spacing-xs);
   font-weight: bold;
   font-size: 1.4em;
-  top: 50%;
-  transform: translateY(-50%);
+  top: 0;
+  line-height: 1.2;
   opacity: 0.8;
 }
 
