@@ -580,10 +580,14 @@ body[data-theme="light"] .action-card {
 }
 
 .feature-list {
-  padding: 0;
+  padding: var(--spacing-lg);
   max-width: 500px;
   margin: 0 auto;
   text-align: left;
+  background: var(--theme-bg-container);
+  border: 1px solid var(--theme-border);
+  border-radius: var(--border-radius);
+  box-shadow: 0 2px 8px var(--container-shadow);
 }
 
 .feature-list dt {
@@ -617,6 +621,11 @@ body[data-theme="light"] .action-card {
   font-size: var(--font-size-sm);
   line-height: 1.5;
   margin-left: 0;
+  margin-bottom: var(--spacing-md);
+  padding-left: calc(var(--spacing-md) + var(--spacing-xs));
+}
+
+.feature-list dd:last-child {
   margin-bottom: 0;
 }
 
