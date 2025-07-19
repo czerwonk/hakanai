@@ -19,6 +19,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
         .route("/i18n.js", web::get().to(serve_i18n_js))
         .route("/icon.svg", web::get().to(serve_icon))
         .route("/logo.svg", web::get().to(serve_logo))
+        .route("/manifest.json", web::get().to(serve_manifest))
         .route("/openapi.json", web::get().to(serve_openapi_json))
         .route("/robots.txt", web::get().to(serve_robots_txt))
         .route("/style.css", web::get().to(serve_css))
@@ -154,6 +155,14 @@ async fn serve_homepage_js() -> impl Responder {
     serve_with_caching_header(
         include_bytes!("includes/homepage.js"),
         "application/javascript",
+        DEFAULT_CACHE_MAX_AGE,
+    )
+}
+
+async fn serve_manifest() -> impl Responder {
+    serve_with_caching_header(
+        include_bytes!("includes/manifest.json"),
+        "application/manifest+json",
         DEFAULT_CACHE_MAX_AGE,
     )
 }
