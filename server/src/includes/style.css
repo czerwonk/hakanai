@@ -1416,11 +1416,15 @@ button.loading::after {
   font-size: var(--font-size-xs);
   color: var(--color-text-muted);
   line-height: 1.4;
-  border-left: 3px solid var(--theme-accent);
-  background: var(--theme-accent-bg);
-  backdrop-filter: blur(5px);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
+  padding-left: var(--spacing-xs);
+  opacity: 0.75;
+  transition: opacity var(--transition-fast);
+}
+
+/* Slightly more visible on hover/focus of parent input */
+.input-group:hover .input-helper,
+.input-group:focus-within .input-helper {
+  opacity: 0.9;
 }
 
 /* API Documentation styles */
