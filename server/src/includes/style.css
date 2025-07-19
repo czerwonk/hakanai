@@ -106,6 +106,22 @@
   /* Animation durations */
   --animation-fade: 300ms;
   --animation-spin: 1s;
+
+  /* Default gradient stops - dark theme values */
+  --gradient-stop-1: 3%;
+  --gradient-stop-2: 7%;
+  --gradient-stop-3: 10%;
+  --gradient-stop-4: 11%;
+  --gradient-stop-5: 13%;
+  --gradient-stop-6: 15%;
+
+  /* Light theme gradient stops */
+  --light-gradient-stop-1: 5%;
+  --light-gradient-stop-2: 8%;
+  --light-gradient-stop-3: 12%;
+  --light-gradient-stop-4: 14%;
+  --light-gradient-stop-5: 16%;
+  --light-gradient-stop-6: 18%;
 }
 
 /* Light theme - update theme pointers */
@@ -130,6 +146,14 @@ body[data-theme="light"] {
   --theme-accent-bg: var(--light-accent-bg);
   --theme-secondary: var(--light-secondary);
   --theme-success: var(--light-success);
+
+  /* Override gradient stops for light theme */
+  --gradient-stop-1: var(--light-gradient-stop-1);
+  --gradient-stop-2: var(--light-gradient-stop-2);
+  --gradient-stop-3: var(--light-gradient-stop-3);
+  --gradient-stop-4: var(--light-gradient-stop-4);
+  --gradient-stop-5: var(--light-gradient-stop-5);
+  --gradient-stop-6: var(--light-gradient-stop-6);
 }
 
 @media (prefers-color-scheme: light) {
@@ -154,6 +178,14 @@ body[data-theme="light"] {
     --theme-accent-bg: var(--light-accent-bg);
     --theme-secondary: var(--light-secondary);
     --theme-success: var(--light-success);
+
+    /* Override gradient stops for system light theme */
+    --gradient-stop-1: var(--light-gradient-stop-1);
+    --gradient-stop-2: var(--light-gradient-stop-2);
+    --gradient-stop-3: var(--light-gradient-stop-3);
+    --gradient-stop-4: var(--light-gradient-stop-4);
+    --gradient-stop-5: var(--light-gradient-stop-5);
+    --gradient-stop-6: var(--light-gradient-stop-6);
   }
 }
 
@@ -191,22 +223,53 @@ body {
   background: linear-gradient(
     135deg,
     var(--theme-bg-main) 0%,
-    var(--theme-bg-main) 50%,
-    color-mix(in srgb, var(--theme-bg-main) 92%, var(--theme-accent) 8%) 100%
+    var(--theme-bg-main) 15%,
+    color-mix(
+        in srgb,
+        var(--theme-bg-main) calc(100% - var(--gradient-stop-1)),
+        var(--theme-primary) var(--gradient-stop-1)
+      )
+      30%,
+    color-mix(
+        in srgb,
+        var(--theme-bg-main) calc(100% - var(--gradient-stop-2)),
+        var(--theme-primary) var(--gradient-stop-2)
+      )
+      45%,
+    color-mix(
+        in srgb,
+        var(--theme-bg-main) calc(100% - var(--gradient-stop-3)),
+        var(--theme-primary) var(--gradient-stop-3)
+      )
+      55%,
+    color-mix(
+        in srgb,
+        var(--theme-bg-main) calc(100% - var(--gradient-stop-4)),
+        var(--theme-secondary) var(--gradient-stop-4)
+      )
+      70%,
+    color-mix(
+        in srgb,
+        var(--theme-bg-main) calc(100% - var(--gradient-stop-5)),
+        var(--theme-accent) var(--gradient-stop-5)
+      )
+      85%,
+    color-mix(
+        in srgb,
+        var(--theme-bg-main) calc(100% - var(--gradient-stop-6)),
+        var(--theme-accent) var(--gradient-stop-6)
+      )
+      100%
   );
   color: var(--color-text);
   line-height: 1.6;
   transition: max-width var(--transition-normal) ease-in-out;
 }
 
-/* Add specific light theme background */
-body[data-theme="light"] {
-  background: linear-gradient(
-    135deg,
-    var(--theme-bg-main) 0%,
-    var(--theme-bg-main) 50%,
-    color-mix(in srgb, var(--theme-bg-main) 90%, var(--theme-accent) 10%) 100%
-  ) !important;
+/* Shared gradient animation properties for all themes */
+body {
+  background-size: 200% 200%;
+  animation: gradient-shift 120s ease-in-out infinite;
 }
 
 /* Add floating particles effect */
@@ -249,6 +312,17 @@ body::before {
   50% {
     transform: translate(-5px, -8px) rotate(0.5deg);
     opacity: 1;
+  }
+}
+
+/* Subtle gradient animation inspired by Kanagawa */
+@keyframes gradient-shift {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
   }
 }
 
