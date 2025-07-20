@@ -371,9 +371,16 @@ body[data-theme="light"] .container {
   background: #faf8f0 !important;
 }
 
-/* Light theme logo background for contrast - homepage specific */
+/* Light theme uses solid banner instead of custom background */
+
+/* Legacy support for old logo container */
 body[data-theme="light"] .homepage-logo-container {
-  background: linear-gradient(180deg, var(--light-primary) 0%, var(--light-primary) 80%, var(--light-accent) 100%);
+  background: linear-gradient(
+    180deg,
+    var(--light-primary) 0%,
+    var(--light-primary) 80%,
+    var(--light-accent) 100%
+  );
   border-radius: var(--border-radius);
   padding: var(--spacing-lg);
   margin-bottom: var(--spacing-lg);
@@ -383,7 +390,12 @@ body[data-theme="light"] .homepage-logo-container {
 
 /* Light theme header background for other pages */
 body[data-theme="light"] .header:not(.homepage-container .header) {
-  background: linear-gradient(180deg, var(--light-primary) 0%, var(--light-primary) 80%, var(--light-accent) 100%);
+  background: linear-gradient(
+    180deg,
+    var(--light-primary) 0%,
+    var(--light-primary) 80%,
+    var(--light-accent) 100%
+  );
   border-radius: var(--border-radius);
   padding: var(--spacing-lg);
   margin-bottom: var(--spacing-lg);
@@ -471,6 +483,26 @@ body[data-theme="light"] #language-switcher {
   opacity: 0.7;
 }
 
+.banner-container,
+.homepage-banner-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+}
+
+.page-banner,
+.homepage-banner {
+  max-width: 100%;
+  height: auto;
+  width: 800px;
+  max-height: 200px;
+  object-fit: contain;
+  border-radius: var(--border-radius);
+}
+
+/* Legacy support for old logo container */
 .homepage-logo-container {
   display: flex;
   flex-direction: column;
@@ -480,6 +512,36 @@ body[data-theme="light"] #language-switcher {
 
 .homepage-logo-container img {
   margin-bottom: 0;
+}
+
+/* Responsive banner sizing */
+@media (max-width: 900px) {
+  .page-banner,
+  .homepage-banner {
+    width: 90vw;
+    max-width: 720px;
+  }
+}
+
+@media (max-width: 768px) {
+  .page-banner,
+  .homepage-banner {
+    width: 95vw;
+    max-width: 600px;
+  }
+
+  body[data-theme="light"] .banner-container,
+  body[data-theme="light"] .homepage-banner-container {
+    padding: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-banner,
+  .homepage-banner {
+    width: 98vw;
+    max-width: 400px;
+  }
 }
 
 .header-text {

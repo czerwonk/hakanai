@@ -17,6 +17,8 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
         .route("/get-secret.js", web::get().to(serve_get_secret_js))
         .route("/hakanai-client.js", web::get().to(serve_js_client))
         .route("/i18n.js", web::get().to(serve_i18n_js))
+        .route("/banner.svg", web::get().to(serve_banner))
+        .route("/banner-transparent.svg", web::get().to(serve_banner_transparent))
         .route("/icon.svg", web::get().to(serve_icon))
         .route("/logo.svg", web::get().to(serve_logo))
         .route("/manifest.json", web::get().to(serve_manifest))
@@ -82,6 +84,22 @@ async fn serve_css() -> impl Responder {
     serve_with_caching_header(
         include_bytes!("includes/style.css"),
         "text/css",
+        DEFAULT_CACHE_MAX_AGE,
+    )
+}
+
+async fn serve_banner() -> impl Responder {
+    serve_with_caching_header(
+        include_bytes!("../../banner.svg"),
+        "image/svg+xml",
+        DEFAULT_CACHE_MAX_AGE,
+    )
+}
+
+async fn serve_banner_transparent() -> impl Responder {
+    serve_with_caching_header(
+        include_bytes!("../../banner-transparent.svg"),
+        "image/svg+xml",
         DEFAULT_CACHE_MAX_AGE,
     )
 }

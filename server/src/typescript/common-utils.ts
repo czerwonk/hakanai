@@ -131,6 +131,26 @@ export function announceToScreenReader(message: string): void {
   }, SCREEN_READER_ANNOUNCEMENT_TIMEOUT);
 }
 
+/**
+ * Update banner images based on current theme
+ * Light theme uses banner.svg (solid background)
+ * Dark theme uses banner-transparent.svg (transparent background)
+ */
+export function updateBannerForTheme(): void {
+  const bannerImages = document.querySelectorAll('.page-banner, .homepage-banner');
+  const isDark = currentThemeIsDark();
+  
+  bannerImages.forEach((img) => {
+    if (img instanceof HTMLImageElement) {
+      if (isDark) {
+        img.src = '/banner-transparent.svg';
+      } else {
+        img.src = '/banner.svg';
+      }
+    }
+  });
+}
+
 function createScreenReaderAnnouncement(message: string): HTMLDivElement {
   const announcement = document.createElement("div");
   announcement.setAttribute("role", "status");
@@ -218,6 +238,7 @@ export function toggleTheme(): void {
 
   applyTheme(newTheme);
   updateThemeToggleButton();
+  updateBannerForTheme();
 }
 
 function getThemeToggleButton(): HTMLButtonElement | null {
@@ -282,9 +303,11 @@ function setupSystemThemeListener(): void {
       try {
         if (!localStorage.getItem(THEME_KEY)) {
           updateThemeToggleButton();
+          updateBannerForTheme();
         }
       } catch {
         updateThemeToggleButton();
+        updateBannerForTheme();
       }
     });
 }
@@ -297,6 +320,7 @@ export function initTheme(): void {
   applyTheme(theme);
   setupThemeToggleButton();
   updateThemeToggleButton();
+  updateBannerForTheme();
   setupSystemThemeListener();
 }
 
