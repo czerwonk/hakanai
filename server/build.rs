@@ -107,11 +107,11 @@ fn add_cache_busters_to_js_files() -> Result<()> {
                 if let Ok(content) = fs::read_to_string(&path) {
                     // Replace any relative .js import with versioned import
                     let updated_content = content
-                        .replace(".js\"", &format!(".js?v={}\"", cache_buster))
-                        .replace(".js'", &format!(".js?v={}'", cache_buster));
+                        .replace(".js\"", &format!(".js?v={cache_buster}\""))
+                        .replace(".js'", &format!(".js?v={cache_buster}'"));
 
                     fs::write(&path, updated_content)
-                        .context(format!("failed to write updated {:?}", path))?;
+                        .context(format!("failed to write updated {path:?}"))?;
                 }
             }
         }
