@@ -371,8 +371,6 @@ body[data-theme="light"] .container {
   background: #faf8f0 !important;
 }
 
-/* Light theme uses solid banner instead of custom background */
-
 /* Legacy support for old logo container */
 body[data-theme="light"] .homepage-logo-container {
   background: linear-gradient(
@@ -386,19 +384,6 @@ body[data-theme="light"] .homepage-logo-container {
   margin-bottom: var(--spacing-lg);
   width: 100%;
   text-align: center;
-}
-
-/* Light theme header background for other pages */
-body[data-theme="light"] .header:not(.homepage-container .header) {
-  background: linear-gradient(
-    180deg,
-    var(--light-primary) 0%,
-    var(--light-primary) 80%,
-    var(--light-accent) 100%
-  );
-  border-radius: var(--border-radius);
-  padding: var(--spacing-lg);
-  margin-bottom: var(--spacing-lg);
 }
 
 /* Light theme logo enhancement */
