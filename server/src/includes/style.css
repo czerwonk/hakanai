@@ -371,9 +371,19 @@ body[data-theme="light"] .container {
   background: #faf8f0 !important;
 }
 
-/* Light theme header background for logo contrast */
-body[data-theme="light"] .header {
-  background: linear-gradient(180deg, #3d5a6c 0%, #4a6b7d 100%);
+/* Light theme logo background for contrast - homepage specific */
+body[data-theme="light"] .homepage-logo-container {
+  background: linear-gradient(180deg, var(--light-primary) 0%, var(--light-primary) 80%, var(--light-accent) 100%);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  width: 100%;
+  text-align: center;
+}
+
+/* Light theme header background for other pages */
+body[data-theme="light"] .header:not(.homepage-container .header) {
+  background: linear-gradient(180deg, var(--light-primary) 0%, var(--light-primary) 80%, var(--light-accent) 100%);
   border-radius: var(--border-radius);
   padding: var(--spacing-lg);
   margin-bottom: var(--spacing-lg);
@@ -461,16 +471,15 @@ body[data-theme="light"] #language-switcher {
   opacity: 0.7;
 }
 
-.homepage-logo-section {
+.homepage-logo-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  max-width: 600px;
 }
 
-.homepage-logo-section img {
-  margin-bottom: var(--spacing-md);
+.homepage-logo-container img {
+  margin-bottom: 0;
 }
 
 .header-text {
