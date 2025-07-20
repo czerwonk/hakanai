@@ -152,16 +152,6 @@ describe("create-secret.ts", () => {
       expect(sanitizeFileName("normal.txt")).toBe("normal.txt");
       expect(sanitizeFileName("")).toBe(null);
     });
-
-    test("formatFileSize returns correct formatted sizes", () => {
-      const { formatFileSize } = createSecretModule;
-
-      expect(formatFileSize(0)).toBe("0 Bytes");
-      expect(formatFileSize(1024)).toBe("1 KB");
-      expect(formatFileSize(1048576)).toBe("1 MB");
-      expect(formatFileSize(1073741824)).toBe("1 GB");
-      expect(formatFileSize(512)).toBe("512 Bytes");
-    });
   });
 
   describe("Input validation", () => {

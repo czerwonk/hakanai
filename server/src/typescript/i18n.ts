@@ -19,7 +19,7 @@ const translations: Translations = {
     // Headers
     "header.create": "Create One-Time Secret",
     "header.get": "One-Time Secret",
-    "header.homepage": "Hakanai - One-Time Secret Sharing",
+    "header.homepage": "One-Time Secret Sharing",
 
     // Labels
     "label.secret": "Secret message:",
@@ -172,7 +172,7 @@ const translations: Translations = {
     // Headers
     "header.create": "Einmal-Secret erstellen",
     "header.get": "Einmal-Secret",
-    "header.homepage": "Hakanai - Einmal-Secret-Sharing",
+    "header.homepage": "Einmal-Secret-Sharing",
 
     // Labels
     "label.secret": "Text:",

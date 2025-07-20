@@ -12,6 +12,7 @@ import {
   debounce,
   initTheme,
   updateThemeToggleButton,
+  formatFileSize,
 } from "./common-utils.js";
 import { isHakanaiError, isStandardError, isErrorLike } from "./types.js";
 
@@ -363,7 +364,7 @@ function createDownloadButton(
   );
 }
 
-function createFilenameInfo(filename: string): HTMLElement {
+function createFilenameInfo(filename: string, size: number): HTMLElement {
   const fileInfo = document.createElement("p");
   fileInfo.style.marginTop = "var(--spacing-sm, 0.75rem)";
   fileInfo.style.fontSize = "0.875rem";
@@ -373,6 +374,11 @@ function createFilenameInfo(filename: string): HTMLElement {
   fileLabel.textContent = UI_STRINGS.FILENAME_LABEL + " ";
   fileInfo.appendChild(fileLabel);
   fileInfo.appendChild(document.createTextNode(filename));
+
+  // Add size information
+  const sizeSpan = document.createElement("span");
+  sizeSpan.textContent = ` (${formatFileSize(size)})`;
+  fileInfo.appendChild(sizeSpan);
 
   return fileInfo;
 }
@@ -412,7 +418,9 @@ function showSuccess(payload: PayloadData): void {
   resultDiv.appendChild(container);
 
   if (payload.filename) {
-    resultDiv.appendChild(createFilenameInfo(payload.filename));
+    resultDiv.appendChild(
+      createFilenameInfo(payload.filename, decodedBytes.length),
+    );
   }
 
   resultDiv.appendChild(createNoteElement());

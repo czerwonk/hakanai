@@ -14,6 +14,7 @@ import {
   saveAuthTokenToStorage,
   getAuthTokenFromStorage,
   clearAuthTokenStorage,
+  formatFileSize,
 } from "./common-utils.js";
 import {
   type RequiredElements,
@@ -636,14 +637,6 @@ function copyUrl(urlId: string, button: HTMLButtonElement): void {
   );
 }
 
-function formatFileSize(bytes: number): string {
-  if (bytes === 0) return "0 Bytes";
-  const k = 1024;
-  const sizes = ["Bytes", "KB", "MB", "GB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-}
-
 function getFileElements(): FileElements {
   return {
     fileInput: document.getElementById("secretFile") as HTMLInputElement,
@@ -665,7 +658,7 @@ function showFileInfo(file: File, elements: FileElements): void {
   const sanitizedName = sanitizeFileName(file.name);
 
   fileNameSpan.textContent = sanitizedName || "Invalid filename";
-  fileSizeSpan.textContent = formatFileSize(file.size);
+  fileSizeSpan.textContent = `(${formatFileSize(file.size)})`;
   fileInfoDiv.classList.remove("hidden");
   fileInfoDiv.className = "file-info";
 }
