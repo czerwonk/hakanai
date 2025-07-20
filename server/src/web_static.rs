@@ -14,11 +14,15 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
         .route("/create", web::get().to(serve_create_secret_html))
         .route("/create-secret.js", web::get().to(serve_create_secret_js))
         .route("/docs", web::get().to(serve_docs_html))
+        .route("/docs.js", web::get().to(serve_docs_js))
         .route("/get-secret.js", web::get().to(serve_get_secret_js))
         .route("/hakanai-client.js", web::get().to(serve_js_client))
         .route("/i18n.js", web::get().to(serve_i18n_js))
         .route("/banner.svg", web::get().to(serve_banner))
-        .route("/banner-transparent.svg", web::get().to(serve_banner_transparent))
+        .route(
+            "/banner-transparent.svg",
+            web::get().to(serve_banner_transparent),
+        )
         .route("/icon.svg", web::get().to(serve_icon))
         .route("/logo.svg", web::get().to(serve_logo))
         .route("/manifest.json", web::get().to(serve_manifest))
@@ -140,6 +144,14 @@ async fn serve_docs_html() -> impl Responder {
     serve_with_caching_header(
         include_str!("includes/docs_generated.html").as_bytes(),
         "text/html",
+        DEFAULT_CACHE_MAX_AGE,
+    )
+}
+
+async fn serve_docs_js() -> impl Responder {
+    serve_with_caching_header(
+        include_bytes!("includes/docs.js"),
+        "application/javascript",
         DEFAULT_CACHE_MAX_AGE,
     )
 }

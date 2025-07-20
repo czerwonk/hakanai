@@ -11,6 +11,7 @@
     <script src="/common-utils.js" type="module"></script>
   </head>
   <body class="expanded-view">
+    <button id="theme-toggle" aria-label="Toggle theme">🌙</button>
     <div class="container">
       <div class="header">
         <div class="banner-container">
@@ -114,11 +115,6 @@
       </div>
     </div>
 
-    <script type="module">
-      import \{ initTheme } from "/common-utils.js";
-      document.addEventListener("DOMContentLoaded", function () \{
-        initTheme();
-      });
-    </script>
+    <script type="module" src="/docs.js"></script>
   </body>
 </html>

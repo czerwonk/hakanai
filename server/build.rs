@@ -6,20 +6,34 @@ use anyhow::{Context, Result, anyhow};
 use serde_json::Value;
 use tinytemplate::TinyTemplate;
 
+/// Auto-detect and register files with given extension for recompilation tracking
+fn register_files_for_recompilation(dir_path: &str, extension: &str) -> Result<()> {
+    let dir = std::path::Path::new(dir_path);
+
+    if !dir.exists() {
+        return Ok(()); // Directory doesn't exist, nothing to register
+    }
+
+    let entries = fs::read_dir(dir)
+        .with_context(|| format!("Failed to read directory: {}", dir.display()))?;
+
+    for entry in entries {
+        let entry = entry?;
+        let path = entry.path();
+
+        if path.extension().and_then(|ext| ext.to_str()) == Some(extension) {
+            println!("cargo:rerun-if-changed={}", path.display());
+        }
+    }
+
+    Ok(())
+}
+
 fn main() -> Result<()> {
     println!("cargo:rerun-if-changed=src/includes/openapi.json");
-    println!("cargo:rerun-if-changed=src/templates/docs.html");
-    println!("cargo:rerun-if-changed=src/templates/endpoint.html");
-    println!("cargo:rerun-if-changed=src/templates/create-secret.html");
-    println!("cargo:rerun-if-changed=src/templates/get-secret.html");
 
-    // TypeScript files that should trigger recompilation
-    println!("cargo:rerun-if-changed=src/typescript/hakanai-client.ts");
-    println!("cargo:rerun-if-changed=src/typescript/common-utils.ts");
-    println!("cargo:rerun-if-changed=src/typescript/i18n.ts");
-    println!("cargo:rerun-if-changed=src/typescript/get-secret.ts");
-    println!("cargo:rerun-if-changed=src/typescript/create-secret.ts");
-    println!("cargo:rerun-if-changed=src/typescript/types.ts");
+    register_files_for_recompilation("src/templates", "html")?;
+    register_files_for_recompilation("src/typescript", "ts")?;
     println!("cargo:rerun-if-changed=tsconfig.json");
 
     let start = std::time::Instant::now();
@@ -29,21 +43,6 @@ fn main() -> Result<()> {
     println!("cargo:warning=Build completed in {:?}", start.elapsed());
 
     Ok(())
-}
-
-fn all_js_files_exist() -> bool {
-    let js_files = [
-        "src/includes/hakanai-client.js",
-        "src/includes/common-utils.js",
-        "src/includes/i18n.js",
-        "src/includes/get-secret.js",
-        "src/includes/create-secret.js",
-        "src/includes/types.js",
-    ];
-
-    js_files
-        .iter()
-        .all(|file| std::path::Path::new(file).exists())
 }
 
 fn ensure_typescript_is_installed() -> Result<()> {
@@ -66,7 +65,7 @@ fn ensure_typescript_is_installed() -> Result<()> {
 fn compile_typescript() -> Result<()> {
     println!("cargo:warning=Compiling TypeScript files...");
 
-    if std::env::var("SKIP_TYPESCRIPT_BUILD").is_ok() && all_js_files_exist() {
+    if std::env::var("SKIP_TYPESCRIPT_BUILD").is_ok() {
         println!("cargo:warning=Skipping TypeScript compilation (SKIP_TYPESCRIPT_BUILD set)");
         return Ok(());
     }
