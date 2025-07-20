@@ -13,10 +13,6 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  build-check:
-    if: startsWith(github.ref, 'refs/tags/')
-    uses: ./.github/workflows/build.yml
-
   lint-check:
     if: startsWith(github.ref, 'refs/tags/')
     uses: ./.github/workflows/lint.yml

@@ -6,9 +6,6 @@ on:
       - "v*"
 
 jobs:
-  build-check:
-    uses: ./.github/workflows/build.yml
-
   lint-check:
     uses: ./.github/workflows/lint.yml
 

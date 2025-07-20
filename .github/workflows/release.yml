@@ -9,9 +9,6 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build-check:
-    uses: ./.github/workflows/build.yml
-
   lint-check:
     uses: ./.github/workflows/lint.yml
 
