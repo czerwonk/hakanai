@@ -798,6 +798,33 @@ body[data-theme="light"] #theme-toggle {
   justify-content: center;
 }
 
+.header-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+
+.header-link:hover {
+  opacity: 0.9;
+  text-decoration: none;
+}
+
+.header-link:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--border-radius);
+}
+
 .homepage-container .header {
   margin: calc(-1 * var(--spacing-lg)) calc(-1 * var(--spacing-lg))
     var(--spacing-lg) calc(-1 * var(--spacing-lg));
