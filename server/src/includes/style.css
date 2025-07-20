@@ -726,6 +726,45 @@ body[data-theme="light"] .action-card {
     color-mix(in srgb, var(--theme-primary) 15%, transparent);
 }
 
+/* File input styling */
+#secretFile {
+  opacity: 0;
+  position: absolute;
+  z-index: -1;
+}
+
+.file-input-button {
+  display: inline-block;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--theme-bg-input);
+  border: 1px solid var(--theme-border);
+  border-radius: var(--border-radius);
+  color: var(--theme-text);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  font-size: var(--font-size-sm);
+  text-align: center;
+  min-width: 120px;
+}
+
+.file-input-button:hover {
+  border-color: var(--theme-primary);
+  background: color-mix(
+    in srgb,
+    var(--theme-bg-input) 95%,
+    var(--theme-primary) 5%
+  );
+}
+
+.file-input-button:focus {
+  outline: 2px solid var(--theme-primary);
+  outline-offset: 2px;
+}
+
+.file-input-button:active {
+  transform: translateY(1px);
+}
+
 /* Theme toggle button */
 #theme-toggle {
   position: absolute;

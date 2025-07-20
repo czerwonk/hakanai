@@ -70,6 +70,7 @@ const translations: Translations = {
     "button.copyKey": "Copy Key",
     "button.download": "Download",
     "button.createAnother": "Create Another",
+    "button.chooseFile": "Choose File",
 
     // Messages
     "msg.creating": "Creating secret...",
@@ -226,6 +227,7 @@ const translations: Translations = {
     "button.copyKey": "Schlüssel kopieren",
     "button.download": "Herunterladen",
     "button.createAnother": "Neues Secret erstellen",
+    "button.chooseFile": "Datei auswählen",
 
     // Messages
     "msg.creating": "Secret wird erstellt...",

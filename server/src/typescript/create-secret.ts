@@ -762,8 +762,18 @@ function setupRadioHandlers(): void {
 
 function setupFileInputHandler(): void {
   const fileInput = document.getElementById("secretFile") as HTMLInputElement;
+  const fileInputButton = document.getElementById(
+    "fileInputButton",
+  ) as HTMLButtonElement;
+
   if (fileInput) {
     fileInput.addEventListener("change", updateFileInfo);
+  }
+
+  if (fileInputButton && fileInput) {
+    fileInputButton.addEventListener("click", () => {
+      fileInput.click();
+    });
   }
 }
 
