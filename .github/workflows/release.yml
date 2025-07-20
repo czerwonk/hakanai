@@ -41,7 +41,7 @@ jobs:
 
   build:
     name: Build - ${{ matrix.platform.release_for }}
-    needs: [build-check, lint-check, test-check, precompile-typescript]
+    needs: [lint-check, test-check, precompile-typescript]
     strategy:
       matrix:
         platform:

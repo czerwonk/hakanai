@@ -14,7 +14,7 @@ jobs:
 
   publish:
     runs-on: ubuntu-latest
-    needs: [build-check, lint-check, test-check]
+    needs: [lint-check, test-check]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
