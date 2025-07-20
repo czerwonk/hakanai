@@ -371,26 +371,6 @@ body[data-theme="light"] .container {
   background: #faf8f0 !important;
 }
 
-/* Legacy support for old logo container */
-body[data-theme="light"] .homepage-logo-container {
-  background: linear-gradient(
-    180deg,
-    var(--light-primary) 0%,
-    var(--light-primary) 80%,
-    var(--light-accent) 100%
-  );
-  border-radius: var(--border-radius);
-  padding: var(--spacing-lg);
-  margin-bottom: var(--spacing-lg);
-  width: 100%;
-  text-align: center;
-}
-
-/* Light theme logo enhancement */
-body[data-theme="light"] .header img[src="/logo.svg"] {
-  filter: contrast(1.1) saturate(1.1);
-}
-
 .container.homepage-container {
   margin: 3rem auto;
   padding: var(--spacing-lg);
@@ -440,34 +420,6 @@ body[data-theme="light"] #language-switcher {
   border-color: var(--color-primary);
 }
 
-.homepage-container .header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding-bottom: var(--spacing-lg);
-  border-bottom: 1px solid var(--theme-border);
-  margin-bottom: var(--spacing-lg);
-  position: relative;
-}
-
-.homepage-container .header::after {
-  content: "";
-  position: absolute;
-  bottom: -1px;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    var(--theme-primary) 30%,
-    var(--theme-accent) 50%,
-    var(--theme-primary) 70%,
-    transparent 100%
-  );
-  opacity: 0.7;
-}
-
 .banner-container,
 .homepage-banner-container {
   display: flex;
@@ -475,58 +427,6 @@ body[data-theme="light"] #language-switcher {
   align-items: center;
   text-align: center;
   width: 100%;
-}
-
-.page-banner,
-.homepage-banner {
-  max-width: 100%;
-  height: auto;
-  width: 800px;
-  max-height: 200px;
-  object-fit: contain;
-  border-radius: var(--border-radius);
-}
-
-/* Legacy support for old logo container */
-.homepage-logo-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
-
-.homepage-logo-container img {
-  margin-bottom: 0;
-}
-
-/* Responsive banner sizing */
-@media (max-width: 900px) {
-  .page-banner,
-  .homepage-banner {
-    width: 90vw;
-    max-width: 720px;
-  }
-}
-
-@media (max-width: 768px) {
-  .page-banner,
-  .homepage-banner {
-    width: 95vw;
-    max-width: 600px;
-  }
-
-  body[data-theme="light"] .banner-container,
-  body[data-theme="light"] .homepage-banner-container {
-    padding: 0;
-  }
-}
-
-@media (max-width: 480px) {
-  .page-banner,
-  .homepage-banner {
-    width: 98vw;
-    max-width: 400px;
-  }
 }
 
 .header-text {
@@ -881,9 +781,26 @@ body[data-theme="light"] #theme-toggle {
 .header {
   text-align: center;
   margin-bottom: var(--spacing-lg);
-  padding-bottom: var(--spacing-lg);
+  padding: var(--spacing-xl) var(--spacing-lg) var(--spacing-lg)
+    var(--spacing-lg);
   border-bottom: 1px solid var(--color-border);
   position: relative;
+  background-image: url("/banner.svg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+  margin: calc(-1 * var(--spacing-xl)) calc(-1 * var(--spacing-xl))
+    var(--spacing-lg) calc(-1 * var(--spacing-xl));
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.homepage-container .header {
+  margin: calc(-1 * var(--spacing-lg)) calc(-1 * var(--spacing-lg))
+    var(--spacing-lg) calc(-1 * var(--spacing-lg));
 }
 
 .header::after {
