@@ -2,20 +2,20 @@
     <defs>
         <!-- Gradient for brush stroke - starts full at top, fades clockwise -->
         <linearGradient id="brushFade" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" style="stop-color:#94D2E6;stop-opacity:1" />
-            <stop offset="20%" style="stop-color:#94D2E6;stop-opacity:1" />
-            <stop offset="40%" style="stop-color:#7FB4CA;stop-opacity:0.8" />
-            <stop offset="60%" style="stop-color:#7FB4CA;stop-opacity:0.5" />
-            <stop offset="80%" style="stop-color:#7FB4CA;stop-opacity:0.2" />
-            <stop offset="95%" style="stop-color:#7FB4CA;stop-opacity:0.05" />
-            <stop offset="100%" style="stop-color:#7FB4CA;stop-opacity:0.02" />
+            <stop offset="0%" style="stop-color:#7FB4CA;stop-opacity:1" />
+            <stop offset="20%" style="stop-color:#7FB4CA;stop-opacity:1" />
+            <stop offset="40%" style="stop-color:#6BA5D4;stop-opacity:0.8" />
+            <stop offset="60%" style="stop-color:#6BA5D4;stop-opacity:0.5" />
+            <stop offset="80%" style="stop-color:#6BA5D4;stop-opacity:0.2" />
+            <stop offset="95%" style="stop-color:#6BA5D4;stop-opacity:0.05" />
+            <stop offset="100%" style="stop-color:#6BA5D4;stop-opacity:0.02" />
         </linearGradient>
         
         <!-- Very subtle radial gradient for center -->
         <radialGradient id="centerGlow">
-            <stop offset="0%" style="stop-color:#A8DFF4;stop-opacity:0.15" />
-            <stop offset="50%" style="stop-color:#94D2E6;stop-opacity:0.08" />
-            <stop offset="100%" style="stop-color:#7FB4CA;stop-opacity:0" />
+            <stop offset="0%" style="stop-color:#7FB4CA;stop-opacity:0.15" />
+            <stop offset="50%" style="stop-color:#6BA5D4;stop-opacity:0.08" />
+            <stop offset="100%" style="stop-color:#5A8CA8;stop-opacity:0" />
         </radialGradient>
         
         <!-- Minimal glow filter -->
@@ -61,7 +61,7 @@
         
         <!-- Add calligraphy imperfections -->
         <circle fill="none" 
-                stroke="#7FB4CA" 
+                stroke="#6BA5D4" 
                 stroke-width="1" 
                 cx="0" cy="0" r="35.5" 
                 stroke-dasharray="1 4 0.5 3 2 1"
@@ -69,7 +69,7 @@
                 transform="rotate(-85)" />
                 
         <circle fill="none" 
-                stroke="#94D2E6" 
+                stroke="#7FB4CA" 
                 stroke-width="0.8" 
                 cx="0" cy="0" r="34.2" 
                 stroke-dasharray="0.8 2 1.5 1"
@@ -84,11 +84,11 @@
 
         <!-- Center node with very subtle presence -->
         <circle fill="url(#centerGlow)" cx="0" cy="0" r="8" />
-        <circle fill="#A8DFF4" cx="0" cy="0" r="3" opacity="0.7" />
+        <circle fill="#7FB4CA" cx="0" cy="0" r="3" opacity="0.7" />
 
-        <!-- Connection lines - subtle -->
-        <line stroke="#7FB4CA" stroke-width="1" opacity="0.25" x1="0" y1="-28" x2="0" y2="28" />
-        <line stroke="#7FB4CA" stroke-width="1" opacity="0.25" x1="-28" y1="0" x2="28" y2="0" />
+        <!-- Connection lines - more visible to show flow -->
+        <line stroke="#6BA5D4" stroke-width="1" opacity="0.4" x1="0" y1="-28" x2="0" y2="28" />
+        <line stroke="#6BA5D4" stroke-width="1" opacity="0.4" x1="-28" y1="0" x2="28" y2="0" />
     </g>
-    <text x="70" y="95" fill="#A8DFF4" font-family="'Segoe UI', sans-serif" font-size="16" font-weight="500" text-anchor="middle" letter-spacing="2px" filter="url(#minimalGlow)">hakanai</text>
+    <text x="70" y="95" fill="#7FB4CA" font-family="'Segoe UI', sans-serif" font-size="16" font-weight="500" text-anchor="middle" letter-spacing="2px" filter="url(#minimalGlow)">hakanai</text>
 </svg>

@@ -371,6 +371,19 @@ body[data-theme="light"] .container {
   background: #faf8f0 !important;
 }
 
+/* Light theme header background for logo contrast */
+body[data-theme="light"] .header {
+  background: linear-gradient(180deg, #3d5a6c 0%, #4a6b7d 100%);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+/* Light theme logo enhancement */
+body[data-theme="light"] .header img[src="/logo.svg"] {
+  filter: contrast(1.1) saturate(1.1);
+}
+
 .container.homepage-container {
   margin: 3rem auto;
   padding: var(--spacing-lg);
