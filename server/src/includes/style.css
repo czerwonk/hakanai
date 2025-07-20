@@ -108,20 +108,20 @@
   --animation-spin: 1s;
 
   /* Default gradient stops - dark theme values */
-  --gradient-stop-1: 3%;
-  --gradient-stop-2: 7%;
-  --gradient-stop-3: 10%;
-  --gradient-stop-4: 11%;
-  --gradient-stop-5: 13%;
-  --gradient-stop-6: 15%;
+  --gradient-stop-1: 2%;
+  --gradient-stop-2: 4%;
+  --gradient-stop-3: 6%;
+  --gradient-stop-4: 7%;
+  --gradient-stop-5: 8%;
+  --gradient-stop-6: 10%;
 
   /* Light theme gradient stops */
-  --light-gradient-stop-1: 5%;
-  --light-gradient-stop-2: 8%;
-  --light-gradient-stop-3: 12%;
-  --light-gradient-stop-4: 14%;
-  --light-gradient-stop-5: 16%;
-  --light-gradient-stop-6: 18%;
+  --light-gradient-stop-1: 3%;
+  --light-gradient-stop-2: 5%;
+  --light-gradient-stop-3: 7%;
+  --light-gradient-stop-4: 8%;
+  --light-gradient-stop-5: 9%;
+  --light-gradient-stop-6: 11%;
 }
 
 /* Light theme - update theme pointers */
@@ -222,8 +222,8 @@ body {
   padding: var(--spacing-lg);
   background: linear-gradient(
     135deg,
-    var(--theme-bg-main) 0%,
-    var(--theme-bg-main) 15%,
+    color-mix(in srgb, var(--theme-bg-main) 92%, var(--theme-primary) 8%) 0%,
+    color-mix(in srgb, var(--theme-bg-main) 95%, var(--theme-primary) 5%) 15%,
     color-mix(
         in srgb,
         var(--theme-bg-main) calc(100% - var(--gradient-stop-1)),
@@ -1439,6 +1439,12 @@ button.loading::after {
     padding: var(--spacing-sm);
     min-height: 3rem;
     font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  /* Fix header breakout on mobile for non-homepage containers */
+  .container:not(.homepage-container) .header {
+    margin: calc(-1 * var(--spacing-lg)) calc(-1 * var(--spacing-lg))
+      var(--spacing-lg) calc(-1 * var(--spacing-lg));
   }
 }
 
