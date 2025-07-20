@@ -87,7 +87,37 @@ fn compile_typescript() -> Result<()> {
         panic!("TypeScript compilation failed: {stderr}");
     }
 
+    add_cache_busters_to_js_files()?;
+
     println!("cargo:warning=TypeScript compilation successful");
+    Ok(())
+}
+
+fn add_cache_busters_to_js_files() -> Result<()> {
+    println!("cargo:warning=Adding cache busters to JavaScript imports...");
+
+    let cache_buster = generate_cache_buster();
+
+    // Find all .js files in src/includes/
+    let includes_dir = std::path::Path::new("src/includes");
+    if let Ok(entries) = fs::read_dir(includes_dir) {
+        for entry in entries.filter_map(|e| e.ok()) {
+            let path = entry.path();
+            if path.extension().map(|ext| ext == "js").unwrap_or(false) {
+                if let Ok(content) = fs::read_to_string(&path) {
+                    // Replace any relative .js import with versioned import
+                    let updated_content = content
+                        .replace(".js\"", &format!(".js?v={}\"", cache_buster))
+                        .replace(".js'", &format!(".js?v={}'", cache_buster));
+
+                    fs::write(&path, updated_content)
+                        .context(format!("failed to write updated {:?}", path))?;
+                }
+            }
+        }
+    }
+
+    println!("cargo:warning=Cache busters added to JavaScript imports");
     Ok(())
 }
 
