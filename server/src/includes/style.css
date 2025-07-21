@@ -222,12 +222,12 @@ body {
   padding: var(--spacing-lg);
   background: linear-gradient(
     135deg,
-    /* Start with stronger color for immediate visibility */
-    color-mix(in srgb, var(--theme-bg-main) 85%, var(--theme-primary) 15%) 0%,
-    color-mix(in srgb, var(--theme-bg-main) 87%, var(--theme-primary) 13%) 5%,
-    color-mix(in srgb, var(--theme-bg-main) 90%, var(--theme-primary) 10%) 10%,
-    color-mix(in srgb, var(--theme-bg-main) 92%, var(--theme-primary) 8%) 15%,
-    color-mix(in srgb, var(--theme-bg-main) 94%, var(--theme-primary) 6%) 20%,
+    /* Start lighter for immediate container contrast */
+    color-mix(in srgb, var(--theme-bg-main) 75%, var(--theme-primary) 25%) 0%,
+    color-mix(in srgb, var(--theme-bg-main) 78%, var(--theme-primary) 22%) 5%,
+    color-mix(in srgb, var(--theme-bg-main) 82%, var(--theme-primary) 18%) 10%,
+    color-mix(in srgb, var(--theme-bg-main) 85%, var(--theme-primary) 15%) 15%,
+    color-mix(in srgb, var(--theme-bg-main) 88%, var(--theme-primary) 12%) 20%,
     /* Use gradient-stop-1 variable */
     color-mix(
         in srgb,
