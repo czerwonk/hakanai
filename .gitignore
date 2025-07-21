@@ -42,3 +42,4 @@ server/src/includes/create-secret.js
 server/src/includes/types.js
 server/src/includes/homepage.js
 server/src/includes/docs.js
+server/src/includes/ios-shortcuts.js
