@@ -123,6 +123,14 @@ pub struct Args {
         help = "Path to impressum/legal information text file. When provided, an impressum link appears in the footer."
     )]
     pub impressum_file: Option<String>,
+
+    /// Path to privacy policy text file for data protection compliance
+    #[arg(
+        long,
+        env = "HAKANAI_PRIVACY_FILE",
+        help = "Path to privacy policy/data protection text file. When provided, a privacy policy link appears in the footer."
+    )]
+    pub privacy_file: Option<String>,
 }
 
 impl Args {
@@ -148,6 +156,14 @@ impl Args {
             None => Ok(None),
         }
     }
+
+    /// Loads privacy policy content from file if configured
+    pub fn load_privacy_content(&self) -> std::io::Result<Option<String>> {
+        match &self.privacy_file {
+            Some(path) => std::fs::read_to_string(path).map(Some),
+            None => Ok(None),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -168,6 +184,7 @@ mod tests {
             reset_admin_token: false,
             reset_user_tokens: false,
             impressum_file: None,
+            privacy_file: None,
         }
     }
 
@@ -294,6 +311,48 @@ mod tests {
         };
 
         let result = args.load_impressum_content().unwrap();
+        assert!(result.is_some());
+        assert_eq!(result.unwrap(), test_content);
+    }
+
+    #[test]
+    fn test_load_privacy_content_none() {
+        let args = Args {
+            privacy_file: None,
+            ..create_test_args()
+        };
+
+        let result = args.load_privacy_content().unwrap();
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_load_privacy_content_nonexistent_file() {
+        let args = Args {
+            privacy_file: Some("/nonexistent/path/to/privacy.txt".to_string()),
+            ..create_test_args()
+        };
+
+        let result = args.load_privacy_content();
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_load_privacy_content_valid_file() {
+        use std::io::Write;
+
+        // Create a temporary file for testing
+        let mut temp_file = tempfile::NamedTempFile::new().unwrap();
+        let test_content = "Test privacy policy content\nData protection guidelines";
+        write!(temp_file, "{test_content}").unwrap();
+        temp_file.flush().unwrap();
+
+        let args = Args {
+            privacy_file: Some(temp_file.path().to_str().unwrap().to_string()),
+            ..create_test_args()
+        };
+
+        let result = args.load_privacy_content().unwrap();
         assert!(result.is_some());
         assert_eq!(result.unwrap(), test_content);
     }

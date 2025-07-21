@@ -351,6 +351,7 @@ export function clearAuthTokenStorage(): void {
 interface AppConfig {
   features: {
     impressum: boolean;
+    privacy: boolean;
   };
 }
 
@@ -376,16 +377,26 @@ async function fetchAppConfig(): Promise<AppConfig | null> {
  */
 async function initializeUI(): Promise<void> {
   const config = await fetchAppConfig();
-  const impressumLink = document.getElementById("impressum-link");
+  await initializeOptionalFeature(
+    "impressum-link",
+    config?.features.impressum ?? false,
+  );
+  await initializeOptionalFeature(
+    "privacy-link",
+    config?.features.privacy ?? false,
+  );
+}
 
-  console.log("Config loaded:", config);
-  console.log("Impressum link element:", impressumLink);
-
-  if (impressumLink) {
-    if (config?.features.impressum) {
-      impressumLink.style.display = "";
+async function initializeOptionalFeature(
+  elementId: string,
+  enabled: boolean,
+): Promise<void> {
+  const element = document.getElementById(elementId);
+  if (element) {
+    if (enabled) {
+      element.style.display = "";
     } else {
-      impressumLink.style.display = "none";
+      element.style.display = "none";
     }
   }
 }

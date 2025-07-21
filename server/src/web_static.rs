@@ -29,6 +29,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
         .route("/types.js", web::get().to(serve_types_js))
         .route("/homepage.js", web::get().to(serve_homepage_js))
         .route("/impressum", web::get().to(serve_impressum))
+        .route("/privacy", web::get().to(serve_privacy))
         .route("/config.json", web::get().to(serve_config));
 }
 
@@ -221,10 +222,28 @@ async fn serve_impressum(app_data: web::Data<crate::app_data::AppData>) -> impl 
     }
 }
 
+async fn serve_privacy(app_data: web::Data<crate::app_data::AppData>) -> impl Responder {
+    match &app_data.privacy_html {
+        Some(html) => HttpResponse::Ok()
+            .content_type("text/html; charset=utf-8")
+            .insert_header((
+                header::CACHE_CONTROL,
+                format!("public, max-age={DEFAULT_CACHE_MAX_AGE}"),
+            ))
+            .insert_header((
+                header::ETAG,
+                concat!("\"", env!("CARGO_PKG_VERSION"), "-privacy\""),
+            ))
+            .body(html.clone()),
+        None => HttpResponse::NotFound().body("No privacy policy configured"),
+    }
+}
+
 async fn serve_config(app_data: web::Data<crate::app_data::AppData>) -> impl Responder {
     let config = serde_json::json!({
         "features": {
-            "impressum": app_data.impressum_html.is_some()
+            "impressum": app_data.impressum_html.is_some(),
+            "privacy": app_data.privacy_html.is_some()
         }
     });
 
@@ -253,6 +272,7 @@ mod tests {
                 upload_size_limit: 32 * 1024,
             },
             impressum_html,
+            privacy_html: None,
         }
     }
 
@@ -290,5 +310,64 @@ mod tests {
         assert!(resp.status().is_success());
         let body: serde_json::Value = test::read_body_json(resp).await;
         assert_eq!(body["features"]["impressum"], false);
+        assert_eq!(body["features"]["privacy"], false);
+    }
+
+    #[actix_web::test]
+    async fn test_serve_config_with_privacy() {
+        let mut app_data = create_test_app_data(None);
+        app_data.privacy_html = Some("Test privacy content".to_string());
+
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(app_data))
+                .route("/config.json", web::get().to(serve_config)),
+        )
+        .await;
+
+        let req = test::TestRequest::get().uri("/config.json").to_request();
+        let resp = test::call_service(&app, req).await;
+
+        assert!(resp.status().is_success());
+        let body: serde_json::Value = test::read_body_json(resp).await;
+        assert_eq!(body["features"]["privacy"], true);
+    }
+
+    #[actix_web::test]
+    async fn test_serve_privacy_configured() {
+        let mut app_data = create_test_app_data(None);
+        app_data.privacy_html = Some("<h1>Privacy Policy</h1><p>Test content</p>".to_string());
+
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(app_data))
+                .route("/privacy", web::get().to(serve_privacy)),
+        )
+        .await;
+
+        let req = test::TestRequest::get().uri("/privacy").to_request();
+        let resp = test::call_service(&app, req).await;
+
+        assert!(resp.status().is_success());
+        let body = test::read_body(resp).await;
+        let body_str = std::str::from_utf8(&body).unwrap();
+        assert!(body_str.contains("Privacy Policy"));
+        assert!(body_str.contains("Test content"));
+    }
+
+    #[actix_web::test]
+    async fn test_serve_privacy_not_configured() {
+        let app_data = create_test_app_data(None);
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(app_data))
+                .route("/privacy", web::get().to(serve_privacy)),
+        )
+        .await;
+
+        let req = test::TestRequest::get().uri("/privacy").to_request();
+        let resp = test::call_service(&app, req).await;
+
+        assert_eq!(resp.status(), 404);
     }
 }

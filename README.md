@@ -399,6 +399,7 @@ For production deployments:
 - `HAKANAI_CORS_ALLOWED_ORIGINS`: Comma-separated allowed CORS origins (default: none)
 - `HAKANAI_MAX_TTL`: Maximum allowed TTL in seconds (default: 604800, 7 days)
 - `HAKANAI_IMPRESSUM_FILE`: Path to impressum/legal information text file (displays impressum link in footer when provided)
+- `HAKANAI_PRIVACY_FILE`: Path to privacy policy/data protection text file (displays privacy policy link in footer when provided)
 - `OTEL_EXPORTER_OTLP_ENDPOINT`: OpenTelemetry collector endpoint (optional, enables OTEL when set)
 
 ### Server Command-line Options
@@ -412,6 +413,7 @@ For production deployments:
 - `--reset-admin-token`: Force regenerate admin token (requires --enable-admin-token)
 - `--reset-user-tokens`: Clear all user tokens and create new default token
 - `--impressum-file`: Path to impressum/legal information text file (displays impressum link in footer when provided)
+- `--privacy-file`: Path to privacy policy/data protection text file (displays privacy policy link in footer when provided)
 
 ### Security Features
 

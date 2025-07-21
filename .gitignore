@@ -33,6 +33,7 @@ server/src/includes/create-secret.html
 server/src/includes/get-secret.html
 server/src/includes/homepage.html
 server/src/includes/impressum.html
+server/src/includes/privacy.html
 
 
 # TypeScript compiled JavaScript files

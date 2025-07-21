@@ -29,6 +29,7 @@ where
     };
 
     let impressum_html = build_impressum_html(&args)?;
+    let privacy_html = build_privacy_html(&args)?;
 
     HttpServer::new(move || {
         let app_data = AppData {
@@ -38,6 +39,7 @@ where
             max_ttl: args.max_ttl,
             anonymous_usage: anonymous_usage.clone(),
             impressum_html: impressum_html.clone(),
+            privacy_html: privacy_html.clone(),
         };
         App::new()
             .app_data(web::Data::new(app_data))
@@ -76,6 +78,20 @@ fn build_impressum_html(args: &Args) -> Result<Option<String>> {
                 r#"<div id="impressum-content-placeholder"></div>"#,
                 &content,
             ))
+        }
+        None => None,
+    })
+}
+
+fn build_privacy_html(args: &Args) -> Result<Option<String>> {
+    Ok(match args.load_privacy_content()? {
+        Some(content) => {
+            info!(
+                "Building privacy policy HTML ({} bytes of content)",
+                content.len()
+            );
+            let template = include_str!("includes/privacy.html");
+            Some(template.replace(r#"<div id="privacy-content-placeholder"></div>"#, &content))
         }
         None => None,
     })

@@ -385,6 +385,8 @@ fn process_single_template(
 
     if template_name == "impressum" {
         template_content = apply_impressum_content(template_content);
+    } else if template_name == "privacy" {
+        template_content = apply_privacy_content(template_content);
     }
 
     let mut tt = TinyTemplate::new();
@@ -411,6 +413,14 @@ fn apply_impressum_content(template_content: String) -> String {
     template_content.replace(
         "[[IMPRESSUM_CONTENT]]",
         "<div id=\"impressum-content-placeholder\"></div>",
+    )
+}
+
+fn apply_privacy_content(template_content: String) -> String {
+    // Remove build-time privacy content injection - will be handled at runtime
+    template_content.replace(
+        "[[PRIVACY_CONTENT]]",
+        "<div id=\"privacy-content-placeholder\"></div>",
     )
 }
 

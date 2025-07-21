@@ -30,4 +30,7 @@ pub struct AppData {
 
     /// Pre-rendered impressum HTML page (built at startup if configured)
     pub impressum_html: Option<String>,
+
+    /// Pre-rendered privacy policy HTML page (built at startup if configured)
+    pub privacy_html: Option<String>,
 }

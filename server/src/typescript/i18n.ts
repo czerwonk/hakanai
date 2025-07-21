@@ -152,6 +152,12 @@ const translations: Translations = {
       "The server never sees your unencrypted data",
     "homepage.docs.link": "View API Documentation",
 
+    // Footer links
+    "footer.privacy": "Privacy Policy",
+
+    // Page privacy
+    "page.privacy.title": "Privacy Policy",
+
     // Error codes
     "error.SEND_FAILED": "Failed to send secret",
     "error.AUTHENTICATION_REQUIRED":
@@ -310,6 +316,12 @@ const translations: Translations = {
     "homepage.how.feature4.description":
       "Der Server sieht niemals die unverschlüsselten Daten",
     "homepage.docs.link": "API-Dokumentation anzeigen",
+
+    // Footer links
+    "footer.privacy": "Datenschutzerklärung",
+
+    // Page privacy
+    "page.privacy.title": "Datenschutzerklärung",
 
     // Error codes
     "error.SEND_FAILED": "Fehler beim Senden des Secrets",

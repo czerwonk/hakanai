@@ -130,6 +130,7 @@ mod tests {
                 upload_size_limit: 32 * 1024,
             },
             impressum_html: None,
+            privacy_html: None,
         }
     }
 
