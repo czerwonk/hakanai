@@ -150,19 +150,34 @@
     </g>
     
     <!-- Mobile-visible area blossoms - minimal and well-spaced -->
-    <!-- Left side -->
+    <!-- Left side (made smaller) -->
     <g transform="translate(300, 55) rotate(-25)">
-        <path d="M0,0 C-3,-6 3,-6 0,0 C6,-3 6,3 0,0 C3,6 -3,6 0,0 C-6,3 -6,-3 0,0" fill="#FFB4CA" opacity="0.4" transform="scale(1.2)"/>
+        <path d="M0,0 C-2,-4 2,-4 0,0 C4,-2 4,2 0,0 C2,4 -2,4 0,0 C-4,2 -4,-2 0,0" fill="#FFB4CA" opacity="0.35" transform="scale(0.9)"/>
     </g>
     
-    <!-- Right side (moved down) -->
+    <!-- Right side (made larger and lighter) -->
     <g transform="translate(500, 75) rotate(60)">
-        <path d="M0,0 C-3,-6 3,-6 0,0 C6,-3 6,3 0,0 C3,6 -3,6 0,0 C-6,3 -6,-3 0,0" fill="#F4A8C4" opacity="0.35" transform="scale(1.1)"/>
+        <path d="M0,0 C-3,-6 3,-6 0,0 C6,-3 6,3 0,0 C3,6 -3,6 0,0 C-6,3 -6,-3 0,0" fill="#F4A8C4" opacity="0.3" transform="scale(1.4)"/>
     </g>
     
     <!-- Subtle one above hakanai, x-aligned with tagline start -->
     <g transform="translate(280, 120) rotate(-40)">
         <path d="M0,0 C-3,-6 3,-6 0,0 C6,-3 6,3 0,0 C3,6 -3,6 0,0 C-6,3 -6,-3 0,0" fill="#FFB4CA" opacity="0.3" transform="scale(1.0)"/>
+    </g>
+    
+    <!-- Far left edge small blossom -->
+    <g transform="translate(260, 100) rotate(30)">
+        <path d="M0,0 C-1,-2 1,-2 0,0 C2,-1 2,1 0,0 C1,2 -1,2 0,0 C-2,1 -2,-1 0,0" fill="#F4A8C4" opacity="0.2" transform="scale(0.6)"/>
+    </g>
+    
+    <!-- Lower area blossom for vertical balance -->
+    <g transform="translate(420, 135) rotate(-15)">
+        <path d="M0,0 C-2,-4 2,-4 0,0 C4,-2 4,2 0,0 C2,4 -2,4 0,0 C-4,2 -4,-2 0,0" fill="#FFB4CA" opacity="0.25" transform="scale(0.8)"/>
+    </g>
+    
+    <!-- Another lower area blossom -->
+    <g transform="translate(470, 140) rotate(50)">
+        <path d="M0,0 C-1,-2 1,-2 0,0 C2,-1 2,1 0,0 C1,2 -1,2 0,0 C-2,1 -2,-1 0,0" fill="#F4A8C4" opacity="0.18" transform="scale(0.7)"/>
     </g>
     
     <!-- Project title and tagline -->
