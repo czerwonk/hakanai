@@ -18,8 +18,6 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
         .route("/get-secret.js", web::get().to(serve_get_secret_js))
         .route("/hakanai-client.js", web::get().to(serve_js_client))
         .route("/i18n.js", web::get().to(serve_i18n_js))
-        .route("/ios-shortcuts", web::get().to(serve_ios_shortcuts_html))
-        .route("/ios-shortcuts.js", web::get().to(serve_ios_shortcuts_js))
         .route("/banner.svg", web::get().to(serve_banner))
         .route("/icon.svg", web::get().to(serve_icon))
         .route("/logo.svg", web::get().to(serve_logo))
@@ -198,14 +196,6 @@ async fn serve_robots_txt() -> impl Responder {
     )
 }
 
-async fn serve_ios_shortcuts_js() -> impl Responder {
-    serve_with_caching_header(
-        include_bytes!("includes/ios-shortcuts.js"),
-        "application/javascript",
-        DEFAULT_CACHE_MAX_AGE,
-    )
-}
-
 async fn serve_impressum(app_data: web::Data<crate::app_data::AppData>) -> impl Responder {
     match &app_data.impressum_html {
         Some(html) => HttpResponse::Ok()
@@ -238,14 +228,6 @@ async fn serve_privacy(app_data: web::Data<crate::app_data::AppData>) -> impl Re
             .body(html.clone()),
         None => HttpResponse::NotFound().body("No privacy policy configured"),
     }
-}
-
-async fn serve_ios_shortcuts_html() -> impl Responder {
-    serve_with_caching_header(
-        include_bytes!("includes/ios-shortcuts.html"),
-        "text/html",
-        DEFAULT_CACHE_MAX_AGE,
-    )
 }
 
 async fn serve_config(app_data: web::Data<crate::app_data::AppData>) -> impl Responder {
