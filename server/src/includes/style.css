@@ -1852,6 +1852,189 @@ legend {
   user-select: none;
 }
 
+/* Legal pages (impressum/privacy) styling */
+body:has(.impressum-content),
+body:has(.privacy-content) {
+  max-width: var(--max-width-expanded);
+}
+
+.impressum-content,
+.privacy-content {
+  line-height: 1.7;
+  color: var(--theme-text);
+  font-size: var(--font-size-base);
+}
+
+.impressum-content h1,
+.impressum-content h2,
+.impressum-content h3,
+.impressum-content h4,
+.impressum-content h5,
+.impressum-content h6,
+.privacy-content h1,
+.privacy-content h2,
+.privacy-content h3,
+.privacy-content h4,
+.privacy-content h5,
+.privacy-content h6 {
+  color: var(--theme-primary);
+  margin-top: var(--spacing-xl);
+  margin-bottom: var(--spacing-md);
+  font-weight: 500;
+}
+
+.impressum-content h1,
+.privacy-content h1 {
+  font-size: var(--font-size-2xl);
+}
+
+.impressum-content h2,
+.privacy-content h2 {
+  font-size: var(--font-size-xl);
+}
+
+.impressum-content h3,
+.privacy-content h3 {
+  font-size: var(--font-size-lg);
+}
+
+.impressum-content h4,
+.impressum-content h5,
+.impressum-content h6,
+.privacy-content h4,
+.privacy-content h5,
+.privacy-content h6 {
+  font-size: var(--font-size-base);
+}
+
+.impressum-content p,
+.privacy-content p {
+  margin-bottom: var(--spacing-md);
+  line-height: 1.7;
+}
+
+.impressum-content ul,
+.impressum-content ol,
+.privacy-content ul,
+.privacy-content ol {
+  margin: var(--spacing-md) 0;
+  padding-left: var(--spacing-xl);
+}
+
+.impressum-content li,
+.privacy-content li {
+  margin-bottom: var(--spacing-sm);
+  line-height: 1.6;
+}
+
+.impressum-content a,
+.privacy-content a {
+  color: var(--theme-primary);
+  text-decoration: none;
+  transition: all var(--transition-fast);
+  border-bottom: 1px solid color-mix(in srgb, var(--theme-primary) 30%, transparent);
+  padding-bottom: 1px;
+}
+
+.impressum-content a:hover,
+.privacy-content a:hover {
+  color: var(--theme-primary-hover);
+  border-bottom-color: var(--theme-primary-hover);
+  text-shadow: 0 0 8px color-mix(in srgb, var(--theme-primary) 40%, transparent);
+}
+
+.impressum-content a:focus-visible,
+.privacy-content a:focus-visible {
+  outline: 2px solid var(--theme-primary);
+  outline-offset: 2px;
+  border-radius: var(--border-radius-sm);
+}
+
+.impressum-content blockquote,
+.privacy-content blockquote {
+  border-left: 3px solid var(--theme-primary);
+  padding-left: var(--spacing-lg);
+  margin: var(--spacing-lg) 0;
+  font-style: italic;
+  background: color-mix(in srgb, var(--theme-primary) 3%, transparent);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: 0 var(--border-radius) var(--border-radius) 0;
+}
+
+.impressum-content code,
+.privacy-content code {
+  background: var(--theme-bg-input);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  border: 1px solid var(--theme-border);
+}
+
+.impressum-content pre,
+.privacy-content pre {
+  background: var(--theme-bg-input);
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--theme-border);
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+}
+
+.impressum-content pre code,
+.privacy-content pre code {
+  background: none;
+  padding: 0;
+  border: none;
+}
+
+.impressum-content hr,
+.privacy-content hr {
+  border: none;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--theme-border) 20%,
+    var(--theme-primary) 50%,
+    var(--theme-border) 80%,
+    transparent 100%
+  );
+  margin: calc(var(--spacing-xl) * 1.5) 0;
+}
+
+.impressum-content table,
+.privacy-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--spacing-lg) 0;
+  border: 1px solid var(--theme-border);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+.impressum-content th,
+.impressum-content td,
+.privacy-content th,
+.privacy-content td {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-bottom: 1px solid var(--theme-border);
+  text-align: left;
+}
+
+.impressum-content th,
+.privacy-content th {
+  background: var(--theme-bg-input);
+  font-weight: 600;
+  color: var(--theme-primary);
+}
+
+.impressum-content tr:last-child td,
+.privacy-content tr:last-child td {
+  border-bottom: none;
+}
+
 /* Utility classes for show/hide (CSP-friendly) */
 .hidden {
   display: none !important;
