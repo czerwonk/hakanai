@@ -223,20 +223,20 @@ body {
   background: linear-gradient(
     135deg,
     /* Start lighter for immediate container contrast */
-    color-mix(in srgb, var(--theme-bg-main) 75%, var(--theme-primary) 25%) 0%,
+      color-mix(in srgb, var(--theme-bg-main) 75%, var(--theme-primary) 25%) 0%,
     color-mix(in srgb, var(--theme-bg-main) 78%, var(--theme-primary) 22%) 5%,
     color-mix(in srgb, var(--theme-bg-main) 82%, var(--theme-primary) 18%) 10%,
     color-mix(in srgb, var(--theme-bg-main) 85%, var(--theme-primary) 15%) 15%,
     color-mix(in srgb, var(--theme-bg-main) 88%, var(--theme-primary) 12%) 20%,
     /* Use gradient-stop-1 variable */
-    color-mix(
+      color-mix(
         in srgb,
         var(--theme-bg-main) calc(100% - var(--gradient-stop-1)),
         var(--theme-primary) var(--gradient-stop-1)
       )
       25%,
     /* Smooth transition between stop-1 and stop-2 */
-    color-mix(
+      color-mix(
         in srgb,
         var(--theme-bg-main) calc(100% - var(--gradient-stop-1) + 1%),
         var(--theme-primary) calc(var(--gradient-stop-1) - 1%)
@@ -255,28 +255,28 @@ body {
       )
       40%,
     /* Use gradient-stop-2 variable */
-    color-mix(
+      color-mix(
         in srgb,
         var(--theme-bg-main) calc(100% - var(--gradient-stop-2)),
         var(--theme-primary) var(--gradient-stop-2)
       )
       45%,
     /* Transition to stop-3 */
-    color-mix(
+      color-mix(
         in srgb,
         var(--theme-bg-main) calc(100% - var(--gradient-stop-2) + 1%),
         var(--theme-primary) calc(var(--gradient-stop-2) - 1%)
       )
       50%,
     /* Use gradient-stop-3 variable */
-    color-mix(
+      color-mix(
         in srgb,
         var(--theme-bg-main) calc(100% - var(--gradient-stop-3)),
         var(--theme-primary) var(--gradient-stop-3)
       )
       55%,
     /* Transition to secondary color */
-    color-mix(
+      color-mix(
         in srgb,
         var(--theme-bg-main) calc(100% - var(--gradient-stop-3) + 1%),
         var(--theme-primary) calc(var(--gradient-stop-3) - 1%)
@@ -289,14 +289,14 @@ body {
       )
       65%,
     /* Use gradient-stop-4 variable with secondary */
-    color-mix(
+      color-mix(
         in srgb,
         var(--theme-bg-main) calc(100% - var(--gradient-stop-4)),
         var(--theme-secondary) var(--gradient-stop-4)
       )
       70%,
     /* Transition to accent */
-    color-mix(
+      color-mix(
         in srgb,
         var(--theme-bg-main) calc(100% - var(--gradient-stop-4) + 1%),
         var(--theme-secondary) calc(var(--gradient-stop-4) - 1%)
@@ -309,14 +309,14 @@ body {
       )
       80%,
     /* Use gradient-stop-5 variable with accent */
-    color-mix(
+      color-mix(
         in srgb,
         var(--theme-bg-main) calc(100% - var(--gradient-stop-5)),
         var(--theme-accent) var(--gradient-stop-5)
       )
       85%,
     /* Final transitions */
-    color-mix(
+      color-mix(
         in srgb,
         var(--theme-bg-main) calc(100% - var(--gradient-stop-5) + 1%),
         var(--theme-accent) calc(var(--gradient-stop-5) - 1%)
@@ -329,7 +329,7 @@ body {
       )
       95%,
     /* Use gradient-stop-6 variable */
-    color-mix(
+      color-mix(
         in srgb,
         var(--theme-bg-main) calc(100% - var(--gradient-stop-6)),
         var(--theme-accent) var(--gradient-stop-6)
@@ -441,9 +441,8 @@ body.expanded-view {
   opacity: 0.3;
 }
 
-/* Fix light theme container backgrounds */
 body[data-theme="light"] .container {
-  background: #faf8f0 !important;
+  background: var(--light-bg-container);
 }
 
 .container.homepage-container {
@@ -484,9 +483,8 @@ body[data-theme="light"] .container {
   transform: translateY(-1px);
 }
 
-/* Fix light theme language switcher */
 body[data-theme="light"] #language-switcher {
-  background: #faf8f0 !important;
+  background: var(--light-bg-container);
 }
 
 #language-switcher:focus-visible {
@@ -587,7 +585,6 @@ body[data-theme="light"] #language-switcher {
   border-color: var(--theme-primary);
 }
 
-/* Fix light theme action cards */
 body[data-theme="light"] .action-card {
   background: var(--light-bg-container);
 }
@@ -842,9 +839,8 @@ body[data-theme="light"] .action-card {
   transform: translateY(-1px);
 }
 
-/* Fix light theme theme toggle */
 body[data-theme="light"] #theme-toggle {
-  background: #faf8f0 !important;
+  background: var(--light-bg-container);
 }
 
 #theme-toggle:focus-visible {
@@ -1516,7 +1512,6 @@ button.loading::after {
     font-size: 16px; /* Prevents zoom on iOS */
   }
 
-  /* Fix header breakout on mobile for non-homepage containers */
   .container:not(.homepage-container) .header {
     margin: calc(-1 * var(--spacing-lg)) calc(-1 * var(--spacing-lg))
       var(--spacing-lg) calc(-1 * var(--spacing-lg));
