@@ -33,6 +33,7 @@ fn main() -> Result<()> {
     println!("cargo:rerun-if-changed=src/includes/openapi.json");
 
     register_files_for_recompilation("src/templates", "html")?;
+    register_files_for_recompilation("src/templates/docs", "html")?;
     register_files_for_recompilation("src/typescript", "ts")?;
     println!("cargo:rerun-if-changed=tsconfig.json");
 
@@ -141,10 +142,13 @@ fn load_openapi() -> Result<Value> {
 fn generate_docs_html(openapi: &Value) -> Result<String> {
     let mut tt = TinyTemplate::new();
 
-    let docs_template =
-        fs::read_to_string("src/templates/docs.html").context("Failed to read docs template")?;
-    let endpoint_template = fs::read_to_string("src/templates/endpoint.html")
+    let docs_template = fs::read_to_string("src/templates/docs/docs.html")
+        .context("Failed to read docs template")?;
+    let endpoint_template = fs::read_to_string("src/templates/docs/endpoint.html")
         .context("Failed to read endpoint template")?;
+
+    let partials = load_partials()?;
+    let docs_template = apply_partials(docs_template, &partials);
 
     tt.add_template("docs", &docs_template)?;
     tt.add_template("endpoint", &endpoint_template)?;
@@ -170,19 +174,23 @@ fn generate_all_endpoints(tt: &TinyTemplate, openapi: &Value) -> Result<String> 
     Ok(endpoints_html)
 }
 
-fn create_docs_context<'a>(
-    openapi: &'a Value,
-    endpoints_html: &'a str,
-) -> HashMap<&'static str, &'a str> {
+fn create_docs_context<'a>(openapi: &'a Value, endpoints_html: &'a str) -> HashMap<String, String> {
     let info = &openapi["info"];
     let mut context = HashMap::new();
     context.insert(
-        "title",
-        info["title"].as_str().unwrap_or("API Documentation"),
+        "title".to_string(),
+        info["title"]
+            .as_str()
+            .unwrap_or("API Documentation")
+            .to_string(),
     );
-    context.insert("version", env!("CARGO_PKG_VERSION"));
-    context.insert("description", info["description"].as_str().unwrap_or(""));
-    context.insert("endpoints", endpoints_html);
+    context.insert("version".to_string(), env!("CARGO_PKG_VERSION").to_string());
+    context.insert(
+        "description".to_string(),
+        info["description"].as_str().unwrap_or("").to_string(),
+    );
+    context.insert("endpoints".to_string(), endpoints_html.to_string());
+    context.insert("cache_buster".to_string(), generate_cache_buster());
 
     context
 }
@@ -295,29 +303,120 @@ fn get_status_text(code: &str) -> &'static str {
 
 fn generate_static_html_files() -> Result<()> {
     println!("cargo:warning=Generate static HTML pages...");
+
+    let partials = load_partials()?;
     let mut tt = TinyTemplate::new();
-
-    let create_secret_template = fs::read_to_string("src/templates/create-secret.html")
-        .context("failed to read create-secret template")?;
-    let get_secret_template = fs::read_to_string("src/templates/get-secret.html")
-        .context("failed to read get-secret template")?;
-    let homepage_template = fs::read_to_string("src/templates/homepage.html")
-        .context("failed to read homepage template")?;
-
-    tt.add_template("create-secret", &create_secret_template)?;
-    tt.add_template("get-secret", &get_secret_template)?;
-    tt.add_template("homepage", &homepage_template)?;
-
     let context = create_version_context();
 
-    generate_html_file(
-        &tt,
-        "create-secret",
-        &context,
-        "src/includes/create-secret.html",
-    )?;
-    generate_html_file(&tt, "get-secret", &context, "src/includes/get-secret.html")?;
-    generate_html_file(&tt, "homepage", &context, "src/includes/homepage.html")
+    discover_and_generate_templates(&mut tt, &context, &partials)?;
+
+    Ok(())
+}
+
+fn load_partials() -> Result<TemplatePartials> {
+    let head = fs::read_to_string("src/templates/partials/head.html")
+        .context("failed to read head partial")?;
+    let theme_controls = fs::read_to_string("src/templates/partials/theme-controls.html")
+        .context("failed to read theme-controls partial")?;
+    let footer = fs::read_to_string("src/templates/partials/footer.html")
+        .context("failed to read footer partial")?;
+    let scripts = fs::read_to_string("src/templates/partials/scripts.html")
+        .context("failed to read scripts partial")?;
+
+    Ok(TemplatePartials {
+        head,
+        theme_controls,
+        footer,
+        scripts,
+    })
+}
+
+fn discover_and_generate_templates(
+    _tt: &mut TinyTemplate,
+    context: &HashMap<&'static str, String>,
+    partials: &TemplatePartials,
+) -> Result<()> {
+    let templates_dir = std::path::Path::new("src/templates");
+
+    if let Ok(entries) = fs::read_dir(templates_dir) {
+        for entry in entries.filter_map(|e| e.ok()) {
+            let path = entry.path();
+
+            if should_process_template(&path)? {
+                let template_name = get_template_name(&path)?;
+                process_single_template(context, partials, &template_name, &path)?;
+            }
+        }
+    }
+
+    Ok(())
+}
+
+fn should_process_template(path: &std::path::Path) -> Result<bool> {
+    // Skip partials and docs directories, and non-HTML files
+    if !path.is_file() || !path.extension().map(|ext| ext == "html").unwrap_or(false) {
+        return Ok(false);
+    }
+
+    Ok(true)
+}
+
+fn get_template_name(path: &std::path::Path) -> Result<String> {
+    path.file_stem()
+        .and_then(|name| name.to_str())
+        .map(|s| s.to_string())
+        .context("failed to get template name")
+}
+
+fn process_single_template(
+    context: &HashMap<&'static str, String>,
+    partials: &TemplatePartials,
+    template_name: &str,
+    template_path: &std::path::Path,
+) -> Result<()> {
+    println!("cargo:warning=Processing template: {template_name}");
+
+    let mut template_content = fs::read_to_string(template_path)
+        .context(format!("failed to read template {template_name}"))?;
+
+    template_content = apply_partials(template_content, partials);
+
+    if template_name == "impressum" {
+        template_content = apply_impressum_content(template_content);
+    }
+
+    let mut tt = TinyTemplate::new();
+    tt.add_template(template_name, &template_content)?;
+
+    let output_path = format!("src/includes/{template_name}.html");
+    let html = tt
+        .render(template_name, context)
+        .context(format!("failed to render template {template_name}"))?;
+
+    fs::write(output_path, html).context(format!("failed to write {template_name}.html"))
+}
+
+fn apply_partials(template_content: String, partials: &TemplatePartials) -> String {
+    template_content
+        .replace("[[HEAD]]", &partials.head)
+        .replace("[[THEME_CONTROLS]]", &partials.theme_controls)
+        .replace("[[FOOTER]]", &partials.footer)
+        .replace("[[SCRIPTS]]", &partials.scripts)
+}
+
+fn apply_impressum_content(template_content: String) -> String {
+    // Remove build-time impressum content injection - will be handled at runtime
+    template_content.replace(
+        "[[IMPRESSUM_CONTENT]]",
+        "<div id=\"impressum-content-placeholder\"></div>",
+    )
+}
+
+struct TemplatePartials {
+    head: String,
+    theme_controls: String,
+    footer: String,
+    scripts: String,
 }
 
 fn create_version_context() -> HashMap<&'static str, String> {
@@ -359,17 +458,4 @@ fn generate_cache_buster() -> String {
         .unwrap_or_default()
         .as_secs()
         .to_string()
-}
-
-fn generate_html_file(
-    tt: &TinyTemplate,
-    template_name: &str,
-    context: &HashMap<&'static str, String>,
-    output_path: &str,
-) -> Result<()> {
-    let html = tt
-        .render(template_name, context)
-        .context(format!("failed to render template {template_name}"))?;
-
-    fs::write(output_path, html).context(format!("failed to write {output_path}"))
 }

@@ -344,3 +344,53 @@ export function clearAuthTokenStorage(): void {
     console.warn("Failed to clear auth token from sessionStorage:", error);
   }
 }
+
+/**
+ * Application configuration interface
+ */
+interface AppConfig {
+  features: {
+    impressum: boolean;
+  };
+}
+
+/**
+ * Fetch application configuration from server
+ */
+async function fetchAppConfig(): Promise<AppConfig | null> {
+  try {
+    const response = await fetch("/config.json");
+    if (!response.ok) {
+      console.warn("Failed to fetch app config:", response.status);
+      return null;
+    }
+    return await response.json();
+  } catch (error) {
+    console.warn("Failed to fetch app config:", error);
+    return null;
+  }
+}
+
+/**
+ * Initialize UI based on application configuration
+ */
+async function initializeUI(): Promise<void> {
+  const config = await fetchAppConfig();
+  const impressumLink = document.getElementById("impressum-link");
+
+  console.log("Config loaded:", config);
+  console.log("Impressum link element:", impressumLink);
+
+  if (impressumLink) {
+    if (config?.features.impressum) {
+      impressumLink.style.display = "";
+    } else {
+      impressumLink.style.display = "none";
+    }
+  }
+}
+
+// Auto-initialize when DOM is ready
+document.addEventListener("DOMContentLoaded", async () => {
+  await initializeUI();
+});

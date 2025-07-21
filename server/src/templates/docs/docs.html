@@ -1,17 +1,12 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    [[HEAD]]
     <meta name="description" content="{description}" />
-    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
-    <link rel="manifest" href="/manifest.json" />
     <title>{title}</title>
-    <link rel="stylesheet" href="/style.css" />
-    <script src="/common-utils.js" type="module"></script>
   </head>
   <body class="expanded-view">
-    <button id="theme-toggle" aria-label="Toggle theme">🌙</button>
+    [[THEME_CONTROLS]]
     <div class="container">
       <header class="header">
         <a href="/" class="header-link" aria-label="Go to homepage">
@@ -91,22 +86,7 @@
         </ul>
       </section>
 
-      <div class="footer">
-        <div class="footer-content">
-          <div class="footer-line">
-            <span class="project-name">Hakanai</span>
-            <span class="version">{version}</span>
-          </div>
-          <div class="footer-line">
-            <a
-              href="https://github.com/czerwonk/hakanai"
-              target="_blank"
-              rel="noopener"
-              >Github</a
-            >
-          </div>
-        </div>
-      </div>
+      [[FOOTER]]
     </div>
 
     <script type="module" src="/docs.js"></script>

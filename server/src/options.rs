@@ -115,6 +115,14 @@ pub struct Args {
         help = "Clear all user tokens and regenerate a new default token."
     )]
     pub reset_user_tokens: bool,
+
+    /// Path to impressum text file for legal compliance
+    #[arg(
+        long,
+        env = "HAKANAI_IMPRESSUM_FILE",
+        help = "Path to impressum/legal information text file. When provided, an impressum link appears in the footer."
+    )]
+    pub impressum_file: Option<String>,
 }
 
 impl Args {
@@ -131,6 +139,14 @@ impl Args {
         }
 
         Ok(())
+    }
+
+    /// Loads impressum content from file if configured
+    pub fn load_impressum_content(&self) -> std::io::Result<Option<String>> {
+        match &self.impressum_file {
+            Some(path) => std::fs::read_to_string(path).map(Some),
+            None => Ok(None),
+        }
     }
 }
 
@@ -151,6 +167,7 @@ mod tests {
             enable_admin_token: false,
             reset_admin_token: false,
             reset_user_tokens: false,
+            impressum_file: None,
         }
     }
 
@@ -237,5 +254,47 @@ mod tests {
 
         let result = args.validate();
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_load_impressum_content_none() {
+        let args = Args {
+            impressum_file: None,
+            ..create_test_args()
+        };
+
+        let result = args.load_impressum_content().unwrap();
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_load_impressum_content_nonexistent_file() {
+        let args = Args {
+            impressum_file: Some("/nonexistent/path/to/impressum.txt".to_string()),
+            ..create_test_args()
+        };
+
+        let result = args.load_impressum_content();
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_load_impressum_content_valid_file() {
+        use std::io::Write;
+
+        // Create a temporary file for testing
+        let mut temp_file = tempfile::NamedTempFile::new().unwrap();
+        let test_content = "Test impressum content\nLine 2 of impressum";
+        write!(temp_file, "{test_content}").unwrap();
+        temp_file.flush().unwrap();
+
+        let args = Args {
+            impressum_file: Some(temp_file.path().to_str().unwrap().to_string()),
+            ..create_test_args()
+        };
+
+        let result = args.load_impressum_content().unwrap();
+        assert!(result.is_some());
+        assert_eq!(result.unwrap(), test_content);
     }
 }

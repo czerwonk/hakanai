@@ -1,24 +1,18 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    [[HEAD]]
     <meta
       name="description"
       content="Hakanai - Zero-knowledge one-time secret sharing service"
       data-i18n-content="meta.homepage"
     />
-    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
-    <link rel="manifest" href="/manifest.json" />
     <title data-i18n-title="page.homepage.title">
       Hakanai - One-Time Secret Sharing
     </title>
-    <link rel="stylesheet" href="/style.css?v={cache_buster}" />
-    <script type="module" src="/i18n.js?v={cache_buster}"></script>
   </head>
   <body>
-    <button id="theme-toggle" aria-label="Toggle theme">🌙</button>
-    <select id="language-switcher" aria-label="Language"></select>
+    [[THEME_CONTROLS]]
     <main class="container homepage-container">
       <header class="header">
         <div class="homepage-banner-container">
@@ -88,19 +82,7 @@
           </a>
         </div>
       </section>
-      <footer class="footer">
-        <div class="footer-content">
-          <div class="footer-line">
-            <span class="project-name">Hakanai</span>
-            <span class="version">v{version}</span>
-          </div>
-          <div class="footer-line">
-            <a href="https://github.com/czerwonk/hakanai" class="github-link"
-              >Github</a
-            >
-          </div>
-        </div>
-      </footer>
+      [[FOOTER]]
     </main>
     <noscript>
       <div class="container">

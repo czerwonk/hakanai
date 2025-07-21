@@ -185,6 +185,7 @@ mod tests {
                 allowed: allow_anonymous,
                 upload_size_limit: 32 * 1024, // 32KB in bytes
             },
+            impressum_html: None,
         }
     }
 

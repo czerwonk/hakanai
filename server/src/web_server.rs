@@ -28,6 +28,8 @@ where
         upload_size_limit: args.anonymous_upload_size_limit,
     };
 
+    let impressum_html = build_impressum_html(&args)?;
+
     HttpServer::new(move || {
         let app_data = AppData {
             data_store: Box::new(data_store.clone()),
@@ -35,6 +37,7 @@ where
             token_creator: Box::new(token_manager.clone()),
             max_ttl: args.max_ttl,
             anonymous_usage: anonymous_usage.clone(),
+            impressum_html: impressum_html.clone(),
         };
         App::new()
             .app_data(web::Data::new(app_data))
@@ -59,6 +62,23 @@ where
     .bind((args.listen_address, args.port))?
     .run()
     .await
+}
+
+fn build_impressum_html(args: &Args) -> Result<Option<String>> {
+    Ok(match args.load_impressum_content()? {
+        Some(content) => {
+            info!(
+                "Building impressum HTML ({} bytes of content)",
+                content.len()
+            );
+            let template = include_str!("includes/impressum.html");
+            Some(template.replace(
+                r#"<div id="impressum-content-placeholder"></div>"#,
+                &content,
+            ))
+        }
+        None => None,
+    })
 }
 
 fn default_headers() -> DefaultHeaders {

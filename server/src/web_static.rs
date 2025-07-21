@@ -27,7 +27,9 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
         .route("/robots.txt", web::get().to(serve_robots_txt))
         .route("/style.css", web::get().to(serve_css))
         .route("/types.js", web::get().to(serve_types_js))
-        .route("/homepage.js", web::get().to(serve_homepage_js));
+        .route("/homepage.js", web::get().to(serve_homepage_js))
+        .route("/impressum", web::get().to(serve_impressum))
+        .route("/config.json", web::get().to(serve_config));
 }
 
 fn serve_with_caching_header(content: &[u8], content_type: &str, max_age: u64) -> HttpResponse {
@@ -200,4 +202,93 @@ async fn serve_ios_shortcuts_js() -> impl Responder {
         "application/javascript",
         DEFAULT_CACHE_MAX_AGE,
     )
+}
+
+async fn serve_impressum(app_data: web::Data<crate::app_data::AppData>) -> impl Responder {
+    match &app_data.impressum_html {
+        Some(html) => HttpResponse::Ok()
+            .content_type("text/html; charset=utf-8")
+            .insert_header((
+                header::CACHE_CONTROL,
+                format!("public, max-age={DEFAULT_CACHE_MAX_AGE}"),
+            ))
+            .insert_header((
+                header::ETAG,
+                concat!("\"", env!("CARGO_PKG_VERSION"), "-impressum\""),
+            ))
+            .body(html.clone()),
+        None => HttpResponse::NotFound().body("No impressum configured"),
+    }
+}
+
+async fn serve_config(app_data: web::Data<crate::app_data::AppData>) -> impl Responder {
+    let config = serde_json::json!({
+        "features": {
+            "impressum": app_data.impressum_html.is_some()
+        }
+    });
+
+    HttpResponse::Ok()
+        .content_type("application/json")
+        .insert_header((header::CACHE_CONTROL, "public, max-age=300")) // 5 minutes cache
+        .insert_header((header::ETAG, concat!("\"", env!("CARGO_PKG_VERSION"), "-config\"")))
+        .json(config)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use actix_web::{test, web, App};
+    use crate::app_data::{AppData, AnonymousOptions};
+    use crate::test_utils::MockDataStore;
+
+    fn create_test_app_data(impressum_html: Option<String>) -> AppData {
+        AppData {
+            data_store: Box::new(MockDataStore::new()),
+            token_validator: Box::new(crate::test_utils::MockTokenManager::new()),
+            token_creator: Box::new(crate::test_utils::MockTokenManager::new()),
+            max_ttl: std::time::Duration::from_secs(7200),
+            anonymous_usage: AnonymousOptions {
+                allowed: true,
+                upload_size_limit: 32 * 1024,
+            },
+            impressum_html,
+        }
+    }
+
+    #[actix_web::test]
+    async fn test_serve_config_with_impressum() {
+        let app_data = create_test_app_data(Some("Test impressum content".to_string()));
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(app_data))
+                .route("/config.json", web::get().to(serve_config)),
+        )
+        .await;
+
+        let req = test::TestRequest::get().uri("/config.json").to_request();
+        let resp = test::call_service(&app, req).await;
+
+        assert!(resp.status().is_success());
+        let body: serde_json::Value = test::read_body_json(resp).await;
+        assert_eq!(body["features"]["impressum"], true);
+    }
+
+    #[actix_web::test]
+    async fn test_serve_config_without_impressum() {
+        let app_data = create_test_app_data(None);
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(app_data))
+                .route("/config.json", web::get().to(serve_config)),
+        )
+        .await;
+
+        let req = test::TestRequest::get().uri("/config.json").to_request();
+        let resp = test::call_service(&app, req).await;
+
+        assert!(resp.status().is_success());
+        let body: serde_json::Value = test::read_body_json(resp).await;
+        assert_eq!(body["features"]["impressum"], false);
+    }
 }

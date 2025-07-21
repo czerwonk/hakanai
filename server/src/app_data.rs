@@ -27,4 +27,7 @@ pub struct AppData {
 
     /// Defines whether the application can be used without authentication and limits for anonymous users.
     pub anonymous_usage: AnonymousOptions,
+
+    /// Pre-rendered impressum HTML page (built at startup if configured)
+    pub impressum_html: Option<String>,
 }

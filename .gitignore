@@ -32,6 +32,8 @@ server/src/includes/docs_generated.html
 server/src/includes/create-secret.html
 server/src/includes/get-secret.html
 server/src/includes/homepage.html
+server/src/includes/impressum.html
+
 
 # TypeScript compiled JavaScript files
 server/src/includes/hakanai-client.js

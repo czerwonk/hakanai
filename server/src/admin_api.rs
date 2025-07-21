@@ -129,6 +129,7 @@ mod tests {
                 allowed: true,
                 upload_size_limit: 32 * 1024,
             },
+            impressum_html: None,
         }
     }
 
