@@ -34,7 +34,7 @@ server/src/includes/get-secret.html
 server/src/includes/homepage.html
 server/src/includes/impressum.html
 server/src/includes/privacy.html
-
+server/src/includes/ios-shortcuts.html
 
 # TypeScript compiled JavaScript files
 server/src/includes/hakanai-client.js
