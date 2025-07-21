@@ -147,6 +147,22 @@
         <line stroke="#6BA5D4" stroke-width="1" opacity="0.4" x1="-28" y1="0" x2="28" y2="0" />
     </g>
     
+    <!-- Mobile-visible area blossoms - minimal and well-spaced -->
+    <!-- Left side -->
+    <g transform="translate(300, 55) rotate(-25)">
+        <path d="M0,0 C-3,-6 3,-6 0,0 C6,-3 6,3 0,0 C3,6 -3,6 0,0 C-6,3 -6,-3 0,0" fill="#FFB4CA" opacity="0.4" transform="scale(1.2)"/>
+    </g>
+    
+    <!-- Right side (moved down) -->
+    <g transform="translate(500, 75) rotate(60)">
+        <path d="M0,0 C-3,-6 3,-6 0,0 C6,-3 6,3 0,0 C3,6 -3,6 0,0 C-6,3 -6,-3 0,0" fill="#F4A8C4" opacity="0.35" transform="scale(1.1)"/>
+    </g>
+    
+    <!-- Subtle one above hakanai, x-aligned with tagline start -->
+    <g transform="translate(280, 120) rotate(-40)">
+        <path d="M0,0 C-3,-6 3,-6 0,0 C6,-3 6,3 0,0 C3,6 -3,6 0,0 C-6,3 -6,-3 0,0" fill="#FFB4CA" opacity="0.3" transform="scale(1.0)"/>
+    </g>
+    
     <!-- Project title and tagline -->
     <text x="400" y="145" fill="#7FB4CA" font-family="'Segoe UI', sans-serif" font-size="24" font-weight="600" text-anchor="middle" letter-spacing="3px" filter="url(#minimalGlow)">hakanai</text>
     <text x="400" y="165" fill="#dcd7ba" font-family="'Segoe UI', sans-serif" font-size="14" font-weight="400" text-anchor="middle" letter-spacing="1px" opacity="0.8">Zero-Knowledge One-Time Secret Sharing</text>
