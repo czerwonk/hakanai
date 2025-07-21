@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hakanai iOS Shortcuts API</title>
+  </head>
+  <body>
+    <script src="hakanai-client.js"></script>
+    <script>
+      // iOS Shortcuts API wrapper for Hakanai
+      window.HakanaiShortcuts = {
+        async sendSecret(fileData, filename, serverUrl, authToken) {
+          try {
+            const client = new HakanaiClient(serverUrl);
+
+            const payload = client.createPayload(filename);
+            payload.setFromBase64(fileData);
+
+            const response = await client.sendSecret(payload, 86400, authToken); // 24 hours default
+
+            return {
+              success: true,
+              url: response.url,
+              id: response.id,
+            };
+          } catch (error) {
+            return {
+              success: false,
+              error: error.message,
+              errorCode: error.code || "UNKNOWN_ERROR",
+            };
+          }
+        },
+
+        async sendText(text, serverUrl, authToken) {
+          try {
+            const bytes = new TextEncoder().encode(text);
+
+            const client = new HakanaiClient(serverUrl);
+
+            const payload = client.createPayload();
+            payload.setFromBytes(bytes);
+
+            const response = await client.sendSecret(payload, 86400, authToken);
+
+            return {
+              success: true,
+              url: response.url,
+              id: response.id,
+            };
+          } catch (error) {
+            return {
+              success: false,
+              error: error.message,
+              errorCode: error.code || "UNKNOWN_ERROR",
+            };
+          }
+        },
+      };
+
+      // Signal that the API is ready
+      window.hakanaiReady = true;
+    </script>
+  </body>
+</html>

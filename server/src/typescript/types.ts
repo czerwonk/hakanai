@@ -1,15 +1,5 @@
 // Error Types
-
-/**
- * Custom error type for Hakanai-specific errors with error codes
- * @interface HakanaiError
- * @extends {Error}
- */
-export interface HakanaiError extends Error {
-  readonly name: "HakanaiError";
-  readonly code: string;
-  readonly statusCode?: number;
-}
+import { HakanaiError } from "./hakanai-client.js";
 
 export interface StandardError extends Error {
   readonly name: string;
@@ -103,39 +93,6 @@ export type ClickHandler = (event: MouseEvent) => void;
 export type ChangeHandler = (event: Event) => void;
 export type SubmitHandler = (event: SubmitEvent) => void;
 
-// Crypto Types
-export interface CryptoKey {
-  readonly bytes: Uint8Array;
-  readonly length: number;
-}
-
-/**
- * Represents secret payload data with optional file metadata
- * @interface PayloadData
- */
-export interface PayloadData {
-  /** Base64-encoded data */
-  readonly data: string;
-  /** Optional filename for file payloads */
-  readonly filename?: string;
-  /** Set data from raw bytes (automatically base64 encodes) */
-  setFromBytes?(bytes: Uint8Array): void;
-  /** Decode data as UTF-8 text string */
-  decode?(): string;
-  /** Decode data as raw bytes */
-  decodeBytes?(): Uint8Array;
-}
-
-// API Types
-export interface SecretRequest {
-  data: string;
-  expires_in: number;
-}
-
-export interface SecretResponse {
-  id: string;
-}
-
 // Theme Types
 export type ThemeMode = "light" | "dark";
 export type LanguageCode = "en" | "de";
@@ -177,13 +134,6 @@ export type Result<T, E = AppError> =
 // Async Operation Types
 export type AsyncOperation<T> = () => Promise<T>;
 export type ErrorHandler = (error: AppError) => void;
-
-// Constants Types
-export interface CryptoConstants {
-  readonly KEY_LENGTH: 32;
-  readonly NONCE_LENGTH: 12;
-  readonly MAX_FILE_SIZE: number;
-}
 
 export interface UITimeouts {
   readonly DEBOUNCE: number;

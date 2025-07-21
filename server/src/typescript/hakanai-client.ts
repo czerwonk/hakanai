@@ -69,6 +69,11 @@ interface PayloadData {
   setFromBytes?(bytes: Uint8Array): void;
 
   /**
+   * Set data directly from base64-encoded string (optimization for pre-encoded data)
+   */
+  setFromBase64?(base64Data: string): void;
+
+  /**
    * Decode the base64-encoded data field to a readable string
    */
   decode?(): string;
@@ -578,6 +583,19 @@ class PayloadDataImpl implements PayloadData {
     }
 
     this._data = btoa(binaryString);
+  }
+
+  setFromBase64(base64Data: string): void {
+    if (typeof base64Data !== "string") {
+      throw new Error("Base64 data must be a string");
+    }
+
+    // Validate base64 format (basic check)
+    if (!/^[A-Za-z0-9+/]*={0,2}$/.test(base64Data)) {
+      throw new Error("Invalid base64 format");
+    }
+
+    this._data = base64Data;
   }
 
   decode(): string {
