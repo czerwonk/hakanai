@@ -222,38 +222,113 @@ body {
   padding: var(--spacing-lg);
   background: linear-gradient(
     135deg,
+    /* Start with stronger color for immediate visibility */
     color-mix(in srgb, var(--theme-bg-main) 85%, var(--theme-primary) 15%) 0%,
-    color-mix(in srgb, var(--theme-bg-main) 90%, var(--theme-primary) 10%) 15%,
+    color-mix(in srgb, var(--theme-bg-main) 87%, var(--theme-primary) 13%) 5%,
+    color-mix(in srgb, var(--theme-bg-main) 90%, var(--theme-primary) 10%) 10%,
+    color-mix(in srgb, var(--theme-bg-main) 92%, var(--theme-primary) 8%) 15%,
+    color-mix(in srgb, var(--theme-bg-main) 94%, var(--theme-primary) 6%) 20%,
+    /* Use gradient-stop-1 variable */
     color-mix(
         in srgb,
         var(--theme-bg-main) calc(100% - var(--gradient-stop-1)),
         var(--theme-primary) var(--gradient-stop-1)
       )
+      25%,
+    /* Smooth transition between stop-1 and stop-2 */
+    color-mix(
+        in srgb,
+        var(--theme-bg-main) calc(100% - var(--gradient-stop-1) + 1%),
+        var(--theme-primary) calc(var(--gradient-stop-1) - 1%)
+      )
       30%,
+    color-mix(
+        in srgb,
+        var(--theme-bg-main) calc(100% - var(--gradient-stop-1) + 2%),
+        var(--theme-primary) calc(var(--gradient-stop-1) - 2%)
+      )
+      35%,
+    color-mix(
+        in srgb,
+        var(--theme-bg-main) calc(100% - var(--gradient-stop-2) + 1%),
+        var(--theme-primary) calc(var(--gradient-stop-2) - 1%)
+      )
+      40%,
+    /* Use gradient-stop-2 variable */
     color-mix(
         in srgb,
         var(--theme-bg-main) calc(100% - var(--gradient-stop-2)),
         var(--theme-primary) var(--gradient-stop-2)
       )
       45%,
+    /* Transition to stop-3 */
+    color-mix(
+        in srgb,
+        var(--theme-bg-main) calc(100% - var(--gradient-stop-2) + 1%),
+        var(--theme-primary) calc(var(--gradient-stop-2) - 1%)
+      )
+      50%,
+    /* Use gradient-stop-3 variable */
     color-mix(
         in srgb,
         var(--theme-bg-main) calc(100% - var(--gradient-stop-3)),
         var(--theme-primary) var(--gradient-stop-3)
       )
       55%,
+    /* Transition to secondary color */
+    color-mix(
+        in srgb,
+        var(--theme-bg-main) calc(100% - var(--gradient-stop-3) + 1%),
+        var(--theme-primary) calc(var(--gradient-stop-3) - 1%)
+      )
+      60%,
+    color-mix(
+        in srgb,
+        var(--theme-bg-main) calc(100% - var(--gradient-stop-4) + 1%),
+        var(--theme-secondary) calc(var(--gradient-stop-4) - 1%)
+      )
+      65%,
+    /* Use gradient-stop-4 variable with secondary */
     color-mix(
         in srgb,
         var(--theme-bg-main) calc(100% - var(--gradient-stop-4)),
         var(--theme-secondary) var(--gradient-stop-4)
       )
       70%,
+    /* Transition to accent */
+    color-mix(
+        in srgb,
+        var(--theme-bg-main) calc(100% - var(--gradient-stop-4) + 1%),
+        var(--theme-secondary) calc(var(--gradient-stop-4) - 1%)
+      )
+      75%,
+    color-mix(
+        in srgb,
+        var(--theme-bg-main) calc(100% - var(--gradient-stop-5) + 1%),
+        var(--theme-accent) calc(var(--gradient-stop-5) - 1%)
+      )
+      80%,
+    /* Use gradient-stop-5 variable with accent */
     color-mix(
         in srgb,
         var(--theme-bg-main) calc(100% - var(--gradient-stop-5)),
         var(--theme-accent) var(--gradient-stop-5)
       )
       85%,
+    /* Final transitions */
+    color-mix(
+        in srgb,
+        var(--theme-bg-main) calc(100% - var(--gradient-stop-5) + 1%),
+        var(--theme-accent) calc(var(--gradient-stop-5) - 1%)
+      )
+      90%,
+    color-mix(
+        in srgb,
+        var(--theme-bg-main) calc(100% - var(--gradient-stop-6) + 2%),
+        var(--theme-accent) calc(var(--gradient-stop-6) - 2%)
+      )
+      95%,
+    /* Use gradient-stop-6 variable */
     color-mix(
         in srgb,
         var(--theme-bg-main) calc(100% - var(--gradient-stop-6)),
