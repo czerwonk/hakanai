@@ -94,7 +94,7 @@ fn compile_typescript() -> Result<()> {
 }
 
 fn add_cache_busters_to_js_files() -> Result<()> {
-    println!("cargo:warning=Adding cache busters to JavaScript imports...");
+    println!("cargo:warning=Adding cache busters to JavaScript imports and JSON URLs...");
 
     let cache_buster = generate_cache_buster();
 
@@ -108,7 +108,9 @@ fn add_cache_busters_to_js_files() -> Result<()> {
                     // Replace any relative .js import with versioned import
                     let updated_content = content
                         .replace(".js\"", &format!(".js?v={cache_buster}\""))
-                        .replace(".js'", &format!(".js?v={cache_buster}'"));
+                        .replace(".js'", &format!(".js?v={cache_buster}'"))
+                        .replace(".json\"", &format!(".json?v={cache_buster}\""))
+                        .replace(".json'", &format!(".json?v={cache_buster}'"));
 
                     fs::write(&path, updated_content)
                         .context(format!("failed to write updated {path:?}"))?;
@@ -117,7 +119,7 @@ fn add_cache_busters_to_js_files() -> Result<()> {
         }
     }
 
-    println!("cargo:warning=Cache busters added to JavaScript imports");
+    println!("cargo:warning=Cache busters added to JavaScript imports and JSON URLs");
     Ok(())
 }
 

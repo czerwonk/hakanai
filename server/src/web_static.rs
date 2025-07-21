@@ -231,16 +231,16 @@ async fn serve_config(app_data: web::Data<crate::app_data::AppData>) -> impl Res
     HttpResponse::Ok()
         .content_type("application/json")
         .insert_header((header::CACHE_CONTROL, "public, max-age=300")) // 5 minutes cache
-        .insert_header((header::ETAG, concat!("\"", env!("CARGO_PKG_VERSION"), "-config\"")))
+        .insert_header((header::ETAG, env!("CARGO_PKG_VERSION")))
         .json(config)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use actix_web::{test, web, App};
-    use crate::app_data::{AppData, AnonymousOptions};
+    use crate::app_data::{AnonymousOptions, AppData};
     use crate::test_utils::MockDataStore;
+    use actix_web::{App, test, web};
 
     fn create_test_app_data(impressum_html: Option<String>) -> AppData {
         AppData {
