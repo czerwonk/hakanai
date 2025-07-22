@@ -8,6 +8,7 @@ import {
   formatFileSize,
   formatTTL,
   ShareData,
+  ShareDataError,
   sanitizeFileName,
 } from "./common-utils.js";
 
@@ -131,6 +132,14 @@ function handleShareError(error: unknown, context: string): void {
     showClipboardError(
       window.i18n?.t("msg.clipboardPermissionDenied") ||
         "Clipboard access denied. Please grant permission and try again.",
+    );
+  } else if (error instanceof ShareDataError) {
+    // Handle validation errors with translations
+    const translationKey = `validation.${error.code}`;
+    const translatedMessage = window.i18n?.t(translationKey);
+
+    showClipboardError(
+      translatedMessage || error.message, // Fallback to original message
     );
   } else if (
     error instanceof Error &&

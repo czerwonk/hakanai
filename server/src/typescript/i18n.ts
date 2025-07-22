@@ -189,6 +189,16 @@ const translations: Translations = {
       "Secret has been accessed and is no longer available",
     "error.RETRIEVE_FAILED": "Failed to retrieve secret",
     "error.MISSING_DECRYPTION_KEY": "No decryption key found in URL",
+
+    // Validation error messages
+    "validation.MISSING_DATA": "Missing or invalid data field",
+    "validation.INVALID_FILENAME": "Invalid filename field - must be text",
+    "validation.INVALID_TOKEN": "Invalid token field - must be text",
+    "validation.INVALID_TTL":
+      "Invalid expiration time - must be a positive number",
+    "validation.EMPTY_JSON": "Clipboard content is empty",
+    "validation.INVALID_JSON_FORMAT":
+      "Invalid clipboard format - not valid JSON",
   },
   de: {
     // Page titles
@@ -374,6 +384,16 @@ const translations: Translations = {
       "Secret wurde bereits abgerufen und ist nicht mehr verfügbar",
     "error.RETRIEVE_FAILED": "Fehler beim Abrufen des Secrets",
     "error.MISSING_DECRYPTION_KEY": "Kein Schlüssel in der URL gefunden",
+
+    // Validation error messages
+    "validation.MISSING_DATA": "Fehlende oder ungültige Daten",
+    "validation.INVALID_FILENAME": "Ungültiger Dateiname - muss Text sein",
+    "validation.INVALID_TOKEN": "Ungültiger Token - muss Text sein",
+    "validation.INVALID_TTL":
+      "Ungültige Ablaufzeit - muss eine positive Zahl sein",
+    "validation.EMPTY_JSON": "Zwischenablage ist leer",
+    "validation.INVALID_JSON_FORMAT":
+      "Ungültiges Format der Zwischenablage - kein gültiges JSON",
   },
 };
 

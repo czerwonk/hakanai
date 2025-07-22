@@ -441,6 +441,31 @@ export function sanitizeFileName(fileName: string): string | null {
 }
 
 /**
+ * Validation error codes for ShareData
+ */
+export enum ShareDataValidationError {
+  MISSING_DATA = "MISSING_DATA",
+  INVALID_FILENAME = "INVALID_FILENAME",
+  INVALID_TOKEN = "INVALID_TOKEN",
+  INVALID_TTL = "INVALID_TTL",
+  EMPTY_JSON = "EMPTY_JSON",
+  INVALID_JSON_FORMAT = "INVALID_JSON_FORMAT",
+}
+
+/**
+ * Custom error class for ShareData validation
+ */
+export class ShareDataError extends Error {
+  constructor(
+    public readonly code: ShareDataValidationError,
+    message: string,
+  ) {
+    super(message);
+    this.name = "ShareDataError";
+  }
+}
+
+/**
  * Share data structure for clipboard and fragment-based sharing
  */
 export class ShareData {
@@ -460,23 +485,35 @@ export class ShareData {
   private validate(): void {
     // Validate required fields
     if (!this.data || typeof this.data !== "string") {
-      throw new Error('Missing or invalid "data" field');
+      throw new ShareDataError(
+        ShareDataValidationError.MISSING_DATA,
+        'Missing or invalid "data" field',
+      );
     }
 
     // Validate optional fields
     if (this.filename !== undefined && typeof this.filename !== "string") {
-      throw new Error('Invalid "filename" field - must be string');
+      throw new ShareDataError(
+        ShareDataValidationError.INVALID_FILENAME,
+        'Invalid "filename" field - must be string',
+      );
     }
 
     if (this.token !== undefined && typeof this.token !== "string") {
-      throw new Error('Invalid "token" field - must be string');
+      throw new ShareDataError(
+        ShareDataValidationError.INVALID_TOKEN,
+        'Invalid "token" field - must be string',
+      );
     }
 
     if (
       this.ttl !== undefined &&
       (typeof this.ttl !== "number" || this.ttl <= 0 || isNaN(this.ttl))
     ) {
-      throw new Error('Invalid "ttl" field - must be positive number');
+      throw new ShareDataError(
+        ShareDataValidationError.INVALID_TTL,
+        'Invalid "ttl" field - must be positive number',
+      );
     }
   }
 
@@ -488,14 +525,20 @@ export class ShareData {
    */
   static fromJSON(jsonString: string): ShareData {
     if (!jsonString.trim()) {
-      throw new Error("JSON string is empty");
+      throw new ShareDataError(
+        ShareDataValidationError.EMPTY_JSON,
+        "JSON string is empty",
+      );
     }
 
     let payload;
     try {
       payload = JSON.parse(jsonString);
     } catch (error) {
-      throw new Error("Invalid JSON format");
+      throw new ShareDataError(
+        ShareDataValidationError.INVALID_JSON_FORMAT,
+        "Invalid JSON format",
+      );
     }
 
     return new ShareData(
