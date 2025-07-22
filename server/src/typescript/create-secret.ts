@@ -15,6 +15,7 @@ import {
   getAuthTokenFromStorage,
   clearAuthTokenStorage,
   formatFileSize,
+  sanitizeFileName,
 } from "./common-utils.js";
 import {
   type RequiredElements,
@@ -135,15 +136,6 @@ function getElements(): Elements | null {
     fileRadio,
     resultDiv,
   };
-}
-
-function sanitizeFileName(fileName: string): string | null {
-  const sanitized = fileName
-    .replace(/[<>:"/\\|?*\x00-\x1f]/g, "_")
-    .replace(/^\.+/, "")
-    .substring(0, 255);
-
-  return sanitized.length > 0 ? sanitized : null;
 }
 
 function readFileAsBytes(file: File): Promise<Uint8Array> {
@@ -838,7 +830,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // Export functions for testing
 export {
-  sanitizeFileName,
   formatFileSize,
   createSecret,
   showError,

@@ -4,7 +4,12 @@
  */
 
 import { HakanaiClient } from "./hakanai-client.js";
-import { formatFileSize, formatTTL, ShareData } from "./common-utils.js";
+import {
+  formatFileSize,
+  formatTTL,
+  ShareData,
+  sanitizeFileName,
+} from "./common-utils.js";
 
 // Declare window.i18n
 declare global {
@@ -65,10 +70,12 @@ function showShareContent(payload: ShareData): void {
     payload.ttl || 86400,
   );
 
-  // Show filename if present
+  // Show filename if present (sanitized for security)
   const filenameRow = document.getElementById("filename-row")!;
   if (payload.filename) {
-    document.getElementById("content-filename")!.textContent = payload.filename;
+    const sanitizedFilename = sanitizeFileName(payload.filename);
+    document.getElementById("content-filename")!.textContent =
+      sanitizedFilename || "Invalid filename";
     filenameRow.style.display = "block";
   } else {
     filenameRow.style.display = "none";
@@ -162,7 +169,11 @@ async function createSecret(): Promise<void> {
 
     const client = new HakanaiClient(window.location.origin);
 
-    const hakanaiPayload = client.createPayload(sharePayload.filename);
+    // Sanitize filename before creating payload
+    const sanitizedFilename = sharePayload.filename
+      ? sanitizeFileName(sharePayload.filename)
+      : undefined;
+    const hakanaiPayload = client.createPayload(sanitizedFilename || undefined);
     hakanaiPayload.setFromBase64(sharePayload.data);
 
     const url = await client.sendPayload(

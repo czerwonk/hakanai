@@ -17,6 +17,11 @@ const mockGetAuthTokenFromStorage = jest.fn();
 const mockClearAuthTokenStorage = jest.fn();
 const mockSecureInputClear = jest.fn();
 
+// Import the real sanitizeFileName function
+const { sanitizeFileName } = jest.requireActual(
+  "../server/src/typescript/common-utils",
+);
+
 jest.mock("../server/src/typescript/common-utils", () => ({
   createButton: jest.fn(),
   createButtonContainer: jest.fn(),
@@ -28,6 +33,7 @@ jest.mock("../server/src/typescript/common-utils", () => ({
   getAuthTokenFromStorage: mockGetAuthTokenFromStorage,
   clearAuthTokenStorage: mockClearAuthTokenStorage,
   secureInputClear: mockSecureInputClear,
+  sanitizeFileName, // Use the real implementation
 }));
 
 const mockIsHakanaiError = jest.fn();
@@ -139,19 +145,6 @@ describe("create-secret.ts", () => {
 
   afterEach(() => {
     dom.window.close();
-  });
-
-  describe("File validation functions", () => {
-    test("sanitizeFileName removes dangerous characters", () => {
-      const { sanitizeFileName } = createSecretModule;
-
-      expect(sanitizeFileName('test<>:"/\\|?*file.txt')).toBe(
-        "test_________file.txt",
-      );
-      expect(sanitizeFileName(".hidden")).toBe("hidden");
-      expect(sanitizeFileName("normal.txt")).toBe("normal.txt");
-      expect(sanitizeFileName("")).toBe(null);
-    });
   });
 
   describe("Input validation", () => {
