@@ -1,0 +1,71 @@
+{
+  "name": "@hakanai/client",
+  "version": "2.3.4",
+  "description": "Zero-knowledge client library for Hakanai one-time secret sharing",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "keywords": [
+    "hakanai",
+    "secret-sharing",
+    "zero-knowledge",
+    "encryption",
+    "one-time-secret",
+    "aes-256-gcm",
+    "client-side-encryption"
+  ],
+  "author": {
+    "name": "Daniel Brendgen-Czerwonk",
+    "url": "https://github.com/czerwonk"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/czerwonk/hakanai.git",
+    "directory": "npm"
+  },
+  "bugs": {
+    "url": "https://github.com/czerwonk/hakanai/issues"
+  },
+  "homepage": "https://github.com/czerwonk/hakanai#readme",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "crypto": "*"
+  },
+  "peerDependenciesMeta": {
+    "crypto": {
+      "optional": true
+    }
+  },
+  "browser": {
+    "crypto": false
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}
