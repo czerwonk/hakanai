@@ -258,6 +258,11 @@ async function copyUrl(): Promise<void> {
  * Initialize the page
  */
 function init(): void {
+  // Check autoInit flag at runtime
+  if (!autoInit) {
+    return;
+  }
+
   // Show permission prompt initially
   document.getElementById("permission-prompt")!.style.display = "block";
   hideOtherSections("permission-prompt");
@@ -279,21 +284,23 @@ function init(): void {
   }
 }
 
-// Initialize when DOM is ready (browser environment only)
-if (typeof window !== "undefined" && typeof document !== "undefined") {
-  // Don't auto-initialize if we're in a test environment (Jest sets this)
-  if (typeof jest === "undefined") {
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", init);
-    } else {
-      init();
-    }
-  }
-}
+// Auto-initialization flag (can be disabled for testing)
+let autoInit = true;
 
-// Export for testing
-if (typeof module !== "undefined" && module.exports) {
-  module.exports = {
-    validateClipboardPayload,
-  };
+// Export for testing (must be before auto-init to allow test setup)
+(globalThis as any).sharePageExports = {
+  validateClipboardPayload,
+  setAutoInit: (value: boolean) => {
+    autoInit = value;
+  },
+  init,
+};
+
+// Initialize when DOM is ready (but not in test environment)
+if (typeof document !== "undefined" && typeof global === "undefined") {
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
 }

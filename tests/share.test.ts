@@ -1,44 +1,12 @@
 /**
- * Tests for share.ts functionality (excluding clipboard API interactions)
+ * Tests for share.ts validation logic (excluding UI and clipboard API interactions)
  */
 
-// Mock DOM elements and methods
-const createMockElement = () => ({
-  textContent: "",
-  style: { display: "" } as any,
-  classList: {
-    add: jest.fn(),
-    remove: jest.fn(),
-  } as any,
-  addEventListener: jest.fn(),
-});
+// Import the actual validation function from share.ts
+require("../server/src/typescript/share");
+const { validateClipboardPayload } = (globalThis as any).sharePageExports;
 
-global.document = {
-  getElementById: jest.fn().mockReturnValue(createMockElement()),
-  readyState: "complete", // Set to complete so it doesn't wait for DOMContentLoaded
-  addEventListener: jest.fn(),
-} as any;
-
-global.window = {
-  location: {
-    origin: "https://test.example.com",
-    search: "",
-  },
-} as any;
-
-global.URLSearchParams = jest.fn().mockImplementation((search) => ({
-  get: jest.fn((key) =>
-    key === "auto" && search.includes("auto=true") ? "true" : null,
-  ),
-}));
-
-// Import the module under test after setting up mocks
-const { validateClipboardPayload } = require("../server/src/typescript/share");
-
-// Since share.ts doesn't export functions, we need to test the validation function
-// that we can access through the module structure
-
-describe("Share functionality", () => {
+describe("Share validation logic", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -209,36 +177,6 @@ describe("Share functionality", () => {
       expect(minimalData.filename).toBeUndefined();
       expect(minimalData.token).toBeUndefined();
       expect(minimalData.ttl).toBeUndefined();
-    });
-  });
-
-  describe("DOM interactions (mocked)", () => {
-    test("getElementById mock function works", () => {
-      // This tests that our mocking setup is functional
-      const getElementSpy = jest.spyOn(document, "getElementById");
-
-      // Simulate calling a function that interacts with DOM
-      document.getElementById("loading-text");
-      document.getElementById("clipboard-content");
-      document.getElementById("error-message");
-
-      expect(getElementSpy).toHaveBeenCalledWith("loading-text");
-      expect(getElementSpy).toHaveBeenCalledWith("clipboard-content");
-      expect(getElementSpy).toHaveBeenCalledWith("error-message");
-      expect(getElementSpy).toHaveBeenCalledTimes(3);
-    });
-  });
-
-  describe("URL parameter parsing", () => {
-    test("URLSearchParams mock works correctly", () => {
-      const params1 = new URLSearchParams("?auto=true");
-      expect(params1.get("auto")).toBe("true");
-
-      const params2 = new URLSearchParams("?other=value");
-      expect(params2.get("auto")).toBeNull();
-
-      const params3 = new URLSearchParams("");
-      expect(params3.get("auto")).toBeNull();
     });
   });
 });
