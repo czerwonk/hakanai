@@ -2,7 +2,7 @@
   /* Theme Palette - Dark (Kanagawa theme) */
   --dark-primary: #7fb4ca; /* Kanagawa Crystal Blue */
   --dark-primary-hover: #7aa89f; /* Kanagawa Wave Blue */
-  --dark-bg-main: #1f1f28; /* Kanagawa Sumi Ink Black */
+  --dark-bg-main: #16161d; /* Kanagawa Sumi Ink Black 0 - darker for better contrast */
   --dark-bg-container: #2a2a37; /* Kanagawa Sumi Ink Black +1 */
   --dark-bg-input: #16161d; /* Kanagawa Sumi Ink Black 0 */
   --dark-text: #dcd7ba; /* Kanagawa Fuji White */
@@ -418,7 +418,8 @@ body.expanded-view {
   backdrop-filter: blur(10px);
   box-shadow:
     0 4px 20px var(--container-shadow),
-    0 0 0 1px color-mix(in srgb, var(--theme-primary) 3%, transparent);
+    0 0 0 1px color-mix(in srgb, var(--theme-primary) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-border) 30%, transparent);
   position: relative;
 }
 
@@ -1932,7 +1933,8 @@ body:has(.privacy-content) {
   color: var(--theme-primary);
   text-decoration: none;
   transition: all var(--transition-fast);
-  border-bottom: 1px solid color-mix(in srgb, var(--theme-primary) 30%, transparent);
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--theme-primary) 30%, transparent);
   padding-bottom: 1px;
 }
 
