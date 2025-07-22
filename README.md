@@ -207,8 +207,18 @@ Hakanai now includes a web interface for users who prefer not to use the CLI:
 
 ### Clipboard-Based Sharing
 
-The `/share` endpoint enables seamless integration with automation tools like iOS Shortcuts:
+The `/share` endpoint enables seamless integration with automation tools like iOS Shortcuts and provides Safari web view compatibility:
 
+#### **Method 1: URL Fragment (Safari Web View Compatible)**
+```
+https://hakanai.example.com/share#data=base64data&filename=test.txt&token=authtoken&ttl=3600
+```
+- ✅ **Works in Safari web views** (no clipboard permissions needed)
+- ✅ **Zero-knowledge** - data stays client-side in URL fragment
+- ✅ **Auto-processes** - no user interaction required
+- ⚠️ **Size limit:** ~5KB payload (Mobile Safari ~8KB fragment limit)
+
+#### **Method 2: Clipboard JSON (Fallback)**
 1. **Copy JSON payload to clipboard**:
    ```json
    {
@@ -219,12 +229,12 @@ The `/share` endpoint enables seamless integration with automation tools like iO
    }
    ```
 
-2. **Visit `/share`** - the page automatically reads and validates clipboard content
+2. **Visit `/share`** - the page reads and validates clipboard content
 3. **Review the preview** - shows file size, filename, and expiration time
 4. **Click "Create Secret"** - encrypts client-side and generates the shareable URL
 5. **URL is copied to clipboard** automatically for easy sharing
 
-**Perfect for iOS Shortcuts**: Create a shortcut that formats your data as JSON, copies it to clipboard, then opens the `/share` page with `?auto=true` to automatically process it.
+**iOS Shortcuts Integration**: Use fragment URLs for small secrets (< 5KB) or clipboard method for larger content. Both maintain zero-knowledge architecture.
 
 ## API Reference
 
