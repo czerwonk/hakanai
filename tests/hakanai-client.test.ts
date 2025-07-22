@@ -549,7 +549,7 @@ describe("Error Code Constants", () => {
   test("Error codes are readonly constants", () => {
     // This should be a compile-time check, but we can verify the values exist
     const codes = Object.keys(HakanaiErrorCodes);
-    expect(codes.length).toBe(12); // 7 original + 5 validation codes we're using
+    expect(codes.length).toBe(22); // 7 original + 15 comprehensive validation codes
 
     // Verify all expected codes are present (original codes)
     expect(codes).toContain("AUTHENTICATION_REQUIRED");
@@ -560,12 +560,22 @@ describe("Error Code Constants", () => {
     expect(codes).toContain("RETRIEVE_FAILED");
     expect(codes).toContain("MISSING_DECRYPTION_KEY");
 
-    // Verify new validation error codes (only the ones we're using)
-    expect(codes).toContain("INVALID_INPUT_TYPE");
+    // Verify new validation error codes (all implemented codes)
+    expect(codes).toContain("EXPECTED_UINT8_ARRAY");
+    expect(codes).toContain("EXPECTED_STRING");
+    expect(codes).toContain("INVALID_INPUT_FORMAT");
     expect(codes).toContain("INVALID_KEY_LENGTH");
     expect(codes).toContain("CRYPTO_API_UNAVAILABLE");
     expect(codes).toContain("INVALID_TTL");
     expect(codes).toContain("INVALID_AUTH_TOKEN");
+    expect(codes).toContain("BASE64_ERROR");
+    expect(codes).toContain("INVALID_ENCRYPTED_DATA");
+    expect(codes).toContain("DECRYPTION_FAILED");
+    expect(codes).toContain("INVALID_URL_FORMAT");
+    expect(codes).toContain("MISSING_SECRET_ID");
+    expect(codes).toContain("INVALID_PAYLOAD");
+    expect(codes).toContain("INVALID_SERVER_RESPONSE");
+    expect(codes).toContain("CRYPTO_CONTEXT_DISPOSED");
   });
 
   test("Error codes can be used for comparison", () => {
@@ -588,7 +598,7 @@ describe("Error Code Constants", () => {
       fail("Expected HakanaiError to be thrown");
     } catch (error: any) {
       expect(error.name).toBe("HakanaiError");
-      expect(error.code).toBe(HakanaiErrorCodes.INVALID_INPUT_TYPE);
+      expect(error.code).toBe(HakanaiErrorCodes.EXPECTED_UINT8_ARRAY);
       expect(error.message).toBe("Input must be a Uint8Array");
     }
 
@@ -598,7 +608,7 @@ describe("Error Code Constants", () => {
       fail("Expected HakanaiError to be thrown");
     } catch (error: any) {
       expect(error.name).toBe("HakanaiError");
-      expect(error.code).toBe(HakanaiErrorCodes.INVALID_INPUT_TYPE);
+      expect(error.code).toBe(HakanaiErrorCodes.EXPECTED_UINT8_ARRAY);
       expect(error.message).toBe("Input must be a Uint8Array");
     }
   });
