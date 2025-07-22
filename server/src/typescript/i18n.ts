@@ -15,11 +15,13 @@ const translations: Translations = {
     "page.create.title": "Hakanai - Create Secret",
     "page.get.title": "Hakanai - Retrieve Secret",
     "page.homepage.title": "Hakanai - One-Time Secret Sharing",
+    "page.share.title": "Hakanai - Share from Clipboard",
 
     // Headers
     "header.create": "Create One-Time Secret",
     "header.get": "One-Time Secret",
     "header.homepage": "One-Time Secret Sharing",
+    "header.share": "Share from Clipboard",
 
     // Labels
     "label.secret": "Secret message:",
@@ -34,6 +36,9 @@ const translations: Translations = {
     "label.separateKey": "Show Key separately",
     "label.saveToken": "Remember authentication token",
     "label.filename": "Filename:",
+    "label.size": "Size:",
+    "label.expiresIn": "Expires in:",
+    "label.contentPreview": "Content Preview",
 
     // Placeholders
     "placeholder.secret": "Enter your secret message here...",
@@ -71,6 +76,8 @@ const translations: Translations = {
     "button.download": "Download",
     "button.createAnother": "Create Another",
     "button.chooseFile": "📁 Choose File",
+    "button.readClipboard": "Read Clipboard",
+    "button.createSecret": "Create Secret",
 
     // Messages
     "msg.creating": "Creating secret...",
@@ -98,6 +105,19 @@ const translations: Translations = {
       "Share this URL carefully. The secret will be deleted after the first access or when it expires.",
     "msg.shareInstructions":
       "Share this URL with the intended recipient. The secret is encrypted and can only be accessed once.",
+    "msg.clipboardError": "Clipboard Error",
+    "msg.clipboardRequired": "Clipboard Access Required",
+    "msg.clipboardRequiredDetail":
+      "Click the button below to read the shared content from your clipboard.",
+    "msg.clipboardPermissionDenied":
+      "Clipboard access denied. Please grant permission and try again.",
+    "msg.clipboardInvalidJson": "Clipboard does not contain valid JSON",
+    "msg.clipboardEmpty": "Clipboard is empty",
+    "msg.readingClipboard": "Reading clipboard...",
+    "msg.creatingSecret": "Creating secret...",
+    "msg.shareSuccess":
+      "Your secret has been created and the URL copied to clipboard:",
+    "msg.expectedJsonFormat": "Expected JSON format:",
     "msg.retrieveNote":
       "Note: This secret has been deleted from the server and cannot be accessed again.",
     "msg.retrieveNoteText":
@@ -175,11 +195,13 @@ const translations: Translations = {
     "page.create.title": "Hakanai - Secret erstellen",
     "page.get.title": "Hakanai - Secret abrufen",
     "page.homepage.title": "Hakanai - Einmal-Secret-Sharing",
+    "page.share.title": "Hakanai - Aus Zwischenablage teilen",
 
     // Headers
     "header.create": "Einmal-Secret erstellen",
     "header.get": "Einmal-Secret",
     "header.homepage": "Einmal-Secret-Sharing",
+    "header.share": "Aus Zwischenablage teilen",
 
     // Labels
     "label.secret": "Text:",
@@ -194,6 +216,9 @@ const translations: Translations = {
     "label.separateKey": "Schlüssel separat anzeigen",
     "label.saveToken": "Token merken",
     "label.filename": "Dateiname:",
+    "label.size": "Größe:",
+    "label.expiresIn": "Läuft ab in:",
+    "label.contentPreview": "Inhaltsvorschau",
 
     // Placeholders
     "placeholder.secret": "Hier wird gen geheime Text eingegeben...",
@@ -234,6 +259,8 @@ const translations: Translations = {
     "button.download": "Herunterladen",
     "button.createAnother": "Neues Secret erstellen",
     "button.chooseFile": "📁 Datei auswählen",
+    "button.readClipboard": "Zwischenablage lesen",
+    "button.createSecret": "Secret erstellen",
 
     // Messages
     "msg.creating": "Secret wird erstellt...",
@@ -262,6 +289,19 @@ const translations: Translations = {
       "Bitte Vorsicht beim Teilen der URL. Das Secret wird nach dem ersten Zugriff oder bei Ablauf gelöscht.",
     "msg.shareInstructions":
       "Diese URL kann nun mit dem vorgesehenen Empfänger geteilt werden. Das Secret ist verschlüsselt und kann nur einmal abgerufen werden.",
+    "msg.clipboardError": "Zwischenablage-Fehler",
+    "msg.clipboardRequired": "Zwischenablage-Zugriff erforderlich",
+    "msg.clipboardRequiredDetail":
+      "Bitte den Button klicken, um den geteilten Inhalt aus der Zwischenablage zu lesen.",
+    "msg.clipboardPermissionDenied":
+      "Zwischenablage-Zugriff verweigert. Bitte Berechtigung erteilen und erneut versuchen.",
+    "msg.clipboardInvalidJson": "Zwischenablage enthält kein gültiges JSON",
+    "msg.clipboardEmpty": "Zwischenablage ist leer",
+    "msg.readingClipboard": "Zwischenablage wird gelesen...",
+    "msg.creatingSecret": "Secret wird erstellt...",
+    "msg.shareSuccess":
+      "Das Secret wurde erstellt und die URL in die Zwischenablage kopiert:",
+    "msg.expectedJsonFormat": "Erwartetes JSON-Format:",
     "msg.retrieveNote":
       "Hinweis: Dieses Secret wurde vom Server gelöscht und kann nicht erneut abgerufen werden.",
     "msg.retrieveNoteText":

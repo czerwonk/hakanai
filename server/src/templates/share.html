@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     [[HEAD]]
-    <title>Hakanai - Share from Clipboard</title>
+    <title data-i18n="page.share.title">Hakanai - Share from Clipboard</title>
   </head>
   <body>
     [[THEME_CONTROLS]]
@@ -11,18 +11,22 @@
       [[HEADER]]
 
       <div class="content-wrapper">
-        <h1>Share from Clipboard</h1>
+        <h1 data-i18n="header.share">Share from Clipboard</h1>
 
         <div id="clipboard-content" style="display: none">
           <div class="input-group">
-            <h2>Content Preview</h2>
+            <h2 data-i18n="label.contentPreview">Content Preview</h2>
             <div class="clipboard-info">
-              <p><strong>Size:</strong> <span id="content-size">-</span></p>
+              <p>
+                <strong data-i18n="label.size">Size:</strong>
+                <span id="content-size">-</span>
+              </p>
               <p id="filename-row" style="display: none">
-                <strong>Filename:</strong> <span id="content-filename">-</span>
+                <strong data-i18n="label.filename">Filename:</strong>
+                <span id="content-filename">-</span>
               </p>
               <p id="ttl-row">
-                <strong>Expires in:</strong>
+                <strong data-i18n="label.expiresIn">Expires in:</strong>
                 <span id="content-ttl">24 hours</span>
               </p>
             </div>
@@ -30,16 +34,16 @@
 
           <div class="input-group">
             <button id="share-button" class="button primary">
-              <span>Create Secret</span>
+              <span data-i18n="button.createSecret">Create Secret</span>
             </button>
           </div>
         </div>
 
         <div id="clipboard-error" style="display: none">
           <div class="result error">
-            <h3>Clipboard Error</h3>
+            <h3 data-i18n="msg.clipboardError">Clipboard Error</h3>
             <p id="error-message"></p>
-            <p>Expected JSON format:</p>
+            <p data-i18n="msg.expectedJsonFormat">Expected JSON format:</p>
             <pre><code>&#123;
   "data": "base64-encoded-content",
   "filename": "document.pdf",  // optional
@@ -51,12 +55,18 @@
 
         <div id="permission-prompt" style="display: none">
           <div class="result">
-            <h3>Clipboard Access Required</h3>
-            <p>
+            <h3 data-i18n="msg.clipboardRequired">Clipboard Access Required</h3>
+            <p data-i18n="msg.clipboardRequiredDetail">
               Click the button below to read the shared content from your
               clipboard.
             </p>
-            <button id="read-clipboard" class="button">Read Clipboard</button>
+            <button
+              id="read-clipboard"
+              class="button"
+              data-i18n="button.readClipboard"
+            >
+              Read Clipboard
+            </button>
           </div>
         </div>
 
@@ -66,15 +76,20 @@
         </div>
 
         <div id="result-success" class="result success" style="display: none">
-          <h3>Success!</h3>
+          <h3 data-i18n="msg.successTitle">Success!</h3>
           <div class="share-instructions">
-            <p>Your secret has been created and the URL copied to clipboard:</p>
+            <p data-i18n="msg.shareSuccess">
+              Your secret has been created and the URL copied to clipboard:
+            </p>
           </div>
           <div class="url-display" id="secret-url"></div>
           <div class="buttons-container">
-            <button class="copy-button" id="copy-url">Copy URL</button>
-            <button class="secondary-button" onclick="window.location.reload()">
-              Share Another
+            <button
+              class="copy-button"
+              id="copy-url"
+              data-i18n="button.copyUrl"
+            >
+              Copy URL
             </button>
           </div>
         </div>
@@ -86,4 +101,3 @@
     <script type="module" src="/share.js?v={cache_buster}"></script>
   </body>
 </html>
-

@@ -199,10 +199,32 @@ Hakanai now includes a web interface for users who prefer not to use the CLI:
 - Visit the server root (e.g., `https://hakanai.example.com/`) to access the web interface
 - Create new secrets at `/create` - supports both text and file uploads
 - Paste a hakanai URL to retrieve secrets directly in your browser
+- Use `/share` for clipboard-based sharing (perfect for iOS Shortcuts integration)
 - The same zero-knowledge encryption is maintained - all encryption/decryption happens in your browser
 - **Dark/Light Mode Toggle**: Automatic system preference detection with manual override
 - Mobile-friendly responsive design
 - Multi-language support (English and German) with automatic browser language detection
+
+### Clipboard-Based Sharing
+
+The `/share` endpoint enables seamless integration with automation tools like iOS Shortcuts:
+
+1. **Copy JSON payload to clipboard**:
+   ```json
+   {
+     "data": "base64-encoded-content",
+     "filename": "document.pdf",  // optional
+     "token": "auth-token",        // optional  
+     "ttl": 86400                 // optional (seconds)
+   }
+   ```
+
+2. **Visit `/share`** - the page automatically reads and validates clipboard content
+3. **Review the preview** - shows file size, filename, and expiration time
+4. **Click "Create Secret"** - encrypts client-side and generates the shareable URL
+5. **URL is copied to clipboard** automatically for easy sharing
+
+**Perfect for iOS Shortcuts**: Create a shortcut that formats your data as JSON, copies it to clipboard, then opens the `/share` page with `?auto=true` to automatically process it.
 
 ## API Reference
 

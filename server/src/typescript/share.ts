@@ -6,6 +6,15 @@
 import { HakanaiClient } from "./hakanai-client.js";
 import { formatFileSize, formatTTL } from "./common-utils.js";
 
+// Declare window.i18n
+declare global {
+  interface Window {
+    i18n: {
+      t(key: string): string;
+    };
+  }
+}
+
 interface ClipboardData {
   data: string; // base64-encoded content
   filename?: string;
@@ -145,7 +154,9 @@ async function readClipboardContent(): Promise<ClipboardData> {
  */
 async function readClipboard(): Promise<void> {
   try {
-    showLoading("Reading clipboard...");
+    showLoading(
+      window.i18n?.t("msg.readingClipboard") || "Reading clipboard...",
+    );
     const payload = await readClipboardContent();
 
     hideLoading();
@@ -155,10 +166,14 @@ async function readClipboard(): Promise<void> {
 
     if (error instanceof Error && error.name === "NotAllowedError") {
       showClipboardError(
-        "Clipboard access denied. Please grant permission and try again.",
+        window.i18n?.t("msg.clipboardPermissionDenied") ||
+          "Clipboard access denied. Please grant permission and try again.",
       );
     } else if (error instanceof SyntaxError) {
-      showClipboardError("Clipboard does not contain valid JSON");
+      showClipboardError(
+        window.i18n?.t("msg.clipboardInvalidJson") ||
+          "Clipboard does not contain valid JSON",
+      );
     } else {
       showClipboardError(
         `Error reading clipboard: ${error instanceof Error ? error.message : "Unknown error"}`,
@@ -177,7 +192,7 @@ async function createSecret(): Promise<void> {
   }
 
   try {
-    showLoading("Creating secret...");
+    showLoading(window.i18n?.t("msg.creatingSecret") || "Creating secret...");
 
     const client = new HakanaiClient(window.location.origin);
 
