@@ -122,6 +122,32 @@ async function readShareData(): Promise<ShareData> {
 }
 
 /**
+ * Handle share data reading errors
+ */
+function handleShareError(error: unknown, context: string): void {
+  hideLoading();
+
+  if (error instanceof Error && error.name === "NotAllowedError") {
+    showClipboardError(
+      window.i18n?.t("msg.clipboardPermissionDenied") ||
+        "Clipboard access denied. Please grant permission and try again.",
+    );
+  } else if (
+    error instanceof Error &&
+    error.message === "Invalid JSON format"
+  ) {
+    showClipboardError(
+      window.i18n?.t("msg.clipboardInvalidJson") ||
+        "Invalid JSON format in clipboard or URL",
+    );
+  } else {
+    showClipboardError(
+      `Error ${context}: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
+  }
+}
+
+/**
  * Read and parse share data from fragment or clipboard
  */
 async function readShare(): Promise<void> {
@@ -132,27 +158,31 @@ async function readShare(): Promise<void> {
     hideLoading();
     showShareContent(payload);
   } catch (error) {
-    hideLoading();
-
-    if (error instanceof Error && error.name === "NotAllowedError") {
-      showClipboardError(
-        window.i18n?.t("msg.clipboardPermissionDenied") ||
-          "Clipboard access denied. Please grant permission and try again.",
-      );
-    } else if (
-      error instanceof Error &&
-      error.message === "Invalid JSON format"
-    ) {
-      showClipboardError(
-        window.i18n?.t("msg.clipboardInvalidJson") ||
-          "Invalid JSON format in clipboard or URL",
-      );
-    } else {
-      showClipboardError(
-        `Error reading data: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
-    }
+    handleShareError(error, "reading data");
   }
+}
+
+/**
+ * Read clipboard synchronously for iOS compatibility
+ * Must be called directly from button click handler
+ */
+function readClipboard(): void {
+  showLoading(window.i18n?.t("msg.readingClipboard") || "Reading data...");
+
+  navigator.clipboard
+    .readText()
+    .then((clipboardText) => {
+      try {
+        const payload = ShareData.fromJSON(clipboardText);
+        hideLoading();
+        showShareContent(payload);
+      } catch (error) {
+        handleShareError(error, "parsing clipboard data");
+      }
+    })
+    .catch((error) => {
+      handleShareError(error, "reading clipboard");
+    });
 }
 
 /**
@@ -238,7 +268,7 @@ function init(): void {
   // Always add event listeners first
   document
     .getElementById("read-clipboard")
-    ?.addEventListener("click", readShare);
+    ?.addEventListener("click", readClipboard);
   document
     .getElementById("share-button")
     ?.addEventListener("click", createSecret);
