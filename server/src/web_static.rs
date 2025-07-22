@@ -27,6 +27,8 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
         .route("/style.css", web::get().to(serve_css))
         .route("/types.js", web::get().to(serve_types_js))
         .route("/homepage.js", web::get().to(serve_homepage_js))
+        .route("/share", web::get().to(serve_share_html))
+        .route("/share.js", web::get().to(serve_share_js))
         .route("/impressum", web::get().to(serve_impressum))
         .route("/privacy", web::get().to(serve_privacy))
         .route("/config.json", web::get().to(serve_config));
@@ -243,6 +245,22 @@ async fn serve_config(app_data: web::Data<crate::app_data::AppData>) -> impl Res
         .insert_header((header::CACHE_CONTROL, "public, max-age=300")) // 5 minutes cache
         .insert_header((header::ETAG, env!("CARGO_PKG_VERSION")))
         .json(config)
+}
+
+async fn serve_share_html() -> impl Responder {
+    serve_with_caching_header(
+        include_bytes!("includes/share.html"),
+        "text/html",
+        DEFAULT_CACHE_MAX_AGE,
+    )
+}
+
+async fn serve_share_js() -> impl Responder {
+    serve_with_caching_header(
+        include_bytes!("includes/share.js"),
+        "application/javascript",
+        DEFAULT_CACHE_MAX_AGE,
+    )
 }
 
 #[cfg(test)]

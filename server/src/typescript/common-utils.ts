@@ -20,6 +20,25 @@ export function formatFileSize(bytes: number): string {
 }
 
 /**
+ * Format TTL seconds as human readable string
+ * @param seconds - Duration in seconds
+ * @returns Human readable duration string
+ */
+export function formatTTL(seconds: number): string {
+  const hours = Math.floor(seconds / 3600);
+  const days = Math.floor(hours / 24);
+
+  if (days > 0) {
+    return `${days} day${days > 1 ? "s" : ""}`;
+  } else if (hours > 0) {
+    return `${hours} hour${hours > 1 ? "s" : ""}`;
+  } else {
+    const minutes = Math.floor(seconds / 60);
+    return `${minutes} minute${minutes > 1 ? "s" : ""}`;
+  }
+}
+
+/**
  * Create a button element with consistent styling and accessibility
  * @param className - CSS class for the button
  * @param text - Button text content

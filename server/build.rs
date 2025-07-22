@@ -324,12 +324,15 @@ fn load_partials() -> Result<TemplatePartials> {
         .context("failed to read footer partial")?;
     let scripts = fs::read_to_string("src/templates/partials/scripts.html")
         .context("failed to read scripts partial")?;
+    let header = fs::read_to_string("src/templates/partials/header.html")
+        .context("failed to read header partial")?;
 
     Ok(TemplatePartials {
         head,
         theme_controls,
         footer,
         scripts,
+        header,
     })
 }
 
@@ -406,6 +409,7 @@ fn apply_partials(template_content: String, partials: &TemplatePartials) -> Stri
         .replace("[[THEME_CONTROLS]]", &partials.theme_controls)
         .replace("[[FOOTER]]", &partials.footer)
         .replace("[[SCRIPTS]]", &partials.scripts)
+        .replace("[[HEADER]]", &partials.header)
 }
 
 fn apply_impressum_content(template_content: String) -> String {
@@ -429,6 +433,7 @@ struct TemplatePartials {
     theme_controls: String,
     footer: String,
     scripts: String,
+    header: String,
 }
 
 fn create_version_context() -> HashMap<&'static str, String> {

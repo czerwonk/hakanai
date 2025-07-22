@@ -3,6 +3,7 @@ import {
   getAuthTokenFromStorage,
   clearAuthTokenStorage,
   formatFileSize,
+  formatTTL,
 } from "../server/src/typescript/common-utils";
 
 describe("SessionStorage Auth Token Management", () => {
@@ -86,5 +87,39 @@ describe("formatFileSize", () => {
   test("handles large files", () => {
     expect(formatFileSize(5368709120)).toBe("5 GB");
     expect(formatFileSize(10737418240)).toBe("10 GB");
+  });
+});
+
+describe("formatTTL", () => {
+  test("formats seconds correctly", () => {
+    expect(formatTTL(30)).toBe("0 minute");
+    expect(formatTTL(60)).toBe("1 minute");
+    expect(formatTTL(120)).toBe("2 minutes");
+    expect(formatTTL(300)).toBe("5 minutes");
+  });
+
+  test("formats hours correctly", () => {
+    expect(formatTTL(3600)).toBe("1 hour");
+    expect(formatTTL(7200)).toBe("2 hours");
+    expect(formatTTL(10800)).toBe("3 hours");
+  });
+
+  test("formats days correctly", () => {
+    expect(formatTTL(86400)).toBe("1 day");
+    expect(formatTTL(172800)).toBe("2 days");
+    expect(formatTTL(259200)).toBe("3 days");
+    expect(formatTTL(604800)).toBe("7 days");
+  });
+
+  test("prefers larger units", () => {
+    expect(formatTTL(90000)).toBe("1 day"); // 25 hours -> 1 day
+    expect(formatTTL(180000)).toBe("2 days"); // 50 hours -> 2 days
+  });
+
+  test("handles edge cases", () => {
+    expect(formatTTL(0)).toBe("0 minute");
+    expect(formatTTL(59)).toBe("0 minute");
+    expect(formatTTL(3599)).toBe("59 minutes");
+    expect(formatTTL(86399)).toBe("23 hours");
   });
 });

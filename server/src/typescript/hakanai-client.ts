@@ -66,22 +66,22 @@ interface PayloadData {
   /**
    * Set data from raw bytes (for binary files or text converted to bytes)
    */
-  setFromBytes?(bytes: Uint8Array): void;
+  setFromBytes(bytes: Uint8Array): void;
 
   /**
    * Set data directly from base64-encoded string (optimization for pre-encoded data)
    */
-  setFromBase64?(base64Data: string): void;
+  setFromBase64(base64Data: string): void;
 
   /**
    * Decode the base64-encoded data field to a readable string
    */
-  decode?(): string;
+  decode(): string;
 
   /**
    * Decode the base64-encoded data field to bytes for binary data
    */
-  decodeBytes?(): Uint8Array;
+  decodeBytes(): Uint8Array;
 }
 
 interface SecretResponse {

@@ -187,7 +187,7 @@ async function validateAndProcessFileInput(
   try {
     const fileBytes = await readFileAsBytes(file);
     const payload = client.createPayload(fileName!);
-    payload.setFromBytes?.(fileBytes);
+    payload.setFromBytes(fileBytes);
     return payload;
   } catch {
     showError(UI_STRINGS.FILE_READ_ERROR);
@@ -213,7 +213,7 @@ function validateTextInput(secretInput: HTMLInputElement): PayloadData | null {
   const encoder = new TextEncoder();
   const textBytes = encoder.encode(secret);
   const payload = client.createPayload();
-  payload.setFromBytes?.(textBytes);
+  payload.setFromBytes(textBytes);
   return payload;
 }
 

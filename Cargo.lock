@@ -1024,7 +1024,7 @@ dependencies = [
 
 [[package]]
 name = "hakanai"
-version = "2.3.0"
+version = "2.3.4"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1043,7 +1043,7 @@ dependencies = [
 
 [[package]]
 name = "hakanai-lib"
-version = "2.3.0"
+version = "2.3.4"
 dependencies = [
  "aes-gcm",
  "async-stream",
@@ -1065,7 +1065,7 @@ dependencies = [
 
 [[package]]
 name = "hakanai-server"
-version = "2.3.3"
+version = "2.3.4"
 dependencies = [
  "actix-cors",
  "actix-web",

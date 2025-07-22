@@ -408,7 +408,7 @@ function showSuccess(payload: PayloadData): void {
   title.textContent = UI_STRINGS.SUCCESS_TITLE;
   resultDiv.appendChild(title);
 
-  const decodedBytes = payload.decodeBytes?.() || new Uint8Array();
+  const decodedBytes = payload.decodeBytes();
   const isBinaryFile =
     payload.filename != null || ContentAnalysis.isBinary(decodedBytes);
 
