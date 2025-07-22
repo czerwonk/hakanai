@@ -224,14 +224,25 @@ async function copyUrl(): Promise<void> {
  * Initialize the page
  */
 function init(): void {
+  // Always add event listeners first
+  document
+    .getElementById("read-clipboard")
+    ?.addEventListener("click", readShare);
+  document
+    .getElementById("share-button")
+    ?.addEventListener("click", createSecret);
+  document.getElementById("copy-url")?.addEventListener("click", copyUrl);
+
   // Check for fragment data first
   const fragment = window.location.hash.substring(1);
-  const fragmentData = ShareData.fromFragment(fragment);
 
-  if (fragmentData) {
+  if (fragment) {
     try {
-      showShareContent(fragmentData);
-      return;
+      const fragmentData = ShareData.fromFragment(fragment);
+      if (fragmentData) {
+        showShareContent(fragmentData);
+        return;
+      }
     } catch (error) {
       showClipboardError(
         `Invalid share data: ${error instanceof Error ? error.message : "Unknown error"}`,
@@ -243,15 +254,6 @@ function init(): void {
   // Show permission prompt for clipboard access
   document.getElementById("permission-prompt")!.style.display = "block";
   hideOtherSections("permission-prompt");
-
-  // Add event listeners
-  document
-    .getElementById("read-clipboard")
-    ?.addEventListener("click", readShare);
-  document
-    .getElementById("share-button")
-    ?.addEventListener("click", createSecret);
-  document.getElementById("copy-url")?.addEventListener("click", copyUrl);
 
   // Auto-read if auto parameter is present (clipboard only)
   const urlParams = new URLSearchParams(window.location.search);

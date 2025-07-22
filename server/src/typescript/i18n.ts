@@ -15,13 +15,13 @@ const translations: Translations = {
     "page.create.title": "Hakanai - Create Secret",
     "page.get.title": "Hakanai - Retrieve Secret",
     "page.homepage.title": "Hakanai - One-Time Secret Sharing",
-    "page.share.title": "Hakanai - Share from Clipboard",
+    "page.share.title": "Hakanai - Share Data",
 
     // Headers
     "header.create": "Create One-Time Secret",
     "header.get": "One-Time Secret",
     "header.homepage": "One-Time Secret Sharing",
-    "header.share": "Share from Clipboard",
+    "header.share": "Share Data",
 
     // Labels
     "label.secret": "Secret message:",
@@ -195,13 +195,13 @@ const translations: Translations = {
     "page.create.title": "Hakanai - Secret erstellen",
     "page.get.title": "Hakanai - Secret abrufen",
     "page.homepage.title": "Hakanai - Einmal-Secret-Sharing",
-    "page.share.title": "Hakanai - Aus Zwischenablage teilen",
+    "page.share.title": "Hakanai - Daten teilen",
 
     // Headers
     "header.create": "Einmal-Secret erstellen",
     "header.get": "Einmal-Secret",
     "header.homepage": "Einmal-Secret-Sharing",
-    "header.share": "Aus Zwischenablage teilen",
+    "header.share": "Daten teilen",
 
     // Labels
     "label.secret": "Text:",
