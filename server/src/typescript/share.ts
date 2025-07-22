@@ -4,7 +4,7 @@
  */
 
 import { HakanaiClient } from "./hakanai-client.js";
-import { formatFileSize, formatTTL } from "./common-utils.js";
+import { formatFileSize, formatTTL, ShareData } from "./common-utils.js";
 
 // Declare window.i18n
 declare global {
@@ -15,14 +15,7 @@ declare global {
   }
 }
 
-interface ClipboardData {
-  data: string; // base64-encoded content
-  filename?: string;
-  token?: string;
-  ttl?: number;
-}
-
-let clipboardPayload: ClipboardData | null = null;
+let sharePayload: ShareData | null = null;
 
 /**
  * Show loading state
@@ -59,17 +52,15 @@ function hideOtherSections(except: string): void {
 }
 
 /**
- * Show clipboard content preview
+ * Show share content preview
  */
-function showClipboardContent(payload: ClipboardData): void {
-  clipboardPayload = payload;
-
-  // Calculate content size from base64
-  const contentBytes = Math.ceil((payload.data.length * 3) / 4);
+function showShareContent(payload: ShareData): void {
+  sharePayload = payload;
 
   // Update UI
-  document.getElementById("content-size")!.textContent =
-    formatFileSize(contentBytes);
+  document.getElementById("content-size")!.textContent = formatFileSize(
+    payload.getContentSize(),
+  );
   document.getElementById("content-ttl")!.textContent = formatTTL(
     payload.ttl || 86400,
   );
@@ -106,61 +97,33 @@ function showSuccess(url: string): void {
 }
 
 /**
- * Validate clipboard JSON payload
- * @throws Error if validation fails
+ * Read share data from clipboard or URL fragment
+ * @returns Parsed share data
+ * @throws Error if no data found or validation fails
  */
-function validateClipboardPayload(payload: any): void {
-  // Validate required fields
-  if (!payload.data || typeof payload.data !== "string") {
-    throw new Error('Missing or invalid "data" field in clipboard JSON');
+async function readShareData(): Promise<ShareData> {
+  // First try URL fragment
+  const fragment = window.location.hash.substring(1);
+  const fragmentData = ShareData.fromFragment(fragment);
+  if (fragmentData) {
+    return fragmentData;
   }
 
-  // Validate optional fields
-  if (payload.filename !== undefined && typeof payload.filename !== "string") {
-    throw new Error('Invalid "filename" field - must be string');
-  }
-
-  if (payload.token !== undefined && typeof payload.token !== "string") {
-    throw new Error('Invalid "token" field - must be string');
-  }
-
-  if (
-    payload.ttl !== undefined &&
-    (typeof payload.ttl !== "number" || payload.ttl <= 0)
-  ) {
-    throw new Error('Invalid "ttl" field - must be positive number');
-  }
-}
-
-/**
- * Read clipboard content and validate it
- * @returns Parsed clipboard data
- * @throws Error if clipboard is empty or invalid JSON
- */
-async function readClipboardContent(): Promise<ClipboardData> {
+  // Fall back to clipboard
   const clipboardText = await navigator.clipboard.readText();
-  if (!clipboardText.trim()) {
-    throw new Error("Clipboard is empty");
-  }
-
-  let payload = JSON.parse(clipboardText);
-  validateClipboardPayload(payload);
-
-  return payload;
+  return ShareData.fromJSON(clipboardText);
 }
 
 /**
- * Read and parse clipboard content
+ * Read and parse share data from fragment or clipboard
  */
-async function readClipboard(): Promise<void> {
+async function readShare(): Promise<void> {
   try {
-    showLoading(
-      window.i18n?.t("msg.readingClipboard") || "Reading clipboard...",
-    );
-    const payload = await readClipboardContent();
+    showLoading(window.i18n?.t("msg.readingClipboard") || "Reading data...");
+    const payload = await readShareData();
 
     hideLoading();
-    showClipboardContent(payload);
+    showShareContent(payload);
   } catch (error) {
     hideLoading();
 
@@ -169,14 +132,17 @@ async function readClipboard(): Promise<void> {
         window.i18n?.t("msg.clipboardPermissionDenied") ||
           "Clipboard access denied. Please grant permission and try again.",
       );
-    } else if (error instanceof SyntaxError) {
+    } else if (
+      error instanceof Error &&
+      error.message === "Invalid JSON format"
+    ) {
       showClipboardError(
         window.i18n?.t("msg.clipboardInvalidJson") ||
-          "Clipboard does not contain valid JSON",
+          "Invalid JSON format in clipboard or URL",
       );
     } else {
       showClipboardError(
-        `Error reading clipboard: ${error instanceof Error ? error.message : "Unknown error"}`,
+        `Error reading data: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
   }
@@ -186,8 +152,8 @@ async function readClipboard(): Promise<void> {
  * Create and send the secret
  */
 async function createSecret(): Promise<void> {
-  if (!clipboardPayload) {
-    showClipboardError("No clipboard data available");
+  if (!sharePayload) {
+    showClipboardError("No share data available");
     return;
   }
 
@@ -196,13 +162,13 @@ async function createSecret(): Promise<void> {
 
     const client = new HakanaiClient(window.location.origin);
 
-    const hakanaiPayload = client.createPayload(clipboardPayload.filename);
-    hakanaiPayload.setFromBase64(clipboardPayload.data);
+    const hakanaiPayload = client.createPayload(sharePayload.filename);
+    hakanaiPayload.setFromBase64(sharePayload.data);
 
     const url = await client.sendPayload(
       hakanaiPayload,
-      clipboardPayload.ttl || 86400,
-      clipboardPayload.token,
+      sharePayload.ttl || 86400,
+      sharePayload.token,
     );
 
     try {
@@ -258,24 +224,40 @@ async function copyUrl(): Promise<void> {
  * Initialize the page
  */
 function init(): void {
-  // Show permission prompt initially
+  // Check for fragment data first
+  const fragment = window.location.hash.substring(1);
+  const fragmentData = ShareData.fromFragment(fragment);
+
+  if (fragmentData) {
+    try {
+      showShareContent(fragmentData);
+      return;
+    } catch (error) {
+      showClipboardError(
+        `Invalid share data: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
+      return;
+    }
+  }
+
+  // Show permission prompt for clipboard access
   document.getElementById("permission-prompt")!.style.display = "block";
   hideOtherSections("permission-prompt");
 
   // Add event listeners
   document
     .getElementById("read-clipboard")
-    ?.addEventListener("click", readClipboard);
+    ?.addEventListener("click", readShare);
   document
     .getElementById("share-button")
     ?.addEventListener("click", createSecret);
   document.getElementById("copy-url")?.addEventListener("click", copyUrl);
 
-  // Auto-read if auto parameter is present
+  // Auto-read if auto parameter is present (clipboard only)
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get("auto") === "true") {
     // Small delay to let the page render
-    setTimeout(readClipboard, 100);
+    setTimeout(readShare, 100);
   }
 }
 
