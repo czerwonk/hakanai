@@ -14,8 +14,8 @@ const createMockElement = () => ({
 });
 
 global.document = {
-  getElementById: jest.fn(() => createMockElement()),
-  readyState: "loading", // Set to loading to prevent auto-initialization
+  getElementById: jest.fn().mockReturnValue(createMockElement()),
+  readyState: "complete", // Set to complete so it doesn't wait for DOMContentLoaded
   addEventListener: jest.fn(),
 } as any;
 
@@ -242,4 +242,3 @@ describe("Share functionality", () => {
     });
   });
 });
-

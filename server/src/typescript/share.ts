@@ -279,12 +279,15 @@ function init(): void {
   }
 }
 
-// Initialize when DOM is ready (skip in test environment)
-if (typeof process === "undefined" || process.env.NODE_ENV !== "test") {
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init);
-  } else {
-    init();
+// Initialize when DOM is ready (browser environment only)
+if (typeof window !== "undefined" && typeof document !== "undefined") {
+  // Don't auto-initialize if we're in a test environment (Jest sets this)
+  if (typeof jest === "undefined") {
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", init);
+    } else {
+      init();
+    }
   }
 }
 
