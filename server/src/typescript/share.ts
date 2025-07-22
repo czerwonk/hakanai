@@ -258,11 +258,6 @@ async function copyUrl(): Promise<void> {
  * Initialize the page
  */
 function init(): void {
-  // Check autoInit flag at runtime
-  if (!autoInit) {
-    return;
-  }
-
   // Show permission prompt initially
   document.getElementById("permission-prompt")!.style.display = "block";
   hideOtherSections("permission-prompt");
@@ -284,20 +279,8 @@ function init(): void {
   }
 }
 
-// Auto-initialization flag (can be disabled for testing)
-let autoInit = true;
-
-// Export for testing (must be before auto-init to allow test setup)
-(globalThis as any).sharePageExports = {
-  validateClipboardPayload,
-  setAutoInit: (value: boolean) => {
-    autoInit = value;
-  },
-  init,
-};
-
-// Initialize when DOM is ready (but not in test environment)
-if (typeof document !== "undefined" && typeof global === "undefined") {
+// Initialize when DOM is ready
+if (typeof document !== "undefined") {
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
   } else {
