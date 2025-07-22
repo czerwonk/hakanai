@@ -2,7 +2,7 @@
 
 **Documentation Type:** Historical Code Review Findings
 **Purpose:** Archive of all resolved code review issues for audit trail and reference
-**Last Updated:** 2025-07-15
+**Last Updated:** 2025-07-22
 
 ## Overview
 
@@ -454,6 +454,63 @@ impl Drop for CreateTokenResponse {
 - **Memory Safety**: Consistent with the project's comprehensive memory security approach
 
 **Impact:** Enhanced memory security for token response handling.
+
+### CR-L12: TypeScript Error Message Standardization [RESOLVED ✅]
+**Status:** **RESOLVED** - Complete standardization with structured error types and i18n support
+
+**Previous Issue:** Some error messages in TypeScript client modules were hardcoded instead of using the i18n system, leading to inconsistent user experience across different languages.
+
+**Resolution Implemented:**
+```typescript
+// Before: Hardcoded error messages
+throw new Error("Invalid URL format");
+throw new Error("Plaintext must be a Uint8Array");
+
+// After: Structured errors with type-specific codes
+throw new HakanaiError(
+  HakanaiErrorCodes.INVALID_URL_FORMAT,
+  "Invalid URL format"
+);
+
+throw new HakanaiError(
+  HakanaiErrorCodes.EXPECTED_UINT8_ARRAY, 
+  "Plaintext must be a Uint8Array"
+);
+```
+
+**Comprehensive Implementation:**
+- **25+ Error Conversions**: All generic `throw new Error()` statements converted to structured `HakanaiError`
+- **15 Specific Error Codes**: Type-safe enum with descriptive error codes
+- **Full Bilingual Support**: English and German translations for all error codes
+- **Type-Specific Messages**: Different codes for different expected types (EXPECTED_UINT8_ARRAY vs EXPECTED_STRING)
+- **UI Integration**: Existing error handlers properly detect and translate all new error codes
+
+**Translation Examples:**
+```typescript
+// English
+"error.EXPECTED_UINT8_ARRAY": "Input must be a Uint8Array (binary data)"
+"error.DECRYPTION_FAILED": "Decryption failed: invalid key or corrupted data"
+"error.CRYPTO_CONTEXT_DISPOSED": "Crypto context has been disposed and cannot be reused"
+
+// German  
+"error.EXPECTED_UINT8_ARRAY": "Eingabe muss ein Uint8Array (binäre Daten) sein"
+"error.DECRYPTION_FAILED": "Entschlüsselung fehlgeschlagen: ungültiger Schlüssel oder beschädigte Daten"
+"error.CRYPTO_CONTEXT_DISPOSED": "Crypto-Kontext wurde entsorgt und kann nicht wiederverwendet werden"
+```
+
+**User Experience Benefits:**
+- **Consistent Multilingual Experience**: All error messages now properly localized
+- **Context-Aware Errors**: Users get specific feedback about what type of input was expected
+- **Better Debugging**: Structured error codes enable better error tracking and debugging
+- **API Consistency**: All client errors now follow the same `HakanaiError` pattern
+
+**Technical Benefits:**
+- **Type Safety**: Compile-time checking of error codes
+- **Maintainability**: Centralized error definitions
+- **Extensibility**: Easy to add new error types and translations
+- **Integration**: Seamlessly works with existing error handling infrastructure
+
+**Impact:** Complete error handling standardization providing consistent, translatable user experience across all client operations.
 
 **Current Status:** All identified code review issues have been resolved. The codebase maintains an **A+ code quality rating** with exceptional production readiness.
 

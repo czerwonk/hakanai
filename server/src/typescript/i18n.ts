@@ -199,6 +199,26 @@ const translations: Translations = {
     "validation.EMPTY_JSON": "Clipboard content is empty",
     "validation.INVALID_JSON_FORMAT":
       "Invalid clipboard format - not valid JSON",
+
+    // Client validation error messages - specific for better translations
+    "error.EXPECTED_UINT8_ARRAY": "Input must be a Uint8Array (binary data)",
+    "error.EXPECTED_STRING": "Input must be a string (text data)",
+    "error.INVALID_INPUT_FORMAT": "Input contains invalid characters or format",
+    "error.INVALID_KEY_LENGTH": "Cryptographic key has invalid length",
+    "error.CRYPTO_API_UNAVAILABLE":
+      "Web Crypto API is not available in this browser",
+    "error.INVALID_TTL": "TTL value must be a positive integer",
+    "error.INVALID_AUTH_TOKEN": "Authentication token must be a string",
+    "error.BASE64_ERROR": "Base64 encoding/decoding failed",
+    "error.INVALID_ENCRYPTED_DATA": "Encrypted data is corrupted or too short",
+    "error.DECRYPTION_FAILED":
+      "Decryption failed: invalid key or corrupted data",
+    "error.INVALID_URL_FORMAT": "Invalid URL format",
+    "error.MISSING_SECRET_ID": "URL is missing required secret ID",
+    "error.INVALID_PAYLOAD": "Payload object is invalid or malformed",
+    "error.INVALID_SERVER_RESPONSE": "Server response is missing required data",
+    "error.CRYPTO_CONTEXT_DISPOSED":
+      "Crypto context has been disposed and cannot be reused",
   },
   de: {
     // Page titles
@@ -394,6 +414,29 @@ const translations: Translations = {
     "validation.EMPTY_JSON": "Zwischenablage ist leer",
     "validation.INVALID_JSON_FORMAT":
       "Ungültiges Format der Zwischenablage - kein gültiges JSON",
+
+    // Client validation error messages - specific for better translations
+    "error.EXPECTED_UINT8_ARRAY":
+      "Eingabe muss ein Uint8Array (binäre Daten) sein",
+    "error.EXPECTED_STRING": "Eingabe muss ein String (Textdaten) sein",
+    "error.INVALID_INPUT_FORMAT":
+      "Eingabe enthält ungültige Zeichen oder Format",
+    "error.INVALID_KEY_LENGTH": "Verschlüsselungsschlüssel hat ungültige Länge",
+    "error.CRYPTO_API_UNAVAILABLE":
+      "Web Crypto API ist in diesem Browser nicht verfügbar",
+    "error.INVALID_TTL": "TTL-Wert muss eine positive Ganzzahl sein",
+    "error.INVALID_AUTH_TOKEN": "Authentifizierungs-Token muss ein String sein",
+    "error.BASE64_ERROR": "Base64-Kodierung/Dekodierung fehlgeschlagen",
+    "error.INVALID_ENCRYPTED_DATA":
+      "Verschlüsselte Daten sind beschädigt oder ungültig",
+    "error.DECRYPTION_FAILED":
+      "Entschlüsselung fehlgeschlagen: ungültiger Schlüssel oder beschädigte Daten",
+    "error.INVALID_URL_FORMAT": "Ungültiges URL-Format",
+    "error.MISSING_SECRET_ID": "URL fehlt erforderliche Secret-ID",
+    "error.INVALID_PAYLOAD": "Payload-Objekt ist ungültig oder fehlerhaft",
+    "error.INVALID_SERVER_RESPONSE": "Server-Antwort fehlt erforderliche Daten",
+    "error.CRYPTO_CONTEXT_DISPOSED":
+      "Crypto-Kontext wurde entsorgt und kann nicht wiederverwendet werden",
   },
 };
 

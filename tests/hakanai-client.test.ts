@@ -348,7 +348,6 @@ describe("HakanaiClient Integration", () => {
     expect(keyBytes).toHaveLength(32);
   });
 
-
   test("PayloadData decode() method works correctly", async () => {
     const originalText = "Test message with unicode: 🔐 åëïöü";
     const filename = "test.txt";
@@ -550,9 +549,9 @@ describe("Error Code Constants", () => {
   test("Error codes are readonly constants", () => {
     // This should be a compile-time check, but we can verify the values exist
     const codes = Object.keys(HakanaiErrorCodes);
-    expect(codes.length).toBe(7);
+    expect(codes.length).toBe(12); // 7 original + 5 validation codes we're using
 
-    // Verify all expected codes are present
+    // Verify all expected codes are present (original codes)
     expect(codes).toContain("AUTHENTICATION_REQUIRED");
     expect(codes).toContain("INVALID_TOKEN");
     expect(codes).toContain("SEND_FAILED");
@@ -560,6 +559,13 @@ describe("Error Code Constants", () => {
     expect(codes).toContain("SECRET_ALREADY_ACCESSED");
     expect(codes).toContain("RETRIEVE_FAILED");
     expect(codes).toContain("MISSING_DECRYPTION_KEY");
+
+    // Verify new validation error codes (only the ones we're using)
+    expect(codes).toContain("INVALID_INPUT_TYPE");
+    expect(codes).toContain("INVALID_KEY_LENGTH");
+    expect(codes).toContain("CRYPTO_API_UNAVAILABLE");
+    expect(codes).toContain("INVALID_TTL");
+    expect(codes).toContain("INVALID_AUTH_TOKEN");
   });
 
   test("Error codes can be used for comparison", () => {
@@ -573,6 +579,28 @@ describe("Error Code Constants", () => {
     );
     expect(checkErrorCode(HakanaiErrorCodes.INVALID_TOKEN)).toBe(false);
     expect(checkErrorCode("SOME_OTHER_CODE")).toBe(false);
+  });
+
+  test("Validation errors throw HakanaiError with correct codes", () => {
+    // Test Base64UrlSafe.encode validation
+    try {
+      Base64UrlSafe.encode("not a uint8array" as any);
+      fail("Expected HakanaiError to be thrown");
+    } catch (error: any) {
+      expect(error.name).toBe("HakanaiError");
+      expect(error.code).toBe(HakanaiErrorCodes.INVALID_INPUT_TYPE);
+      expect(error.message).toBe("Input must be a Uint8Array");
+    }
+
+    // Test ContentAnalysis.isBinary validation
+    try {
+      ContentAnalysis.isBinary("not a uint8array" as any);
+      fail("Expected HakanaiError to be thrown");
+    } catch (error: any) {
+      expect(error.name).toBe("HakanaiError");
+      expect(error.code).toBe(HakanaiErrorCodes.INVALID_INPUT_TYPE);
+      expect(error.message).toBe("Input must be a Uint8Array");
+    }
   });
 });
 

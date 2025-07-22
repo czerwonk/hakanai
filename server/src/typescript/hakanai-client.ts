@@ -30,6 +30,38 @@ const HakanaiErrorCodes = {
   RETRIEVE_FAILED: "RETRIEVE_FAILED",
   /** URL missing decryption key in fragment */
   MISSING_DECRYPTION_KEY: "MISSING_DECRYPTION_KEY",
+
+  // Validation error codes - specific for better translations
+  /** Input must be a Uint8Array but received different type */
+  EXPECTED_UINT8_ARRAY: "EXPECTED_UINT8_ARRAY",
+  /** Input must be a string but received different type */
+  EXPECTED_STRING: "EXPECTED_STRING",
+  /** Input contains invalid characters or format */
+  INVALID_INPUT_FORMAT: "INVALID_INPUT_FORMAT",
+  /** Cryptographic key has invalid length */
+  INVALID_KEY_LENGTH: "INVALID_KEY_LENGTH",
+  /** Web Crypto API is not available */
+  CRYPTO_API_UNAVAILABLE: "CRYPTO_API_UNAVAILABLE",
+  /** TTL value is invalid */
+  INVALID_TTL: "INVALID_TTL",
+  /** Authentication token format is invalid */
+  INVALID_AUTH_TOKEN: "INVALID_AUTH_TOKEN",
+  /** Base64 encoding/decoding failed */
+  BASE64_ERROR: "BASE64_ERROR",
+  /** Encrypted data is corrupted or invalid */
+  INVALID_ENCRYPTED_DATA: "INVALID_ENCRYPTED_DATA",
+  /** Decryption operation failed */
+  DECRYPTION_FAILED: "DECRYPTION_FAILED",
+  /** URL format is invalid */
+  INVALID_URL_FORMAT: "INVALID_URL_FORMAT",
+  /** URL is missing required secret ID */
+  MISSING_SECRET_ID: "MISSING_SECRET_ID",
+  /** Payload object is invalid or malformed */
+  INVALID_PAYLOAD: "INVALID_PAYLOAD",
+  /** Server response is invalid or empty */
+  INVALID_SERVER_RESPONSE: "INVALID_SERVER_RESPONSE",
+  /** CryptoContext has been disposed */
+  CRYPTO_CONTEXT_DISPOSED: "CRYPTO_CONTEXT_DISPOSED",
 } as const;
 
 // Type for error codes
@@ -108,7 +140,10 @@ class Base64UrlSafe {
    */
   static encode(data: Uint8Array): string {
     if (!(data instanceof Uint8Array)) {
-      throw new Error("Input must be a Uint8Array");
+      throw new HakanaiError(
+        HakanaiErrorCodes.EXPECTED_UINT8_ARRAY,
+        "Input must be a Uint8Array",
+      );
     }
 
     // Handle empty arrays
@@ -142,7 +177,10 @@ class Base64UrlSafe {
    */
   static decode(encoded: string): Uint8Array {
     if (typeof encoded !== "string") {
-      throw new Error("Input must be a string");
+      throw new HakanaiError(
+        HakanaiErrorCodes.EXPECTED_STRING,
+        "Input must be a string",
+      );
     }
 
     if (encoded.length === 0) {
@@ -150,7 +188,10 @@ class Base64UrlSafe {
     }
 
     if (!/^[A-Za-z0-9_-]*$/.test(encoded)) {
-      throw new Error("Invalid base64url characters");
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_INPUT_FORMAT,
+        "Invalid base64url characters",
+      );
     }
 
     // Add proper padding
@@ -171,7 +212,10 @@ class Base64UrlSafe {
 
       return bytes;
     } catch (error) {
-      throw new Error("Failed to decode base64url string: invalid encoding");
+      throw new HakanaiError(
+        HakanaiErrorCodes.BASE64_ERROR,
+        "Failed to decode base64url string: invalid encoding",
+      );
     }
   }
 
@@ -181,7 +225,10 @@ class Base64UrlSafe {
    */
   static encodeText(text: string): string {
     if (typeof text !== "string") {
-      throw new Error("Input must be a string");
+      throw new HakanaiError(
+        HakanaiErrorCodes.EXPECTED_STRING,
+        "Input must be a string",
+      );
     }
 
     const encoder = new TextEncoder();
@@ -292,7 +339,10 @@ class ContentAnalysis {
    */
   static isBinary(bytes: Uint8Array): boolean {
     if (!(bytes instanceof Uint8Array)) {
-      throw new Error("Input must be a Uint8Array");
+      throw new HakanaiError(
+        HakanaiErrorCodes.EXPECTED_UINT8_ARRAY,
+        "Input must be a Uint8Array",
+      );
     }
 
     // Check for null bytes, which are common in binary files
@@ -368,7 +418,10 @@ class CryptoContext {
   private static getCrypto(): Crypto {
     const cryptoInstance = window?.crypto || crypto;
     if (!cryptoInstance) {
-      throw new Error("Crypto API not available");
+      throw new HakanaiError(
+        HakanaiErrorCodes.CRYPTO_API_UNAVAILABLE,
+        "Crypto API not available",
+      );
     }
 
     return cryptoInstance;
@@ -405,11 +458,17 @@ class CryptoContext {
    */
   static async fromKey(keyBytes: Uint8Array): Promise<CryptoContext> {
     if (!(keyBytes instanceof Uint8Array)) {
-      throw new Error("Key must be a Uint8Array");
+      throw new HakanaiError(
+        HakanaiErrorCodes.EXPECTED_UINT8_ARRAY,
+        "Key must be a Uint8Array",
+      );
     }
 
     if (keyBytes.length !== KEY_LENGTH) {
-      throw new Error(`Invalid key length: must be ${KEY_LENGTH} bytes`);
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_KEY_LENGTH,
+        `Invalid key length: must be ${KEY_LENGTH} bytes`,
+      );
     }
 
     // Create a copy to avoid external modification
@@ -439,13 +498,17 @@ class CryptoContext {
     this.checkDisposed();
 
     if (this.isUsed) {
-      throw new Error(
+      throw new HakanaiError(
+        HakanaiErrorCodes.CRYPTO_CONTEXT_DISPOSED,
         "CryptoContext has already been used for encryption. Create a new context to prevent nonce reuse.",
       );
     }
 
     if (!(plaintextBytes instanceof Uint8Array)) {
-      throw new Error("Plaintext must be a Uint8Array");
+      throw new HakanaiError(
+        HakanaiErrorCodes.EXPECTED_UINT8_ARRAY,
+        "Plaintext must be a Uint8Array",
+      );
     }
 
     // Mark context as used to prevent nonce reuse
@@ -484,7 +547,10 @@ class CryptoContext {
     this.checkDisposed();
 
     if (typeof encryptedData !== "string") {
-      throw new Error("Encrypted data must be a string");
+      throw new HakanaiError(
+        HakanaiErrorCodes.EXPECTED_STRING,
+        "Encrypted data must be a string",
+      );
     }
 
     // Decode from standard base64
@@ -496,7 +562,10 @@ class CryptoContext {
     }
 
     if (combined.length < NONCE_LENGTH + 1) {
-      throw new Error("Invalid encrypted data: too short");
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_ENCRYPTED_DATA,
+        "Invalid encrypted data: too short",
+      );
     }
 
     // Extract nonce and update context nonce
@@ -512,7 +581,10 @@ class CryptoContext {
 
       return new Uint8Array(plaintextBytes);
     } catch (error) {
-      throw new Error("Decryption failed: invalid key or corrupted data");
+      throw new HakanaiError(
+        HakanaiErrorCodes.DECRYPTION_FAILED,
+        "Decryption failed: invalid key or corrupted data",
+      );
     }
   }
 
@@ -543,7 +615,10 @@ class CryptoContext {
    */
   private checkDisposed(): void {
     if (this.isDisposed) {
-      throw new Error("CryptoContext has been disposed and cannot be used");
+      throw new HakanaiError(
+        HakanaiErrorCodes.CRYPTO_CONTEXT_DISPOSED,
+        "CryptoContext has been disposed and cannot be used",
+      );
     }
   }
 }
@@ -570,7 +645,10 @@ class PayloadDataImpl implements PayloadData {
 
   setFromBytes(bytes: Uint8Array): void {
     if (!(bytes instanceof Uint8Array)) {
-      throw new Error("Data must be a Uint8Array");
+      throw new HakanaiError(
+        HakanaiErrorCodes.EXPECTED_UINT8_ARRAY,
+        "Data must be a Uint8Array",
+      );
     }
 
     // Convert bytes to base64 for storage
@@ -587,12 +665,18 @@ class PayloadDataImpl implements PayloadData {
 
   setFromBase64(base64Data: string): void {
     if (typeof base64Data !== "string") {
-      throw new Error("Base64 data must be a string");
+      throw new HakanaiError(
+        HakanaiErrorCodes.EXPECTED_STRING,
+        "Base64 data must be a string",
+      );
     }
 
     // Validate base64 format (basic check)
     if (!/^[A-Za-z0-9+/]*={0,2}$/.test(base64Data)) {
-      throw new Error("Invalid base64 format");
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_INPUT_FORMAT,
+        "Invalid base64 format",
+      );
     }
 
     this._data = base64Data;
@@ -627,7 +711,10 @@ class HakanaiClient {
    */
   constructor(baseUrl: string) {
     if (typeof baseUrl !== "string" || !baseUrl.trim()) {
-      throw new Error("Base URL must be a non-empty string");
+      throw new HakanaiError(
+        HakanaiErrorCodes.EXPECTED_STRING,
+        "Base URL must be a non-empty string",
+      );
     }
 
     this.baseUrl = baseUrl.replace(/\/$/, ""); // Remove trailing slash
@@ -635,7 +722,8 @@ class HakanaiClient {
     // Check browser compatibility
     const compatibilityInfo = BrowserCompatibility.getCompatibilityInfo();
     if (!compatibilityInfo.isCompatible) {
-      throw new Error(
+      throw new HakanaiError(
+        HakanaiErrorCodes.CRYPTO_API_UNAVAILABLE,
         `Your browser does not support the required security features for this application. ` +
           `Please use a modern browser with Web Crypto API support.`,
       );
@@ -666,7 +754,10 @@ class HakanaiClient {
     authToken?: string,
   ): void {
     if (!payload || typeof payload !== "object") {
-      throw new Error("Payload must be an object");
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_PAYLOAD,
+        "Payload must be an object",
+      );
     }
 
     if (
@@ -674,15 +765,24 @@ class HakanaiClient {
       typeof payload.data !== "string" ||
       payload.data.length === 0
     ) {
-      throw new Error("Payload data cannot be empty");
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_PAYLOAD,
+        "Payload data cannot be empty",
+      );
     }
 
     if (typeof ttl !== "number" || ttl <= 0 || !Number.isInteger(ttl)) {
-      throw new Error("TTL must be a positive integer");
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_TTL,
+        "TTL must be a positive integer",
+      );
     }
 
     if (authToken !== undefined && typeof authToken !== "string") {
-      throw new Error("Auth token must be a string if provided");
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_AUTH_TOKEN,
+        "Auth token must be a string if provided",
+      );
     }
   }
 
@@ -749,7 +849,10 @@ class HakanaiClient {
 
     const responseData: SecretResponse = await response.json();
     if (!responseData.id || typeof responseData.id !== "string") {
-      throw new Error("Invalid response: missing secret ID");
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_SERVER_RESPONSE,
+        "Invalid response: missing secret ID",
+      );
     }
 
     return responseData.id;
@@ -812,7 +915,10 @@ class HakanaiClient {
     key: Uint8Array;
   } {
     if (typeof url !== "string" || !url.trim()) {
-      throw new Error("URL must be a non-empty string");
+      throw new HakanaiError(
+        HakanaiErrorCodes.EXPECTED_STRING,
+        "URL must be a non-empty string",
+      );
     }
 
     // Parse the URL
@@ -820,13 +926,19 @@ class HakanaiClient {
     try {
       urlObj = new URL(url);
     } catch (error) {
-      throw new Error("Invalid URL format");
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_URL_FORMAT,
+        "Invalid URL format",
+      );
     }
 
     // Extract secret ID from path (expects format /s/{id})
     const pathParts = urlObj.pathname.split("/");
     if (pathParts.length < 3 || pathParts[1] !== "s" || !pathParts[2]) {
-      throw new Error("No secret ID found in URL");
+      throw new HakanaiError(
+        HakanaiErrorCodes.MISSING_SECRET_ID,
+        "No secret ID found in URL",
+      );
     }
     const secretId = pathParts[2];
 
@@ -842,11 +954,17 @@ class HakanaiClient {
     try {
       key = Base64UrlSafe.decode(keyBase64);
     } catch (error) {
-      throw new Error("Invalid decryption key in URL");
+      throw new HakanaiError(
+        HakanaiErrorCodes.BASE64_ERROR,
+        "Invalid decryption key in URL",
+      );
     }
 
     if (key.length !== KEY_LENGTH) {
-      throw new Error("Invalid key length");
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_KEY_LENGTH,
+        "Invalid key length",
+      );
     }
 
     return { secretId, key };
@@ -900,7 +1018,10 @@ class HakanaiClient {
 
     const encryptedData = await response.text();
     if (!encryptedData) {
-      throw new Error("Empty response from server");
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_SERVER_RESPONSE,
+        "Empty response from server",
+      );
     }
 
     const cryptoContext = await CryptoContext.fromKey(key);
@@ -915,7 +1036,10 @@ class HakanaiClient {
       try {
         payload = JSON.parse(decryptedJson);
       } catch (error) {
-        throw new Error("Failed to parse decrypted payload");
+        throw new HakanaiError(
+          HakanaiErrorCodes.INVALID_PAYLOAD,
+          "Failed to parse decrypted payload",
+        );
       }
 
       // Validate payload structure
@@ -924,7 +1048,10 @@ class HakanaiClient {
         typeof payload !== "object" ||
         typeof payload.data !== "string"
       ) {
-        throw new Error("Invalid payload structure");
+        throw new HakanaiError(
+          HakanaiErrorCodes.INVALID_PAYLOAD,
+          "Invalid payload structure",
+        );
       }
 
       return new PayloadDataImpl(payload.data, payload.filename || undefined);
