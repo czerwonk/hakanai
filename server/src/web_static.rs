@@ -2,6 +2,7 @@ use actix_web::http::header;
 use actix_web::{HttpResponse, Responder, web};
 
 const DEFAULT_CACHE_MAX_AGE: u64 = 604800; // 7 days
+const VOLATILE_CACHE_MAX_AGE: u64 = 86400; // 1 day
 
 /// Configures the Actix Web services for the application.
 ///
@@ -49,7 +50,7 @@ pub async fn serve_get_secret_html() -> HttpResponse {
     serve_with_caching_header(
         include_bytes!("includes/get-secret.html"),
         "text/html",
-        DEFAULT_CACHE_MAX_AGE,
+        VOLATILE_CACHE_MAX_AGE,
     )
 }
 
@@ -57,7 +58,7 @@ async fn serve_create_secret_html() -> HttpResponse {
     serve_with_caching_header(
         include_bytes!("includes/create-secret.html"),
         "text/html",
-        DEFAULT_CACHE_MAX_AGE,
+        VOLATILE_CACHE_MAX_AGE,
     )
 }
 
@@ -65,7 +66,7 @@ async fn serve_js_client() -> impl Responder {
     serve_with_caching_header(
         include_bytes!("includes/hakanai-client.js"),
         "application/javascript",
-        DEFAULT_CACHE_MAX_AGE,
+        VOLATILE_CACHE_MAX_AGE,
     )
 }
 
@@ -73,7 +74,7 @@ async fn serve_common_utils_js() -> impl Responder {
     serve_with_caching_header(
         include_bytes!("includes/common-utils.js"),
         "application/javascript",
-        DEFAULT_CACHE_MAX_AGE,
+        VOLATILE_CACHE_MAX_AGE,
     )
 }
 
@@ -81,7 +82,7 @@ async fn serve_i18n_js() -> impl Responder {
     serve_with_caching_header(
         include_bytes!("includes/i18n.js"),
         "application/javascript",
-        DEFAULT_CACHE_MAX_AGE,
+        VOLATILE_CACHE_MAX_AGE,
     )
 }
 
@@ -89,7 +90,7 @@ async fn serve_css() -> impl Responder {
     serve_with_caching_header(
         include_bytes!("includes/style.css"),
         "text/css",
-        DEFAULT_CACHE_MAX_AGE,
+        VOLATILE_CACHE_MAX_AGE,
     )
 }
 
@@ -121,7 +122,7 @@ async fn serve_get_secret_js() -> impl Responder {
     serve_with_caching_header(
         include_bytes!("includes/get-secret.js"),
         "application/javascript",
-        DEFAULT_CACHE_MAX_AGE,
+        VOLATILE_CACHE_MAX_AGE,
     )
 }
 
@@ -129,7 +130,7 @@ async fn serve_create_secret_js() -> impl Responder {
     serve_with_caching_header(
         include_bytes!("includes/create-secret.js"),
         "application/javascript",
-        DEFAULT_CACHE_MAX_AGE,
+        VOLATILE_CACHE_MAX_AGE,
     )
 }
 
@@ -137,7 +138,7 @@ async fn serve_docs_html() -> impl Responder {
     serve_with_caching_header(
         include_str!("includes/docs_generated.html").as_bytes(),
         "text/html",
-        DEFAULT_CACHE_MAX_AGE,
+        VOLATILE_CACHE_MAX_AGE,
     )
 }
 
@@ -145,7 +146,7 @@ async fn serve_docs_js() -> impl Responder {
     serve_with_caching_header(
         include_bytes!("includes/docs.js"),
         "application/javascript",
-        DEFAULT_CACHE_MAX_AGE,
+        VOLATILE_CACHE_MAX_AGE,
     )
 }
 
@@ -161,7 +162,7 @@ async fn serve_types_js() -> impl Responder {
     serve_with_caching_header(
         include_bytes!("includes/types.js"),
         "application/javascript",
-        DEFAULT_CACHE_MAX_AGE,
+        VOLATILE_CACHE_MAX_AGE,
     )
 }
 
@@ -170,7 +171,7 @@ async fn serve_homepage() -> HttpResponse {
     serve_with_caching_header(
         include_bytes!("includes/homepage.html"),
         "text/html",
-        DEFAULT_CACHE_MAX_AGE,
+        VOLATILE_CACHE_MAX_AGE,
     )
 }
 
@@ -178,7 +179,7 @@ async fn serve_homepage_js() -> impl Responder {
     serve_with_caching_header(
         include_bytes!("includes/homepage.js"),
         "application/javascript",
-        DEFAULT_CACHE_MAX_AGE,
+        VOLATILE_CACHE_MAX_AGE,
     )
 }
 
@@ -251,7 +252,7 @@ async fn serve_share_html() -> impl Responder {
     serve_with_caching_header(
         include_bytes!("includes/share.html"),
         "text/html",
-        DEFAULT_CACHE_MAX_AGE,
+        VOLATILE_CACHE_MAX_AGE,
     )
 }
 
@@ -259,7 +260,7 @@ async fn serve_share_js() -> impl Responder {
     serve_with_caching_header(
         include_bytes!("includes/share.js"),
         "application/javascript",
-        DEFAULT_CACHE_MAX_AGE,
+        VOLATILE_CACHE_MAX_AGE,
     )
 }
 
