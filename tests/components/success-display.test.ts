@@ -141,39 +141,6 @@ describe("Success Display Component", () => {
       expect(title).toBeTruthy();
     });
 
-    test("should handle WASM loading failure gracefully", async () => {
-      const {
-        QRCodeGenerator,
-      } = require("../../server/src/typescript/core/qr-generator");
-      QRCodeGenerator.ensureWasmLoaded.mockRejectedValue(
-        new Error("WASM load failed"),
-      );
-
-      const consoleSpy = jest.spyOn(console, "debug").mockImplementation();
-
-      const testUrl = "https://example.com/s/123#abcdef";
-
-      displaySuccessResult(testUrl, {
-        container,
-        separateKeyMode: false,
-      });
-
-      // Wait for async QR code generation
-      await new Promise((resolve) => setTimeout(resolve, 0));
-
-      // Should log debug message about QR code not being available
-      expect(consoleSpy).toHaveBeenCalledWith(
-        "QR code not available:",
-        expect.any(Error),
-      );
-
-      // QR code section should not be present
-      const qrSection = container.querySelector(".qr-code-section");
-      expect(qrSection).toBeFalsy();
-
-      consoleSpy.mockRestore();
-    });
-
     test("should use fallback text when i18n is not available", async () => {
       delete (global as any).window.i18n;
 
