@@ -44,6 +44,7 @@ Built for those who believe privacy isn't about having something to hide - it's 
 ### Prerequisites
 - Rust 2024 edition or later
 - Redis server (for backend storage)
+- Node.js and npm (for TypeScript bundling)
 - Standard Rust toolchain (`cargo`, `rustc`)
 
 ### From Source
@@ -53,7 +54,10 @@ Built for those who believe privacy isn't about having something to hide - it's 
 git clone https://github.com/czerwonk/hakanai
 cd hakanai
 
-# Build all components
+# Install npm dependencies for TypeScript bundling
+npm install
+
+# Build all components (includes automatic TypeScript bundling)
 cargo build --release --workspace
 
 # Binaries will be in:
