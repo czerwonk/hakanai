@@ -2120,3 +2120,28 @@ body:has(.privacy-content) {
 .loading.visible {
   display: block !important;
 }
+
+/* File info styling */
+.file-info {
+  margin-top: var(--spacing-sm, 0.75rem);
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #888888);
+}
+
+/* Note element styling */
+.note-element {
+  margin-top: var(--spacing-sm, 0.75rem);
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #888888);
+}
+
+/* Binary message styling */
+.binary-message {
+  margin-bottom: var(--spacing-md, 1rem);
+  color: var(--color-text, #000000);
+}
+
+/* Auto-height textarea */
+.auto-height {
+  height: var(--textarea-height, auto) !important;
+}

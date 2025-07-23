@@ -2,17 +2,17 @@ import {
   HakanaiClient,
   HakanaiErrorCodes,
   type PayloadData,
-} from "./hakanai-client.js";
-import { initI18n } from "./core/i18n.js";
-import { announceToScreenReader, secureInputClear } from "./core/dom-utils.js";
-import { initTheme, updateThemeToggleButton } from "./core/theme.js";
+} from "./hakanai-client";
+import { initI18n } from "./core/i18n";
+import { announceToScreenReader, secureInputClear } from "./core/dom-utils";
+import { initTheme, updateThemeToggleButton } from "./core/theme";
 import {
   saveAuthTokenToStorage,
   getAuthTokenFromStorage,
   clearAuthTokenStorage,
-} from "./core/auth-storage.js";
-import { formatFileSize, sanitizeFileName } from "./core/formatters.js";
-import { displaySuccessResult } from "./components/success-display.js";
+} from "./core/auth-storage";
+import { formatFileSize, sanitizeFileName } from "./core/formatters";
+import { displaySuccessResult } from "./components/success-display";
 import {
   type RequiredElements,
   type FileElements,
@@ -20,7 +20,8 @@ import {
   isHakanaiError,
   isStandardError,
   isErrorLike,
-} from "./core/types.js";
+} from "./core/types";
+import { initFeatures } from "./core/app-config";
 
 interface UIStrings {
   EMPTY_SECRET: string;
@@ -28,8 +29,6 @@ interface UIStrings {
   CREATE_FAILED: string;
   SUCCESS_TITLE: string;
   ERROR_TITLE: string;
-  COPY_TEXT: string;
-  COPIED_TEXT: string;
   COPY_FAILED: string;
   NOTE_TEXT: string;
   SHARE_INSTRUCTIONS: string;
@@ -47,8 +46,6 @@ const UI_STRINGS: UIStrings = {
   CREATE_FAILED: "Failed to create secret",
   SUCCESS_TITLE: "Secret Created Successfully",
   ERROR_TITLE: "Error",
-  COPY_TEXT: "Copy URL",
-  COPIED_TEXT: "Copied!",
   COPY_FAILED: "Failed to copy. Please select and copy manually.",
   NOTE_TEXT:
     "Note: Share this URL carefully. The secret will be deleted after the first access or when it expires.",
@@ -84,8 +81,6 @@ function updateUIStrings(): void {
   UI_STRINGS.CREATE_FAILED = window.i18n.t("msg.createFailed");
   UI_STRINGS.SUCCESS_TITLE = window.i18n.t("msg.successTitle");
   UI_STRINGS.ERROR_TITLE = window.i18n.t("msg.errorTitle");
-  UI_STRINGS.COPY_TEXT = window.i18n.t("button.copy");
-  UI_STRINGS.COPIED_TEXT = window.i18n.t("button.copied");
   UI_STRINGS.COPY_FAILED = window.i18n.t("msg.copyFailed");
   UI_STRINGS.NOTE_TEXT = window.i18n.t("msg.createNote");
   UI_STRINGS.SHARE_INSTRUCTIONS = window.i18n.t("msg.shareInstructions");
@@ -610,6 +605,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setupRadioHandlers();
   setupFileInputHandler();
   initializeAuthToken();
+  initFeatures();
 });
 
 // Export functions for testing

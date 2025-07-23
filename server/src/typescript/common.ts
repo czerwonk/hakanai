@@ -4,6 +4,7 @@
  */
 import { initI18n } from "./core/i18n";
 import { initTheme } from "./core/theme";
+import { initFeatures } from "./core/app-config";
 
 /**
  * Initialize common functionality for static pages
@@ -18,4 +19,5 @@ export function initCommon(): void {
 document.addEventListener("DOMContentLoaded", () => {
   initI18n();
   initCommon();
+  initFeatures();
 });

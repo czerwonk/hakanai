@@ -2,8 +2,8 @@ import {
   HakanaiClient,
   ContentAnalysis,
   type PayloadData,
-} from "./hakanai-client.js";
-import { initI18n } from "./core/i18n.js";
+} from "./hakanai-client";
+import { initI18n } from "./core/i18n";
 import {
   announceToScreenReader,
   createButton,
@@ -11,19 +11,16 @@ import {
   debounce,
   generateRandomId,
   secureInputClear,
-} from "./core/dom-utils.js";
-import { copyToClipboard } from "./core/clipboard.js";
-import { formatFileSize } from "./core/formatters.js";
-import { initTheme, updateThemeToggleButton } from "./core/theme.js";
-import { isHakanaiError, isStandardError, isErrorLike } from "./core/types.js";
+} from "./core/dom-utils";
+import { copyToClipboard } from "./core/clipboard";
+import { formatFileSize } from "./core/formatters";
+import { initTheme, updateThemeToggleButton } from "./core/theme";
+import { isHakanaiError, isStandardError, isErrorLike } from "./core/types";
+import { initFeatures } from "./core/app-config";
 
 interface UIStrings {
   BINARY_DETECTED: string;
-  COPY_ARIA: string;
   COPY_FAILED: string;
-  COPY_TEXT: string;
-  DOWNLOAD_ARIA: string;
-  DOWNLOAD_TEXT: string;
   EMPTY_URL: string;
   ERROR_TITLE: string;
   FILENAME_LABEL: string;
@@ -42,11 +39,7 @@ const TIMEOUTS = {
 const UI_STRINGS: UIStrings = {
   BINARY_DETECTED:
     "Binary file detected. Content hidden for security. Use download button to save the file.",
-  COPY_ARIA: "Copy secret to clipboard",
   COPY_FAILED: "Failed to copy. Please select and copy manually.",
-  COPY_TEXT: "Copy Secret",
-  DOWNLOAD_ARIA: "Download secret as file",
-  DOWNLOAD_TEXT: "Download",
   EMPTY_URL: "Please enter a valid secret URL",
   ERROR_TITLE: "Error",
   FILENAME_LABEL: "Filename:",
@@ -80,11 +73,7 @@ function updateUIStrings(): void {
   }
 
   UI_STRINGS.BINARY_DETECTED = window.i18n.t("msg.binaryDetected");
-  UI_STRINGS.COPY_ARIA = window.i18n.t("aria.copySecret");
   UI_STRINGS.COPY_FAILED = window.i18n.t("msg.copyFailed");
-  UI_STRINGS.COPY_TEXT = window.i18n.t("button.copySecret");
-  UI_STRINGS.DOWNLOAD_ARIA = window.i18n.t("aria.downloadSecret");
-  UI_STRINGS.DOWNLOAD_TEXT = window.i18n.t("button.download");
   UI_STRINGS.EMPTY_URL = window.i18n.t("msg.emptyUrl");
   UI_STRINGS.ERROR_TITLE = window.i18n.t("msg.errorTitle");
   UI_STRINGS.FILENAME_LABEL = window.i18n.t("label.filename");
@@ -134,37 +123,49 @@ function validateInputs(
 
 function setElementsState(disabled: boolean): void {
   const { urlInput, keyInput, button } = getElements();
-  button.disabled = disabled;
-  urlInput.disabled = disabled;
-  keyInput.disabled = disabled;
+  if (button) button.disabled = disabled;
+  if (urlInput) urlInput.disabled = disabled;
+  if (keyInput) keyInput.disabled = disabled;
 }
 
 function clearInputs(): void {
   const { urlInput, keyInput } = getElements();
-  secureInputClear(urlInput);
-  secureInputClear(keyInput);
+  if (urlInput) secureInputClear(urlInput);
+  if (keyInput) secureInputClear(keyInput);
 }
 
 function showLoadingState(): void {
   const { loadingDiv, resultDiv } = getElements();
-  loadingDiv.classList.add("visible");
-  loadingDiv.classList.remove("hidden");
-  resultDiv.innerHTML = "";
+  if (loadingDiv) {
+    loadingDiv.classList.add("visible");
+    loadingDiv.classList.remove("hidden");
+  }
+  if (resultDiv) {
+    resultDiv.innerHTML = "";
+  }
   document.body.classList.remove("expanded-view");
   setElementsState(true);
 }
 
 function hideLoadingState(): void {
   const { loadingDiv } = getElements();
-  loadingDiv.classList.add("hidden");
-  loadingDiv.classList.remove("visible");
+  if (loadingDiv) {
+    loadingDiv.classList.add("hidden");
+    loadingDiv.classList.remove("visible");
+  }
   setElementsState(false);
 }
 
 async function processRetrieveRequest(): Promise<void> {
   const { urlInput, keyInput } = getElements();
+
+  if (!urlInput) {
+    console.error("URL input element not found");
+    return;
+  }
+
   const url = urlInput.value.trim();
-  const key = keyInput.value.trim();
+  const key = keyInput?.value?.trim() || "";
 
   const processedUrl = normalizeUrl(url);
   const hasFragment = hasUrlFragment(processedUrl);
@@ -227,6 +228,11 @@ function retrieveSecret(): void {
 
 function toggleKeyInputVisibility(): void {
   const { urlInput, keyInputGroup, keyInput } = getElements();
+
+  if (!urlInput || !keyInputGroup || !keyInput) {
+    return;
+  }
+
   const url = urlInput.value.trim();
 
   if (!url) {
@@ -306,13 +312,16 @@ function createSecretTextarea(
 }
 
 function resizeTextarea(textarea: HTMLTextAreaElement): void {
-  textarea.style.height = "auto";
+  // Use CSS custom properties to set height without inline styles
   const styles = window.getComputedStyle(textarea);
   const minHeight = parseInt(styles.minHeight);
   const maxHeight = parseInt(styles.maxHeight);
   const scrollHeight = textarea.scrollHeight;
-  textarea.style.height =
-    Math.min(Math.max(scrollHeight, minHeight), maxHeight) + "px";
+  const height = Math.min(Math.max(scrollHeight, minHeight), maxHeight);
+
+  // Set CSS custom property instead of inline style
+  textarea.style.setProperty("--textarea-height", height + "px");
+  textarea.classList.add("auto-height");
 }
 
 function createBinarySecret(
@@ -323,8 +332,7 @@ function createBinarySecret(
   container.className = "secret-container";
 
   const message = document.createElement("p");
-  message.style.marginBottom = "var(--spacing-md, 1rem)";
-  message.style.color = "var(--color-text, #000000)";
+  message.className = "binary-message";
   message.textContent = UI_STRINGS.BINARY_DETECTED;
   container.appendChild(message);
 
@@ -340,8 +348,8 @@ function createBinarySecret(
 function createCopyButton(secretId: string): HTMLButtonElement {
   return createButton(
     "copy-button",
-    UI_STRINGS.COPY_TEXT,
-    UI_STRINGS.COPY_ARIA,
+    window.i18n?.t("button.copySecret") || "Copy Secret",
+    window.i18n?.t("aria.copySecret") || "Copy secret to clipboard",
     function (this: HTMLButtonElement) {
       copySecret(secretId, this);
     },
@@ -355,17 +363,15 @@ function createDownloadButton(
 ): HTMLButtonElement {
   return createButton(
     "download-button",
-    UI_STRINGS.DOWNLOAD_TEXT,
-    UI_STRINGS.DOWNLOAD_ARIA,
+    window.i18n?.t("button.download") || "Download",
+    window.i18n?.t("aria.downloadSecret") || "Download secret as file",
     () => downloadSecret(payload, decodedBytes, isBinary),
   );
 }
 
 function createFilenameInfo(filename: string, size: number): HTMLElement {
   const fileInfo = document.createElement("p");
-  fileInfo.style.marginTop = "var(--spacing-sm, 0.75rem)";
-  fileInfo.style.fontSize = "0.875rem";
-  fileInfo.style.color = "var(--color-text-muted, #888888)";
+  fileInfo.className = "file-info";
 
   const fileLabel = document.createElement("strong");
   fileLabel.textContent = UI_STRINGS.FILENAME_LABEL + " ";
@@ -382,9 +388,7 @@ function createFilenameInfo(filename: string, size: number): HTMLElement {
 
 function createNoteElement(): HTMLElement {
   const note = document.createElement("p");
-  note.style.marginTop = "var(--spacing-sm, 0.75rem)";
-  note.style.fontSize = "0.875rem";
-  note.style.color = "var(--color-text-muted, #888888)";
+  note.className = "note-element";
 
   const strong = document.createElement("strong");
   strong.textContent = window.i18n.t("msg.retrieveNote").split(":")[0] + ":";
@@ -398,6 +402,8 @@ function createNoteElement(): HTMLElement {
 
 function showSuccess(payload: PayloadData): void {
   const { resultDiv } = getElements();
+  if (!resultDiv) return;
+
   resultDiv.className = "result success";
   resultDiv.innerHTML = "";
 
@@ -426,6 +432,8 @@ function showSuccess(payload: PayloadData): void {
 
 function showError(message: string): void {
   const { resultDiv } = getElements();
+  if (!resultDiv) return;
+
   resultDiv.className = "result error";
   resultDiv.innerHTML = "";
   document.body.classList.remove("expanded-view");
@@ -537,6 +545,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setupForm();
   setupUrlInput();
   updateUIStrings();
+  initFeatures();
 });
 
 // Export functions for testing

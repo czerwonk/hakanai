@@ -12,6 +12,7 @@ import {
 } from "./core/formatters.js";
 import { displaySuccessResult } from "./components/success-display.js";
 import { ShareData, ShareDataError } from "./core/types.js";
+import { initFeatures } from "./core/app-config";
 
 let sharePayload: ShareData | null = null;
 
@@ -20,7 +21,9 @@ let sharePayload: ShareData | null = null;
  */
 function showLoading(message: string): void {
   document.getElementById("loading-text")!.textContent = message;
-  document.getElementById("loading")!.style.display = "block";
+  const loading = document.getElementById("loading")!;
+  loading.classList.add("visible");
+  loading.classList.remove("hidden");
   hideOtherSections("loading");
 }
 
@@ -28,7 +31,9 @@ function showLoading(message: string): void {
  * Hide loading state
  */
 function hideLoading(): void {
-  document.getElementById("loading")!.style.display = "none";
+  const loading = document.getElementById("loading")!;
+  loading.classList.add("hidden");
+  loading.classList.remove("visible");
 }
 
 /**
@@ -44,7 +49,9 @@ function hideOtherSections(except: string): void {
   ];
   sections.forEach((section) => {
     if (section !== except) {
-      document.getElementById(section)!.style.display = "none";
+      const element = document.getElementById(section)!;
+      element.classList.add("hidden");
+      element.classList.remove("visible");
     }
   });
 }
@@ -69,12 +76,16 @@ function showShareContent(payload: ShareData): void {
     const sanitizedFilename = sanitizeFileName(payload.filename);
     document.getElementById("content-filename")!.textContent =
       sanitizedFilename || "Invalid filename";
-    filenameRow.style.display = "block";
+    filenameRow.classList.remove("hidden");
+    filenameRow.classList.add("visible");
   } else {
-    filenameRow.style.display = "none";
+    filenameRow.classList.add("hidden");
+    filenameRow.classList.remove("visible");
   }
 
-  document.getElementById("clipboard-content")!.style.display = "block";
+  const clipboardContent = document.getElementById("clipboard-content")!;
+  clipboardContent.classList.remove("hidden");
+  clipboardContent.classList.add("visible");
   hideOtherSections("clipboard-content");
 }
 
@@ -83,7 +94,9 @@ function showShareContent(payload: ShareData): void {
  */
 function showClipboardError(message: string): void {
   document.getElementById("error-message")!.textContent = message;
-  document.getElementById("clipboard-error")!.style.display = "block";
+  const clipboardError = document.getElementById("clipboard-error")!;
+  clipboardError.classList.remove("hidden");
+  clipboardError.classList.add("visible");
   hideOtherSections("clipboard-error");
 }
 
@@ -242,6 +255,7 @@ async function createSecret(): Promise<void> {
  */
 function init(): void {
   initI18n();
+  initFeatures();
   // Always add event listeners first
   document
     .getElementById("read-clipboard")
@@ -269,7 +283,9 @@ function init(): void {
   }
 
   // Show permission prompt for clipboard access
-  document.getElementById("permission-prompt")!.style.display = "block";
+  const permissionPrompt = document.getElementById("permission-prompt")!;
+  permissionPrompt.classList.remove("hidden");
+  permissionPrompt.classList.add("visible");
   hideOtherSections("permission-prompt");
 
   // Auto-read if auto parameter is present (clipboard only)
