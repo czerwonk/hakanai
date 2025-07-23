@@ -10,29 +10,30 @@ const VOLATILE_CACHE_MAX_AGE: u64 = 86400; // 1 day
 /// including the data store that will be shared across all handlers.
 pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg.route("/", web::get().to(serve_homepage))
-        .route("/get", web::get().to(serve_get_secret_html))
+        .route("/banner.svg", web::get().to(serve_banner))
         .route("/common-utils.js", web::get().to(serve_common_utils_js))
+        .route("/config.json", web::get().to(serve_config))
         .route("/create", web::get().to(serve_create_secret_html))
         .route("/create-secret.js", web::get().to(serve_create_secret_js))
         .route("/docs", web::get().to(serve_docs_html))
         .route("/docs.js", web::get().to(serve_docs_js))
+        .route("/get", web::get().to(serve_get_secret_html))
         .route("/get-secret.js", web::get().to(serve_get_secret_js))
         .route("/hakanai-client.js", web::get().to(serve_js_client))
+        .route("/homepage.js", web::get().to(serve_homepage_js))
         .route("/i18n.js", web::get().to(serve_i18n_js))
-        .route("/banner.svg", web::get().to(serve_banner))
         .route("/icon.svg", web::get().to(serve_icon))
+        .route("/impressum", web::get().to(serve_impressum))
         .route("/logo.svg", web::get().to(serve_logo))
         .route("/manifest.json", web::get().to(serve_manifest))
         .route("/openapi.json", web::get().to(serve_openapi_json))
+        .route("/privacy", web::get().to(serve_privacy))
         .route("/robots.txt", web::get().to(serve_robots_txt))
-        .route("/style.css", web::get().to(serve_css))
-        .route("/types.js", web::get().to(serve_types_js))
-        .route("/homepage.js", web::get().to(serve_homepage_js))
         .route("/share", web::get().to(serve_share_html))
         .route("/share.js", web::get().to(serve_share_js))
-        .route("/impressum", web::get().to(serve_impressum))
-        .route("/privacy", web::get().to(serve_privacy))
-        .route("/config.json", web::get().to(serve_config));
+        .route("/share.shortcut", web::get().to(serve_shortcut))
+        .route("/style.css", web::get().to(serve_css))
+        .route("/types.js", web::get().to(serve_types_js));
 }
 
 fn serve_with_caching_header(content: &[u8], content_type: &str, max_age: u64) -> HttpResponse {
@@ -261,6 +262,14 @@ async fn serve_share_js() -> impl Responder {
         include_bytes!("includes/share.js"),
         "application/javascript",
         VOLATILE_CACHE_MAX_AGE,
+    )
+}
+
+async fn serve_shortcut() -> impl Responder {
+    serve_with_caching_header(
+        include_bytes!("../../share.shortcut"),
+        "application/octet-stream",
+        DEFAULT_CACHE_MAX_AGE,
     )
 }
 

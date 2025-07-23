@@ -16,7 +16,9 @@ The shortcut uses a **clipboard-based workflow** that requires user interaction:
 
 ## Installation
 
-1. Download `share.shortcut` to your iOS/macOS device
+1. Download the shortcut from your Hakanai server:
+   - Visit `https://your-hakanai-instance.com/share.shortcut`
+   - Or download directly from [this repository](../share.shortcut)
 2. Open the file - it will automatically import into the Shortcuts app
 3. (Optional) If your Hakanai instance requires authentication:
    - Edit the shortcut

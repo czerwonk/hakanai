@@ -2,7 +2,7 @@
  * Tests for ShareData validation error translations
  */
 
-import { ShareData, ShareDataError, ShareDataValidationError } from "../server/src/typescript/common-utils";
+import { ShareData, ShareDataError, ShareDataValidationError } from "../server/src/typescript/types";
 
 // Mock i18n for testing
 const mockI18n = {

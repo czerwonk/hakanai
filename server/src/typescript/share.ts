@@ -4,13 +4,8 @@
  */
 
 import { HakanaiClient } from "./hakanai-client.js";
-import {
-  formatFileSize,
-  formatTTL,
-  ShareData,
-  ShareDataError,
-  sanitizeFileName,
-} from "./common-utils.js";
+import { formatFileSize, formatTTL, sanitizeFileName } from "./common-utils.js";
+import { ShareData, ShareDataError } from "./types.js";
 
 // Declare window.i18n
 declare global {
