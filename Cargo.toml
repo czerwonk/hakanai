@@ -4,4 +4,9 @@ members = [
   "lib",
   "cli",
   "server",
+  "wasm",
 ]
+
+[profile.release]
+opt-level = "z"
+lto = true

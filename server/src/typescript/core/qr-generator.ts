@@ -1,8 +1,19 @@
 /**
  * QR Code generator using WebAssembly
  */
+
+// Type definitions for the WASM module
+interface QrGeneratorWasm {
+  generate_svg(text: string, size: number): string;
+}
+
+interface WasmModule {
+  default(): Promise<void>;
+  QrGenerator: new () => QrGeneratorWasm;
+}
+
 export class QRCodeGenerator {
-  private static wasmModule: any = null;
+  private static generator: QrGeneratorWasm | null = null;
   private static loadPromise: Promise<void> | null = null;
 
   /**
@@ -20,40 +31,44 @@ export class QRCodeGenerator {
    */
   private static async loadWasm(): Promise<void> {
     try {
-      // TODO: Replace with actual WASM module loading when implemented
-      // For now, we'll simulate the interface for development
-      console.debug("QR code WASM module would be loaded here");
+      // Dynamic import of the WASM module
+      const module = (await import(
+        "/wasm/hakanai_wasm.js"
+      )) as unknown as WasmModule;
 
-      // Simulate successful load for development
-      this.wasmModule = {
-        generate_qr_svg: (url: string) => {
-          // Placeholder implementation - will be replaced with real WASM
-          return `<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
-            <rect width="100" height="100" fill="white"/>
-            <text x="50" y="50" text-anchor="middle" dy=".3em" font-size="8">QR CODE</text>
-            <text x="50" y="65" text-anchor="middle" dy=".3em" font-size="6">(PLACEHOLDER)</text>
-          </svg>`;
-        },
-      };
+      // Initialize the WASM module
+      await module.default();
+
+      this.generator = new module.QrGenerator();
+
+      console.debug("QR code WASM module loaded successfully");
     } catch (error) {
       console.warn("Failed to load QR code WASM module:", error);
-      throw error;
+      this.generator = null;
     }
   }
 
   /**
    * Generate QR code SVG for the given URL
    * @param url - URL to encode in QR code
+   * @param size - Size of the QR code in pixels (default: 200)
    * @returns SVG string or null if generation failed
    */
-  static generateQRCode(url: string): string | null {
-    if (!this.wasmModule) return null;
+  static generateQRCode(url: string, size: number = 200): string | null {
+    if (!this.generator) return null;
 
     try {
-      return this.wasmModule.generate_qr_svg(url);
+      return this.generator.generate_svg(url, size);
     } catch (error) {
       console.warn("QR code generation failed:", error);
       return null;
     }
+  }
+
+  /**
+   * Check if QR code generation is available
+   */
+  static isAvailable(): boolean {
+    return this.generator !== null;
   }
 }

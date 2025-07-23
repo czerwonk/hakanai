@@ -25,6 +25,7 @@ CLAUDE.md
 AGENTS.md
 node_modules/
 npm/dist/
+wasm/pkg
 
 docker-compose.override.yml
 

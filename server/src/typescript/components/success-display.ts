@@ -1,4 +1,8 @@
-import { createButton, generateRandomId } from "../core/dom-utils.js";
+import {
+  createButton,
+  generateRandomId,
+  hideElement,
+} from "../core/dom-utils.js";
 import { copyToClipboardByElementId } from "../core/clipboard.js";
 import { QRCodeGenerator } from "../core/qr-generator.js";
 
@@ -192,9 +196,7 @@ async function createQRCodeSection(
       container.appendChild(qrSection);
     }
   } catch (error) {
-    // Silent graceful degradation - no UI indication needed
-    // QR code simply doesn't appear if WASM fails
-    console.debug("QR code not available:", error);
+    // showing QR codes is optional, so we can ignore errors
   }
 }
 
@@ -203,6 +205,7 @@ async function createQRCodeSection(
  */
 function createQRDisplayElement(qrSvg: string): HTMLElement {
   const qrSection = document.createElement("div");
+  hideElement(qrSection);
   qrSection.className = "qr-code-section";
 
   const qrLabel = document.createElement("label");

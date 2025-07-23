@@ -30,7 +30,12 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
         .route("/share", web::get().to(serve_share_html))
         .route("/share.js", web::get().to(serve_share_js))
         .route("/share.shortcut", web::get().to(serve_shortcut))
-        .route("/style.css", web::get().to(serve_css));
+        .route("/style.css", web::get().to(serve_css))
+        .route("/wasm/hakanai_wasm.js", web::get().to(serve_wasm_js))
+        .route(
+            "/wasm/hakanai_wasm_bg.wasm",
+            web::get().to(serve_wasm_binary),
+        );
 }
 
 fn serve_with_caching_header(content: &[u8], content_type: &str, max_age: u64) -> HttpResponse {
@@ -235,6 +240,22 @@ async fn serve_common_js() -> impl Responder {
         include_bytes!("includes/common.js"),
         "application/javascript",
         VOLATILE_CACHE_MAX_AGE,
+    )
+}
+
+async fn serve_wasm_js() -> impl Responder {
+    serve_with_caching_header(
+        include_bytes!("includes/wasm/hakanai_wasm.js"),
+        "application/javascript",
+        HIGHLY_VOLATILE_CACHE_MAX_AGE,
+    )
+}
+
+async fn serve_wasm_binary() -> impl Responder {
+    serve_with_caching_header(
+        include_bytes!("includes/wasm/hakanai_wasm_bg.wasm"),
+        "application/wasm",
+        HIGHLY_VOLATILE_CACHE_MAX_AGE,
     )
 }
 
