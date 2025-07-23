@@ -51,24 +51,8 @@ export default [
       })
     ]
   },
-  {
-    input: 'server/src/typescript/docs.ts',
-    output: {
-      file: 'server/src/includes/docs.js',
-      format: 'iife',
-      name: 'Docs'
-    },
-    plugins: [
-      nodeResolve(),
-      typescript({
-        tsconfig: './tsconfig.json',
-        sourceMap: false,
-        declaration: false
-      })
-    ]
-  },
 
-  // Common bundle for static pages (homepage, impressum, privacy)
+  // Common bundle for static pages (homepage, impressum, privacy, docs)
   {
     input: 'server/src/typescript/common.ts',
     output: {

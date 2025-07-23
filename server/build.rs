@@ -321,8 +321,10 @@ fn generate_static_html_files() -> Result<()> {
 fn load_partials() -> Result<TemplatePartials> {
     let head = fs::read_to_string("src/templates/partials/head.html")
         .context("failed to read head partial")?;
-    let theme_controls = fs::read_to_string("src/templates/partials/theme-controls.html")
-        .context("failed to read theme-controls partial")?;
+    let theme_switcher = fs::read_to_string("src/templates/partials/theme-switcher.html")
+        .context("failed to read theme-switcher partial")?;
+    let language_selector = fs::read_to_string("src/templates/partials/language-selector.html")
+        .context("failed to read language-selector partial")?;
     let footer = fs::read_to_string("src/templates/partials/footer.html")
         .context("failed to read footer partial")?;
     let header = fs::read_to_string("src/templates/partials/header.html")
@@ -330,9 +332,10 @@ fn load_partials() -> Result<TemplatePartials> {
 
     Ok(TemplatePartials {
         head,
-        theme_controls,
         footer,
         header,
+        theme_switcher,
+        language_selector,
     })
 }
 
@@ -406,7 +409,8 @@ fn process_single_template(
 fn apply_partials(template_content: String, partials: &TemplatePartials) -> String {
     template_content
         .replace("[[HEAD]]", &partials.head)
-        .replace("[[THEME_CONTROLS]]", &partials.theme_controls)
+        .replace("[[THEME_SWITCHER]]", &partials.theme_switcher)
+        .replace("[[LANGUAGE_SELECTOR]]", &partials.language_selector)
         .replace("[[FOOTER]]", &partials.footer)
         .replace("[[HEADER]]", &partials.header)
 }
@@ -429,7 +433,8 @@ fn apply_privacy_content(template_content: String) -> String {
 
 struct TemplatePartials {
     head: String,
-    theme_controls: String,
+    theme_switcher: String,
+    language_selector: String,
     footer: String,
     header: String,
 }

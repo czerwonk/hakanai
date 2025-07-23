@@ -17,7 +17,6 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
         .route("/create-secret.js", web::get().to(serve_create_secret_js))
         .route("/common.js", web::get().to(serve_common_js))
         .route("/docs", web::get().to(serve_docs_html))
-        .route("/docs.js", web::get().to(serve_docs_js))
         .route("/get", web::get().to(serve_get_secret_html))
         .route("/get-secret.js", web::get().to(serve_get_secret_js))
         .route("/hakanai-client.js", web::get().to(serve_js_client))
@@ -121,14 +120,6 @@ async fn serve_docs_html() -> impl Responder {
     serve_with_caching_header(
         include_str!("includes/docs_generated.html").as_bytes(),
         "text/html",
-        VOLATILE_CACHE_MAX_AGE,
-    )
-}
-
-async fn serve_docs_js() -> impl Responder {
-    serve_with_caching_header(
-        include_bytes!("includes/docs.js"),
-        "application/javascript",
         VOLATILE_CACHE_MAX_AGE,
     )
 }
