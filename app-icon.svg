@@ -1,0 +1,86 @@
+<svg width="140" height="140" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <!-- Dark theme gradient background -->
+        <linearGradient id="darkGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#16161d;stop-opacity:1" />
+            <stop offset="25%" style="stop-color:#1a1a23;stop-opacity:1" />
+            <stop offset="50%" style="stop-color:#1f2937;stop-opacity:1" />
+            <stop offset="75%" style="stop-color:#243447;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#2a3f5f;stop-opacity:1" />
+        </linearGradient>
+        
+        <!-- Gradient for brush stroke - starts full at top, fades clockwise -->
+        <linearGradient id="brushFade" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:#7FB4CA;stop-opacity:1" />
+            <stop offset="20%" style="stop-color:#7FB4CA;stop-opacity:1" />
+            <stop offset="40%" style="stop-color:#6BA5D4;stop-opacity:0.8" />
+            <stop offset="60%" style="stop-color:#6BA5D4;stop-opacity:0.5" />
+            <stop offset="80%" style="stop-color:#6BA5D4;stop-opacity:0.2" />
+            <stop offset="95%" style="stop-color:#6BA5D4;stop-opacity:0.05" />
+            <stop offset="100%" style="stop-color:#6BA5D4;stop-opacity:0.02" />
+        </linearGradient>
+
+        <!-- Very subtle radial gradient for center -->
+        <radialGradient id="centerGlow">
+            <stop offset="0%" style="stop-color:#7FB4CA;stop-opacity:0.15" />
+            <stop offset="50%" style="stop-color:#6BA5D4;stop-opacity:0.08" />
+            <stop offset="100%" style="stop-color:#5A8CA8;stop-opacity:0" />
+        </radialGradient>
+
+        <!-- Minimal glow filter -->
+        <filter id="minimalGlow">
+            <feGaussianBlur stdDeviation="0.5" result="coloredBlur"/>
+            <feMerge>
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+        </filter>
+    </defs>
+
+    <!-- Background with gradient and rounded corners -->
+    <rect width="140" height="140" fill="url(#darkGradient)" rx="28" ry="28" />
+
+    <g transform="translate(70,60)">
+        <!-- Calligraphy brush stroke circle with natural fade -->
+        <circle fill="none" 
+                stroke="url(#brushFade)" 
+                stroke-width="3.5" 
+                cx="0" cy="0" r="35" 
+                stroke-linecap="round"
+                stroke-dasharray="2 1 3 0.5 1 2"
+                opacity="0.9" 
+                transform="rotate(180)" />
+
+        <!-- Add calligraphy imperfections -->
+        <circle fill="none" 
+                stroke="#6BA5D4" 
+                stroke-width="1" 
+                cx="0" cy="0" r="35.5" 
+                stroke-dasharray="1 4 0.5 3 2 1"
+                opacity="0.2" 
+                transform="rotate(-85)" />
+
+        <circle fill="none" 
+                stroke="#7FB4CA" 
+                stroke-width="0.8" 
+                cx="0" cy="0" r="34.2" 
+                stroke-dasharray="0.8 2 1.5 1"
+                opacity="0.3" 
+                transform="rotate(-95)" />
+
+        <!-- Hiragana arranged in circle - subtle but visible -->
+        <text x="0" y="-13" fill="#B8E7F9" font-family="'Noto Sans JP', 'Segoe UI', sans-serif" font-size="22" font-weight="500" text-anchor="middle">は</text>
+        <text x="18" y="8" fill="#B8E7F9" font-family="'Noto Sans JP', 'Segoe UI', sans-serif" font-size="22" font-weight="500" text-anchor="middle">か</text>
+        <text x="0" y="28" fill="#B8E7F9" font-family="'Noto Sans JP', 'Segoe UI', sans-serif" font-size="22" font-weight="500" text-anchor="middle">な</text>
+        <text x="-18" y="8" fill="#B8E7F9" font-family="'Noto Sans JP', 'Segoe UI', sans-serif" font-size="22" font-weight="500" text-anchor="middle">い</text>
+
+        <!-- Center node with very subtle presence -->
+        <circle fill="url(#centerGlow)" cx="0" cy="0" r="8" />
+        <circle fill="#7FB4CA" cx="0" cy="0" r="3" opacity="0.7" />
+
+        <!-- Connection lines - more visible to show flow -->
+        <line stroke="#6BA5D4" stroke-width="1" opacity="0.4" x1="0" y1="-28" x2="0" y2="28" />
+        <line stroke="#6BA5D4" stroke-width="1" opacity="0.4" x1="-28" y1="0" x2="28" y2="0" />
+    </g>
+    <text x="70" y="110" fill="#7FB4CA" font-family="'Segoe UI', sans-serif" font-size="16" font-weight="500" text-anchor="middle" letter-spacing="2px" filter="url(#minimalGlow)">hakanai</text>
+</svg>
