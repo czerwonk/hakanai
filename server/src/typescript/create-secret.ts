@@ -479,8 +479,8 @@ function setupTextMode(): void {
   const secretFile = document.getElementById("secretFile") as HTMLInputElement;
 
   if (textInputGroup && fileInputGroup && secretText && secretFile) {
-    showElement(secretText);
-    hideElement(secretFile);
+    showElement(textInputGroup);
+    hideElement(fileInputGroup);
     secretText.required = true;
     secretFile.required = false;
     secretText.focus();
@@ -494,8 +494,8 @@ function setupFileMode(): void {
   const secretFile = document.getElementById("secretFile") as HTMLInputElement;
 
   if (textInputGroup && fileInputGroup && secretText && secretFile) {
-    showElement(secretFile);
-    hideElement(secretText);
+    hideElement(textInputGroup);
+    showElement(fileInputGroup);
     secretText.required = false;
     secretFile.required = true;
     secretFile.focus();
