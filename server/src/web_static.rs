@@ -52,7 +52,7 @@ pub async fn serve_get_secret_html() -> HttpResponse {
     serve_with_caching_header(
         include_bytes!("includes/get-secret.html"),
         "text/html",
-        VOLATILE_CACHE_MAX_AGE,
+        HIGHLY_VOLATILE_CACHE_MAX_AGE,
     )
 }
 
@@ -60,7 +60,7 @@ async fn serve_create_secret_html() -> HttpResponse {
     serve_with_caching_header(
         include_bytes!("includes/create-secret.html"),
         "text/html",
-        VOLATILE_CACHE_MAX_AGE,
+        HIGHLY_VOLATILE_CACHE_MAX_AGE,
     )
 }
 
