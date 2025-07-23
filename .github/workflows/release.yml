@@ -15,8 +15,8 @@ jobs:
   test-check:
     uses: ./.github/workflows/test.yml
 
-  precompile-typescript:
-    name: Pre-compile TypeScript
+  precompile-assets:
+    name: Pre-compile TypeScript and WASM
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -27,21 +27,37 @@ jobs:
         with:
           node-version: "24"
 
-      - name: Install TypeScript
-        run: npm install -g typescript
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lld
+
+      - name: Install wasm-pack
+        run: cargo install wasm-pack
+
+      - name: Add wasm32 target
+        run: rustup target add wasm32-unknown-unknown
+
+      - name: Ensure npm modules are installed
+        run: npm install
 
       - name: Compile TypeScript
-        run: tsc
+        run: npx rollup -c
 
-      - name: Upload compiled JavaScript
+      - name: Compile WASM
+        run: cd wasm && ./build.sh
+
+      - name: Upload compiled assets
         uses: actions/upload-artifact@v4
         with:
-          name: compiled-js
-          path: server/src/includes/*.js
+          name: compiled-assets
+          path: |
+            server/src/includes/*.js
+            server/src/includes/wasm/*
 
   build:
     name: Build - ${{ matrix.platform.release_for }}
-    needs: [lint-check, test-check, precompile-typescript]
+    needs: [lint-check, test-check, precompile-assets]
     strategy:
       matrix:
         platform:
@@ -71,14 +87,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Download pre-compiled JavaScript
+      - name: Download pre-compiled assets
         uses: actions/download-artifact@v4
         with:
-          name: compiled-js
+          name: compiled-assets
           path: server/src/includes/
 
-      - name: Set SKIP_TYPESCRIPT_BUILD
-        run: echo "SKIP_TYPESCRIPT_BUILD=1" >> $GITHUB_ENV
+      - name: Set skip build flags
+        run: |
+          echo "SKIP_TYPESCRIPT_BUILD=1" >> $GITHUB_ENV
+          echo "SKIP_WASM_BUILD=1" >> $GITHUB_ENV
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable

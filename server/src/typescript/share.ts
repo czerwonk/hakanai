@@ -4,22 +4,16 @@
  */
 
 import { HakanaiClient } from "./hakanai-client.js";
+import { initI18n } from "./core/i18n.js";
 import {
   formatFileSize,
   formatTTL,
   sanitizeFileName,
-  displaySuccessResult,
-} from "./common-utils.js";
-import { ShareData, ShareDataError } from "./types.js";
-
-// Declare window.i18n
-declare global {
-  interface Window {
-    i18n: {
-      t(key: string): string;
-    };
-  }
-}
+} from "./core/formatters.js";
+import { hideElement, showElement } from "./core/dom-utils";
+import { displaySuccessResult } from "./components/success-display.js";
+import { ShareData, ShareDataError } from "./core/types.js";
+import { initFeatures } from "./core/app-config";
 
 let sharePayload: ShareData | null = null;
 
@@ -28,7 +22,8 @@ let sharePayload: ShareData | null = null;
  */
 function showLoading(message: string): void {
   document.getElementById("loading-text")!.textContent = message;
-  document.getElementById("loading")!.style.display = "block";
+  const loading = document.getElementById("loading")!;
+  showElement(loading);
   hideOtherSections("loading");
 }
 
@@ -36,7 +31,8 @@ function showLoading(message: string): void {
  * Hide loading state
  */
 function hideLoading(): void {
-  document.getElementById("loading")!.style.display = "none";
+  const loading = document.getElementById("loading")!;
+  hideElement(loading);
 }
 
 /**
@@ -52,7 +48,8 @@ function hideOtherSections(except: string): void {
   ];
   sections.forEach((section) => {
     if (section !== except) {
-      document.getElementById(section)!.style.display = "none";
+      const element = document.getElementById(section)!;
+      hideElement(element);
     }
   });
 }
@@ -77,12 +74,13 @@ function showShareContent(payload: ShareData): void {
     const sanitizedFilename = sanitizeFileName(payload.filename);
     document.getElementById("content-filename")!.textContent =
       sanitizedFilename || "Invalid filename";
-    filenameRow.style.display = "block";
+    showElement(filenameRow);
   } else {
-    filenameRow.style.display = "none";
+    hideElement(filenameRow);
   }
 
-  document.getElementById("clipboard-content")!.style.display = "block";
+  const clipboardContent = document.getElementById("clipboard-content")!;
+  showElement(clipboardContent);
   hideOtherSections("clipboard-content");
 }
 
@@ -91,7 +89,8 @@ function showShareContent(payload: ShareData): void {
  */
 function showClipboardError(message: string): void {
   document.getElementById("error-message")!.textContent = message;
-  document.getElementById("clipboard-error")!.style.display = "block";
+  const clipboardError = document.getElementById("clipboard-error")!;
+  showElement(clipboardError);
   hideOtherSections("clipboard-error");
 }
 
@@ -249,6 +248,8 @@ async function createSecret(): Promise<void> {
  * Initialize the page
  */
 function init(): void {
+  initI18n();
+  initFeatures();
   // Always add event listeners first
   document
     .getElementById("read-clipboard")
@@ -276,7 +277,8 @@ function init(): void {
   }
 
   // Show permission prompt for clipboard access
-  document.getElementById("permission-prompt")!.style.display = "block";
+  const permissionPrompt = document.getElementById("permission-prompt")!;
+  showElement(permissionPrompt);
   hideOtherSections("permission-prompt");
 
   // Auto-read if auto parameter is present (clipboard only)

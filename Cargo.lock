@@ -479,6 +479,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "46c5e41b57b8bba42a04676d81cb89e9ee8e859a1a66f80a5a72e1cb76b34d43"
 
 [[package]]
+name = "bytemuck"
+version = "1.23.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5c76a5792e44e4abe34d3abf15636779261d45a7450612059293d1d2cfc63422"
+
+[[package]]
+name = "byteorder-lite"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8f1fe948ff07f4bd06c30984e69f5b4899c516a3ef74f34df92a2df2ab535495"
+
+[[package]]
 name = "bytes"
 version = "1.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1024,7 +1036,7 @@ dependencies = [
 
 [[package]]
 name = "hakanai"
-version = "2.4.4"
+version = "2.5.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1043,7 +1055,7 @@ dependencies = [
 
 [[package]]
 name = "hakanai-lib"
-version = "2.4.4"
+version = "2.5.0"
 dependencies = [
  "aes-gcm",
  "async-stream",
@@ -1065,7 +1077,7 @@ dependencies = [
 
 [[package]]
 name = "hakanai-server"
-version = "2.4.6"
+version = "2.5.0"
 dependencies = [
  "actix-cors",
  "actix-web",
@@ -1095,6 +1107,14 @@ dependencies = [
  "tracing-opentelemetry",
  "tracing-subscriber",
  "uuid",
+]
+
+[[package]]
+name = "hakanai-wasm"
+version = "2.5.0"
+dependencies = [
+ "qrcode",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -1411,6 +1431,17 @@ checksum = "3acae9609540aa318d1bc588455225fb2085b9ed0c4f6bd0d9d5bcd86f1a0344"
 dependencies = [
  "icu_normalizer",
  "icu_properties",
+]
+
+[[package]]
+name = "image"
+version = "0.25.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "db35664ce6b9810857a38a906215e75a9c879f0696556a39f59c62829710251a"
+dependencies = [
+ "bytemuck",
+ "byteorder-lite",
+ "num-traits",
 ]
 
 [[package]]
@@ -2062,6 +2093,15 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "qrcode"
+version = "0.14.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d68782463e408eb1e668cf6152704bd856c78c5b6417adaee3203d8f4c1fc9ec"
+dependencies = [
+ "image",
 ]
 
 [[package]]

@@ -174,13 +174,9 @@ describe("get-secret.ts", () => {
       expect(typeof UI_STRINGS.RETRIEVE_FAILED).toBe("string");
       expect(typeof UI_STRINGS.SUCCESS_TITLE).toBe("string");
       expect(typeof UI_STRINGS.ERROR_TITLE).toBe("string");
-      expect(typeof UI_STRINGS.COPY_TEXT).toBe("string");
       expect(typeof UI_STRINGS.COPY_FAILED).toBe("string");
-      expect(typeof UI_STRINGS.DOWNLOAD_TEXT).toBe("string");
       expect(typeof UI_STRINGS.NOTE_TEXT).toBe("string");
       expect(typeof UI_STRINGS.BINARY_DETECTED).toBe("string");
-      expect(typeof UI_STRINGS.COPY_ARIA).toBe("string");
-      expect(typeof UI_STRINGS.DOWNLOAD_ARIA).toBe("string");
       expect(typeof UI_STRINGS.FILENAME_LABEL).toBe("string");
 
       // Test that strings are not empty

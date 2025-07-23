@@ -1,5 +1,5 @@
 // Error Types
-import { HakanaiError } from "./hakanai-client.js";
+import { HakanaiError } from "../hakanai-client.js";
 
 export interface StandardError extends Error {
   readonly name: string;

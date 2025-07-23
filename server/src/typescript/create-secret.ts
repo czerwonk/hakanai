@@ -2,19 +2,22 @@ import {
   HakanaiClient,
   HakanaiErrorCodes,
   type PayloadData,
-} from "./hakanai-client.js";
+} from "./hakanai-client";
+import { initI18n } from "./core/i18n";
 import {
   announceToScreenReader,
   secureInputClear,
-  initTheme,
-  updateThemeToggleButton,
+  showElement,
+  hideElement,
+} from "./core/dom-utils";
+import { initTheme, updateThemeToggleButton } from "./core/theme";
+import {
   saveAuthTokenToStorage,
   getAuthTokenFromStorage,
   clearAuthTokenStorage,
-  formatFileSize,
-  sanitizeFileName,
-  displaySuccessResult,
-} from "./common-utils.js";
+} from "./core/auth-storage";
+import { formatFileSize, sanitizeFileName } from "./core/formatters";
+import { displaySuccessResult } from "./components/success-display";
 import {
   type RequiredElements,
   type FileElements,
@@ -22,7 +25,8 @@ import {
   isHakanaiError,
   isStandardError,
   isErrorLike,
-} from "./types.js";
+} from "./core/types";
+import { initFeatures } from "./core/app-config";
 
 interface UIStrings {
   EMPTY_SECRET: string;
@@ -30,8 +34,6 @@ interface UIStrings {
   CREATE_FAILED: string;
   SUCCESS_TITLE: string;
   ERROR_TITLE: string;
-  COPY_TEXT: string;
-  COPIED_TEXT: string;
   COPY_FAILED: string;
   NOTE_TEXT: string;
   SHARE_INSTRUCTIONS: string;
@@ -49,8 +51,6 @@ const UI_STRINGS: UIStrings = {
   CREATE_FAILED: "Failed to create secret",
   SUCCESS_TITLE: "Secret Created Successfully",
   ERROR_TITLE: "Error",
-  COPY_TEXT: "Copy URL",
-  COPIED_TEXT: "Copied!",
   COPY_FAILED: "Failed to copy. Please select and copy manually.",
   NOTE_TEXT:
     "Note: Share this URL carefully. The secret will be deleted after the first access or when it expires.",
@@ -86,8 +86,6 @@ function updateUIStrings(): void {
   UI_STRINGS.CREATE_FAILED = window.i18n.t("msg.createFailed");
   UI_STRINGS.SUCCESS_TITLE = window.i18n.t("msg.successTitle");
   UI_STRINGS.ERROR_TITLE = window.i18n.t("msg.errorTitle");
-  UI_STRINGS.COPY_TEXT = window.i18n.t("button.copy");
-  UI_STRINGS.COPIED_TEXT = window.i18n.t("button.copied");
   UI_STRINGS.COPY_FAILED = window.i18n.t("msg.copyFailed");
   UI_STRINGS.NOTE_TEXT = window.i18n.t("msg.createNote");
   UI_STRINGS.SHARE_INSTRUCTIONS = window.i18n.t("msg.shareInstructions");
@@ -221,11 +219,9 @@ function setElementsState(elements: Elements, disabled: boolean): void {
   } = elements;
 
   if (disabled) {
-    loadingDiv.classList.add("visible");
-    loadingDiv.classList.remove("hidden");
+    showElement(loadingDiv);
   } else {
-    loadingDiv.classList.add("hidden");
-    loadingDiv.classList.remove("visible");
+    hideElement(loadingDiv);
   }
   button.disabled = disabled;
   secretInput.disabled = disabled;
@@ -336,7 +332,7 @@ async function createSecret(): Promise<void> {
 function hideForm(): void {
   const form = document.getElementById("create-secret-form");
   if (form) {
-    form.classList.add("hidden");
+    hideElement(form);
   }
 }
 
@@ -367,7 +363,7 @@ function resetToCreateMode(): void {
   const resultContainer = document.getElementById("result");
 
   if (form) {
-    form.classList.remove("hidden");
+    showElement(form);
   }
   if (resultContainer) {
     resultContainer.innerHTML = "";
@@ -410,7 +406,7 @@ function showError(message: string): void {
 function showForm(): void {
   const form = document.getElementById("create-secret-form");
   if (form) {
-    form.classList.remove("hidden");
+    showElement(form);
   }
 }
 
@@ -436,28 +432,28 @@ function showFileInfo(file: File, elements: FileElements): void {
 
   fileNameSpan.textContent = sanitizedName || "Invalid filename";
   fileSizeSpan.textContent = `(${formatFileSize(file.size)})`;
-  fileInfoDiv.classList.remove("hidden");
+  showElement(fileInfoDiv);
   fileInfoDiv.className = "file-info";
 }
 
 function hideFileInfo(elements: FileElements): void {
   const { fileInfoDiv } = elements;
-  fileInfoDiv.classList.add("hidden");
+  hideElement(fileInfoDiv);
 }
 
 function switchToFileMode(elements: FileElements): void {
   const { radioGroup, textInputGroup, fileInputGroup, fileRadio } = elements;
 
-  radioGroup.classList.add("hidden");
-  textInputGroup.classList.add("hidden");
-  fileInputGroup.classList.remove("hidden");
+  hideElement(radioGroup);
+  hideElement(textInputGroup);
+  showElement(fileInputGroup);
   fileRadio.checked = true;
 }
 
 function switchToTextMode(elements: FileElements): void {
   const { radioGroup, textRadio } = elements;
 
-  radioGroup.classList.remove("hidden");
+  showElement(radioGroup);
   textRadio.checked = true;
   toggleSecretType();
 }
@@ -483,8 +479,8 @@ function setupTextMode(): void {
   const secretFile = document.getElementById("secretFile") as HTMLInputElement;
 
   if (textInputGroup && fileInputGroup && secretText && secretFile) {
-    textInputGroup.classList.remove("hidden");
-    fileInputGroup.classList.add("hidden");
+    showElement(textInputGroup);
+    hideElement(fileInputGroup);
     secretText.required = true;
     secretFile.required = false;
     secretText.focus();
@@ -498,8 +494,8 @@ function setupFileMode(): void {
   const secretFile = document.getElementById("secretFile") as HTMLInputElement;
 
   if (textInputGroup && fileInputGroup && secretText && secretFile) {
-    textInputGroup.classList.add("hidden");
-    fileInputGroup.classList.remove("hidden");
+    hideElement(textInputGroup);
+    showElement(fileInputGroup);
     secretText.required = false;
     secretFile.required = true;
     secretFile.focus();
@@ -604,6 +600,7 @@ document.addEventListener("i18nInitialized", () => {
 });
 
 document.addEventListener("DOMContentLoaded", () => {
+  initI18n();
   initTheme();
   updateUIStrings();
   focusSecretInput();
@@ -611,6 +608,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setupRadioHandlers();
   setupFileInputHandler();
   initializeAuthToken();
+  initFeatures();
 });
 
 // Export functions for testing

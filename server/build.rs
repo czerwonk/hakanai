@@ -36,9 +36,14 @@ fn main() -> Result<()> {
     register_files_for_recompilation("src/templates/docs", "html")?;
     register_files_for_recompilation("src/typescript", "ts")?;
     println!("cargo:rerun-if-changed=tsconfig.json");
+    println!("cargo:rerun-if-changed=rollup.config.js");
+    println!("cargo:rerun-if-changed=package.json");
+    println!("cargo:rerun-if-changed=../wasm/src/lib.rs");
+    println!("cargo:rerun-if-changed=../wasm/Cargo.toml");
 
     let start = std::time::Instant::now();
     compile_typescript()?;
+    compile_wasm()?;
     generate_docs()?;
     generate_static_html_files()?;
     println!("cargo:warning=Build completed in {:?}", start.elapsed());
@@ -46,50 +51,110 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn ensure_typescript_is_installed() -> Result<()> {
-    let is_installed = Command::new("tsc")
-        .arg("--version")
+fn ensure_rollup_is_installed() -> Result<()> {
+    let is_installed = Command::new("npx")
+        .args(["rollup", "--version"])
         .output()?
         .status
         .success();
 
     if is_installed {
-        println!("cargo:warning=TypeScript compiler (tsc) is installed");
+        println!("cargo:warning=Rollup bundler is available");
         Ok(())
     } else {
         Err(anyhow!(
-            "TypeScript compiler not available. Install with: npm install -g typescript or set SKIP_TYPESCRIPT_BUILD=1"
+            "Rollup bundler not available. Run 'npm install' first or set SKIP_TYPESCRIPT_BUILD=1"
         ))
     }
 }
 
 fn compile_typescript() -> Result<()> {
-    println!("cargo:warning=Compiling TypeScript files...");
+    println!("cargo:warning=Bundling TypeScript files with Rollup...");
 
     if std::env::var("SKIP_TYPESCRIPT_BUILD").is_ok() {
-        println!("cargo:warning=Skipping TypeScript compilation (SKIP_TYPESCRIPT_BUILD set)");
+        println!("cargo:warning=Skipping TypeScript bundling (SKIP_TYPESCRIPT_BUILD set)");
         return Ok(());
     }
 
-    ensure_typescript_is_installed()?;
+    ensure_rollup_is_installed()?;
 
-    // Compile TypeScript files
-    let output = Command::new("tsc")
-        .current_dir("..") // Run from workspace root where tsconfig.json is located
+    // Bundle TypeScript files with Rollup
+    let output = Command::new("npx")
+        .args(["rollup", "-c"])
+        .current_dir("..") // Run from workspace root where rollup.config.js is located
         .output()?;
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
         let stdout = String::from_utf8_lossy(&output.stdout);
-        println!("cargo:warning=TypeScript compilation failed");
+        println!("cargo:warning=Rollup bundling failed");
         println!("cargo:warning=STDOUT: {stdout}");
         println!("cargo:warning=STDERR: {stderr}");
-        panic!("TypeScript compilation failed: {stderr}");
+        panic!("Rollup bundling failed: {stderr}");
     }
 
     add_cache_busters_to_js_files()?;
 
-    println!("cargo:warning=TypeScript compilation successful");
+    println!("cargo:warning=TypeScript bundling successful");
+    Ok(())
+}
+
+fn compile_wasm() -> Result<()> {
+    println!("cargo:warning=Building WASM module...");
+
+    if std::env::var("SKIP_WASM_BUILD").is_ok() {
+        println!("cargo:warning=Skipping WASM build (SKIP_WASM_BUILD set)");
+        return Ok(());
+    }
+
+    // Check if wasm-pack is installed
+    let wasm_pack_check = Command::new("wasm-pack").args(["--version"]).output();
+
+    if wasm_pack_check.is_err() || !wasm_pack_check?.status.success() {
+        println!(
+            "cargo:warning=wasm-pack not found. Skipping WASM build. Install with: cargo install wasm-pack"
+        );
+        return Ok(());
+    }
+
+    // Build WASM module
+    let output = Command::new("wasm-pack")
+        .args(["build", "--target", "web", "--out-dir", "pkg", "--release"])
+        .current_dir("../wasm")
+        .output()?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        println!("cargo:warning=WASM build failed");
+        println!("cargo:warning=STDOUT: {stdout}");
+        println!("cargo:warning=STDERR: {stderr}");
+        // Don't panic - WASM is optional enhancement
+        println!("cargo:warning=Continuing without WASM support");
+        return Ok(());
+    }
+
+    // Copy WASM files to includes directory
+    fs::create_dir_all("src/includes/wasm")?;
+
+    let wasm_files = [
+        (
+            "../wasm/pkg/hakanai_wasm_bg.wasm",
+            "src/includes/wasm/hakanai_wasm_bg.wasm",
+        ),
+        (
+            "../wasm/pkg/hakanai_wasm.js",
+            "src/includes/wasm/hakanai_wasm.js",
+        ),
+    ];
+
+    for (src, dst) in &wasm_files {
+        if fs::copy(src, dst).is_ok() {
+            println!("cargo:warning=Copied {src} to {dst}");
+        }
+    }
+
+    println!("cargo:warning=WASM module built successfully");
     Ok(())
 }
 
@@ -318,21 +383,21 @@ fn generate_static_html_files() -> Result<()> {
 fn load_partials() -> Result<TemplatePartials> {
     let head = fs::read_to_string("src/templates/partials/head.html")
         .context("failed to read head partial")?;
-    let theme_controls = fs::read_to_string("src/templates/partials/theme-controls.html")
-        .context("failed to read theme-controls partial")?;
+    let theme_switcher = fs::read_to_string("src/templates/partials/theme-switcher.html")
+        .context("failed to read theme-switcher partial")?;
+    let language_selector = fs::read_to_string("src/templates/partials/language-selector.html")
+        .context("failed to read language-selector partial")?;
     let footer = fs::read_to_string("src/templates/partials/footer.html")
         .context("failed to read footer partial")?;
-    let scripts = fs::read_to_string("src/templates/partials/scripts.html")
-        .context("failed to read scripts partial")?;
     let header = fs::read_to_string("src/templates/partials/header.html")
         .context("failed to read header partial")?;
 
     Ok(TemplatePartials {
         head,
-        theme_controls,
         footer,
-        scripts,
         header,
+        theme_switcher,
+        language_selector,
     })
 }
 
@@ -406,9 +471,9 @@ fn process_single_template(
 fn apply_partials(template_content: String, partials: &TemplatePartials) -> String {
     template_content
         .replace("[[HEAD]]", &partials.head)
-        .replace("[[THEME_CONTROLS]]", &partials.theme_controls)
+        .replace("[[THEME_SWITCHER]]", &partials.theme_switcher)
+        .replace("[[LANGUAGE_SELECTOR]]", &partials.language_selector)
         .replace("[[FOOTER]]", &partials.footer)
-        .replace("[[SCRIPTS]]", &partials.scripts)
         .replace("[[HEADER]]", &partials.header)
 }
 
@@ -430,9 +495,9 @@ fn apply_privacy_content(template_content: String) -> String {
 
 struct TemplatePartials {
     head: String,
-    theme_controls: String,
+    theme_switcher: String,
+    language_selector: String,
     footer: String,
-    scripts: String,
     header: String,
 }
 

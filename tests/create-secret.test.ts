@@ -19,28 +19,40 @@ const mockSecureInputClear = jest.fn();
 
 // Import the real sanitizeFileName function
 const { sanitizeFileName } = jest.requireActual(
-  "../server/src/typescript/common-utils",
+  "../server/src/typescript/core/formatters",
 );
 
-jest.mock("../server/src/typescript/common-utils", () => ({
-  createButton: jest.fn(),
-  createButtonContainer: jest.fn(),
-  copyToClipboard: jest.fn(),
+// Mock modular imports
+jest.mock("../server/src/typescript/core/dom-utils", () => ({
   announceToScreenReader: mockAnnounceToScreenReader,
+  secureInputClear: mockSecureInputClear,
+}));
+
+jest.mock("../server/src/typescript/core/theme", () => ({
   initTheme: jest.fn(),
   updateThemeToggleButton: jest.fn(),
+}));
+
+jest.mock("../server/src/typescript/core/auth-storage", () => ({
   saveAuthTokenToStorage: mockSaveAuthTokenToStorage,
   getAuthTokenFromStorage: mockGetAuthTokenFromStorage,
   clearAuthTokenStorage: mockClearAuthTokenStorage,
-  secureInputClear: mockSecureInputClear,
+}));
+
+jest.mock("../server/src/typescript/core/formatters", () => ({
+  formatFileSize: jest.fn(),
   sanitizeFileName, // Use the real implementation
+}));
+
+jest.mock("../server/src/typescript/components/success-display", () => ({
+  displaySuccessResult: jest.fn(),
 }));
 
 const mockIsHakanaiError = jest.fn();
 const mockIsStandardError = jest.fn();
 const mockIsErrorLike = jest.fn();
 
-jest.mock("../server/src/typescript/types", () => ({
+jest.mock("../server/src/typescript/core/types", () => ({
   isHakanaiError: mockIsHakanaiError,
   isStandardError: mockIsStandardError,
   isErrorLike: mockIsErrorLike,

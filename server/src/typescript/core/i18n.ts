@@ -39,6 +39,7 @@ const translations: Translations = {
     "label.size": "Size:",
     "label.expiresIn": "Expires in:",
     "label.contentPreview": "Content Preview",
+    "label.qrCode": "QR Code:",
 
     // Placeholders
     "placeholder.secret": "Enter your secret message here...",
@@ -73,6 +74,7 @@ const translations: Translations = {
     "button.copied": "Copied!",
     "button.copyUrl": "Copy URL",
     "button.copyKey": "Copy Key",
+    "button.copySecret": "Copy Secret",
     "button.download": "Download",
     "button.createAnother": "Create Another",
     "button.chooseFile": "📁 Choose File",
@@ -249,6 +251,7 @@ const translations: Translations = {
     "label.size": "Größe:",
     "label.expiresIn": "Läuft ab in:",
     "label.contentPreview": "Inhaltsvorschau",
+    "label.qrCode": "QR-Code:",
 
     // Placeholders
     "placeholder.secret": "Hier wird gen geheime Text eingegeben...",
@@ -286,6 +289,7 @@ const translations: Translations = {
     "button.copied": "Kopiert!",
     "button.copyUrl": "URL kopieren",
     "button.copyKey": "Schlüssel kopieren",
+    "button.copySecret": "Secret kopieren",
     "button.download": "Herunterladen",
     "button.createAnother": "Neues Secret erstellen",
     "button.chooseFile": "📁 Datei auswählen",
@@ -661,7 +665,16 @@ class I18n {
   private addLanguageChangeListener(switcher: HTMLSelectElement): void {
     switcher.addEventListener("change", (e) => {
       const target = e.target as HTMLSelectElement;
-      this.setLanguage(target.value);
+      const newLang = target.value;
+
+      if (!this.isValidLanguage(newLang)) {
+        return;
+      }
+
+      this.storeLanguage(newLang as LanguageCode);
+
+      // Reload the page to apply the new language across all components
+      window.location.reload();
     });
   }
 
@@ -683,15 +696,9 @@ class I18n {
 }
 
 // Initialize i18n system
-const initializeI18n = (): void => {
+export function initI18n() {
   const i18n = new I18n();
   (window as any).i18n = i18n;
-};
-
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", initializeI18n);
-} else {
-  initializeI18n();
 }
 
 // Note: No exports needed for browser usage - i18n is attached to window.i18n

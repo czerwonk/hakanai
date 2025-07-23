@@ -456,7 +456,9 @@ body[data-theme="light"] .container {
 #language-switcher {
   position: absolute;
   top: var(--spacing-md);
-  right: var(--spacing-md);
+  right: calc(
+    var(--spacing-md) + 2.75rem + var(--spacing-xs)
+  ); /* Position left of theme toggle with small gap */
   background-color: var(--color-bg-container);
   color: var(--color-text);
   border: 1px solid var(--color-border);
@@ -811,9 +813,7 @@ body[data-theme="light"] .action-card {
 #theme-toggle {
   position: absolute;
   top: var(--spacing-md);
-  right: calc(
-    var(--spacing-md) + var(--language-selector-width) + var(--spacing-xs)
-  ); /* Position left of language selector with small gap */
+  right: var(--spacing-md);
   background-color: var(--color-bg-container);
   color: var(--color-text);
   border: 1px solid var(--color-border);
@@ -1450,7 +1450,9 @@ button.loading::after {
   /* Adjust language selector position on mobile */
   #language-switcher {
     top: var(--spacing-xs);
-    right: var(--spacing-xs);
+    right: calc(
+      var(--spacing-xs) + 2.5rem + var(--spacing-xs)
+    ); /* Position left of theme toggle on mobile */
     font-size: 16px; /* Prevents zoom on iOS */
     padding: calc(var(--spacing-xs) / 2) calc(var(--spacing-sm) / 2);
     min-height: 3rem; /* Match other form elements */
@@ -1461,9 +1463,7 @@ button.loading::after {
   /* Adjust theme toggle position on mobile */
   #theme-toggle {
     top: var(--spacing-xs);
-    right: calc(
-      var(--spacing-xs) + var(--language-selector-width) + var(--spacing-xs)
-    ); /* Consistent spacing */
+    right: var(--spacing-xs);
     width: 2.5rem;
     height: 2.5rem;
     font-size: var(--font-size-base);
@@ -1534,6 +1534,77 @@ button.loading::after {
     --color-primary: #7fb4ca;
     --color-border: #dcd7ba;
   }
+}
+
+/* Success result layout improvements */
+.result.success {
+  padding: var(--spacing-xl);
+}
+
+.result.success h3 {
+  margin-bottom: var(--spacing-lg);
+}
+
+.result.success .share-instructions {
+  margin-bottom: var(--spacing-lg);
+}
+
+.url-container {
+  margin-bottom: var(--spacing-lg);
+}
+
+.url-container label {
+  display: block;
+  margin-bottom: var(--spacing-sm);
+  font-weight: 600;
+}
+
+.url-container .input-group {
+  margin-bottom: var(--spacing-lg);
+}
+
+.url-container .url-input {
+  width: 100%;
+  margin-bottom: var(--spacing-sm);
+}
+
+.url-container .input-group .copy-button {
+  margin-right: var(--spacing-sm);
+}
+
+/* QR Code styling */
+.qr-code-section {
+  margin: var(--spacing-lg) 0;
+}
+
+.qr-code-section label {
+  display: block;
+  margin-bottom: var(--spacing-md);
+  font-weight: 600;
+  text-align: center;
+}
+
+.qr-code-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.qr-code-container svg {
+  max-width: 200px;
+  max-height: 200px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  background: white;
+  padding: var(--spacing-md);
+  box-shadow: 0 2px 8px var(--container-shadow);
+}
+
+/* Security note spacing */
+.secret-note {
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-border);
 }
 
 /* Accessibility utilities */
@@ -2042,10 +2113,27 @@ body:has(.privacy-content) {
   display: none !important;
 }
 
-.visible {
-  display: block !important;
+/* File info styling */
+.file-info {
+  margin-top: var(--spacing-sm, 0.75rem);
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #888888);
 }
 
-.loading.visible {
-  display: block !important;
+/* Note element styling */
+.note-element {
+  margin-top: var(--spacing-sm, 0.75rem);
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #888888);
+}
+
+/* Binary message styling */
+.binary-message {
+  margin-bottom: var(--spacing-md, 1rem);
+  color: var(--color-text, #000000);
+}
+
+/* Auto-height textarea */
+.auto-height {
+  height: var(--textarea-height, auto) !important;
 }

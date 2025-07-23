@@ -2,28 +2,27 @@ import {
   HakanaiClient,
   ContentAnalysis,
   type PayloadData,
-} from "./hakanai-client.js";
+} from "./hakanai-client";
+import { initI18n } from "./core/i18n";
 import {
   announceToScreenReader,
-  copyToClipboard,
   createButton,
   createButtonContainer,
   debounce,
-  formatFileSize,
   generateRandomId,
-  initTheme,
+  hideElement,
   secureInputClear,
-  updateThemeToggleButton,
-} from "./common-utils.js";
-import { isHakanaiError, isStandardError, isErrorLike } from "./types.js";
+  showElement,
+} from "./core/dom-utils";
+import { copyToClipboard } from "./core/clipboard";
+import { formatFileSize } from "./core/formatters";
+import { initTheme, updateThemeToggleButton } from "./core/theme";
+import { isHakanaiError, isStandardError, isErrorLike } from "./core/types";
+import { initFeatures } from "./core/app-config";
 
 interface UIStrings {
   BINARY_DETECTED: string;
-  COPY_ARIA: string;
   COPY_FAILED: string;
-  COPY_TEXT: string;
-  DOWNLOAD_ARIA: string;
-  DOWNLOAD_TEXT: string;
   EMPTY_URL: string;
   ERROR_TITLE: string;
   FILENAME_LABEL: string;
@@ -42,11 +41,7 @@ const TIMEOUTS = {
 const UI_STRINGS: UIStrings = {
   BINARY_DETECTED:
     "Binary file detected. Content hidden for security. Use download button to save the file.",
-  COPY_ARIA: "Copy secret to clipboard",
   COPY_FAILED: "Failed to copy. Please select and copy manually.",
-  COPY_TEXT: "Copy Secret",
-  DOWNLOAD_ARIA: "Download secret as file",
-  DOWNLOAD_TEXT: "Download",
   EMPTY_URL: "Please enter a valid secret URL",
   ERROR_TITLE: "Error",
   FILENAME_LABEL: "Filename:",
@@ -80,11 +75,7 @@ function updateUIStrings(): void {
   }
 
   UI_STRINGS.BINARY_DETECTED = window.i18n.t("msg.binaryDetected");
-  UI_STRINGS.COPY_ARIA = window.i18n.t("aria.copySecret");
   UI_STRINGS.COPY_FAILED = window.i18n.t("msg.copyFailed");
-  UI_STRINGS.COPY_TEXT = window.i18n.t("button.copySecret");
-  UI_STRINGS.DOWNLOAD_ARIA = window.i18n.t("aria.downloadSecret");
-  UI_STRINGS.DOWNLOAD_TEXT = window.i18n.t("button.download");
   UI_STRINGS.EMPTY_URL = window.i18n.t("msg.emptyUrl");
   UI_STRINGS.ERROR_TITLE = window.i18n.t("msg.errorTitle");
   UI_STRINGS.FILENAME_LABEL = window.i18n.t("label.filename");
@@ -147,24 +138,26 @@ function clearInputs(): void {
 
 function showLoadingState(): void {
   const { loadingDiv, resultDiv } = getElements();
-  loadingDiv.classList.add("visible");
-  loadingDiv.classList.remove("hidden");
+  showElement(loadingDiv);
+
   resultDiv.innerHTML = "";
+
   document.body.classList.remove("expanded-view");
   setElementsState(true);
 }
 
 function hideLoadingState(): void {
   const { loadingDiv } = getElements();
-  loadingDiv.classList.add("hidden");
-  loadingDiv.classList.remove("visible");
+  hideElement(loadingDiv);
+
   setElementsState(false);
 }
 
 async function processRetrieveRequest(): Promise<void> {
   const { urlInput, keyInput } = getElements();
+
   const url = urlInput.value.trim();
-  const key = keyInput.value.trim();
+  const key = keyInput?.value?.trim() || "";
 
   const processedUrl = normalizeUrl(url);
   const hasFragment = hasUrlFragment(processedUrl);
@@ -227,6 +220,7 @@ function retrieveSecret(): void {
 
 function toggleKeyInputVisibility(): void {
   const { urlInput, keyInputGroup, keyInput } = getElements();
+
   const url = urlInput.value.trim();
 
   if (!url) {
@@ -248,8 +242,7 @@ function hideKeyInput(
   keyInputGroup: HTMLElement,
   keyInput: HTMLInputElement,
 ): void {
-  keyInputGroup.classList.remove("visible");
-  keyInputGroup.classList.add("hidden");
+  hideElement(keyInputGroup);
   keyInput.required = false;
   secureInputClear(keyInput);
 }
@@ -258,8 +251,7 @@ function showKeyInput(
   keyInputGroup: HTMLElement,
   keyInput: HTMLInputElement,
 ): void {
-  keyInputGroup.classList.remove("hidden");
-  keyInputGroup.classList.add("visible");
+  showElement(keyInputGroup);
   keyInput.required = true;
 }
 
@@ -271,7 +263,7 @@ function createTextSecret(
   const container = document.createElement("div");
   container.className = "secret-container";
 
-  const textarea = createSecretTextarea(secretId, payload, decodedBytes);
+  const textarea = createSecretTextarea(secretId, decodedBytes);
   container.appendChild(textarea);
 
   const buttonsContainer = createButtonContainer();
@@ -289,7 +281,6 @@ function createTextSecret(
 
 function createSecretTextarea(
   secretId: string,
-  payload: PayloadData,
   decodedBytes: Uint8Array,
 ): HTMLTextAreaElement {
   const textarea = document.createElement("textarea");
@@ -307,13 +298,16 @@ function createSecretTextarea(
 }
 
 function resizeTextarea(textarea: HTMLTextAreaElement): void {
-  textarea.style.height = "auto";
+  // Use CSS custom properties to set height without inline styles
   const styles = window.getComputedStyle(textarea);
   const minHeight = parseInt(styles.minHeight);
   const maxHeight = parseInt(styles.maxHeight);
   const scrollHeight = textarea.scrollHeight;
-  textarea.style.height =
-    Math.min(Math.max(scrollHeight, minHeight), maxHeight) + "px";
+  const height = Math.min(Math.max(scrollHeight, minHeight), maxHeight);
+
+  // Set CSS custom property instead of inline style
+  textarea.style.setProperty("--textarea-height", height + "px");
+  textarea.classList.add("auto-height");
 }
 
 function createBinarySecret(
@@ -324,8 +318,7 @@ function createBinarySecret(
   container.className = "secret-container";
 
   const message = document.createElement("p");
-  message.style.marginBottom = "var(--spacing-md, 1rem)";
-  message.style.color = "var(--color-text, #000000)";
+  message.className = "binary-message";
   message.textContent = UI_STRINGS.BINARY_DETECTED;
   container.appendChild(message);
 
@@ -341,8 +334,8 @@ function createBinarySecret(
 function createCopyButton(secretId: string): HTMLButtonElement {
   return createButton(
     "copy-button",
-    UI_STRINGS.COPY_TEXT,
-    UI_STRINGS.COPY_ARIA,
+    window.i18n?.t("button.copySecret") || "Copy Secret",
+    window.i18n?.t("aria.copySecret") || "Copy secret to clipboard",
     function (this: HTMLButtonElement) {
       copySecret(secretId, this);
     },
@@ -356,17 +349,15 @@ function createDownloadButton(
 ): HTMLButtonElement {
   return createButton(
     "download-button",
-    UI_STRINGS.DOWNLOAD_TEXT,
-    UI_STRINGS.DOWNLOAD_ARIA,
+    window.i18n?.t("button.download") || "Download",
+    window.i18n?.t("aria.downloadSecret") || "Download secret as file",
     () => downloadSecret(payload, decodedBytes, isBinary),
   );
 }
 
 function createFilenameInfo(filename: string, size: number): HTMLElement {
   const fileInfo = document.createElement("p");
-  fileInfo.style.marginTop = "var(--spacing-sm, 0.75rem)";
-  fileInfo.style.fontSize = "0.875rem";
-  fileInfo.style.color = "var(--color-text-muted, #888888)";
+  fileInfo.className = "file-info";
 
   const fileLabel = document.createElement("strong");
   fileLabel.textContent = UI_STRINGS.FILENAME_LABEL + " ";
@@ -383,9 +374,7 @@ function createFilenameInfo(filename: string, size: number): HTMLElement {
 
 function createNoteElement(): HTMLElement {
   const note = document.createElement("p");
-  note.style.marginTop = "var(--spacing-sm, 0.75rem)";
-  note.style.fontSize = "0.875rem";
-  note.style.color = "var(--color-text-muted, #888888)";
+  note.className = "note-element";
 
   const strong = document.createElement("strong");
   strong.textContent = window.i18n.t("msg.retrieveNote").split(":")[0] + ":";
@@ -399,6 +388,7 @@ function createNoteElement(): HTMLElement {
 
 function showSuccess(payload: PayloadData): void {
   const { resultDiv } = getElements();
+
   resultDiv.className = "result success";
   resultDiv.innerHTML = "";
 
@@ -427,6 +417,7 @@ function showSuccess(payload: PayloadData): void {
 
 function showError(message: string): void {
   const { resultDiv } = getElements();
+
   resultDiv.className = "result error";
   resultDiv.innerHTML = "";
   document.body.classList.remove("expanded-view");
@@ -480,7 +471,7 @@ function downloadSecret(
   const url = window.URL.createObjectURL(blob);
 
   const anchor = document.createElement("a");
-  anchor.classList.add("hidden");
+  hideElement(anchor);
   anchor.href = url;
   anchor.download = filename;
 
@@ -497,8 +488,6 @@ function downloadSecret(
 
 function setupUrlInput(): void {
   const urlInput = document.getElementById("secretUrl") as HTMLInputElement;
-  if (!urlInput) return;
-
   urlInput.placeholder = `${baseUrl}/s/uuid#key`;
 
   if (window.location.pathname.match(/^\/s\/[^\/]+$/)) {
@@ -533,10 +522,12 @@ document.addEventListener("i18nInitialized", () => {
 });
 
 document.addEventListener("DOMContentLoaded", () => {
+  initI18n();
   initTheme();
-  updateUIStrings();
   setupForm();
   setupUrlInput();
+  updateUIStrings();
+  initFeatures();
 });
 
 // Export functions for testing
