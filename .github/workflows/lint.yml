@@ -29,7 +29,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y lld
       - name: Install wasm-pack
-        run: cargo install wasm-pack
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
       - name: Add wasm32 target
         run: rustup target add wasm32-unknown-unknown
       - name: Ensure npm modules are installed
