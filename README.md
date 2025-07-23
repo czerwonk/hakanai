@@ -234,7 +234,7 @@ https://hakanai.example.com/share#data=base64data&filename=test.txt&token=authto
 4. **Click "Create Secret"** - encrypts client-side and generates the shareable URL
 5. **URL is copied to clipboard** automatically for easy sharing
 
-**iOS Shortcuts Integration**: Use fragment URLs for small secrets (< 5KB) or clipboard method for larger content. Both maintain zero-knowledge architecture.
+**iOS Shortcuts Integration**: Use fragment URLs for small secrets (< 5KB) or clipboard method for larger content. Both maintain zero-knowledge architecture. For detailed setup instructions and the ready-to-use shortcut file, see [docs/shortcuts-README.md](docs/shortcuts-README.md).
 
 ## API Reference
 
