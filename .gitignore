@@ -38,4 +38,6 @@ server/src/includes/privacy.html
 server/src/includes/share.html
 
 # TypeScript compiled JavaScript files
-server/src/includes/**./*.js
+server/src/includes/*.js
+server/src/includes/components/
+server/src/includes/core/
