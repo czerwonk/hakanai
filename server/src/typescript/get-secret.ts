@@ -4,34 +4,34 @@ import {
   type PayloadData,
 } from "./hakanai-client.js";
 import {
+  announceToScreenReader,
+  copyToClipboard,
   createButton,
   createButtonContainer,
-  copyToClipboard,
-  announceToScreenReader,
-  secureInputClear,
   debounce,
-  initTheme,
-  updateThemeToggleButton,
   formatFileSize,
+  generateRandomId,
+  initTheme,
+  secureInputClear,
+  updateThemeToggleButton,
 } from "./common-utils.js";
 import { isHakanaiError, isStandardError, isErrorLike } from "./types.js";
 
 interface UIStrings {
-  EMPTY_URL: string;
-  INVALID_URL: string;
-  MISSING_KEY: string;
-  RETRIEVE_FAILED: string;
-  SUCCESS_TITLE: string;
-  ERROR_TITLE: string;
-  COPY_TEXT: string;
-  COPIED_TEXT: string;
-  COPY_FAILED: string;
-  DOWNLOAD_TEXT: string;
-  NOTE_TEXT: string;
   BINARY_DETECTED: string;
   COPY_ARIA: string;
+  COPY_FAILED: string;
+  COPY_TEXT: string;
   DOWNLOAD_ARIA: string;
+  DOWNLOAD_TEXT: string;
+  EMPTY_URL: string;
+  ERROR_TITLE: string;
   FILENAME_LABEL: string;
+  INVALID_URL: string;
+  MISSING_KEY: string;
+  NOTE_TEXT: string;
+  RETRIEVE_FAILED: string;
+  SUCCESS_TITLE: string;
 }
 
 const TIMEOUTS = {
@@ -40,24 +40,23 @@ const TIMEOUTS = {
 } as const;
 
 const UI_STRINGS: UIStrings = {
-  EMPTY_URL: "Please enter a valid secret URL",
-  INVALID_URL:
-    "Invalid URL format. Please include the full URL with the secret key after #",
-  MISSING_KEY: "Please enter the decryption key",
-  RETRIEVE_FAILED: "Failed to retrieve secret",
-  SUCCESS_TITLE: "Secret Retrieved Successfully",
-  ERROR_TITLE: "Error",
-  COPY_TEXT: "Copy",
-  COPIED_TEXT: "Copied!",
-  COPY_FAILED: "Failed to copy. Please select and copy manually.",
-  DOWNLOAD_TEXT: "Download",
-  NOTE_TEXT:
-    "Note: This secret has been deleted from the server and cannot be accessed again.",
   BINARY_DETECTED:
     "Binary file detected. Content hidden for security. Use download button to save the file.",
   COPY_ARIA: "Copy secret to clipboard",
+  COPY_FAILED: "Failed to copy. Please select and copy manually.",
+  COPY_TEXT: "Copy Secret",
   DOWNLOAD_ARIA: "Download secret as file",
+  DOWNLOAD_TEXT: "Download",
+  EMPTY_URL: "Please enter a valid secret URL",
+  ERROR_TITLE: "Error",
   FILENAME_LABEL: "Filename:",
+  INVALID_URL:
+    "Invalid URL format. Please include the full URL with the secret key after #",
+  MISSING_KEY: "Please enter the decryption key",
+  NOTE_TEXT:
+    "Note: This secret has been deleted from the server and cannot be accessed again.",
+  RETRIEVE_FAILED: "Failed to retrieve secret",
+  SUCCESS_TITLE: "Secret Retrieved Successfully",
 };
 
 const baseUrl = window.location.origin.includes("file://")
@@ -80,21 +79,20 @@ function updateUIStrings(): void {
     return;
   }
 
-  UI_STRINGS.EMPTY_URL = window.i18n.t("msg.emptyUrl");
-  UI_STRINGS.INVALID_URL = window.i18n.t("msg.invalidUrl");
-  UI_STRINGS.MISSING_KEY = window.i18n.t("msg.missingKey");
-  UI_STRINGS.RETRIEVE_FAILED = window.i18n.t("msg.retrieveFailed");
-  UI_STRINGS.SUCCESS_TITLE = window.i18n.t("msg.successTitle");
-  UI_STRINGS.ERROR_TITLE = window.i18n.t("msg.errorTitle");
-  UI_STRINGS.COPY_TEXT = window.i18n.t("button.copy");
-  UI_STRINGS.COPIED_TEXT = window.i18n.t("button.copied");
-  UI_STRINGS.COPY_FAILED = window.i18n.t("msg.copyFailed");
-  UI_STRINGS.DOWNLOAD_TEXT = window.i18n.t("button.download");
-  UI_STRINGS.NOTE_TEXT = window.i18n.t("msg.retrieveNote");
   UI_STRINGS.BINARY_DETECTED = window.i18n.t("msg.binaryDetected");
   UI_STRINGS.COPY_ARIA = window.i18n.t("aria.copySecret");
+  UI_STRINGS.COPY_FAILED = window.i18n.t("msg.copyFailed");
+  UI_STRINGS.COPY_TEXT = window.i18n.t("button.copySecret");
   UI_STRINGS.DOWNLOAD_ARIA = window.i18n.t("aria.downloadSecret");
+  UI_STRINGS.DOWNLOAD_TEXT = window.i18n.t("button.download");
+  UI_STRINGS.EMPTY_URL = window.i18n.t("msg.emptyUrl");
+  UI_STRINGS.ERROR_TITLE = window.i18n.t("msg.errorTitle");
   UI_STRINGS.FILENAME_LABEL = window.i18n.t("label.filename");
+  UI_STRINGS.INVALID_URL = window.i18n.t("msg.invalidUrl");
+  UI_STRINGS.MISSING_KEY = window.i18n.t("msg.missingKey");
+  UI_STRINGS.NOTE_TEXT = window.i18n.t("msg.retrieveNote");
+  UI_STRINGS.RETRIEVE_FAILED = window.i18n.t("msg.retrieveFailed");
+  UI_STRINGS.SUCCESS_TITLE = window.i18n.t("msg.successTitle");
 }
 
 function getElements() {
@@ -269,7 +267,7 @@ function createTextSecret(
   payload: PayloadData,
   decodedBytes: Uint8Array,
 ): HTMLElement {
-  const secretId = "secret-" + Date.now();
+  const secretId = "secret-" + generateRandomId();
   const container = document.createElement("div");
   container.className = "secret-container";
 
@@ -453,13 +451,7 @@ function copySecret(secretId: string, button: HTMLButtonElement): void {
     return;
   }
 
-  copyToClipboard(
-    secretElement.value,
-    button,
-    button.textContent || "",
-    UI_STRINGS.COPIED_TEXT,
-    UI_STRINGS.COPY_FAILED,
-  );
+  copyToClipboard(secretElement.value, button);
 }
 
 function generateFilename(payload: PayloadData, isBinary: boolean): string {

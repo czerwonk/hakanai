@@ -4,7 +4,12 @@
  */
 
 import { HakanaiClient } from "./hakanai-client.js";
-import { formatFileSize, formatTTL, sanitizeFileName } from "./common-utils.js";
+import {
+  formatFileSize,
+  formatTTL,
+  sanitizeFileName,
+  displaySuccessResult,
+} from "./common-utils.js";
 import { ShareData, ShareDataError } from "./types.js";
 
 // Declare window.i18n
@@ -94,8 +99,16 @@ function showClipboardError(message: string): void {
  * Show success result
  */
 function showSuccess(url: string): void {
-  document.getElementById("secret-url")!.textContent = url;
-  document.getElementById("result-success")!.style.display = "block";
+  const resultContainer = document.getElementById("result-success");
+  if (!resultContainer) {
+    console.error("Result container not found");
+    return;
+  }
+
+  displaySuccessResult(url, {
+    container: resultContainer,
+    separateKeyMode: false,
+  });
   hideOtherSections("result-success");
 }
 
@@ -233,39 +246,6 @@ async function createSecret(): Promise<void> {
 }
 
 /**
- * Copy URL to clipboard
- */
-async function copyUrl(): Promise<void> {
-  const urlElement = document.getElementById("secret-url");
-  const copyButton = document.getElementById("copy-url") as HTMLButtonElement;
-
-  if (!urlElement || !copyButton) return;
-
-  try {
-    await navigator.clipboard.writeText(urlElement.textContent || "");
-
-    // Show feedback
-    const originalText = copyButton.textContent;
-    copyButton.textContent = "Copied!";
-    copyButton.classList.add("copied");
-
-    setTimeout(() => {
-      copyButton.textContent = originalText;
-      copyButton.classList.remove("copied");
-    }, 2000);
-  } catch (error) {
-    console.error("Failed to copy:", error);
-    copyButton.textContent = "Copy Failed";
-    copyButton.classList.add("copy-failed");
-
-    setTimeout(() => {
-      copyButton.textContent = "Copy URL";
-      copyButton.classList.remove("copy-failed");
-    }, 2000);
-  }
-}
-
-/**
  * Initialize the page
  */
 function init(): void {
@@ -276,7 +256,6 @@ function init(): void {
   document
     .getElementById("share-button")
     ?.addEventListener("click", createSecret);
-  document.getElementById("copy-url")?.addEventListener("click", copyUrl);
 
   // Check for fragment data first
   const fragment = window.location.hash.substring(1);

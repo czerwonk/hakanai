@@ -1,4 +1,3 @@
-// Constants
 const SCREEN_READER_ANNOUNCEMENT_TIMEOUT = 1000;
 const COPY_FEEDBACK_TIMEOUT = 2000;
 const THEME_KEY = "hakanai-theme";
@@ -39,6 +38,21 @@ export function formatTTL(seconds: number): string {
 }
 
 /**
+ * Sanitize filename by removing invalid characters and limiting length
+ * @param fileName - Original filename to sanitize
+ * @returns Sanitized filename or null if invalid
+ */
+export function sanitizeFileName(fileName: string): string | null {
+  const sanitized = fileName
+    .replace(/[<>:"/\\|?*\x00-\x1f]/g, "_")
+    .replace(/^\.+/, "")
+    .substring(0, 255)
+    .trim();
+
+  return sanitized.length > 0 ? sanitized : null;
+}
+
+/**
  * Create a button element with consistent styling and accessibility
  * @param className - CSS class for the button
  * @param text - Button text content
@@ -72,20 +86,17 @@ export function createButtonContainer(): HTMLDivElement {
  * @param text - Text to copy to clipboard
  * @param button - Button element to show feedback on
  * @param originalText - Original button text to restore
- * @param successMessage - Message to show on successful copy
- * @param failedMessage - Message to announce on failure
  */
-export function copyToClipboard(
-  text: string,
-  button: HTMLButtonElement,
-  originalText: string,
-  successMessage: string,
-  failedMessage: string,
-): void {
+export function copyToClipboard(text: string, button: HTMLButtonElement): void {
+  const originalText = button.textContent || "Copy";
   navigator.clipboard
     .writeText(text)
-    .then(() => showCopySuccess(button, originalText, successMessage))
-    .catch(() => showCopyFailure(button, originalText, failedMessage));
+    .then(() =>
+      showCopySuccess(button, originalText, window.i18n?.t("button.copied")),
+    )
+    .catch(() =>
+      showCopyFailure(button, originalText, window.i18n?.t("msg.copyFailed")),
+    );
 }
 
 function showCopySuccess(
@@ -425,17 +436,347 @@ document.addEventListener("DOMContentLoaded", async () => {
   await initializeUI();
 });
 
-/**
- * Sanitize filename by removing invalid characters and limiting length
- * @param fileName - Original filename to sanitize
- * @returns Sanitized filename or null if invalid
- */
-export function sanitizeFileName(fileName: string): string | null {
-  const sanitized = fileName
-    .replace(/[<>:"/\\|?*\x00-\x1f]/g, "_")
-    .replace(/^\.+/, "")
-    .substring(0, 255)
-    .trim();
+// QR Code Generation Utilities
 
-  return sanitized.length > 0 ? sanitized : null;
+/**
+ * QR Code generator using WebAssembly
+ */
+export class QRCodeGenerator {
+  private static wasmModule: any = null;
+  private static loadPromise: Promise<void> | null = null;
+
+  /**
+   * Ensure WASM module is loaded (loads once, cached for reuse)
+   */
+  static async ensureWasmLoaded(): Promise<void> {
+    if (this.loadPromise) return this.loadPromise;
+
+    this.loadPromise = this.loadWasm();
+    return this.loadPromise;
+  }
+
+  /**
+   * Load the WASM QR code module
+   */
+  private static async loadWasm(): Promise<void> {
+    try {
+      // TODO: Replace with actual WASM module loading when implemented
+      // For now, we'll simulate the interface for development
+      console.debug("QR code WASM module would be loaded here");
+
+      // Simulate successful load for development
+      this.wasmModule = {
+        generate_qr_svg: (url: string) => {
+          // Placeholder implementation - will be replaced with real WASM
+          return `<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
+            <rect width="100" height="100" fill="white"/>
+            <text x="50" y="50" text-anchor="middle" dy=".3em" font-size="8">QR CODE</text>
+            <text x="50" y="65" text-anchor="middle" dy=".3em" font-size="6">(PLACEHOLDER)</text>
+          </svg>`;
+        },
+      };
+    } catch (error) {
+      console.warn("Failed to load QR code WASM module:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Generate QR code SVG for the given URL
+   * @param url - URL to encode in QR code
+   * @returns SVG string or null if generation failed
+   */
+  static generateQRCode(url: string): string | null {
+    if (!this.wasmModule) return null;
+
+    try {
+      return this.wasmModule.generate_qr_svg(url);
+    } catch (error) {
+      console.warn("QR code generation failed:", error);
+      return null;
+    }
+  }
+}
+
+// Unified Success Display Components
+
+/**
+ * Options for success result display
+ */
+interface SuccessDisplayOptions {
+  separateKeyMode?: boolean;
+  container: HTMLElement;
+}
+
+declare global {
+  interface Window {
+    i18n: {
+      t(key: string): string;
+    };
+  }
+}
+
+/**
+ * Display unified success result with URL, QR code, and security note
+ * @param url - The secret URL to display
+ * @param options - Configuration options
+ */
+export function displaySuccessResult(
+  url: string,
+  options: SuccessDisplayOptions,
+): void {
+  const { container } = options;
+
+  container.className = "result success";
+  container.innerHTML = "";
+
+  // 1. Success header with instructions - ALWAYS shown
+  createSuccessHeader(container);
+
+  // 2. URL display (with separate key support)
+  createUrlSection(container, url, options.separateKeyMode);
+
+  // 3. QR Code section - ALWAYS attempted
+  createQRCodeSection(container, url);
+
+  // 4. Note section - ALWAYS shown for security
+  createNoteSection(container);
+}
+
+/**
+ * Create success header with title and instructions
+ */
+function createSuccessHeader(container: HTMLElement): void {
+  const title = document.createElement("h3");
+  title.textContent =
+    window.i18n?.t("msg.successTitle") || "Secret Created Successfully";
+  container.appendChild(title);
+
+  const instructions = document.createElement("p");
+  instructions.className = "share-instructions";
+  instructions.textContent =
+    window.i18n?.t("msg.shareInstructions") ||
+    "Share this URL with the intended recipient. The secret is encrypted and can only be accessed once.";
+  container.appendChild(instructions);
+}
+
+/**
+ * Create URL display section with copy functionality
+ */
+function createUrlSection(
+  container: HTMLElement,
+  url: string,
+  separateKeyMode?: boolean,
+): void {
+  const urlContainer = document.createElement("div");
+  urlContainer.className = "url-container";
+
+  if (separateKeyMode) {
+    createSeparateUrlDisplay(urlContainer, url);
+  } else {
+    createCombinedUrlDisplay(urlContainer, url);
+  }
+
+  container.appendChild(urlContainer);
+}
+
+/**
+ * Create combined URL display (traditional mode)
+ */
+function createCombinedUrlDisplay(container: HTMLElement, url: string): void {
+  const urlId = generateRandomId();
+
+  const label = document.createElement("label");
+  label.textContent = window.i18n?.t("label.secretUrl") || "Secret URL:";
+  label.setAttribute("for", urlId);
+  container.appendChild(label);
+
+  const inputContainer = document.createElement("div");
+  inputContainer.className = "input-group";
+
+  const urlInput = document.createElement("input");
+  urlInput.type = "text";
+  urlInput.id = urlId;
+  urlInput.value = url;
+  urlInput.readOnly = true;
+  urlInput.className = "url-input";
+  inputContainer.appendChild(urlInput);
+
+  const copyButton = createButton(
+    "copy-button",
+    window.i18n?.t("button.copy") || "Copy URL",
+    "Copy secret URL to clipboard",
+    () => copyToClipboardByElementId(urlId, copyButton as HTMLButtonElement),
+  );
+  inputContainer.appendChild(copyButton);
+
+  container.appendChild(inputContainer);
+}
+
+/*
+ * Generate a unique ID to be used for dynamic elements like URL inputs
+ */
+export function generateRandomId(): string {
+  return crypto?.randomUUID && typeof crypto.randomUUID === "function"
+    ? `url-${crypto.randomUUID()}`
+    : `url-${Date.now()}-${Math.random()}`;
+}
+
+/**
+ * Create separate URL and key display (enhanced security mode)
+ */
+function createSeparateUrlDisplay(
+  container: HTMLElement,
+  fullUrl: string,
+): void {
+  const [url, key] = fullUrl.split("#");
+  const id = generateRandomId();
+  const urlId = id;
+  const keyId = id + "-key";
+
+  // URL section
+  const urlLabel = document.createElement("label");
+  urlLabel.textContent = window.i18n?.t("label.secretUrl") || "Secret URL:";
+  urlLabel.setAttribute("for", urlId);
+  container.appendChild(urlLabel);
+
+  const urlInputContainer = document.createElement("div");
+  urlInputContainer.className = "input-group";
+
+  const urlInput = document.createElement("input");
+  urlInput.type = "text";
+  urlInput.id = urlId;
+  urlInput.value = url;
+  urlInput.readOnly = true;
+  urlInput.className = "url-input";
+  urlInputContainer.appendChild(urlInput);
+
+  const urlCopyButton = createButton(
+    "copy-button",
+    window.i18n?.t("button.copy") || "Copy URL",
+    "Copy secret URL to clipboard",
+    () =>
+      copyToClipboardByElementId(
+        urlInput.id,
+        urlCopyButton as HTMLButtonElement,
+      ),
+  );
+  urlInputContainer.appendChild(urlCopyButton);
+  container.appendChild(urlInputContainer);
+
+  // Key section
+  const keyLabel = document.createElement("label");
+  keyLabel.textContent =
+    window.i18n?.t("label.decryptionKey") || "Decryption Key:";
+  keyLabel.setAttribute("for", keyId);
+  container.appendChild(keyLabel);
+
+  const keyInputContainer = document.createElement("div");
+  keyInputContainer.className = "input-group";
+
+  const keyInput = document.createElement("input");
+  keyInput.type = "text";
+  keyInput.id = keyId;
+  keyInput.value = key;
+  keyInput.readOnly = true;
+  keyInput.className = "url-input";
+  keyInputContainer.appendChild(keyInput);
+
+  const keyCopyButton = createButton(
+    "copy-button",
+    window.i18n?.t("button.copy") || "Copy Key",
+    "Copy decryption key to clipboard",
+    () =>
+      copyToClipboardByElementId(
+        keyInput.id,
+        keyCopyButton as HTMLButtonElement,
+      ),
+  );
+  keyInputContainer.appendChild(keyCopyButton);
+  container.appendChild(keyInputContainer);
+}
+
+function copyToClipboardByElementId(
+  elementId: string,
+  button: HTMLButtonElement,
+): void {
+  const input = document.getElementById(elementId) as HTMLInputElement;
+  if (input) {
+    copyToClipboard(input.value, button);
+  } else {
+    showCopyFailure(
+      button,
+      button.textContent || "Copy",
+      window.i18n?.t("msg.copyFailed"),
+    );
+  }
+}
+
+/**
+ * Create QR code section (with graceful degradation)
+ */
+async function createQRCodeSection(
+  container: HTMLElement,
+  url: string,
+): Promise<void> {
+  try {
+    await QRCodeGenerator.ensureWasmLoaded();
+    const qrSvg = QRCodeGenerator.generateQRCode(url);
+
+    if (qrSvg) {
+      const qrSection = createQRDisplayElement(qrSvg);
+      container.appendChild(qrSection);
+    }
+  } catch (error) {
+    // Silent graceful degradation - no UI indication needed
+    // QR code simply doesn't appear if WASM fails
+    console.debug("QR code not available:", error);
+  }
+}
+
+/**
+ * Create QR code display element
+ */
+function createQRDisplayElement(qrSvg: string): HTMLElement {
+  const qrSection = document.createElement("div");
+  qrSection.className = "qr-code-section";
+
+  const qrLabel = document.createElement("label");
+  qrLabel.textContent = window.i18n?.t("label.qrCode") || "QR Code:";
+  qrSection.appendChild(qrLabel);
+
+  const qrContainer = document.createElement("div");
+  qrContainer.className = "qr-code-container";
+  qrContainer.innerHTML = qrSvg;
+  qrSection.appendChild(qrContainer);
+
+  return qrSection;
+}
+
+/**
+ * Create security note section
+ */
+function createNoteSection(container: HTMLElement): void {
+  const note = document.createElement("p");
+  note.className = "secret-note";
+
+  const noteText =
+    window.i18n?.t("msg.createNote") ||
+    "Note: Share this URL carefully. The secret will be deleted after the first access or when it expires.";
+  const colonIndex = noteText.indexOf(":");
+
+  if (colonIndex > 0) {
+    const strong = document.createElement("strong");
+    strong.textContent = noteText.substring(0, colonIndex + 1);
+    note.appendChild(strong);
+
+    const remaining = document.createTextNode(
+      noteText.substring(colonIndex + 1),
+    );
+    note.appendChild(remaining);
+  } else {
+    note.textContent = noteText;
+  }
+
+  container.appendChild(note);
 }

@@ -14,7 +14,6 @@ describe("get-secret.ts", () => {
             "msg.successTitle": "Secret Retrieved Successfully",
             "msg.errorTitle": "Error",
             "button.copy": "Copy",
-            "button.copied": "Copied!",
             "msg.copyFailed": "Failed to copy",
             "button.download": "Download",
             "msg.retrieveNote": "Note: This secret has been deleted",
@@ -176,7 +175,6 @@ describe("get-secret.ts", () => {
       expect(typeof UI_STRINGS.SUCCESS_TITLE).toBe("string");
       expect(typeof UI_STRINGS.ERROR_TITLE).toBe("string");
       expect(typeof UI_STRINGS.COPY_TEXT).toBe("string");
-      expect(typeof UI_STRINGS.COPIED_TEXT).toBe("string");
       expect(typeof UI_STRINGS.COPY_FAILED).toBe("string");
       expect(typeof UI_STRINGS.DOWNLOAD_TEXT).toBe("string");
       expect(typeof UI_STRINGS.NOTE_TEXT).toBe("string");

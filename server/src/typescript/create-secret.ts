@@ -4,9 +4,6 @@ import {
   type PayloadData,
 } from "./hakanai-client.js";
 import {
-  createButton,
-  createButtonContainer,
-  copyToClipboard,
   announceToScreenReader,
   secureInputClear,
   initTheme,
@@ -16,6 +13,7 @@ import {
   clearAuthTokenStorage,
   formatFileSize,
   sanitizeFileName,
+  displaySuccessResult,
 } from "./common-utils.js";
 import {
   type RequiredElements,
@@ -335,163 +333,11 @@ async function createSecret(): Promise<void> {
   }
 }
 
-function generateUrlId(): string {
-  return crypto?.randomUUID && typeof crypto.randomUUID === "function"
-    ? `url-${crypto.randomUUID()}`
-    : `url-${Date.now()}-${Math.random()}`;
-}
-
 function hideForm(): void {
   const form = document.getElementById("create-secret-form");
   if (form) {
     form.classList.add("hidden");
   }
-}
-
-function createSuccessHeader(container: HTMLElement): void {
-  const title = document.createElement("h3");
-  title.textContent = UI_STRINGS.SUCCESS_TITLE;
-  container.appendChild(title);
-
-  const instructions = document.createElement("p");
-  instructions.className = "share-instructions";
-  instructions.textContent = UI_STRINGS.SHARE_INSTRUCTIONS;
-  container.appendChild(instructions);
-}
-
-function createLabel(
-  text: string,
-  styles?: Partial<CSSStyleDeclaration>,
-): HTMLLabelElement {
-  const label = document.createElement("label");
-  label.textContent = text;
-  label.style.fontWeight = "bold";
-  label.style.marginBottom = "0.5rem";
-  label.style.display = "block";
-
-  if (styles) {
-    Object.assign(label.style, styles);
-  }
-
-  return label;
-}
-
-function createUrlInput(
-  id: string,
-  value: string,
-  ariaLabel: string,
-): HTMLInputElement {
-  const input = document.createElement("input");
-  input.type = "text";
-  input.id = id;
-  input.readOnly = true;
-  input.setAttribute("aria-label", ariaLabel);
-  input.value = value;
-  input.className = "url-display";
-  input.addEventListener("click", () => input.select());
-  return input;
-}
-
-function createCopyButton(
-  text: string,
-  ariaLabel: string,
-  clickHandler: () => void,
-): HTMLButtonElement {
-  return createButton("secondary-button", text, ariaLabel, clickHandler);
-}
-
-function splitSecretUrl(secretUrl: string) {
-  const url = new URL(secretUrl);
-  const key = url.hash.substring(1);
-  url.hash = "";
-  const urlWithoutFragment = url.toString();
-  return { urlWithoutFragment, key };
-}
-
-function createSeparateUrlDisplay(
-  secretUrl: string,
-  urlId: string,
-): HTMLElement {
-  const container = document.createElement("div");
-  container.className = "secret-container";
-
-  const { urlWithoutFragment, key } = splitSecretUrl(secretUrl);
-
-  const urlLabel = createLabel(window.i18n.t("label.url"));
-  container.appendChild(urlLabel);
-
-  const urlDisplay = createUrlInput(urlId, urlWithoutFragment, "Secret URL");
-  container.appendChild(urlDisplay);
-
-  const keyLabel = createLabel(window.i18n.t("label.key"), {
-    marginTop: "1rem",
-  });
-  container.appendChild(keyLabel);
-
-  const keyDisplay = createUrlInput(urlId + "-key", key, "Decryption Key");
-  container.appendChild(keyDisplay);
-
-  const buttonsContainer = createButtonContainer();
-
-  const copyUrlBtn = createCopyButton(
-    window.i18n.t("button.copyUrl"),
-    "Copy secret URL to clipboard",
-    function (this: HTMLButtonElement) {
-      copyUrl(urlId, this);
-    },
-  );
-  buttonsContainer.appendChild(copyUrlBtn);
-
-  const copyKeyBtn = createCopyButton(
-    window.i18n.t("button.copyKey"),
-    "Copy decryption key to clipboard",
-    function (this: HTMLButtonElement) {
-      copyUrl(urlId + "-key", this);
-    },
-  );
-  buttonsContainer.appendChild(copyKeyBtn);
-
-  const createAnotherBtn = createCopyButton(
-    window.i18n.t("button.createAnother"),
-    "Create another secret",
-    resetToCreateMode,
-  );
-  buttonsContainer.appendChild(createAnotherBtn);
-
-  container.appendChild(buttonsContainer);
-  return container;
-}
-
-function createCombinedUrlDisplay(
-  secretUrl: string,
-  urlId: string,
-): HTMLElement {
-  const container = document.createElement("div");
-  container.className = "secret-container";
-
-  const urlDisplay = createUrlInput(urlId, secretUrl, "Secret URL");
-  container.appendChild(urlDisplay);
-
-  const buttonsContainer = createButtonContainer();
-
-  const copyBtn = createCopyButton(
-    UI_STRINGS.COPY_TEXT,
-    "Copy secret URL to clipboard",
-    function (this: HTMLButtonElement) {
-      copyUrl(urlId, this);
-    },
-  );
-  buttonsContainer.appendChild(copyBtn);
-
-  const createAnotherBtn = createCopyButton(
-    window.i18n.t("button.createAnother"),
-    "Create another secret",
-    resetToCreateMode,
-  );
-  buttonsContainer.appendChild(createAnotherBtn);
-
-  container.appendChild(buttonsContainer);
-  return container;
 }
 
 function isSeparateKeyMode(): boolean {
@@ -501,41 +347,6 @@ function isSeparateKeyMode(): boolean {
   return separateKeyCheckbox?.checked || false;
 }
 
-function createUrlDisplaySection(
-  secretUrl: string,
-  urlId: string,
-): HTMLElement {
-  return isSeparateKeyMode()
-    ? createSeparateUrlDisplay(secretUrl, urlId)
-    : createCombinedUrlDisplay(secretUrl, urlId);
-}
-
-function createNoteSection(container: HTMLElement): void {
-  const note = document.createElement("p");
-  note.className = "secret-note";
-
-  const noteText = window.i18n.t("msg.createNote");
-  const colonIndex = noteText.indexOf(":");
-
-  if (colonIndex > 0) {
-    const strong = document.createElement("strong");
-    strong.textContent = noteText.substring(0, colonIndex + 1);
-    note.appendChild(strong);
-    note.appendChild(
-      document.createTextNode(" " + noteText.substring(colonIndex + 1).trim()),
-    );
-  } else {
-    const strong = document.createElement("strong");
-    strong.textContent = "Note: ";
-    note.appendChild(strong);
-    note.appendChild(
-      document.createTextNode(window.i18n.t("msg.createNoteText")),
-    );
-  }
-
-  container.appendChild(note);
-}
-
 function showSuccess(secretUrl: string): void {
   const resultContainer = document.getElementById("result");
   if (!resultContainer) {
@@ -543,17 +354,11 @@ function showSuccess(secretUrl: string): void {
     return;
   }
 
-  resultContainer.className = "result success";
-  const urlId = generateUrlId();
-  resultContainer.innerHTML = "";
-
   hideForm();
-  createSuccessHeader(resultContainer);
-
-  const container = createUrlDisplaySection(secretUrl, urlId);
-  resultContainer.appendChild(container);
-
-  createNoteSection(resultContainer);
+  displaySuccessResult(secretUrl, {
+    container: resultContainer,
+    separateKeyMode: isSeparateKeyMode(),
+  });
   announceToScreenReader(UI_STRINGS.SUCCESS_TITLE);
 }
 
@@ -607,26 +412,6 @@ function showForm(): void {
   if (form) {
     form.classList.remove("hidden");
   }
-}
-
-function copyUrl(urlId: string, button: HTMLButtonElement): void {
-  const urlElement = document.getElementById(urlId) as HTMLInputElement;
-
-  if (!urlElement || !button) {
-    showError(UI_STRINGS.COPY_FAILED);
-    return;
-  }
-
-  const originalText = button.textContent || "";
-  const urlText = urlElement.value;
-
-  copyToClipboard(
-    urlText,
-    button,
-    originalText,
-    UI_STRINGS.COPIED_TEXT,
-    UI_STRINGS.COPY_FAILED,
-  );
 }
 
 function getFileElements(): FileElements {
