@@ -19,7 +19,7 @@ import {
   isHakanaiError,
   isStandardError,
   isErrorLike,
-} from "./types.js";
+} from "./core/types.js";
 
 interface UIStrings {
   EMPTY_SECRET: string;

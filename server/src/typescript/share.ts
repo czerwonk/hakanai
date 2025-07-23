@@ -10,7 +10,7 @@ import {
   sanitizeFileName,
 } from "./core/formatters.js";
 import { displaySuccessResult } from "./components/success-display.js";
-import { ShareData, ShareDataError } from "./types.js";
+import { ShareData, ShareDataError } from "./core/types.js";
 
 // Declare window.i18n
 declare global {

@@ -12,17 +12,15 @@ const HIGHLY_VOLATILE_CACHE_MAX_AGE: u64 = 300; // 5 minutes
 pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg.route("/", web::get().to(serve_homepage))
         .route("/banner.svg", web::get().to(serve_banner))
-        .route("/common-utils.js", web::get().to(serve_common_utils_js))
         .route("/config.json", web::get().to(serve_config))
         .route("/create", web::get().to(serve_create_secret_html))
         .route("/create-secret.js", web::get().to(serve_create_secret_js))
+        .route("/common.js", web::get().to(serve_common_js))
         .route("/docs", web::get().to(serve_docs_html))
         .route("/docs.js", web::get().to(serve_docs_js))
         .route("/get", web::get().to(serve_get_secret_html))
         .route("/get-secret.js", web::get().to(serve_get_secret_js))
         .route("/hakanai-client.js", web::get().to(serve_js_client))
-        .route("/homepage.js", web::get().to(serve_homepage_js))
-        .route("/i18n.js", web::get().to(serve_i18n_js))
         .route("/icon.svg", web::get().to(serve_icon))
         .route("/impressum", web::get().to(serve_impressum))
         .route("/logo.svg", web::get().to(serve_logo))
@@ -33,8 +31,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
         .route("/share", web::get().to(serve_share_html))
         .route("/share.js", web::get().to(serve_share_js))
         .route("/share.shortcut", web::get().to(serve_shortcut))
-        .route("/style.css", web::get().to(serve_css))
-        .route("/types.js", web::get().to(serve_types_js));
+        .route("/style.css", web::get().to(serve_css));
 }
 
 fn serve_with_caching_header(content: &[u8], content_type: &str, max_age: u64) -> HttpResponse {
@@ -67,22 +64,6 @@ async fn serve_create_secret_html() -> HttpResponse {
 async fn serve_js_client() -> impl Responder {
     serve_with_caching_header(
         include_bytes!("includes/hakanai-client.js"),
-        "application/javascript",
-        VOLATILE_CACHE_MAX_AGE,
-    )
-}
-
-async fn serve_common_utils_js() -> impl Responder {
-    serve_with_caching_header(
-        include_bytes!("includes/common-utils.js"),
-        "application/javascript",
-        VOLATILE_CACHE_MAX_AGE,
-    )
-}
-
-async fn serve_i18n_js() -> impl Responder {
-    serve_with_caching_header(
-        include_bytes!("includes/i18n.js"),
         "application/javascript",
         VOLATILE_CACHE_MAX_AGE,
     )
@@ -160,27 +141,11 @@ async fn serve_openapi_json() -> impl Responder {
     )
 }
 
-async fn serve_types_js() -> impl Responder {
-    serve_with_caching_header(
-        include_bytes!("includes/types.js"),
-        "application/javascript",
-        VOLATILE_CACHE_MAX_AGE,
-    )
-}
-
 /// Serves the homepage HTML
 async fn serve_homepage() -> HttpResponse {
     serve_with_caching_header(
         include_bytes!("includes/homepage.html"),
         "text/html",
-        VOLATILE_CACHE_MAX_AGE,
-    )
-}
-
-async fn serve_homepage_js() -> impl Responder {
-    serve_with_caching_header(
-        include_bytes!("includes/homepage.js"),
-        "application/javascript",
         VOLATILE_CACHE_MAX_AGE,
     )
 }
@@ -271,6 +236,14 @@ async fn serve_shortcut() -> impl Responder {
         include_bytes!("../../share.shortcut"),
         "application/octet-stream",
         DEFAULT_CACHE_MAX_AGE,
+    )
+}
+
+async fn serve_common_js() -> impl Responder {
+    serve_with_caching_header(
+        include_bytes!("includes/common.js"),
+        "application/javascript",
+        VOLATILE_CACHE_MAX_AGE,
     )
 }
 

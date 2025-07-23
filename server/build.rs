@@ -36,6 +36,8 @@ fn main() -> Result<()> {
     register_files_for_recompilation("src/templates/docs", "html")?;
     register_files_for_recompilation("src/typescript", "ts")?;
     println!("cargo:rerun-if-changed=tsconfig.json");
+    println!("cargo:rerun-if-changed=rollup.config.js");
+    println!("cargo:rerun-if-changed=package.json");
 
     let start = std::time::Instant::now();
     compile_typescript()?;
@@ -46,50 +48,51 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn ensure_typescript_is_installed() -> Result<()> {
-    let is_installed = Command::new("tsc")
-        .arg("--version")
+fn ensure_rollup_is_installed() -> Result<()> {
+    let is_installed = Command::new("npx")
+        .args(["rollup", "--version"])
         .output()?
         .status
         .success();
 
     if is_installed {
-        println!("cargo:warning=TypeScript compiler (tsc) is installed");
+        println!("cargo:warning=Rollup bundler is available");
         Ok(())
     } else {
         Err(anyhow!(
-            "TypeScript compiler not available. Install with: npm install -g typescript or set SKIP_TYPESCRIPT_BUILD=1"
+            "Rollup bundler not available. Run 'npm install' first or set SKIP_TYPESCRIPT_BUILD=1"
         ))
     }
 }
 
 fn compile_typescript() -> Result<()> {
-    println!("cargo:warning=Compiling TypeScript files...");
+    println!("cargo:warning=Bundling TypeScript files with Rollup...");
 
     if std::env::var("SKIP_TYPESCRIPT_BUILD").is_ok() {
-        println!("cargo:warning=Skipping TypeScript compilation (SKIP_TYPESCRIPT_BUILD set)");
+        println!("cargo:warning=Skipping TypeScript bundling (SKIP_TYPESCRIPT_BUILD set)");
         return Ok(());
     }
 
-    ensure_typescript_is_installed()?;
+    ensure_rollup_is_installed()?;
 
-    // Compile TypeScript files
-    let output = Command::new("tsc")
-        .current_dir("..") // Run from workspace root where tsconfig.json is located
+    // Bundle TypeScript files with Rollup
+    let output = Command::new("npx")
+        .args(["rollup", "-c"])
+        .current_dir("..") // Run from workspace root where rollup.config.js is located
         .output()?;
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
         let stdout = String::from_utf8_lossy(&output.stdout);
-        println!("cargo:warning=TypeScript compilation failed");
+        println!("cargo:warning=Rollup bundling failed");
         println!("cargo:warning=STDOUT: {stdout}");
         println!("cargo:warning=STDERR: {stderr}");
-        panic!("TypeScript compilation failed: {stderr}");
+        panic!("Rollup bundling failed: {stderr}");
     }
 
     add_cache_busters_to_js_files()?;
 
-    println!("cargo:warning=TypeScript compilation successful");
+    println!("cargo:warning=TypeScript bundling successful");
     Ok(())
 }
 

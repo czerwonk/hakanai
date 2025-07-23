@@ -14,7 +14,7 @@ import {
 import { copyToClipboard } from "./core/clipboard.js";
 import { formatFileSize } from "./core/formatters.js";
 import { initTheme, updateThemeToggleButton } from "./core/theme.js";
-import { isHakanaiError, isStandardError, isErrorLike } from "./types.js";
+import { isHakanaiError, isStandardError, isErrorLike } from "./core/types.js";
 
 interface UIStrings {
   BINARY_DETECTED: string;

@@ -52,7 +52,7 @@ const mockIsHakanaiError = jest.fn();
 const mockIsStandardError = jest.fn();
 const mockIsErrorLike = jest.fn();
 
-jest.mock("../server/src/typescript/types", () => ({
+jest.mock("../server/src/typescript/core/types", () => ({
   isHakanaiError: mockIsHakanaiError,
   isStandardError: mockIsStandardError,
   isErrorLike: mockIsErrorLike,
