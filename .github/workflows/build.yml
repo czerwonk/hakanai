@@ -21,7 +21,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: "24"
-      - name: Install TypeScript
-        run: npm install -g typescript
+      - name: Ensure npm modules are installed
+        run: npm install
       - name: Build
         run: cargo build --workspace --verbose

@@ -3,11 +3,10 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     libssl-dev \
     npm && \
-    npm install -g typescript && \
     rm -rf /var/lib/apt/lists/*
 WORKDIR /src
 COPY . .
-RUN cd server && cargo build --release
+RUN npm install && cd server && cargo build --release
 
 FROM gcr.io/distroless/cc-debian12
 COPY --from=builder /src/target/release/hakanai-server /app/hakanai-server

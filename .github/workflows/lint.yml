@@ -24,7 +24,7 @@ jobs:
           cache: "npm"
           cache-dependency-path: tests/package-lock.json
 
-      - name: Setup TypeScript
-        run: npm install -g typescript
+      - name: Ensure npm modules are installed
+        run: npm install
       - name: Run clippy
         run: cargo clippy --workspace

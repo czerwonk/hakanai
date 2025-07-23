@@ -661,7 +661,14 @@ class I18n {
   private addLanguageChangeListener(switcher: HTMLSelectElement): void {
     switcher.addEventListener("change", (e) => {
       const target = e.target as HTMLSelectElement;
-      this.setLanguage(target.value);
+      const newLang = target.value;
+
+      // Store the new language preference
+      if (this.isValidLanguage(newLang)) {
+        this.storeLanguage(newLang as LanguageCode);
+        // Reload the page to apply the new language across all components
+        window.location.reload();
+      }
     });
   }
 
