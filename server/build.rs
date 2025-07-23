@@ -149,8 +149,8 @@ fn compile_wasm() -> Result<()> {
     ];
 
     for (src, dst) in &wasm_files {
-        if let Ok(_) = fs::copy(src, dst) {
-            println!("cargo:warning=Copied {} to {}", src, dst);
+        if fs::copy(src, dst).is_ok() {
+            println!("cargo:warning=Copied {src} to {dst}");
         }
     }
 

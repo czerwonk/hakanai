@@ -15,7 +15,7 @@ impl QrGenerator {
     #[wasm_bindgen]
     pub fn generate_svg(&self, text: &str, size: u32) -> Result<String, JsValue> {
         let code = QrCode::new(text)
-            .map_err(|e| JsValue::from_str(&format!("Failed to generate QR code: {}", e)))?;
+            .map_err(|e| JsValue::from_str(&format!("Failed to generate QR code: {e}")))?;
         
         let svg = code.render::<svg::Color>()
             .min_dimensions(size, size)
