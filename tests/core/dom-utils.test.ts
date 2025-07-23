@@ -79,7 +79,7 @@ describe("DOM Utilities", () => {
   });
 
   describe("secureInputClear", () => {
-    test("should clear input value and remove from DOM", () => {
+    test("should clear input value", () => {
       const input = document.createElement("input");
       input.value = "sensitive data";
       document.body.appendChild(input);
@@ -87,7 +87,6 @@ describe("DOM Utilities", () => {
       secureInputClear(input);
 
       expect(input.value).toBe("");
-      expect(document.body.contains(input)).toBe(false);
     });
 
     test("should handle input not in DOM", () => {

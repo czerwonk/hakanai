@@ -29,11 +29,11 @@ async function initFeatures(): Promise<void> {
   const config = await fetchAppConfig();
   await initializeOptionalFeature(
     "impressum-link",
-    config?.features.impressum ?? false,
+    config?.features?.impressum ?? false,
   );
   await initializeOptionalFeature(
     "privacy-link",
-    config?.features.privacy ?? false,
+    config?.features?.privacy ?? false,
   );
 }
 

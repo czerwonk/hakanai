@@ -39,22 +39,19 @@ export function createButtonContainer(): HTMLDivElement {
  * @param input - HTML input element containing sensitive data
  */
 export function secureInputClear(input: HTMLInputElement): void {
-  if (input.value.length > 0) {
-    const length = input.value.length;
-    // Multiple overwrite passes
-    for (let i = 0; i < 3; i++) {
-      input.value = Array(length)
-        .fill(0)
-        .map(() => String.fromCharCode(Math.floor(Math.random() * 256)))
-        .join("");
-    }
-    input.value = "";
+  if (input.value.length == 0) {
+    return;
   }
 
-  // Remove from DOM for additional security
-  if (input.parentNode) {
-    input.parentNode.removeChild(input);
+  const length = input.value.length;
+  // Multiple overwrite passes
+  for (let i = 0; i < 3; i++) {
+    input.value = Array(length)
+      .fill(0)
+      .map(() => String.fromCharCode(Math.floor(Math.random() * 256)))
+      .join("");
   }
+  input.value = "";
 }
 
 /**
@@ -105,4 +102,14 @@ export function generateRandomId(): string {
   return crypto?.randomUUID && typeof crypto.randomUUID === "function"
     ? `url-${crypto.randomUUID()}`
     : `url-${Date.now()}-${Math.random()}`;
+}
+
+export function showElement(element: HTMLElement): void {
+  element.classList.remove("hidden");
+  element.classList.add("visible");
+}
+
+export function hideElement(element: HTMLElement): void {
+  element.classList.remove("visible");
+  element.classList.add("hidden");
 }

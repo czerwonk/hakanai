@@ -4,7 +4,12 @@ import {
   type PayloadData,
 } from "./hakanai-client";
 import { initI18n } from "./core/i18n";
-import { announceToScreenReader, secureInputClear } from "./core/dom-utils";
+import {
+  announceToScreenReader,
+  secureInputClear,
+  showElement,
+  hideElement,
+} from "./core/dom-utils";
 import { initTheme, updateThemeToggleButton } from "./core/theme";
 import {
   saveAuthTokenToStorage,
@@ -214,11 +219,9 @@ function setElementsState(elements: Elements, disabled: boolean): void {
   } = elements;
 
   if (disabled) {
-    loadingDiv.classList.add("visible");
-    loadingDiv.classList.remove("hidden");
+    showElement(loadingDiv);
   } else {
-    loadingDiv.classList.add("hidden");
-    loadingDiv.classList.remove("visible");
+    hideElement(loadingDiv);
   }
   button.disabled = disabled;
   secretInput.disabled = disabled;

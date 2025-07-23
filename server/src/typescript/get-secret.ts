@@ -10,7 +10,9 @@ import {
   createButtonContainer,
   debounce,
   generateRandomId,
+  hideElement,
   secureInputClear,
+  showElement,
 } from "./core/dom-utils";
 import { copyToClipboard } from "./core/clipboard";
 import { formatFileSize } from "./core/formatters";
@@ -123,46 +125,36 @@ function validateInputs(
 
 function setElementsState(disabled: boolean): void {
   const { urlInput, keyInput, button } = getElements();
-  if (button) button.disabled = disabled;
-  if (urlInput) urlInput.disabled = disabled;
-  if (keyInput) keyInput.disabled = disabled;
+  button.disabled = disabled;
+  urlInput.disabled = disabled;
+  keyInput.disabled = disabled;
 }
 
 function clearInputs(): void {
   const { urlInput, keyInput } = getElements();
-  if (urlInput) secureInputClear(urlInput);
-  if (keyInput) secureInputClear(keyInput);
+  secureInputClear(urlInput);
+  secureInputClear(keyInput);
 }
 
 function showLoadingState(): void {
   const { loadingDiv, resultDiv } = getElements();
-  if (loadingDiv) {
-    loadingDiv.classList.add("visible");
-    loadingDiv.classList.remove("hidden");
-  }
-  if (resultDiv) {
-    resultDiv.innerHTML = "";
-  }
+  showElement(loadingDiv);
+
+  resultDiv.innerHTML = "";
+
   document.body.classList.remove("expanded-view");
   setElementsState(true);
 }
 
 function hideLoadingState(): void {
   const { loadingDiv } = getElements();
-  if (loadingDiv) {
-    loadingDiv.classList.add("hidden");
-    loadingDiv.classList.remove("visible");
-  }
+  hideElement(loadingDiv);
+
   setElementsState(false);
 }
 
 async function processRetrieveRequest(): Promise<void> {
   const { urlInput, keyInput } = getElements();
-
-  if (!urlInput) {
-    console.error("URL input element not found");
-    return;
-  }
 
   const url = urlInput.value.trim();
   const key = keyInput?.value?.trim() || "";
@@ -229,10 +221,6 @@ function retrieveSecret(): void {
 function toggleKeyInputVisibility(): void {
   const { urlInput, keyInputGroup, keyInput } = getElements();
 
-  if (!urlInput || !keyInputGroup || !keyInput) {
-    return;
-  }
-
   const url = urlInput.value.trim();
 
   if (!url) {
@@ -254,8 +242,7 @@ function hideKeyInput(
   keyInputGroup: HTMLElement,
   keyInput: HTMLInputElement,
 ): void {
-  keyInputGroup.classList.remove("visible");
-  keyInputGroup.classList.add("hidden");
+  hideElement(keyInputGroup);
   keyInput.required = false;
   secureInputClear(keyInput);
 }
@@ -264,8 +251,7 @@ function showKeyInput(
   keyInputGroup: HTMLElement,
   keyInput: HTMLInputElement,
 ): void {
-  keyInputGroup.classList.remove("hidden");
-  keyInputGroup.classList.add("visible");
+  showElement(keyInputGroup);
   keyInput.required = true;
 }
 
@@ -402,7 +388,6 @@ function createNoteElement(): HTMLElement {
 
 function showSuccess(payload: PayloadData): void {
   const { resultDiv } = getElements();
-  if (!resultDiv) return;
 
   resultDiv.className = "result success";
   resultDiv.innerHTML = "";
@@ -432,7 +417,6 @@ function showSuccess(payload: PayloadData): void {
 
 function showError(message: string): void {
   const { resultDiv } = getElements();
-  if (!resultDiv) return;
 
   resultDiv.className = "result error";
   resultDiv.innerHTML = "";
@@ -487,7 +471,7 @@ function downloadSecret(
   const url = window.URL.createObjectURL(blob);
 
   const anchor = document.createElement("a");
-  anchor.classList.add("hidden");
+  hideElement(anchor);
   anchor.href = url;
   anchor.download = filename;
 
@@ -504,8 +488,6 @@ function downloadSecret(
 
 function setupUrlInput(): void {
   const urlInput = document.getElementById("secretUrl") as HTMLInputElement;
-  if (!urlInput) return;
-
   urlInput.placeholder = `${baseUrl}/s/uuid#key`;
 
   if (window.location.pathname.match(/^\/s\/[^\/]+$/)) {
