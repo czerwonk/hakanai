@@ -8,8 +8,8 @@ import {
   formatFileSize,
   formatTTL,
   sanitizeFileName,
-  displaySuccessResult,
-} from "./common-utils.js";
+} from "./core/formatters.js";
+import { displaySuccessResult } from "./components/success-display.js";
 import { ShareData, ShareDataError } from "./types.js";
 
 // Declare window.i18n

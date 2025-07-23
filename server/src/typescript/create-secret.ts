@@ -3,18 +3,15 @@ import {
   HakanaiErrorCodes,
   type PayloadData,
 } from "./hakanai-client.js";
+import { announceToScreenReader, secureInputClear } from "./core/dom-utils.js";
+import { initTheme, updateThemeToggleButton } from "./core/theme.js";
 import {
-  announceToScreenReader,
-  secureInputClear,
-  initTheme,
-  updateThemeToggleButton,
   saveAuthTokenToStorage,
   getAuthTokenFromStorage,
   clearAuthTokenStorage,
-  formatFileSize,
-  sanitizeFileName,
-  displaySuccessResult,
-} from "./common-utils.js";
+} from "./core/auth-storage.js";
+import { formatFileSize, sanitizeFileName } from "./core/formatters.js";
+import { displaySuccessResult } from "./components/success-display.js";
 import {
   type RequiredElements,
   type FileElements,

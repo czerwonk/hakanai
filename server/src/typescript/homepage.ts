@@ -1,5 +1,5 @@
 import { I18n } from "./i18n.js";
-import { initTheme } from "./common-utils.js";
+import { initTheme } from "./core/theme.js";
 
 class HomePage {
   private readonly i18n: I18n;

@@ -5,10 +5,6 @@
 CARGO := cargo
 TSC := tsc
 
-# TypeScript source files (for reference and manual compilation if needed)
-TS_SRC := server/src/typescript/hakanai-client.ts server/src/typescript/common-utils.ts server/src/typescript/i18n.ts server/src/typescript/get-secret.ts server/src/typescript/create-secret.ts server/src/typescript/types.ts
-# Generated JavaScript files (output to includes directory)
-JS_OUT := server/src/includes/hakanai-client.js server/src/includes/common-utils.js server/src/includes/i18n.js server/src/includes/get-secret.js server/src/includes/create-secret.js server/src/includes/types.js
 
 # Default target
 .PHONY: all
@@ -21,9 +17,7 @@ build:
 
 # Manual TypeScript compilation (optional - normally handled by build.rs)
 .PHONY: build-ts
-build-ts: clean-ts $(JS_OUT)
-
-$(JS_OUT): $(TS_SRC) tsconfig.json
+build-ts: clean-ts
 	$(TSC)
 
 # Release builds (TypeScript compilation handled by build.rs)
@@ -53,5 +47,5 @@ clean-rust:
 
 .PHONY: clean-ts
 clean-ts:
-	rm -f $(JS_OUT)
+	rm -rf server/src/includes/*.js server/src/includes/core server/src/includes/components
 	rm -rf tests/node_modules tests/coverage

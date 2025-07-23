@@ -5,16 +5,15 @@ import {
 } from "./hakanai-client.js";
 import {
   announceToScreenReader,
-  copyToClipboard,
   createButton,
   createButtonContainer,
   debounce,
-  formatFileSize,
   generateRandomId,
-  initTheme,
   secureInputClear,
-  updateThemeToggleButton,
-} from "./common-utils.js";
+} from "./core/dom-utils.js";
+import { copyToClipboard } from "./core/clipboard.js";
+import { formatFileSize } from "./core/formatters.js";
+import { initTheme, updateThemeToggleButton } from "./core/theme.js";
 import { isHakanaiError, isStandardError, isErrorLike } from "./types.js";
 
 interface UIStrings {

@@ -1,4 +1,4 @@
-import { initTheme } from "./common-utils.js";
+import { initTheme } from "./core/theme.js";
 
 function initDocs(): void {
   initTheme();
