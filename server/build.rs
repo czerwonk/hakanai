@@ -325,8 +325,6 @@ fn load_partials() -> Result<TemplatePartials> {
         .context("failed to read theme-controls partial")?;
     let footer = fs::read_to_string("src/templates/partials/footer.html")
         .context("failed to read footer partial")?;
-    let scripts = fs::read_to_string("src/templates/partials/scripts.html")
-        .context("failed to read scripts partial")?;
     let header = fs::read_to_string("src/templates/partials/header.html")
         .context("failed to read header partial")?;
 
@@ -334,7 +332,6 @@ fn load_partials() -> Result<TemplatePartials> {
         head,
         theme_controls,
         footer,
-        scripts,
         header,
     })
 }
@@ -411,7 +408,6 @@ fn apply_partials(template_content: String, partials: &TemplatePartials) -> Stri
         .replace("[[HEAD]]", &partials.head)
         .replace("[[THEME_CONTROLS]]", &partials.theme_controls)
         .replace("[[FOOTER]]", &partials.footer)
-        .replace("[[SCRIPTS]]", &partials.scripts)
         .replace("[[HEADER]]", &partials.header)
 }
 
@@ -435,7 +431,6 @@ struct TemplatePartials {
     head: String,
     theme_controls: String,
     footer: String,
-    scripts: String,
     header: String,
 }
 
