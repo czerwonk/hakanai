@@ -4,6 +4,7 @@
  */
 
 import { HakanaiClient } from "./hakanai-client.js";
+import { initI18n } from "./core/i18n.js";
 import {
   formatFileSize,
   formatTTL,
@@ -11,15 +12,6 @@ import {
 } from "./core/formatters.js";
 import { displaySuccessResult } from "./components/success-display.js";
 import { ShareData, ShareDataError } from "./core/types.js";
-
-// Declare window.i18n
-declare global {
-  interface Window {
-    i18n: {
-      t(key: string): string;
-    };
-  }
-}
 
 let sharePayload: ShareData | null = null;
 
@@ -249,6 +241,7 @@ async function createSecret(): Promise<void> {
  * Initialize the page
  */
 function init(): void {
+  initI18n();
   // Always add event listeners first
   document
     .getElementById("read-clipboard")

@@ -1,5 +1,5 @@
 import { createButton, generateRandomId } from "../core/dom-utils.js";
-import { copyToClipboard, copyToClipboardByElementId } from "../core/clipboard.js";
+import { copyToClipboardByElementId } from "../core/clipboard.js";
 import { QRCodeGenerator } from "../core/qr-generator.js";
 
 /**
@@ -8,14 +8,6 @@ import { QRCodeGenerator } from "../core/qr-generator.js";
 interface SuccessDisplayOptions {
   separateKeyMode?: boolean;
   container: HTMLElement;
-}
-
-declare global {
-  interface Window {
-    i18n: {
-      t(key: string): string;
-    };
-  }
 }
 
 /**
@@ -32,16 +24,12 @@ export function displaySuccessResult(
   container.className = "result success";
   container.innerHTML = "";
 
-  // 1. Success header with instructions - ALWAYS shown
   createSuccessHeader(container);
 
-  // 2. URL display (with separate key support)
   createUrlSection(container, url, options.separateKeyMode);
 
-  // 3. QR Code section - ALWAYS attempted
   createQRCodeSection(container, url);
 
-  // 4. Note section - ALWAYS shown for security
   createNoteSection(container);
 }
 
@@ -89,7 +77,7 @@ function createCombinedUrlDisplay(container: HTMLElement, url: string): void {
   const urlId = generateRandomId();
 
   const label = document.createElement("label");
-  label.textContent = window.i18n?.t("label.secretUrl") || "Secret URL:";
+  label.textContent = window.i18n?.t("label.url") || "Secret URL:";
   label.setAttribute("for", urlId);
   container.appendChild(label);
 
@@ -129,7 +117,7 @@ function createSeparateUrlDisplay(
 
   // URL section
   const urlLabel = document.createElement("label");
-  urlLabel.textContent = window.i18n?.t("label.secretUrl") || "Secret URL:";
+  urlLabel.textContent = window.i18n?.t("label.url") || "Secret URL:";
   urlLabel.setAttribute("for", urlId);
   container.appendChild(urlLabel);
 
@@ -159,8 +147,7 @@ function createSeparateUrlDisplay(
 
   // Key section
   const keyLabel = document.createElement("label");
-  keyLabel.textContent =
-    window.i18n?.t("label.decryptionKey") || "Decryption Key:";
+  keyLabel.textContent = window.i18n?.t("label.key") || "Decryption Key:";
   keyLabel.setAttribute("for", keyId);
   container.appendChild(keyLabel);
 

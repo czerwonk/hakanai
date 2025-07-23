@@ -3,6 +3,7 @@ import {
   HakanaiErrorCodes,
   type PayloadData,
 } from "./hakanai-client.js";
+import { initI18n } from "./core/i18n.js";
 import { announceToScreenReader, secureInputClear } from "./core/dom-utils.js";
 import { initTheme, updateThemeToggleButton } from "./core/theme.js";
 import {
@@ -601,6 +602,7 @@ document.addEventListener("i18nInitialized", () => {
 });
 
 document.addEventListener("DOMContentLoaded", () => {
+  initI18n();
   initTheme();
   updateUIStrings();
   focusSecretInput();

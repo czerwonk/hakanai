@@ -23,8 +23,8 @@ describe("Success Display Component", () => {
             "msg.successTitle": "Secret Created Successfully",
             "msg.shareInstructions":
               "Share this URL with the intended recipient.",
-            "label.secretUrl": "Secret URL:",
-            "label.decryptionKey": "Decryption Key:",
+            "label.url": "Secret URL:",
+            "label.key": "Decryption Key:",
             "label.qrCode": "QR Code:",
             "button.copy": "Copy",
             "msg.createNote":

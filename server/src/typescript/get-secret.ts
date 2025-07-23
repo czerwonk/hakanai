@@ -3,6 +3,7 @@ import {
   ContentAnalysis,
   type PayloadData,
 } from "./hakanai-client.js";
+import { initI18n } from "./core/i18n.js";
 import {
   announceToScreenReader,
   createButton,
@@ -270,7 +271,7 @@ function createTextSecret(
   const container = document.createElement("div");
   container.className = "secret-container";
 
-  const textarea = createSecretTextarea(secretId, payload, decodedBytes);
+  const textarea = createSecretTextarea(secretId, decodedBytes);
   container.appendChild(textarea);
 
   const buttonsContainer = createButtonContainer();
@@ -288,7 +289,6 @@ function createTextSecret(
 
 function createSecretTextarea(
   secretId: string,
-  payload: PayloadData,
   decodedBytes: Uint8Array,
 ): HTMLTextAreaElement {
   const textarea = document.createElement("textarea");
@@ -532,10 +532,11 @@ document.addEventListener("i18nInitialized", () => {
 });
 
 document.addEventListener("DOMContentLoaded", () => {
+  initI18n();
   initTheme();
-  updateUIStrings();
   setupForm();
   setupUrlInput();
+  updateUIStrings();
 });
 
 // Export functions for testing
