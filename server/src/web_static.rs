@@ -3,6 +3,7 @@ use actix_web::{HttpResponse, Responder, web};
 
 const DEFAULT_CACHE_MAX_AGE: u64 = 604800; // 7 days
 const VOLATILE_CACHE_MAX_AGE: u64 = 86400; // 1 day
+const HIGHLY_VOLATILE_CACHE_MAX_AGE: u64 = 3600; // 1 hour
 
 /// Configures the Actix Web services for the application.
 ///
@@ -253,7 +254,7 @@ async fn serve_share_html() -> impl Responder {
     serve_with_caching_header(
         include_bytes!("includes/share.html"),
         "text/html",
-        VOLATILE_CACHE_MAX_AGE,
+        HIGHLY_VOLATILE_CACHE_MAX_AGE,
     )
 }
 
