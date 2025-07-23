@@ -3,7 +3,7 @@ use actix_web::{HttpResponse, Responder, web};
 
 const DEFAULT_CACHE_MAX_AGE: u64 = 604800; // 7 days
 const VOLATILE_CACHE_MAX_AGE: u64 = 86400; // 1 day
-const HIGHLY_VOLATILE_CACHE_MAX_AGE: u64 = 3600; // 1 hour
+const HIGHLY_VOLATILE_CACHE_MAX_AGE: u64 = 300; // 5 minutes
 
 /// Configures the Actix Web services for the application.
 ///
