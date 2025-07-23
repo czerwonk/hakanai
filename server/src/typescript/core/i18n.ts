@@ -663,12 +663,14 @@ class I18n {
       const target = e.target as HTMLSelectElement;
       const newLang = target.value;
 
-      // Store the new language preference
-      if (this.isValidLanguage(newLang)) {
-        this.storeLanguage(newLang as LanguageCode);
-        // Reload the page to apply the new language across all components
-        window.location.reload();
+      if (!this.isValidLanguage(newLang)) {
+        return;
       }
+
+      this.storeLanguage(newLang as LanguageCode);
+
+      // Reload the page to apply the new language across all components
+      window.location.reload();
     });
   }
 
