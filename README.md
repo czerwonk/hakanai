@@ -322,14 +322,14 @@ hakanai/
 ### Building
 
 ```bash
-# Build entire workspace (includes TypeScript compilation and HTML generation)
+# Build entire workspace (includes automatic TypeScript bundling via Rollup)
 cargo build --workspace --verbose
 
 # Build release version
 cargo build --release --workspace
 
-# Build TypeScript client only (compiles .ts to .js)
-make build-ts
+# Manual TypeScript bundling (optional - automatically done by cargo build)
+npm run build
 
 # Clean TypeScript compiled files
 make clean-ts
@@ -337,6 +337,12 @@ make clean-ts
 # TypeScript type checking only (no compilation)
 tsc --noEmit
 ```
+
+**Build Process:**
+- `cargo build` automatically handles TypeScript compilation via `build.rs`
+- TypeScript files are bundled using Rollup for optimal performance
+- Single JavaScript bundle per page reduces HTTP requests
+- Tree shaking eliminates unused code for smaller file sizes
 
 
 ### Testing

@@ -3,8 +3,6 @@
 
 # Variables
 CARGO := cargo
-TSC := tsc
-
 
 # Default target
 .PHONY: all
@@ -18,7 +16,7 @@ build:
 # Manual TypeScript compilation (optional - normally handled by build.rs)
 .PHONY: build-ts
 build-ts: clean-ts
-	$(TSC)
+	npm run build
 
 # Release builds (TypeScript compilation handled by build.rs)
 .PHONY: release
