@@ -42,3 +42,4 @@ server/src/includes/share.html
 server/src/includes/*.js
 server/src/includes/components/
 server/src/includes/core/
+server/src/includes/wasm/
