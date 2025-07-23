@@ -1,3 +1,5 @@
+import { showElement, hideElement } from "./dom-utils";
+
 interface AppConfig {
   features: {
     impressum: boolean;
@@ -22,10 +24,24 @@ async function fetchAppConfig(): Promise<AppConfig | null> {
   }
 }
 
+async function initializeOptionalFeature(
+  elementId: string,
+  enabled: boolean,
+): Promise<void> {
+  const element = document.getElementById(elementId);
+  if (element) {
+    if (enabled) {
+      showElement(element);
+    } else {
+      hideElement(element);
+    }
+  }
+}
+
 /**
  * Initialize UI based on application configuration
  */
-async function initFeatures(): Promise<void> {
+export async function initFeatures(): Promise<void> {
   const config = await fetchAppConfig();
   await initializeOptionalFeature(
     "impressum-link",
@@ -36,19 +52,3 @@ async function initFeatures(): Promise<void> {
     config?.features?.privacy ?? false,
   );
 }
-
-async function initializeOptionalFeature(
-  elementId: string,
-  enabled: boolean,
-): Promise<void> {
-  const element = document.getElementById(elementId);
-  if (element) {
-    if (enabled) {
-      element?.classList.remove("hidden");
-    } else {
-      element?.classList.add("hidden");
-    }
-  }
-}
-
-export { initFeatures };

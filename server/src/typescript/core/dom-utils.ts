@@ -106,10 +106,8 @@ export function generateRandomId(): string {
 
 export function showElement(element: HTMLElement): void {
   element.classList.remove("hidden");
-  element.classList.add("visible");
 }
 
 export function hideElement(element: HTMLElement): void {
-  element.classList.remove("visible");
   element.classList.add("hidden");
 }

@@ -2113,14 +2113,6 @@ body:has(.privacy-content) {
   display: none !important;
 }
 
-.visible {
-  display: block !important;
-}
-
-.loading.visible {
-  display: block !important;
-}
-
 /* File info styling */
 .file-info {
   margin-top: var(--spacing-sm, 0.75rem);

@@ -332,7 +332,7 @@ async function createSecret(): Promise<void> {
 function hideForm(): void {
   const form = document.getElementById("create-secret-form");
   if (form) {
-    form.classList.add("hidden");
+    hideElement(form);
   }
 }
 
@@ -363,7 +363,7 @@ function resetToCreateMode(): void {
   const resultContainer = document.getElementById("result");
 
   if (form) {
-    form.classList.remove("hidden");
+    showElement(form);
   }
   if (resultContainer) {
     resultContainer.innerHTML = "";
@@ -406,7 +406,7 @@ function showError(message: string): void {
 function showForm(): void {
   const form = document.getElementById("create-secret-form");
   if (form) {
-    form.classList.remove("hidden");
+    showElement(form);
   }
 }
 
@@ -432,28 +432,28 @@ function showFileInfo(file: File, elements: FileElements): void {
 
   fileNameSpan.textContent = sanitizedName || "Invalid filename";
   fileSizeSpan.textContent = `(${formatFileSize(file.size)})`;
-  fileInfoDiv.classList.remove("hidden");
+  showElement(fileInfoDiv);
   fileInfoDiv.className = "file-info";
 }
 
 function hideFileInfo(elements: FileElements): void {
   const { fileInfoDiv } = elements;
-  fileInfoDiv.classList.add("hidden");
+  hideElement(fileInfoDiv);
 }
 
 function switchToFileMode(elements: FileElements): void {
   const { radioGroup, textInputGroup, fileInputGroup, fileRadio } = elements;
 
-  radioGroup.classList.add("hidden");
-  textInputGroup.classList.add("hidden");
-  fileInputGroup.classList.remove("hidden");
+  hideElement(radioGroup);
+  hideElement(textInputGroup);
+  showElement(fileInputGroup);
   fileRadio.checked = true;
 }
 
 function switchToTextMode(elements: FileElements): void {
   const { radioGroup, textRadio } = elements;
 
-  radioGroup.classList.remove("hidden");
+  showElement(radioGroup);
   textRadio.checked = true;
   toggleSecretType();
 }
@@ -479,8 +479,8 @@ function setupTextMode(): void {
   const secretFile = document.getElementById("secretFile") as HTMLInputElement;
 
   if (textInputGroup && fileInputGroup && secretText && secretFile) {
-    textInputGroup.classList.remove("hidden");
-    fileInputGroup.classList.add("hidden");
+    showElement(secretText);
+    hideElement(secretFile);
     secretText.required = true;
     secretFile.required = false;
     secretText.focus();
@@ -494,8 +494,8 @@ function setupFileMode(): void {
   const secretFile = document.getElementById("secretFile") as HTMLInputElement;
 
   if (textInputGroup && fileInputGroup && secretText && secretFile) {
-    textInputGroup.classList.add("hidden");
-    fileInputGroup.classList.remove("hidden");
+    showElement(secretFile);
+    hideElement(secretText);
     secretText.required = false;
     secretFile.required = true;
     secretFile.focus();
