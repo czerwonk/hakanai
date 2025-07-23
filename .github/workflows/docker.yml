@@ -35,6 +35,32 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # Pre-build WASM and TypeScript assets
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "24"
+      
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lld
+
+      - name: Install wasm-pack
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+      - name: Add wasm32 target
+        run: rustup target add wasm32-unknown-unknown
+
+      - name: Install npm dependencies
+        run: npm install
+
+      - name: Build TypeScript
+        run: npm run build
+
+      - name: Build WASM
+        run: cd wasm && ./build.sh
+
       # Install the cosign tool except on PR
       # https://github.com/sigstore/cosign-installer
       - name: Install cosign
