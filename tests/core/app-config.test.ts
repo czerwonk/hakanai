@@ -99,7 +99,7 @@ describe("app-config", () => {
       expect(privacyLink?.classList.contains("hidden")).toBe(true);
       expect(consoleWarnSpy).toHaveBeenCalledWith(
         "Failed to fetch app config:",
-        404
+        404,
       );
     });
 
@@ -116,7 +116,7 @@ describe("app-config", () => {
       expect(privacyLink?.classList.contains("hidden")).toBe(true);
       expect(consoleWarnSpy).toHaveBeenCalledWith(
         "Failed to fetch app config:",
-        error
+        error,
       );
     });
 
@@ -177,7 +177,7 @@ describe("app-config", () => {
 
       // Impressum should be hidden again
       expect(impressumLink?.classList.contains("hidden")).toBe(true);
-      
+
       const privacyLink = document.getElementById("privacy-link");
       expect(privacyLink?.classList.contains("hidden")).toBe(false);
     });
@@ -200,3 +200,4 @@ describe("app-config", () => {
     });
   });
 });
+
