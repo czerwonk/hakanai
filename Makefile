@@ -12,7 +12,7 @@ build:
 	$(CARGO) build --workspace --verbose
 
 .PHONY: build-wasm
-build-ts: clean-wasm
+build-wasm: clean-wasm
 	cd wasm && ./build.sh
 
 .PHONY: build-ts
@@ -49,5 +49,5 @@ clean-ts:
 	rm -rf tests/node_modules tests/coverage
 
 .PHONY: clean-wasm
-clean-ts:
+clean-wasm:
 	rm -rf server/src/includes/*.wasm

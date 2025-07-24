@@ -144,6 +144,10 @@ fn compile_wasm() -> Result<()> {
             "../wasm/pkg/hakanai_wasm.js",
             "src/includes/hakanai_wasm.js",
         ),
+        (
+            "../wasm/pkg/hakanai_wasm.d.ts",
+            "src/includes/hakanai_wasm.d.ts",
+        ),
     ];
 
     for (src, dst) in &wasm_files {
