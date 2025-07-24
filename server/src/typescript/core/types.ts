@@ -108,14 +108,14 @@ export class ShareData {
     }
 
     // Validate optional fields
-    if (this.filename !== undefined && typeof this.filename !== "string") {
+    if (this.filename != null && typeof this.filename !== "string") {
       throw new ShareDataError(
         ShareDataValidationError.INVALID_FILENAME,
         'Invalid "filename" field - must be string',
       );
     }
 
-    if (this.token !== undefined && typeof this.token !== "string") {
+    if (this.token != null && typeof this.token !== "string") {
       throw new ShareDataError(
         ShareDataValidationError.INVALID_TOKEN,
         'Invalid "token" field - must be string',
@@ -181,8 +181,8 @@ export class ShareData {
 
     return new ShareData(
       data,
-      params.get("filename") || undefined,
-      params.get("token") || undefined,
+      params.get("filename") ?? undefined,
+      params.get("token") ?? undefined,
       params.get("ttl") ? parseInt(params.get("ttl")!) : undefined,
     );
   }

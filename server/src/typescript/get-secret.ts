@@ -107,7 +107,7 @@ function normalizeUrl(url: string): string {
 function hasUrlFragment(url: string): boolean {
   try {
     const urlObj = new URL(url);
-    return !!(urlObj.hash && urlObj.hash.length > 1);
+    return (urlObj.hash?.length ?? 0) > 1;
   } catch {
     return false;
   }
@@ -157,7 +157,7 @@ async function processRetrieveRequest(): Promise<void> {
   const { urlInput, keyInput } = getElements();
 
   const url = urlInput.value.trim();
-  const key = keyInput?.value?.trim() || "";
+  const key = keyInput?.value?.trim() ?? "";
 
   const processedUrl = normalizeUrl(url);
   const hasFragment = hasUrlFragment(processedUrl);
@@ -334,8 +334,8 @@ function createBinarySecret(
 function createCopyButton(secretId: string): HTMLButtonElement {
   return createButton(
     "copy-button",
-    window.i18n?.t("button.copySecret") || "Copy Secret",
-    window.i18n?.t("aria.copySecret") || "Copy secret to clipboard",
+    window.i18n?.t("button.copySecret") ?? "Copy Secret",
+    window.i18n?.t("aria.copySecret") ?? "Copy secret to clipboard",
     function (this: HTMLButtonElement) {
       copySecret(secretId, this);
     },
@@ -349,8 +349,8 @@ function createDownloadButton(
 ): HTMLButtonElement {
   return createButton(
     "download-button",
-    window.i18n?.t("button.download") || "Download",
-    window.i18n?.t("aria.downloadSecret") || "Download secret as file",
+    window.i18n?.t("button.download") ?? "Download",
+    window.i18n?.t("aria.downloadSecret") ?? "Download secret as file",
     () => downloadSecret(payload, decodedBytes, isBinary),
   );
 }

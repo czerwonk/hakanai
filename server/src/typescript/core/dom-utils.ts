@@ -99,7 +99,7 @@ export function debounce<T extends (...args: any[]) => void>(
  * Generate a unique ID to be used for dynamic elements like URL inputs
  */
 export function generateRandomId(): string {
-  return crypto?.randomUUID && typeof crypto.randomUUID === "function"
+  return crypto?.randomUUID?.()
     ? `url-${crypto.randomUUID()}`
     : `url-${Date.now()}-${Math.random()}`;
 }

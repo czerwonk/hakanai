@@ -65,7 +65,7 @@ function showShareContent(payload: ShareData): void {
     payload.getContentSize(),
   );
   document.getElementById("content-ttl")!.textContent = formatTTL(
-    payload.ttl || 86400,
+    payload.ttl ?? 86400,
   );
 
   // Show filename if present (sanitized for security)
@@ -73,7 +73,7 @@ function showShareContent(payload: ShareData): void {
   if (payload.filename) {
     const sanitizedFilename = sanitizeFileName(payload.filename);
     document.getElementById("content-filename")!.textContent =
-      sanitizedFilename || "Invalid filename";
+      sanitizedFilename ?? "Invalid filename";
     showElement(filenameRow);
   } else {
     hideElement(filenameRow);

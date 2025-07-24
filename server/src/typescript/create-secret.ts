@@ -340,7 +340,7 @@ function isSeparateKeyMode(): boolean {
   const separateKeyCheckbox = document.getElementById(
     "separateKey",
   ) as HTMLInputElement;
-  return separateKeyCheckbox?.checked || false;
+  return separateKeyCheckbox?.checked ?? false;
 }
 
 function showSuccess(secretUrl: string): void {
@@ -430,7 +430,7 @@ function showFileInfo(file: File, elements: FileElements): void {
   const { fileInfoDiv, fileNameSpan, fileSizeSpan } = elements;
   const sanitizedName = sanitizeFileName(file.name);
 
-  fileNameSpan.textContent = sanitizedName || "Invalid filename";
+  fileNameSpan.textContent = sanitizedName ?? "Invalid filename";
   fileSizeSpan.textContent = `(${formatFileSize(file.size)})`;
   showElement(fileInfoDiv);
   fileInfoDiv.className = "file-info";
@@ -462,7 +462,7 @@ function updateFileInfo(): void {
   const elements = getFileElements();
   const { fileInput } = elements;
 
-  if (fileInput.files?.length && fileInput.files.length > 0) {
+  if (fileInput.files?.length) {
     const file = fileInput.files[0];
     showFileInfo(file, elements);
     switchToFileMode(elements);

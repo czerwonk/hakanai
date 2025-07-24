@@ -17,21 +17,21 @@ declare global {
  * @param button - Button element to show feedback on
  */
 export function copyToClipboard(text: string, button: HTMLButtonElement): void {
-  const originalText = button.textContent || "Copy";
+  const originalText = button.textContent ?? "Copy";
   navigator.clipboard
     .writeText(text)
     .then(() =>
       showCopySuccess(
         button,
         originalText,
-        window.i18n?.t("button.copied") || "Copied!",
+        window.i18n?.t("button.copied") ?? "Copied!",
       ),
     )
     .catch(() =>
       showCopyFailure(
         button,
         originalText,
-        window.i18n?.t("msg.copyFailed") || "Copy Failed",
+        window.i18n?.t("msg.copyFailed") ?? "Copy Failed",
       ),
     );
 }
@@ -57,9 +57,9 @@ function showCopyFailure(
   failedMessage: string,
 ): void {
   // Show failure state visually without disruptive alerts
-  button.textContent = failedMessage || "Copy Failed";
+  button.textContent = failedMessage ?? "Copy Failed";
   button.classList.add("copy-failed");
-  announceToScreenReader(failedMessage || "Copy Failed");
+  announceToScreenReader(failedMessage ?? "Copy Failed");
 
   setTimeout(() => {
     button.textContent = originalText;
@@ -77,7 +77,7 @@ export function copyToClipboardByElementId(
   } else {
     showCopyFailure(
       button,
-      button.textContent || "Copy",
+      button.textContent ?? "Copy",
       window.i18n?.t("msg.copyFailed") || "Copy Failed",
     );
   }

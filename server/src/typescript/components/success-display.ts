@@ -59,13 +59,13 @@ function ensureQRCodeGeneratorCleanup() {
 function createSuccessHeader(container: HTMLElement): void {
   const title = document.createElement("h3");
   title.textContent =
-    window.i18n?.t("msg.successTitle") || "Secret Created Successfully";
+    window.i18n?.t("msg.successTitle") ?? "Secret Created Successfully";
   container.appendChild(title);
 
   const instructions = document.createElement("p");
   instructions.className = "share-instructions";
   instructions.textContent =
-    window.i18n?.t("msg.shareInstructions") ||
+    window.i18n?.t("msg.shareInstructions") ??
     "Share this URL with the intended recipient. The secret is encrypted and can only be accessed once.";
   container.appendChild(instructions);
 }
@@ -97,7 +97,7 @@ function createCombinedUrlDisplay(container: HTMLElement, url: string): void {
   const urlId = generateRandomId();
 
   const label = document.createElement("label");
-  label.textContent = window.i18n?.t("label.url") || "Secret URL:";
+  label.textContent = window.i18n?.t("label.url") ?? "Secret URL:";
   label.setAttribute("for", urlId);
   container.appendChild(label);
 
@@ -114,7 +114,7 @@ function createCombinedUrlDisplay(container: HTMLElement, url: string): void {
 
   const copyButton = createButton(
     "copy-button",
-    window.i18n?.t("button.copy") || "Copy URL",
+    window.i18n?.t("button.copy") ?? "Copy URL",
     "Copy secret URL to clipboard",
     () => copyToClipboardByElementId(urlId, copyButton as HTMLButtonElement),
   );
@@ -137,7 +137,7 @@ function createSeparateUrlDisplay(
 
   // URL section
   const urlLabel = document.createElement("label");
-  urlLabel.textContent = window.i18n?.t("label.url") || "Secret URL:";
+  urlLabel.textContent = window.i18n?.t("label.url") ?? "Secret URL:";
   urlLabel.setAttribute("for", urlId);
   container.appendChild(urlLabel);
 
@@ -154,7 +154,7 @@ function createSeparateUrlDisplay(
 
   const urlCopyButton = createButton(
     "copy-button",
-    window.i18n?.t("button.copy") || "Copy URL",
+    window.i18n?.t("button.copy") ?? "Copy URL",
     "Copy secret URL to clipboard",
     () =>
       copyToClipboardByElementId(
@@ -167,7 +167,7 @@ function createSeparateUrlDisplay(
 
   // Key section
   const keyLabel = document.createElement("label");
-  keyLabel.textContent = window.i18n?.t("label.key") || "Decryption Key:";
+  keyLabel.textContent = window.i18n?.t("label.key") ?? "Decryption Key:";
   keyLabel.setAttribute("for", keyId);
   container.appendChild(keyLabel);
 
@@ -184,7 +184,7 @@ function createSeparateUrlDisplay(
 
   const keyCopyButton = createButton(
     "copy-button",
-    window.i18n?.t("button.copy") || "Copy Key",
+    window.i18n?.t("button.copy") ?? "Copy Key",
     "Copy decryption key to clipboard",
     () =>
       copyToClipboardByElementId(
@@ -225,7 +225,7 @@ function createQRDisplayElement(qrSvg: string): HTMLElement {
   qrSection.className = "qr-code-section";
 
   const qrLabel = document.createElement("label");
-  qrLabel.textContent = window.i18n?.t("label.qrCode") || "QR Code:";
+  qrLabel.textContent = window.i18n?.t("label.qrCode") ?? "QR Code:";
   qrSection.appendChild(qrLabel);
 
   const qrContainer = document.createElement("div");
@@ -244,7 +244,7 @@ function createNoteSection(container: HTMLElement): void {
   note.className = "secret-note";
 
   const noteText =
-    window.i18n?.t("msg.createNote") ||
+    window.i18n?.t("msg.createNote") ??
     "Note: Share this URL carefully. The secret will be deleted after the first access or when it expires.";
   const colonIndex = noteText.indexOf(":");
 

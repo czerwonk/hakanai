@@ -491,7 +491,7 @@ class BrowserCompatibility {
     const missingFeatures: string[] = [];
 
     // Check for Web Crypto API (browser environment)
-    const cryptoInstance = window?.crypto || crypto;
+    const cryptoInstance = window?.crypto ?? crypto;
     if (!cryptoInstance || !cryptoInstance.subtle) {
       missingFeatures.push("Web Crypto API (crypto.subtle)");
     }
@@ -644,7 +644,7 @@ class CryptoContext {
    * @private
    */
   private static getCrypto(): Crypto {
-    const cryptoInstance = window?.crypto || crypto;
+    const cryptoInstance = window?.crypto ?? crypto;
     if (!cryptoInstance) {
       throw new HakanaiError(
         HakanaiErrorCodes.CRYPTO_API_UNAVAILABLE,
@@ -1050,7 +1050,7 @@ class HakanaiClient {
       "Content-Type": "application/json",
     };
 
-    if (authToken && authToken.length > 0) {
+    if (authToken?.length) {
       headers["Authorization"] = `Bearer ${authToken}`;
     }
 
@@ -1102,7 +1102,7 @@ class HakanaiClient {
     try {
       const secretPayload = {
         data: payload.data,
-        filename: payload.filename || null,
+        filename: payload.filename ?? null,
       };
       const payloadJson = JSON.stringify(secretPayload);
       const encodedBytes = new TextEncoder().encode(payloadJson);
@@ -1240,7 +1240,7 @@ class HakanaiClient {
         );
       }
 
-      return new PayloadDataImpl(payload.data, payload.filename || undefined);
+      return new PayloadDataImpl(payload.data, payload.filename ?? undefined);
     } finally {
       cryptoContext.dispose();
     }

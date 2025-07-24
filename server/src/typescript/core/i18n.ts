@@ -498,7 +498,7 @@ class I18n {
    * @returns Translated text in current language, English fallback, or key itself
    */
   t(key: TranslationKey): string {
-    return translations[this.currentLang][key] || translations.en[key] || key;
+    return translations[this.currentLang][key] ?? translations.en[key] ?? key;
   }
 
   /**
