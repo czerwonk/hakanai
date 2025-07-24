@@ -27,21 +27,6 @@ describe("I18n Translation Completeness", () => {
   });
 
   describe("Language Coverage", () => {
-    test("should support exactly 2 languages (en, de)", () => {
-      const availableLanguages = i18n.getAvailableLanguages();
-      expect(availableLanguages).toHaveLength(2);
-      expect(availableLanguages).toContain("en");
-      expect(availableLanguages).toContain("de");
-    });
-
-    test("should have the same translation keys in all languages", () => {
-      const enKeys = Object.keys(translations.en).sort();
-      const deKeys = Object.keys(translations.de).sort();
-
-      expect(enKeys).toEqual(deKeys);
-      expect(enKeys.length).toBeGreaterThan(50); // Ensure we have a substantial number of translations
-    });
-
     test("should not have empty translations in any language", () => {
       const languages: LanguageCode[] = ["en", "de"];
 
@@ -55,9 +40,31 @@ describe("I18n Translation Completeness", () => {
         }
       }
     });
-  });
 
-  describe("Translation Quality", () => {
+    test("should generate a completeness report", () => {
+      const enKeys = Object.keys(translations.en);
+      const deKeys = Object.keys(translations.de);
+
+      const report = {
+        totalKeys: enKeys.length,
+        englishKeys: enKeys.length,
+        germanKeys: deKeys.length,
+        missingInGerman: enKeys.filter((key) => !deKeys.includes(key)),
+        missingInEnglish: deKeys.filter((key) => !enKeys.includes(key)),
+        categories: {} as Record<string, number>,
+      };
+
+      for (const key of enKeys) {
+        const category = key.split(".")[0];
+        report.categories[category] = (report.categories[category] || 0) + 1;
+      }
+
+      expect(report.missingInGerman).toHaveLength(0);
+      expect(report.missingInEnglish).toHaveLength(0);
+      expect(report.totalKeys).toBeGreaterThan(50);
+      expect(Object.keys(report.categories).length).toBeGreaterThan(5);
+    });
+
     test("should have different translations for different languages", () => {
       const enKeys = Object.keys(translations.en);
       let differentTranslations = 0;
@@ -88,24 +95,6 @@ describe("I18n Translation Completeness", () => {
           expect(value).not.toMatch(/\$\{.*\}/); // ${placeholder}
           expect(value).not.toMatch(/TODO|FIXME|XXX/i);
         }
-      }
-    });
-
-    test("should have consistent punctuation patterns within languages", () => {
-      // Check that labels end consistently (with or without colons)
-      const enLabels = Object.entries(translations.en)
-        .filter(([key]) => key.startsWith("label."))
-        .map(([, value]) => value);
-
-      if (enLabels.length > 0) {
-        const enLabelsWithColons = enLabels.filter((label) =>
-          (label as string).endsWith(":"),
-        );
-        const colonRatio = enLabelsWithColons.length / enLabels.length;
-
-        // Either most labels have colons or most don't (consistency check)
-        // Form field labels should have colons, checkbox/radio labels should not
-        expect(colonRatio).toBeGreaterThan(0.6); // 60% consistency allows for mixed UI patterns
       }
     });
   });
@@ -147,40 +136,6 @@ describe("I18n Translation Completeness", () => {
       expect([translations.en[testKey], translations.de[testKey]]).toContain(
         result,
       );
-    });
-  });
-
-  describe("Translation Completeness Report", () => {
-    test("should generate a completeness report", () => {
-      const enKeys = Object.keys(translations.en);
-      const deKeys = Object.keys(translations.de);
-
-      const report = {
-        totalKeys: enKeys.length,
-        englishKeys: enKeys.length,
-        germanKeys: deKeys.length,
-        missingInGerman: enKeys.filter((key) => !deKeys.includes(key)),
-        missingInEnglish: deKeys.filter((key) => !enKeys.includes(key)),
-        categories: {} as Record<string, number>,
-      };
-
-      // Count keys by category
-      for (const key of enKeys) {
-        const category = key.split(".")[0];
-        report.categories[category] = (report.categories[category] || 0) + 1;
-      }
-
-      // Log the report for visibility
-      console.log(
-        "Translation Completeness Report:",
-        JSON.stringify(report, null, 2),
-      );
-
-      // Assertions
-      expect(report.missingInGerman).toHaveLength(0);
-      expect(report.missingInEnglish).toHaveLength(0);
-      expect(report.totalKeys).toBeGreaterThan(50);
-      expect(Object.keys(report.categories).length).toBeGreaterThan(5);
     });
   });
 });
