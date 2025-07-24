@@ -208,67 +208,6 @@ class InputValidation {
   }
 
   /**
-   * Validate complete secret URL format and structure
-   * @param url - Secret URL to validate
-   * @throws {HakanaiError} If URL format or structure is invalid
-   */
-  static validateSecretUrl(url: string): void {
-    if (typeof url !== "string") {
-      throw new HakanaiError(
-        HakanaiErrorCodes.INVALID_URL_FORMAT,
-        "URL must be a string",
-      );
-    }
-
-    if (!url.trim()) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.INVALID_URL_FORMAT,
-        "URL cannot be empty",
-      );
-    }
-
-    // Basic URL validation
-    let urlObj: URL;
-    try {
-      urlObj = new URL(url);
-    } catch {
-      throw new HakanaiError(
-        HakanaiErrorCodes.INVALID_URL_FORMAT,
-        "Invalid URL format",
-      );
-    }
-
-    // Validate protocol (allow both http and https)
-    if (!["http:", "https:"].includes(urlObj.protocol)) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.INVALID_URL_FORMAT,
-        "URL must use HTTP or HTTPS protocol",
-      );
-    }
-
-    // Validate path structure (/s/{id})
-    const pathParts = urlObj.pathname.split("/");
-    if (pathParts.length < 3 || pathParts[1] !== "s" || !pathParts[2]) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.MISSING_SECRET_ID,
-        "URL must contain secret ID in format /s/{id}",
-      );
-    }
-
-    this.validateSecretId(pathParts[2]);
-
-    const keyFragment = urlObj.hash.slice(1);
-    if (!keyFragment) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.MISSING_DECRYPTION_KEY,
-        "URL must contain decryption key in fragment",
-      );
-    }
-
-    this.validateSecretKey(keyFragment);
-  }
-
-  /**
    * Validate TTL (Time To Live) value
    * @param ttl - TTL value in seconds
    * @throws {HakanaiError} If TTL is invalid
@@ -312,12 +251,46 @@ class UrlParser {
     secretId: string;
     secretKey: string;
   } {
-    InputValidation.validateSecretUrl(url);
+    // Basic URL validation
+    if (typeof url !== "string" || !url.trim()) {
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_URL_FORMAT,
+        "URL cannot be empty",
+      );
+    }
 
-    const urlObj = new URL(url);
+    let urlObj: URL;
+    try {
+      urlObj = new URL(url);
+    } catch {
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_URL_FORMAT,
+        "Invalid URL format",
+      );
+    }
+
+    // Parse and validate URL structure first
     const pathParts = urlObj.pathname.split("/");
+    if (pathParts.length !== 3 || pathParts[1] !== "s" || !pathParts[2]) {
+      throw new HakanaiError(
+        HakanaiErrorCodes.MISSING_SECRET_ID,
+        "URL must contain secret ID in format /s/{id}",
+      );
+    }
+
+    // Check if hash fragment is missing from URL
+    if (!urlObj.hash) {
+      throw new HakanaiError(
+        HakanaiErrorCodes.MISSING_DECRYPTION_KEY,
+        "URL must contain decryption key in fragment",
+      );
+    }
+
     const secretId = pathParts[2];
+    InputValidation.validateSecretId(secretId);
+
     const secretKey = urlObj.hash.slice(1);
+    InputValidation.validateSecretKey(secretKey);
 
     return { secretId, secretKey };
   }
