@@ -190,6 +190,7 @@ const translations: Translations = {
       "Secret has been accessed and is no longer available",
     "error.RETRIEVE_FAILED": "Failed to retrieve secret",
     "error.MISSING_DECRYPTION_KEY": "No decryption key found in URL",
+    "error.PAYLOAD_TOO_LARGE": "Secret size exeeds the limit",
 
     // Validation error messages
     "validation.MISSING_DATA": "Missing or invalid data field",
@@ -419,6 +420,7 @@ const translations: Translations = {
     "validation.EMPTY_JSON": "Zwischenablage ist leer",
     "validation.INVALID_JSON_FORMAT":
       "Ungültiges Format der Zwischenablage - kein gültiges JSON",
+    "error.PAYLOAD_TOO_LARGE": "Secret-Größe überschreitet das Limit",
 
     // Client validation error messages - specific for better translations
     "error.EXPECTED_UINT8_ARRAY":

@@ -30,6 +30,8 @@ const HakanaiErrorCodes = {
   RETRIEVE_FAILED: "RETRIEVE_FAILED",
   /** URL missing decryption key in fragment */
   MISSING_DECRYPTION_KEY: "MISSING_DECRYPTION_KEY",
+  /** Secret is too large */
+  PAYLOAD_TOO_LARGE: "PAYLOAD_TOO_LARGE",
 
   // Validation error codes - specific for better translations
   /** Input must be a Uint8Array but received different type */
@@ -1025,6 +1027,14 @@ class HakanaiClient {
       throw new HakanaiError(
         HakanaiErrorCodes.INVALID_TOKEN,
         "Invalid authentication token: Please check your token and try again",
+        response.status,
+      );
+    }
+
+    if (response.status === 413) {
+      throw new HakanaiError(
+        HakanaiErrorCodes.PAYLOAD_TOO_LARGE,
+        "The payload size exceeds the limit allowed for the user",
         response.status,
       );
     }

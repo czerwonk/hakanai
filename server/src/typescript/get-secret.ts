@@ -28,7 +28,6 @@ interface UIStrings {
   FILENAME_LABEL: string;
   INVALID_URL: string;
   MISSING_KEY: string;
-  NOTE_TEXT: string;
   RETRIEVE_FAILED: string;
   SUCCESS_TITLE: string;
 }
@@ -48,8 +47,6 @@ const UI_STRINGS: UIStrings = {
   INVALID_URL:
     "Invalid URL format. Please include the full URL with the secret key after #",
   MISSING_KEY: "Please enter the decryption key",
-  NOTE_TEXT:
-    "Note: This secret has been deleted from the server and cannot be accessed again.",
   RETRIEVE_FAILED: "Failed to retrieve secret",
   SUCCESS_TITLE: "Secret Retrieved Successfully",
 };
@@ -81,7 +78,6 @@ function updateUIStrings(): void {
   UI_STRINGS.FILENAME_LABEL = window.i18n.t("label.filename");
   UI_STRINGS.INVALID_URL = window.i18n.t("msg.invalidUrl");
   UI_STRINGS.MISSING_KEY = window.i18n.t("msg.missingKey");
-  UI_STRINGS.NOTE_TEXT = window.i18n.t("msg.retrieveNote");
   UI_STRINGS.RETRIEVE_FAILED = window.i18n.t("msg.retrieveFailed");
   UI_STRINGS.SUCCESS_TITLE = window.i18n.t("msg.successTitle");
 }

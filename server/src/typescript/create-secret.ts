@@ -34,10 +34,6 @@ interface UIStrings {
   CREATE_FAILED: string;
   SUCCESS_TITLE: string;
   ERROR_TITLE: string;
-  COPY_FAILED: string;
-  NOTE_TEXT: string;
-  SHARE_INSTRUCTIONS: string;
-  FILE_TOO_LARGE: string;
   FILE_READ_ERROR: string;
   INVALID_FILENAME: string;
 }
@@ -51,12 +47,6 @@ const UI_STRINGS: UIStrings = {
   CREATE_FAILED: "Failed to create secret",
   SUCCESS_TITLE: "Secret Created Successfully",
   ERROR_TITLE: "Error",
-  COPY_FAILED: "Failed to copy. Please select and copy manually.",
-  NOTE_TEXT:
-    "Note: Share this URL carefully. The secret will be deleted after the first access or when it expires.",
-  SHARE_INSTRUCTIONS:
-    "Share this URL with the intended recipient. The secret is encrypted and can only be accessed once.",
-  FILE_TOO_LARGE: "File size exceeds 10MB limit",
   FILE_READ_ERROR: "Error reading file",
   INVALID_FILENAME: "Invalid filename. Please select a file with a valid name.",
 };
@@ -86,10 +76,6 @@ function updateUIStrings(): void {
   UI_STRINGS.CREATE_FAILED = window.i18n.t("msg.createFailed");
   UI_STRINGS.SUCCESS_TITLE = window.i18n.t("msg.successTitle");
   UI_STRINGS.ERROR_TITLE = window.i18n.t("msg.errorTitle");
-  UI_STRINGS.COPY_FAILED = window.i18n.t("msg.copyFailed");
-  UI_STRINGS.NOTE_TEXT = window.i18n.t("msg.createNote");
-  UI_STRINGS.SHARE_INSTRUCTIONS = window.i18n.t("msg.shareInstructions");
-  UI_STRINGS.FILE_TOO_LARGE = window.i18n.t("msg.fileTooLarge");
   UI_STRINGS.FILE_READ_ERROR = window.i18n.t("msg.fileReadError");
   UI_STRINGS.INVALID_FILENAME = window.i18n.t("msg.invalidFilename");
 }

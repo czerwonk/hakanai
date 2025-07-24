@@ -19,9 +19,9 @@ function encodeText(text: string): Uint8Array {
 
 // Helper function to generate valid UUID v4
 function generateUUID(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0;
-    const v = c == 'x' ? r : (r & 0x3 | 0x8);
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+    const r = (Math.random() * 16) | 0;
+    const v = c == "x" ? r : (r & 0x3) | 0x8;
     return v.toString(16);
   });
 }
@@ -348,7 +348,9 @@ describe("HakanaiClient Integration", () => {
     expect(urlObj.protocol).toBe("http:");
     expect(urlObj.hostname).toBe("localhost");
     expect(urlObj.port).toBe("8080");
-    expect(urlObj.pathname).toMatch(/^\/s\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+    expect(urlObj.pathname).toMatch(
+      /^\/s\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+    );
     expect(urlObj.hash).toMatch(/^#[A-Za-z0-9_-]+$/);
 
     // Key should be exactly 32 bytes when decoded
@@ -442,7 +444,11 @@ describe("Error Handling", () => {
 
     // Use a properly formatted base64url token (43 chars) that will pass client validation but fail server auth
     await expect(
-      client.sendPayload(payload, 3600, "oCTJV5YSQEllqpBQ5_4ttyeTJsQxNtgsz3xSGjqP9xw"),
+      client.sendPayload(
+        payload,
+        3600,
+        "oCTJV5YSQEllqpBQ5_4ttyeTJsQxNtgsz3xSGjqP9xw",
+      ),
     ).rejects.toThrow(
       "Authentication required: Please provide a valid authentication token",
     );
@@ -461,7 +467,11 @@ describe("Error Handling", () => {
 
     // Use a properly formatted base64url token (43 chars) that will pass client validation but fail server auth
     await expect(
-      client.sendPayload(payload, 3600, "opBEGjLy_mkCsTbMog4nxnvstB39kNx8K7450KHHH4E"),
+      client.sendPayload(
+        payload,
+        3600,
+        "opBEGjLy_mkCsTbMog4nxnvstB39kNx8K7450KHHH4E",
+      ),
     ).rejects.toThrow(
       "Invalid authentication token: Please check your token and try again",
     );
@@ -481,7 +491,11 @@ describe("Error Handling", () => {
 
     try {
       // Use a properly formatted but invalid token (43 chars base64url)
-      await client.sendPayload(payload, 3600, "HUqlqUd68TmqGkNj5o7pMqRcJe2YIQqoOlMfSSYF5r8");
+      await client.sendPayload(
+        payload,
+        3600,
+        "HUqlqUd68TmqGkNj5o7pMqRcJe2YIQqoOlMfSSYF5r8",
+      );
       fail("Expected error to be thrown");
     } catch (error: any) {
       expect(error.name).toBe("HakanaiError");
@@ -498,7 +512,11 @@ describe("Error Handling", () => {
 
     try {
       // Use a properly formatted but invalid token (43 chars base64url)
-      await client.sendPayload(payload, 3600, "opBEGjLy_mkCsTbMog4nxnvstB39kNx8K7450KHHH4E");
+      await client.sendPayload(
+        payload,
+        3600,
+        "opBEGjLy_mkCsTbMog4nxnvstB39kNx8K7450KHHH4E",
+      );
       fail("Expected error to be thrown");
     } catch (error: any) {
       expect(error.name).toBe("HakanaiError");
@@ -521,7 +539,9 @@ describe("Error Handling", () => {
     ).rejects.toThrow("URL must contain secret ID in format /s/{id}");
 
     await expect(
-      client.receivePayload("http://localhost/s/550e8400-e29b-41d4-a716-446655440000"),
+      client.receivePayload(
+        "http://localhost/s/550e8400-e29b-41d4-a716-446655440000",
+      ),
     ).rejects.toThrow("URL must contain decryption key in fragment");
   });
 
@@ -538,7 +558,9 @@ describe("Error Handling", () => {
     const validUuid = "550e8400-e29b-41d4-a716-446655440000";
     const validKey = Base64UrlSafe.encode(new Uint8Array(32)); // 32 zero bytes
     await expect(
-      client.receivePayload("http://localhost:8080/s/" + validUuid + "#" + validKey),
+      client.receivePayload(
+        "http://localhost:8080/s/" + validUuid + "#" + validKey,
+      ),
     ).rejects.toThrow("Secret not found or has expired");
   });
 });
@@ -563,9 +585,8 @@ describe("Error Code Constants", () => {
   test("Error codes are readonly constants", () => {
     // This should be a compile-time check, but we can verify the values exist
     const codes = Object.keys(HakanaiErrorCodes);
-    expect(codes.length).toBe(25);
+    expect(codes.length).toBe(26);
 
-    // Verify all expected codes are present (original codes)
     expect(codes).toContain("AUTHENTICATION_REQUIRED");
     expect(codes).toContain("INVALID_TOKEN");
     expect(codes).toContain("SEND_FAILED");
@@ -573,8 +594,7 @@ describe("Error Code Constants", () => {
     expect(codes).toContain("SECRET_ALREADY_ACCESSED");
     expect(codes).toContain("RETRIEVE_FAILED");
     expect(codes).toContain("MISSING_DECRYPTION_KEY");
-
-    // Verify new validation error codes (all implemented codes)
+    expect(codes).toContain("PAYLOAD_TOO_LARGE");
     expect(codes).toContain("EXPECTED_UINT8_ARRAY");
     expect(codes).toContain("EXPECTED_STRING");
     expect(codes).toContain("INVALID_INPUT_FORMAT");
@@ -631,7 +651,8 @@ describe("Error Code Constants", () => {
   });
 
   test("MISSING vs INVALID error differentiation", async () => {
-    const { InputValidation } = require("../server/src/typescript/hakanai-client") as any;
+    const { InputValidation } =
+      require("../server/src/typescript/hakanai-client") as any;
     const client = new HakanaiClient("http://localhost:8080");
 
     // Test auth token: empty should be valid (no error thrown)
@@ -645,7 +666,9 @@ describe("Error Code Constants", () => {
       fail("Expected HakanaiError to be thrown");
     } catch (error: any) {
       expect(error.code).toBe(HakanaiErrorCodes.INVALID_AUTH_TOKEN);
-      expect(error.message).toBe("Auth token must be a 43-character base64url string (server-generated format)");
+      expect(error.message).toBe(
+        "Auth token must be a 43-character base64url string (server-generated format)",
+      );
     }
 
     // Test secret ID: missing vs invalid
@@ -679,7 +702,9 @@ describe("Error Code Constants", () => {
       fail("Expected HakanaiError to be thrown");
     } catch (error: any) {
       expect(error.code).toBe(HakanaiErrorCodes.INVALID_KEY);
-      expect(error.message).toBe("Secret key must be a 43-character base64url string (32 bytes)");
+      expect(error.message).toBe(
+        "Secret key must be a 43-character base64url string (32 bytes)",
+      );
     }
 
     // Test URL parsing via receivePayload: missing secret ID vs invalid format
@@ -688,7 +713,9 @@ describe("Error Code Constants", () => {
       fail("Expected HakanaiError to be thrown");
     } catch (error: any) {
       expect(error.code).toBe(HakanaiErrorCodes.MISSING_SECRET_ID);
-      expect(error.message).toBe("URL must contain secret ID in format /s/{id}");
+      expect(error.message).toBe(
+        "URL must contain secret ID in format /s/{id}",
+      );
     }
   });
 });
