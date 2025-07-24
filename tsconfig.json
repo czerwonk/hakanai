@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    "target": "ES2017",
-    "module": "ES2015",
-    "lib": ["ES2017", "DOM"],
+    "target": "es2022",
+    "module": "es2022",
+    "lib": ["ES2022", "DOM"],
     "outDir": "./server/src/includes",
     "allowJs": true,
     "declaration": false,
@@ -15,7 +15,6 @@
   },
   "include": [
     "server/src/typescript/*.ts",
-    "server/src/includes/hakanai_wasm.js"
   ],
   "exclude": [
     "node_modules",
