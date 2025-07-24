@@ -28,57 +28,14 @@ import {
 } from "./core/types";
 import { initFeatures } from "./core/app-config";
 
-interface UIStrings {
-  EMPTY_SECRET: string;
-  EMPTY_FILE: string;
-  CREATE_FAILED: string;
-  SUCCESS_TITLE: string;
-  ERROR_TITLE: string;
-  FILE_READ_ERROR: string;
-  INVALID_FILENAME: string;
-}
-
 // Use the RequiredElements type from types.ts
 type Elements = RequiredElements;
-
-const UI_STRINGS: UIStrings = {
-  EMPTY_SECRET: "Please enter a secret to share",
-  EMPTY_FILE: "Please select a file to share",
-  CREATE_FAILED: "Failed to create secret",
-  SUCCESS_TITLE: "Secret Created Successfully",
-  ERROR_TITLE: "Error",
-  FILE_READ_ERROR: "Error reading file",
-  INVALID_FILENAME: "Invalid filename. Please select a file with a valid name.",
-};
 
 const baseUrl = window.location.origin.includes("file://")
   ? "http://localhost:8080"
   : window.location.origin;
 
 const client = new HakanaiClient(baseUrl);
-
-declare global {
-  interface Window {
-    i18n: {
-      t(key: string): string;
-    };
-  }
-}
-
-function updateUIStrings(): void {
-  // Check if i18n is available before using it
-  if (!window.i18n?.t) {
-    return;
-  }
-
-  UI_STRINGS.EMPTY_SECRET = window.i18n.t("msg.emptySecret");
-  UI_STRINGS.EMPTY_FILE = window.i18n.t("msg.emptyFile");
-  UI_STRINGS.CREATE_FAILED = window.i18n.t("msg.createFailed");
-  UI_STRINGS.SUCCESS_TITLE = window.i18n.t("msg.successTitle");
-  UI_STRINGS.ERROR_TITLE = window.i18n.t("msg.errorTitle");
-  UI_STRINGS.FILE_READ_ERROR = window.i18n.t("msg.fileReadError");
-  UI_STRINGS.INVALID_FILENAME = window.i18n.t("msg.invalidFilename");
-}
 
 function getElements(): Elements | null {
   const loadingDiv = document.getElementById("loading");
@@ -146,14 +103,19 @@ async function validateAndProcessFileInput(
 ): Promise<PayloadData | null> {
   const file = fileInput.files?.[0];
   if (!file) {
-    showError(UI_STRINGS.EMPTY_FILE);
+    showError(
+      window.i18n?.t("msg.emptyFile") ?? "Please select a file to share",
+    );
     fileInput.focus();
     return null;
   }
 
   const fileName = sanitizeFileName(file.name);
   if (!validateFilename(file.name)) {
-    showError(UI_STRINGS.INVALID_FILENAME);
+    showError(
+      window.i18n?.t("msg.invalidFilename") ??
+        "Invalid filename. Please select a file with a valid name.",
+    );
     fileInput.focus();
     return null;
   }
@@ -164,7 +126,7 @@ async function validateAndProcessFileInput(
     payload.setFromBytes(fileBytes);
     return payload;
   } catch {
-    showError(UI_STRINGS.FILE_READ_ERROR);
+    showError(window.i18n?.t("msg.fileReadError") ?? "Error reading file");
     return null;
   }
 }
@@ -172,7 +134,9 @@ async function validateAndProcessFileInput(
 function validateTextInput(secretInput: HTMLInputElement): PayloadData | null {
   const secret = secretInput.value.trim();
   if (!secret) {
-    showError(UI_STRINGS.EMPTY_SECRET);
+    showError(
+      window.i18n?.t("msg.emptySecret") ?? "Please enter a secret to share",
+    );
     secretInput.focus();
     return null;
   }
@@ -263,9 +227,13 @@ function handleCreateError(error: unknown): void {
   } else if (isStandardError(error)) {
     showError(error.message);
   } else if (isErrorLike(error)) {
-    showError(error.message ?? UI_STRINGS.CREATE_FAILED);
+    showError(
+      error.message ??
+        window.i18n?.t("msg.createFailed") ??
+        "Failed to create secret",
+    );
   } else {
-    showError(UI_STRINGS.CREATE_FAILED);
+    showError(window.i18n?.t("msg.createFailed") ?? "Failed to create secret");
   }
 }
 
@@ -341,7 +309,9 @@ function showSuccess(secretUrl: string): void {
     container: resultContainer,
     separateKeyMode: isSeparateKeyMode(),
   });
-  announceToScreenReader(UI_STRINGS.SUCCESS_TITLE);
+  announceToScreenReader(
+    window.i18n?.t("msg.successTitle") ?? "Secret Created Successfully",
+  );
 }
 
 function resetToCreateMode(): void {
@@ -379,14 +349,16 @@ function showError(message: string): void {
   showForm();
 
   const title = document.createElement("h3");
-  title.textContent = UI_STRINGS.ERROR_TITLE;
+  title.textContent = window.i18n?.t("msg.errorTitle") ?? "Error";
   resultDiv.appendChild(title);
 
   const errorDiv = document.createElement("div");
   errorDiv.textContent = message;
   resultDiv.appendChild(errorDiv);
 
-  announceToScreenReader(`${UI_STRINGS.ERROR_TITLE}: ${message}`);
+  announceToScreenReader(
+    `${window.i18n?.t("msg.errorTitle") ?? "Error"}: ${message}`,
+  );
 }
 
 function showForm(): void {
@@ -576,19 +548,16 @@ function focusSecretInput(): void {
 }
 
 document.addEventListener("languageChanged", () => {
-  updateUIStrings();
   updateThemeToggleButton();
 });
 
 document.addEventListener("i18nInitialized", () => {
-  updateUIStrings();
   updateThemeToggleButton();
 });
 
 document.addEventListener("DOMContentLoaded", () => {
   initI18n();
   initTheme();
-  updateUIStrings();
   focusSecretInput();
   setupFormHandler();
   setupRadioHandlers();
@@ -606,8 +575,6 @@ export {
   updateFileInfo,
   toggleSecretType,
   resetToCreateMode,
-  updateUIStrings,
   initializeAuthToken,
   handleAuthTokenSave,
-  UI_STRINGS,
 };

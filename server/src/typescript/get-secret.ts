@@ -20,67 +20,16 @@ import { initTheme, updateThemeToggleButton } from "./core/theme";
 import { isHakanaiError, isStandardError, isErrorLike } from "./core/types";
 import { initFeatures } from "./core/app-config";
 
-interface UIStrings {
-  BINARY_DETECTED: string;
-  COPY_FAILED: string;
-  EMPTY_URL: string;
-  ERROR_TITLE: string;
-  FILENAME_LABEL: string;
-  INVALID_URL: string;
-  MISSING_KEY: string;
-  RETRIEVE_FAILED: string;
-  SUCCESS_TITLE: string;
-}
-
 const TIMEOUTS = {
   DEBOUNCE: 300,
   CLEANUP_DELAY: 100,
 } as const;
-
-const UI_STRINGS: UIStrings = {
-  BINARY_DETECTED:
-    "Binary file detected. Content hidden for security. Use download button to save the file.",
-  COPY_FAILED: "Failed to copy. Please select and copy manually.",
-  EMPTY_URL: "Please enter a valid secret URL",
-  ERROR_TITLE: "Error",
-  FILENAME_LABEL: "Filename:",
-  INVALID_URL:
-    "Invalid URL format. Please include the full URL with the secret key after #",
-  MISSING_KEY: "Please enter the decryption key",
-  RETRIEVE_FAILED: "Failed to retrieve secret",
-  SUCCESS_TITLE: "Secret Retrieved Successfully",
-};
 
 const baseUrl = window.location.origin.includes("file://")
   ? "http://localhost:8080"
   : window.location.origin;
 
 const client = new HakanaiClient(baseUrl);
-
-declare global {
-  interface Window {
-    i18n: {
-      t(key: string): string;
-    };
-  }
-}
-
-function updateUIStrings(): void {
-  // Check if i18n is available before using it
-  if (!window.i18n?.t) {
-    return;
-  }
-
-  UI_STRINGS.BINARY_DETECTED = window.i18n.t("msg.binaryDetected");
-  UI_STRINGS.COPY_FAILED = window.i18n.t("msg.copyFailed");
-  UI_STRINGS.EMPTY_URL = window.i18n.t("msg.emptyUrl");
-  UI_STRINGS.ERROR_TITLE = window.i18n.t("msg.errorTitle");
-  UI_STRINGS.FILENAME_LABEL = window.i18n.t("label.filename");
-  UI_STRINGS.INVALID_URL = window.i18n.t("msg.invalidUrl");
-  UI_STRINGS.MISSING_KEY = window.i18n.t("msg.missingKey");
-  UI_STRINGS.RETRIEVE_FAILED = window.i18n.t("msg.retrieveFailed");
-  UI_STRINGS.SUCCESS_TITLE = window.i18n.t("msg.successTitle");
-}
 
 function getElements() {
   return {
@@ -114,8 +63,12 @@ function validateInputs(
   key: string,
   hasFragment: boolean,
 ): string | null {
-  if (!url) return UI_STRINGS.EMPTY_URL;
-  if (!hasFragment && !key) return UI_STRINGS.MISSING_KEY;
+  if (!url)
+    return window.i18n?.t("msg.emptyUrl") ?? "Please enter a valid secret URL";
+  if (!hasFragment && !key)
+    return (
+      window.i18n?.t("msg.missingKey") ?? "Please enter the decryption key"
+    );
   return null;
 }
 
@@ -161,7 +114,10 @@ async function processRetrieveRequest(): Promise<void> {
   try {
     new URL(processedUrl);
   } catch {
-    showError(UI_STRINGS.INVALID_URL);
+    showError(
+      window.i18n?.t("msg.invalidUrl") ??
+        "Invalid URL format. Please include the full URL with the secret key after #",
+    );
     urlInput.focus();
     return;
   }
@@ -169,7 +125,7 @@ async function processRetrieveRequest(): Promise<void> {
   const validationError = validateInputs(url, key, hasFragment);
   if (validationError) {
     showError(validationError);
-    (validationError === UI_STRINGS.EMPTY_URL ? urlInput : keyInput).focus();
+    (validationError.includes("emptyUrl") ? urlInput : keyInput).focus();
     return;
   }
 
@@ -199,9 +155,15 @@ function handleRetrieveError(error: unknown): void {
   } else if (isStandardError(error)) {
     showError(error.message);
   } else if (isErrorLike(error)) {
-    showError(error.message ?? UI_STRINGS.RETRIEVE_FAILED);
+    showError(
+      error.message ??
+        window.i18n?.t("msg.retrieveFailed") ??
+        "Failed to retrieve secret",
+    );
   } else {
-    showError(UI_STRINGS.RETRIEVE_FAILED);
+    showError(
+      window.i18n?.t("msg.retrieveFailed") ?? "Failed to retrieve secret",
+    );
   }
 }
 
@@ -315,7 +277,9 @@ function createBinarySecret(
 
   const message = document.createElement("p");
   message.className = "binary-message";
-  message.textContent = UI_STRINGS.BINARY_DETECTED;
+  message.textContent =
+    window.i18n?.t("msg.binaryDetected") ??
+    "Binary file detected. Content hidden for security. Use download button to save the file.";
   container.appendChild(message);
 
   const buttonsContainer = createButtonContainer();
@@ -356,7 +320,8 @@ function createFilenameInfo(filename: string, size: number): HTMLElement {
   fileInfo.className = "file-info";
 
   const fileLabel = document.createElement("strong");
-  fileLabel.textContent = UI_STRINGS.FILENAME_LABEL + " ";
+  fileLabel.textContent =
+    (window.i18n?.t("label.filename") ?? "Filename:") + " ";
   fileInfo.appendChild(fileLabel);
   fileInfo.appendChild(document.createTextNode(filename));
 
@@ -389,7 +354,8 @@ function showSuccess(payload: PayloadData): void {
   resultDiv.innerHTML = "";
 
   const title = document.createElement("h3");
-  title.textContent = UI_STRINGS.SUCCESS_TITLE;
+  title.textContent =
+    window.i18n?.t("msg.successTitle") ?? "Secret Retrieved Successfully";
   resultDiv.appendChild(title);
 
   const decodedBytes = payload.decodeBytes();
@@ -408,7 +374,9 @@ function showSuccess(payload: PayloadData): void {
   }
 
   resultDiv.appendChild(createNoteElement());
-  announceToScreenReader(UI_STRINGS.SUCCESS_TITLE);
+  announceToScreenReader(
+    window.i18n?.t("msg.successTitle") ?? "Secret Retrieved Successfully",
+  );
 }
 
 function showError(message: string): void {
@@ -419,14 +387,16 @@ function showError(message: string): void {
   document.body.classList.remove("expanded-view");
 
   const title = document.createElement("h3");
-  title.textContent = UI_STRINGS.ERROR_TITLE;
+  title.textContent = window.i18n?.t("msg.errorTitle") ?? "Error";
   resultDiv.appendChild(title);
 
   const errorDiv = document.createElement("div");
   errorDiv.textContent = message;
   resultDiv.appendChild(errorDiv);
 
-  announceToScreenReader(`${UI_STRINGS.ERROR_TITLE}: ${message}`);
+  announceToScreenReader(
+    `${window.i18n?.t("msg.errorTitle") ?? "Error"}: ${message}`,
+  );
 }
 
 function copySecret(secretId: string, button: HTMLButtonElement): void {
@@ -434,7 +404,10 @@ function copySecret(secretId: string, button: HTMLButtonElement): void {
     secretId,
   ) as HTMLTextAreaElement;
   if (!secretElement) {
-    showError(UI_STRINGS.COPY_FAILED);
+    showError(
+      window.i18n?.t("msg.copyFailed") ??
+        "Failed to copy. Please select and copy manually.",
+    );
     return;
   }
 
@@ -508,12 +481,10 @@ function setupForm(): void {
 }
 
 document.addEventListener("languageChanged", () => {
-  updateUIStrings();
   updateThemeToggleButton();
 });
 
 document.addEventListener("i18nInitialized", () => {
-  updateUIStrings();
   updateThemeToggleButton();
 });
 
@@ -522,16 +493,8 @@ document.addEventListener("DOMContentLoaded", () => {
   initTheme();
   setupForm();
   setupUrlInput();
-  updateUIStrings();
   initFeatures();
 });
 
 // Export functions for testing
-export {
-  normalizeUrl,
-  hasUrlFragment,
-  validateInputs,
-  generateFilename,
-  updateUIStrings,
-  UI_STRINGS,
-};
+export { normalizeUrl, hasUrlFragment, validateInputs, generateFilename };
