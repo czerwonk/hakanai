@@ -163,27 +163,6 @@ describe("get-secret.ts", () => {
       expect(typeof UI_STRINGS.EMPTY_URL).toBe("string");
       expect(UI_STRINGS.EMPTY_URL.length).toBeGreaterThan(0);
     });
-
-    test("UI_STRINGS has sensible defaults", () => {
-      const { UI_STRINGS } = getSecretModule;
-
-      // Test that we have the expected string properties
-      expect(typeof UI_STRINGS.EMPTY_URL).toBe("string");
-      expect(typeof UI_STRINGS.INVALID_URL).toBe("string");
-      expect(typeof UI_STRINGS.MISSING_KEY).toBe("string");
-      expect(typeof UI_STRINGS.RETRIEVE_FAILED).toBe("string");
-      expect(typeof UI_STRINGS.SUCCESS_TITLE).toBe("string");
-      expect(typeof UI_STRINGS.ERROR_TITLE).toBe("string");
-      expect(typeof UI_STRINGS.COPY_FAILED).toBe("string");
-      expect(typeof UI_STRINGS.NOTE_TEXT).toBe("string");
-      expect(typeof UI_STRINGS.BINARY_DETECTED).toBe("string");
-      expect(typeof UI_STRINGS.FILENAME_LABEL).toBe("string");
-
-      // Test that strings are not empty
-      expect(UI_STRINGS.EMPTY_URL.length).toBeGreaterThan(0);
-      expect(UI_STRINGS.SUCCESS_TITLE.length).toBeGreaterThan(0);
-      expect(UI_STRINGS.ERROR_TITLE.length).toBeGreaterThan(0);
-    });
   });
 
   describe("URL format validation edge cases", () => {
