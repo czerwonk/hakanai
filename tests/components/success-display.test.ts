@@ -1,4 +1,5 @@
 import { displaySuccessResult } from "../../server/src/typescript/components/success-display";
+import { I18n } from "../../server/src/typescript/core/i18n";
 
 // Mock the QR code generator
 jest.mock("../../server/src/typescript/core/qr-generator", () => ({
@@ -15,24 +16,26 @@ describe("Success Display Component", () => {
     container = document.createElement("div");
     document.body.appendChild(container);
 
-    // Mock window.i18n
-    Object.defineProperty(window, "i18n", {
+    // Mock localStorage for i18n
+    Object.defineProperty(window, "localStorage", {
       value: {
-        t: jest.fn((key: string) => {
-          const translations: Record<string, string> = {
-            "msg.successTitle": "Secret Created Successfully",
-            "msg.shareInstructions":
-              "Share this URL with the intended recipient.",
-            "label.url": "Secret URL:",
-            "label.key": "Decryption Key:",
-            "label.qrCode": "QR Code:",
-            "button.copy": "Copy",
-            "msg.createNote":
-              "Note: Share this URL carefully. The secret will be deleted after the first access or when it expires.",
-          };
-          return translations[key] || key;
-        }),
+        getItem: jest.fn(),
+        setItem: jest.fn(),
       },
+      writable: true,
+    });
+
+    // Mock navigator.language
+    Object.defineProperty(navigator, "language", {
+      value: "en-US",
+      writable: true,
+    });
+
+    // Initialize real i18n instead of mocking
+    const i18n = new I18n();
+
+    Object.defineProperty(window, "i18n", {
+      value: i18n,
       writable: true,
     });
   });
@@ -58,11 +61,11 @@ describe("Success Display Component", () => {
 
       // Check for success header
       const title = container.querySelector("h3");
-      expect(title?.textContent).toBe("Secret Created Successfully");
+      expect(title?.textContent).toBe("Success");
 
       const instructions = container.querySelector(".share-instructions");
       expect(instructions?.textContent).toBe(
-        "Share this URL with the intended recipient.",
+        "Share this URL with the intended recipient. The secret is encrypted and can only be accessed once.",
       );
 
       // Check for URL input
@@ -74,7 +77,7 @@ describe("Success Display Component", () => {
 
       // Check for copy button
       const copyButton = container.querySelector(".copy-button");
-      expect(copyButton?.textContent).toBe("Copy");
+      expect(copyButton?.textContent).toBe("📋 Copy");
 
       // Check for QR code section
       const qrSection = container.querySelector(".qr-code-section");
@@ -141,9 +144,7 @@ describe("Success Display Component", () => {
       expect(title).toBeTruthy();
     });
 
-    test("should use fallback text when i18n is not available", async () => {
-      delete (global as any).window.i18n;
-
+    test("should use real translations from i18n", async () => {
       const testUrl = "https://example.com/s/123#abcdef";
 
       displaySuccessResult(testUrl, {
@@ -154,9 +155,9 @@ describe("Success Display Component", () => {
       // Wait for async QR code generation
       await new Promise((resolve) => setTimeout(resolve, 0));
 
-      // Should use fallback English text
+      // Should use real i18n translations
       const title = container.querySelector("h3");
-      expect(title?.textContent).toBe("Secret Created Successfully");
+      expect(title?.textContent).toBe("Success");
 
       const urlLabel = container.querySelector("label");
       expect(urlLabel?.textContent).toBe("Secret URL:");
