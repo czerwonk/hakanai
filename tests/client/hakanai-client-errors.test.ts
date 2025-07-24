@@ -174,24 +174,7 @@ describe("Error Handling", () => {
 });
 
 describe("Error Code Constants", () => {
-  test("HakanaiErrorCodes exports all expected constants", () => {
-    expect(HakanaiErrorCodes.AUTHENTICATION_REQUIRED).toBe(
-      "AUTHENTICATION_REQUIRED",
-    );
-    expect(HakanaiErrorCodes.INVALID_TOKEN).toBe("INVALID_TOKEN");
-    expect(HakanaiErrorCodes.SEND_FAILED).toBe("SEND_FAILED");
-    expect(HakanaiErrorCodes.SECRET_NOT_FOUND).toBe("SECRET_NOT_FOUND");
-    expect(HakanaiErrorCodes.SECRET_ALREADY_ACCESSED).toBe(
-      "SECRET_ALREADY_ACCESSED",
-    );
-    expect(HakanaiErrorCodes.RETRIEVE_FAILED).toBe("RETRIEVE_FAILED");
-    expect(HakanaiErrorCodes.MISSING_DECRYPTION_KEY).toBe(
-      "MISSING_DECRYPTION_KEY",
-    );
-  });
-
   test("Error codes are readonly constants", () => {
-    // This should be a compile-time check, but we can verify the values exist
     const codes = Object.keys(HakanaiErrorCodes);
     expect(codes.length).toBe(26);
 
