@@ -104,9 +104,14 @@ function showSuccess(url: string): void {
     return;
   }
 
+  const separateKeyCheckbox = document.getElementById(
+    "separate-key-mode",
+  ) as HTMLInputElement;
+  const separateKeyMode = separateKeyCheckbox?.checked ?? false;
+
   displaySuccessResult(url, {
     container: resultContainer,
-    separateKeyMode: false,
+    separateKeyMode: separateKeyMode,
   });
   hideOtherSections("result-success");
 }

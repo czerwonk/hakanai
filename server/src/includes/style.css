@@ -2137,3 +2137,8 @@ body:has(.privacy-content) {
 .auto-height {
   height: var(--textarea-height, auto) !important;
 }
+
+/* Button spacing utility */
+.button-spacing {
+  margin-top: var(--spacing-lg);
+}

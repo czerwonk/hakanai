@@ -76,7 +76,6 @@ const translations: Translations = {
     "button.download": "💾 Download",
     "button.chooseFile": "📁 Choose File",
     "button.readClipboard": "📄 Read Clipboard",
-    "button.createSecret": "Create Secret",
 
     // Messages
     "msg.creating": "Creating secret...",
@@ -291,7 +290,6 @@ const translations: Translations = {
     "button.download": "💾 Speichern",
     "button.chooseFile": "📁 Datei auswählen",
     "button.readClipboard": "📄 Zwischenablage lesen",
-    "button.createSecret": "Secret erstellen",
 
     // Messages
     "msg.creating": "Secret wird erstellt...",

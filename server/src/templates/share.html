@@ -33,8 +33,22 @@
           </div>
 
           <div class="input-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="separate-key-mode" />
+              <span data-i18n="label.separateKey"
+                >Show URL and key separately for enhanced security</span
+              >
+            </label>
+            <span data-i18n="helper.separateKey" class="input-helper">
+              When enabled, the URL and decryption key are displayed separately,
+              allowing you to share them through different channels for enhanced
+              security.
+            </span>
+          </div>
+
+          <div class="input-group">
             <button id="share-button" class="button primary">
-              <span data-i18n="button.createSecret">Create Secret</span>
+              <span data-i18n="button.create">Create Secret</span>
             </button>
           </div>
         </div>
@@ -60,13 +74,15 @@
               Click the button below to read the shared content from your
               clipboard.
             </p>
-            <button
-              id="read-clipboard"
-              class="button"
-              data-i18n="button.readClipboard"
-            >
-              Read Clipboard
-            </button>
+            <div class="button-spacing">
+              <button
+                id="read-clipboard"
+                class="button"
+                data-i18n="button.readClipboard"
+              >
+                Read Clipboard
+              </button>
+            </div>
           </div>
         </div>
 
@@ -84,11 +100,7 @@
           </div>
           <div class="url-display" id="secret-url"></div>
           <div class="buttons-container">
-            <button
-              class="copy-button"
-              id="copy-url"
-              data-i18n="button.copy"
-            >
+            <button class="copy-button" id="copy-url" data-i18n="button.copy">
               📋 Copy
             </button>
           </div>
