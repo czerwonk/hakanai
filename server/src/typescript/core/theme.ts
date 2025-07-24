@@ -94,7 +94,7 @@ export function updateThemeToggleButton(): void {
   if (!button) return;
 
   const isDark = currentThemeIsDark();
-  button.textContent = isDark ? "🌙" : "☀️";
+  button.textContent = isDark ? "☀️" : "🌙";
   button.setAttribute("aria-label", getThemeToggleLabel(isDark));
 }
 
