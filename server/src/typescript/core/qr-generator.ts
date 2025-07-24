@@ -32,6 +32,7 @@ export class QRCodeGenerator {
   private static async loadWasm(): Promise<void> {
     try {
       // Dynamic import of the WASM module
+      // @ts-ignore
       const module = (await import(
         "/hakanai_wasm.js"
       )) as unknown as WasmModule;

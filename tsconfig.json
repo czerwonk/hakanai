@@ -14,7 +14,8 @@
     "forceConsistentCasingInFileNames": true
   },
   "include": [
-    "server/src/typescript/*.ts"
+    "server/src/typescript/*.ts",
+    "server/src/includes/hakanai_wasm.js"
   ],
   "exclude": [
     "node_modules",
