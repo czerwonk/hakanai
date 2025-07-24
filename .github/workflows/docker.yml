@@ -40,14 +40,16 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: "24"
-      
+
       - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y lld
 
       - name: Install wasm-pack
-        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+        uses: jetli/wasm-pack-action@v0.4.0
+        with:
+          version: "0.13.1"
 
       - name: Add wasm32 target
         run: rustup target add wasm32-unknown-unknown
