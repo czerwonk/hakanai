@@ -206,17 +206,20 @@ const translations: Translations = {
     "error.EXPECTED_UINT8_ARRAY": "Input must be a Uint8Array (binary data)",
     "error.EXPECTED_STRING": "Input must be a string (text data)",
     "error.INVALID_INPUT_FORMAT": "Input contains invalid characters or format",
-    "error.INVALID_KEY_LENGTH": "Cryptographic key has invalid length",
+    "error.MISSING_KEY": "Secret key is required",
+    "error.INVALID_KEY": "Secret key has invalid length or format",
     "error.CRYPTO_API_UNAVAILABLE":
       "Web Crypto API is not available in this browser",
     "error.INVALID_TTL": "TTL value must be a positive integer",
-    "error.INVALID_AUTH_TOKEN": "Authentication token must be a string",
+    "error.MISSING_AUTH_TOKEN": "Authentication token is required",
+    "error.INVALID_AUTH_TOKEN": "Authentication token format is invalid",
     "error.BASE64_ERROR": "Base64 encoding/decoding failed",
     "error.INVALID_ENCRYPTED_DATA": "Encrypted data is corrupted or too short",
     "error.DECRYPTION_FAILED":
       "Decryption failed: invalid key or corrupted data",
     "error.INVALID_URL_FORMAT": "Invalid URL format",
-    "error.MISSING_SECRET_ID": "URL is missing required secret ID",
+    "error.MISSING_SECRET_ID": "URL is missing secret ID",
+    "error.INVALID_SECRET_ID": "Secret ID format is invalid",
     "error.INVALID_PAYLOAD": "Payload object is invalid or malformed",
     "error.INVALID_SERVER_RESPONSE": "Server response is missing required data",
     "error.CRYPTO_CONTEXT_DISPOSED":
@@ -425,18 +428,22 @@ const translations: Translations = {
     "error.EXPECTED_STRING": "Eingabe muss ein String (Textdaten) sein",
     "error.INVALID_INPUT_FORMAT":
       "Eingabe enthält ungültige Zeichen oder Format",
-    "error.INVALID_KEY_LENGTH": "Verschlüsselungsschlüssel hat ungültige Länge",
+    "error.MISSING_KEY": "Geheimer Schlüssel ist erforderlich",
+    "error.INVALID_KEY":
+      "Verschlüsselungsschlüssel hat ungültige Länge oder Format",
     "error.CRYPTO_API_UNAVAILABLE":
       "Web Crypto API ist in diesem Browser nicht verfügbar",
     "error.INVALID_TTL": "TTL-Wert muss eine positive Ganzzahl sein",
-    "error.INVALID_AUTH_TOKEN": "Authentifizierungs-Token muss ein String sein",
+    "error.MISSING_AUTH_TOKEN": "Authentifizierungs-Token ist erforderlich",
+    "error.INVALID_AUTH_TOKEN": "Authentifizierungs-Token-Format ist ungültig",
     "error.BASE64_ERROR": "Base64-Kodierung/Dekodierung fehlgeschlagen",
     "error.INVALID_ENCRYPTED_DATA":
       "Verschlüsselte Daten sind beschädigt oder ungültig",
     "error.DECRYPTION_FAILED":
       "Entschlüsselung fehlgeschlagen: ungültiger Schlüssel oder beschädigte Daten",
     "error.INVALID_URL_FORMAT": "Ungültiges URL-Format",
-    "error.MISSING_SECRET_ID": "URL fehlt erforderliche Secret-ID",
+    "error.MISSING_SECRET_ID": "URL fehlt die Secret-ID",
+    "error.INVALID_SECRET_ID": "Secret-ID-Format ist ungültig",
     "error.INVALID_PAYLOAD": "Payload-Objekt ist ungültig oder fehlerhaft",
     "error.INVALID_SERVER_RESPONSE": "Server-Antwort fehlt erforderliche Daten",
     "error.CRYPTO_CONTEXT_DISPOSED":

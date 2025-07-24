@@ -1,4 +1,4 @@
-/**
+/*
  * Hakanai JavaScript Client (TypeScript Implementation)
  *
  * This client implements the same cryptographic protocol as the Rust CLI client,
@@ -38,12 +38,16 @@ const HakanaiErrorCodes = {
   EXPECTED_STRING: "EXPECTED_STRING",
   /** Input contains invalid characters or format */
   INVALID_INPUT_FORMAT: "INVALID_INPUT_FORMAT",
-  /** Cryptographic key has invalid length */
-  INVALID_KEY_LENGTH: "INVALID_KEY_LENGTH",
+  /** Cryptographic key is missing */
+  MISSING_KEY: "MISSING_KEY",
+  /** Cryptographic key has invalid length or format */
+  INVALID_KEY: "INVALID_KEY",
   /** Web Crypto API is not available */
   CRYPTO_API_UNAVAILABLE: "CRYPTO_API_UNAVAILABLE",
   /** TTL value is invalid */
   INVALID_TTL: "INVALID_TTL",
+  /** Authentication token is missing */
+  MISSING_AUTH_TOKEN: "MISSING_AUTH_TOKEN",
   /** Authentication token format is invalid */
   INVALID_AUTH_TOKEN: "INVALID_AUTH_TOKEN",
   /** Base64 encoding/decoding failed */
@@ -54,8 +58,10 @@ const HakanaiErrorCodes = {
   DECRYPTION_FAILED: "DECRYPTION_FAILED",
   /** URL format is invalid */
   INVALID_URL_FORMAT: "INVALID_URL_FORMAT",
-  /** URL is missing required secret ID */
+  /** URL is missing secret ID */
   MISSING_SECRET_ID: "MISSING_SECRET_ID",
+  /** Secret ID format is invalid */
+  INVALID_SECRET_ID: "INVALID_SECRET_ID",
   /** Payload object is invalid or malformed */
   INVALID_PAYLOAD: "INVALID_PAYLOAD",
   /** Server response is invalid or empty */
@@ -67,6 +73,255 @@ const HakanaiErrorCodes = {
 // Type for error codes
 type HakanaiErrorCode =
   (typeof HakanaiErrorCodes)[keyof typeof HakanaiErrorCodes];
+
+/**
+ * Type-safe validation functions for all input data
+ * Provides compile-time safety without string copying for better memory security
+ * @namespace InputValidation
+ */
+class InputValidation {
+  /**
+   * Validate server-generated authentication token format
+   * Server tokens are 32 random bytes encoded as base64 (44 characters with padding)
+   * @param token - Authentication token string to validate
+   * @throws {HakanaiError} If token format doesn't match server-generated format
+   */
+  static validateAuthToken(token: string): void {
+    if (typeof token !== "string") {
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_AUTH_TOKEN,
+        "Auth token must be a string",
+      );
+    }
+
+    // Empty token is valid (represents no authentication)
+    if (!token.trim()) {
+      return;
+    }
+
+    // Server-generated tokens are 32 bytes base64url-encoded = 43 chars without padding
+    if (!/^[A-Za-z0-9_-]{43}$/.test(token)) {
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_AUTH_TOKEN,
+        "Auth token must be a 43-character base64url string (server-generated format)",
+      );
+    }
+  }
+
+  /**
+   * Validate AES-256 secret key format (base64url, 32 bytes)
+   * @param key - Base64url encoded secret key to validate
+   * @throws {HakanaiError} If key format or length is invalid
+   */
+  static validateSecretKey(key: string): void {
+    if (typeof key !== "string") {
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_KEY,
+        "Secret key must be a string",
+      );
+    }
+
+    if (!key.trim()) {
+      throw new HakanaiError(
+        HakanaiErrorCodes.MISSING_KEY,
+        "Secret key cannot be empty",
+      );
+    }
+
+    // Validate base64url format and length (32 bytes = 43 chars in base64url without padding)
+    if (!/^[A-Za-z0-9_-]{43}$/.test(key)) {
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_KEY,
+        "Secret key must be a 43-character base64url string (32 bytes)",
+      );
+    }
+  }
+
+  /**
+   * Validate secret ID format (UUID)
+   * @param id - Secret ID string to validate
+   * @throws {HakanaiError} If ID format is invalid
+   */
+  static validateSecretId(id: string): void {
+    if (typeof id !== "string") {
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_SECRET_ID,
+        "Secret ID must be a string",
+      );
+    }
+
+    if (!id.trim()) {
+      throw new HakanaiError(
+        HakanaiErrorCodes.MISSING_SECRET_ID,
+        "Secret ID cannot be empty",
+      );
+    }
+
+    // Validate UUID format (flexible - supports v1-v8)
+    if (
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        id,
+      )
+    ) {
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_SECRET_ID,
+        "Secret ID must be a valid UUID",
+      );
+    }
+  }
+
+  /**
+   * Validate encrypted data format (base64)
+   * @param data - Base64 encoded encrypted data to validate
+   * @throws {HakanaiError} If data format is invalid
+   */
+  static validateEncryptedData(data: string): void {
+    if (typeof data !== "string") {
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_ENCRYPTED_DATA,
+        "Encrypted data must be a string",
+      );
+    }
+
+    if (!data.trim()) {
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_ENCRYPTED_DATA,
+        "Encrypted data cannot be empty",
+      );
+    }
+
+    // Validate base64 format (with optional padding)
+    if (!/^[A-Za-z0-9+/]*={0,2}$/.test(data)) {
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_ENCRYPTED_DATA,
+        "Encrypted data must be valid base64",
+      );
+    }
+
+    // Check minimum length (AES-GCM nonce + some encrypted content)
+    if (data.length < 16) {
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_ENCRYPTED_DATA,
+        "Encrypted data appears too short to be valid",
+      );
+    }
+  }
+
+  /**
+   * Validate complete secret URL format and structure
+   * @param url - Secret URL to validate
+   * @throws {HakanaiError} If URL format or structure is invalid
+   */
+  static validateSecretUrl(url: string): void {
+    if (typeof url !== "string") {
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_URL_FORMAT,
+        "URL must be a string",
+      );
+    }
+
+    if (!url.trim()) {
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_URL_FORMAT,
+        "URL cannot be empty",
+      );
+    }
+
+    // Basic URL validation
+    let urlObj: URL;
+    try {
+      urlObj = new URL(url);
+    } catch {
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_URL_FORMAT,
+        "Invalid URL format",
+      );
+    }
+
+    // Validate protocol (allow both http and https)
+    if (!["http:", "https:"].includes(urlObj.protocol)) {
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_URL_FORMAT,
+        "URL must use HTTP or HTTPS protocol",
+      );
+    }
+
+    // Validate path structure (/s/{id})
+    const pathParts = urlObj.pathname.split("/");
+    if (pathParts.length < 3 || pathParts[1] !== "s" || !pathParts[2]) {
+      throw new HakanaiError(
+        HakanaiErrorCodes.MISSING_SECRET_ID,
+        "URL must contain secret ID in format /s/{id}",
+      );
+    }
+
+    this.validateSecretId(pathParts[2]);
+
+    const keyFragment = urlObj.hash.slice(1);
+    if (!keyFragment) {
+      throw new HakanaiError(
+        HakanaiErrorCodes.MISSING_DECRYPTION_KEY,
+        "URL must contain decryption key in fragment",
+      );
+    }
+
+    this.validateSecretKey(keyFragment);
+  }
+
+  /**
+   * Validate TTL (Time To Live) value
+   * @param ttl - TTL value in seconds
+   * @throws {HakanaiError} If TTL is invalid
+   */
+  static validateTTL(ttl: number): void {
+    if (typeof ttl !== "number") {
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_TTL,
+        "TTL must be a number",
+      );
+    }
+
+    if (!Number.isInteger(ttl)) {
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_TTL,
+        "TTL must be an integer",
+      );
+    }
+
+    if (ttl <= 0) {
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_TTL,
+        "TTL must be a positive number",
+      );
+    }
+  }
+}
+
+/**
+ * URL parsing utilities for Hakanai secret URLs
+ * @class UrlParser
+ */
+class UrlParser {
+  /**
+   * Parse and validate a secret URL, returning its components
+   * @param url - Complete secret URL
+   * @returns Object with validated secretId and secretKey
+   * @throws {HakanaiError} If URL or its components are invalid
+   */
+  static parseSecretUrl(url: string): {
+    secretId: string;
+    secretKey: string;
+  } {
+    InputValidation.validateSecretUrl(url);
+
+    const urlObj = new URL(url);
+    const pathParts = urlObj.pathname.split("/");
+    const secretId = pathParts[2];
+    const secretKey = urlObj.hash.slice(1);
+
+    return { secretId, secretKey };
+  }
+}
 
 // Type definitions
 interface CompatibilityCheck {
@@ -466,7 +721,7 @@ class CryptoContext {
 
     if (keyBytes.length !== KEY_LENGTH) {
       throw new HakanaiError(
-        HakanaiErrorCodes.INVALID_KEY_LENGTH,
+        HakanaiErrorCodes.INVALID_KEY,
         `Invalid key length: must be ${KEY_LENGTH} bytes`,
       );
     }
@@ -745,7 +1000,7 @@ class HakanaiClient {
   }
 
   /**
-   * Validate sendPayload parameters
+   * Validate sendPayload parameters with comprehensive type checking
    * @private
    */
   private validateSendPayloadParams(
@@ -771,18 +1026,12 @@ class HakanaiClient {
       );
     }
 
-    if (typeof ttl !== "number" || ttl <= 0 || !Number.isInteger(ttl)) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.INVALID_TTL,
-        "TTL must be a positive integer",
-      );
-    }
+    // Use validation namespace for consistent TTL validation
+    InputValidation.validateTTL(ttl);
 
-    if (authToken !== undefined && typeof authToken !== "string") {
-      throw new HakanaiError(
-        HakanaiErrorCodes.INVALID_AUTH_TOKEN,
-        "Auth token must be a string if provided",
-      );
+    // Validate auth token format if provided
+    if (authToken !== undefined) {
+      InputValidation.validateAuthToken(authToken);
     }
   }
 
@@ -907,63 +1156,24 @@ class HakanaiClient {
   }
 
   /**
-   * Validate and parse receive URL for secret retrieval
+   * Validate and parse receive URL for secret retrieval using centralized validation
    * @private
    */
   private validateAndParseReceiveUrl(url: string): {
     secretId: string;
     key: Uint8Array;
   } {
-    if (typeof url !== "string" || !url.trim()) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.EXPECTED_STRING,
-        "URL must be a non-empty string",
-      );
-    }
+    // Use URL parser for parsing
+    const { secretId, secretKey } = UrlParser.parseSecretUrl(url);
 
-    // Parse the URL
-    let urlObj: URL;
-    try {
-      urlObj = new URL(url);
-    } catch (error) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.INVALID_URL_FORMAT,
-        "Invalid URL format",
-      );
-    }
-
-    // Extract secret ID from path (expects format /s/{id})
-    const pathParts = urlObj.pathname.split("/");
-    if (pathParts.length < 3 || pathParts[1] !== "s" || !pathParts[2]) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.MISSING_SECRET_ID,
-        "No secret ID found in URL",
-      );
-    }
-    const secretId = pathParts[2];
-
-    const keyBase64 = urlObj.hash.slice(1); // Remove the #
-    if (!keyBase64) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.MISSING_DECRYPTION_KEY,
-        "No decryption key found in URL",
-      );
-    }
-
+    // Convert validated key string to bytes
     let key: Uint8Array;
     try {
-      key = Base64UrlSafe.decode(keyBase64);
+      key = Base64UrlSafe.decode(secretKey);
     } catch (error) {
       throw new HakanaiError(
         HakanaiErrorCodes.BASE64_ERROR,
         "Invalid decryption key in URL",
-      );
-    }
-
-    if (key.length !== KEY_LENGTH) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.INVALID_KEY_LENGTH,
-        "Invalid key length",
       );
     }
 
@@ -1024,6 +1234,9 @@ class HakanaiClient {
       );
     }
 
+    // Validate encrypted data format
+    InputValidation.validateEncryptedData(encryptedData);
+
     const cryptoContext = await CryptoContext.fromKey(key);
     try {
       const decryptedBytes = await cryptoContext.decrypt(encryptedData);
@@ -1079,6 +1292,7 @@ if (typeof module !== "undefined" && module.exports) {
     HakanaiErrorCodes,
     Base64UrlSafe,
     ContentAnalysis,
+    InputValidation,
   };
 }
 
