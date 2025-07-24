@@ -19,21 +19,21 @@ const commonConfig = {
   },
 };
 
-const createBundle = (inputFile, outputFile) => ({
-  input: `server/src/typescript/${inputFile}.ts`,
+const createBundle = (fileName) => ({
+  input: `server/src/typescript/${fileName}.ts`,
   output: {
-    file: `server/src/includes/${outputFile}.js`,
+    file: `server/src/includes/${fileName}.js`,
     format: "es",
   },
   ...commonConfig,
 });
 
 const bundles = [
-  ["create-secret", "create-secret"],
-  ["get-secret", "get-secret"],
-  ["share", "share"],
-  ["common", "common"],
-  ["hakanai-client", "hakanai-client"],
+  "create-secret",
+  "get-secret",
+  "share",
+  "common",
+  "hakanai-client",
 ];
 
-export default bundles.map(([input, output]) => createBundle(input, output));
+export default bundles.map((fileName) => createBundle(fileName));
