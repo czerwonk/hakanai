@@ -4,21 +4,21 @@
 # Variables
 CARGO := cargo
 
-# Default target
 .PHONY: all
 all: build
 
-# Build everything (TypeScript compilation now integrated in build.rs)
 .PHONY: build
 build:
 	$(CARGO) build --workspace --verbose
 
-# Manual TypeScript compilation (optional - normally handled by build.rs)
+.PHONY: build-wasm
+build-ts: clean-wasm
+	cd wasm && ./build.sh
+
 .PHONY: build-ts
-build-ts: clean-ts
+build-ts: clean-ts build-wasm
 	npm run build
 
-# Release builds (TypeScript compilation handled by build.rs)
 .PHONY: release
 release:
 	$(CARGO) build --release --workspace --verbose
