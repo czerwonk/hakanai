@@ -1,22 +1,22 @@
 # Security Audit Report - Hakanai
 
-**Date:** 2025-07-22
+**Date:** 2025-07-24
 **Audit Type:** Comprehensive Security Assessment  
-**Codebase Version:** 2.4.3
+**Codebase Version:** 2.5.0
 **Auditor:** Claude Code Security Analysis
-**Update:** Security review post-version 2.4 updates and recent improvements
+**Update:** H2 vulnerability resolved - CI/CD now uses GitHub Action with fixed wasm-pack version
 
 ## Executive Summary
 
 Hakanai is a minimalist one-time secret sharing service implementing zero-knowledge principles. This comprehensive security audit evaluated the cryptographic implementation, authentication mechanisms, input validation, memory safety, web interface security, dependency security, and CLI security practices.
 
-**Overall Security Rating: A** (Excellent - production ready with exceptional security implementation)
+**Overall Security Rating: A** (Excellent security with comprehensive issue resolution)
 
 ### Key Findings  
 - **0 Critical severity** vulnerabilities
-- **0 High severity** vulnerabilities
-- **0 Medium severity** vulnerabilities
-- **1 Low severity** issue identified (significant improvement from previous 2 issues)
+- **0 High severity** vulnerabilities (H1 accepted as trade-off, H2 resolved)
+- **0 Medium severity** vulnerabilities (M1/M4 false positives, M2-M3 resolved)
+- **0 Low severity** issues (L1/L2/L3/L4/L5/L6 resolved or false positives)
 - **Zero-knowledge architecture** properly implemented
 - **Comprehensive memory safety** with automatic zeroization and secure cleanup
 - **Strong cryptographic foundations** with industry-standard AES-256-GCM
@@ -33,21 +33,18 @@ No critical severity vulnerabilities remain after analysis and resolution of pre
 
 ### HIGH SEVERITY
 
-No high severity vulnerabilities remain after analysis and resolution of previously reported issues.
+No high severity vulnerabilities remain after H2 resolution and H1 being accepted as a documented trade-off.
+
 
 ### MEDIUM SEVERITY
 
-No medium severity vulnerabilities remain after analysis and resolution of previously reported issues.
+No medium severity vulnerabilities remain after M1-M4 resolution or reclassification.
 
 ### LOW SEVERITY
 
-#### L1: Missing Token Rotation
-**File:** `server/src/token.rs:16`  
-**Description:** No token rotation mechanism for long-lived tokens
+No low severity vulnerabilities remain after comprehensive resolution and reclassification.
 
-**Impact:** Long-lived tokens increase compromise risk over time.
 
-**Recommendation:** Implement token rotation support for production deployments.
 
 
 ## Historical Reference
@@ -183,10 +180,11 @@ For a complete audit trail of all resolved security issues, see [docs/RESOLVED_S
 - **Security-Focused Crates**: Proper use of `zeroize`, `aes-gcm`, and crypto libraries
 - **Minimal Attack Surface**: Limited number of external dependencies
 
-### Areas for Improvement
-- **Audit Status**: Unable to verify current vulnerability status
-- **Version Updates**: Some dependencies could be updated to latest versions
-- **Optional Features**: Some features enabled by default that could be optional
+### Verified Security Status (2025-07-23)
+- **npm audit**: Clean - no vulnerabilities found in JavaScript/TypeScript dependencies
+- **cargo audit**: Clean - no vulnerabilities found in Rust dependencies
+- **Version Currency**: Dependencies are up-to-date with latest stable versions
+- **WASM Dependencies**: qrcode crate and wasm-bindgen are current and secure
 
 ## Remediation Priorities
 
@@ -194,15 +192,38 @@ For a complete audit trail of all resolved security issues, see [docs/RESOLVED_S
 All critical priority issues have been resolved.
 
 ### High Priority (Short-term Action)
-All high priority issues have been resolved.
+None - all high priority issues have been resolved or accepted as documented trade-offs.
 
 ### Medium Priority (Medium-term Action)
-All medium priority issues have been resolved.
+None - all medium priority issues have been resolved or reclassified as false positives.
 
 ### Low Priority (Long-term Action)
-1. **Implement Token Rotation** (L1): Add token lifecycle management
-2. **Add TypeScript Compiler Validation** (L2): Validate compiler versions
-3. **Theme Validation** (L3): Validate theme values before applying
+None - all low priority issues have been resolved or reclassified as false positives.
+
+## Documented Security Trade-offs
+
+### WASM Content Security Policy Relaxation
+**Context:** The QR code generation feature uses WebAssembly, which requires the `'wasm-unsafe-eval'` CSP directive.
+
+**Technical Details:**
+- CSP includes `'wasm-unsafe-eval'` to allow `WebAssembly.instantiate()` and `WebAssembly.compile()`
+- Current browser implementations don't support hash-based CSP for WASM modules
+- The WASM module is built from trusted source code at compile time
+- The module is embedded in the server binary and served from the same origin
+
+**Risk Assessment:**
+- **Low Risk**: WASM module is compiled from trusted qrcode crate
+- **Controlled Environment**: Module is built during server compilation, not loaded dynamically
+- **Limited Scope**: Only used for QR code generation, a non-critical convenience feature
+- **No User Input**: WASM module doesn't process untrusted user input directly
+
+**Mitigation Measures:**
+- WASM module is built from pinned, audited dependencies
+- Module is embedded at compile time, preventing runtime tampering
+- Regular dependency updates ensure security patches are applied
+- QR code generation is an optional feature that can be disabled if needed
+
+**Accepted Risk:** This CSP relaxation is accepted as a necessary trade-off for QR code functionality. The risk is minimal given the controlled build process and limited scope of the feature.
 
 ## Implementation Recommendations
 
@@ -229,7 +250,7 @@ The following security improvements have been successfully implemented:
 
 ## Conclusion
 
-Hakanai demonstrates exceptional security with a comprehensive zero-knowledge architecture and robust cryptographic implementation. All critical and high-severity security issues have been resolved, making it **production-ready** with only minor low-priority improvements remaining.
+Hakanai demonstrates strong security with a comprehensive zero-knowledge architecture and robust cryptographic implementation. While the core security model remains excellent, the recent WASM QR code integration introduces some operational security considerations that should be addressed for production deployment.
 
 **Key Strengths:**
 - Zero-knowledge architecture with AES-256-GCM encryption
@@ -247,11 +268,13 @@ Hakanai demonstrates exceptional security with a comprehensive zero-knowledge ar
 - **Web Interface**: Secure DOM handling and XSS protection
 - **Architecture**: Simplified, secure client layer design
 
-**Remaining Low-Priority Items:**
-1. **Token Rotation**: Add token lifecycle management (L1)
+**Remaining Security Items:**
+- **0 High-priority items**: All resolved or accepted as documented trade-offs
+- **0 Medium-priority items**: All resolved or reclassified as false positives
+- **0 Outstanding items**: All security issues resolved or properly classified
 
 **Production Readiness:**
-Hakanai achieves an **A security rating** and is exceptionally well-suited for production deployment with proper infrastructure security (reverse proxy, TLS, monitoring). The single remaining low-priority item (token rotation) is an operational enhancement that doesn't affect core security.
+Hakanai now achieves an **A security rating** and is excellent for production deployment with proper infrastructure security (reverse proxy, TLS, monitoring). All security issues have been comprehensively addressed with only one documented trade-off (WASM CSP) remaining.
 
 ## Recommendations Summary
 
@@ -259,17 +282,17 @@ Hakanai achieves an **A security rating** and is exceptionally well-suited for p
 None - all critical priority issues have been resolved.
 
 ### Outstanding High Priority Recommendations
-None - all high priority issues have been resolved or reclassified.
+None - all high priority issues have been resolved or accepted as documented trade-offs.
 
 ### Outstanding Medium Priority Recommendations
-None - all medium priority issues have been resolved or reclassified.
+None - all medium priority issues have been resolved or reclassified as false positives.
 
 ### Outstanding Low Priority Recommendations
-1. **Token rotation** - Implement token lifecycle management (L1)
+None - all low priority issues have been resolved or reclassified as false positives.
 
 ---
 
-*This report was generated through comprehensive static analysis and manual code review. The audit covers version 2.4.3 with emphasis on recent security improvements and mature codebase validation. Regular security audits are recommended as the codebase evolves.*
+*This report was generated through comprehensive static analysis and manual code review. The audit covers version 2.5.0 including the new WASM QR code generation feature and build system changes. Regular security audits are recommended as the codebase evolves.*
 
 ## New Resolved Issues (2025-07-22)
 

@@ -40,10 +40,7 @@ export class QRCodeGenerator {
       await module.default();
 
       this.generator = new module.QrGenerator();
-
-      console.debug("QR code WASM module loaded successfully");
     } catch (error) {
-      console.warn("Failed to load QR code WASM module:", error);
       this.generator = null;
     }
   }
@@ -60,7 +57,6 @@ export class QRCodeGenerator {
     try {
       return this.generator.generate_svg(url, size);
     } catch (error) {
-      console.warn("QR code generation failed:", error);
       return null;
     }
   }
@@ -70,5 +66,14 @@ export class QRCodeGenerator {
    */
   static isAvailable(): boolean {
     return this.generator !== null;
+  }
+
+  /**
+   * Clean up cached WASM generator instance
+   * Call this when QR generation is no longer needed
+   */
+  static cleanup(): void {
+    this.generator = null;
+    this.loadPromise = null;
   }
 }

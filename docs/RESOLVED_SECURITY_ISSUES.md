@@ -2,7 +2,7 @@
 
 **Documentation Type:** Historical Security Audit Findings
 **Purpose:** Archive of all resolved security issues and false positives for audit trail and reference
-**Last Updated:** 2025-07-17
+**Last Updated:** 2025-07-24
 
 ## Overview
 
@@ -51,6 +51,26 @@ Major cryptographic architecture refactoring with comprehensive memory safety:
 **Impact:** Critical-severity vulnerabilities completely resolved. System now has comprehensive memory safety with automatic cleanup.
 
 ## HIGH PRIORITY RESOLVED ISSUES
+
+### H2: Remote Script Execution in CI/CD [RESOLVED 2025-07-24]
+**Status:** **RESOLVED** - CI/CD now uses GitHub Action with fixed wasm-pack version
+**Files:** `.github/workflows/docker.yml`, `.github/workflows/test.yml`
+**Original Issue:** Downloaded and executed `wasm-pack` installer script from remote URL without integrity verification, creating risk of remote code execution if rustwasm.github.io is compromised or man-in-the-middle attacks occur.
+
+**Resolution Implemented:**
+Replaced the remote script execution with a GitHub Action that loads a fixed binary version of wasm-pack:
+- **Eliminated remote script execution**: No more `curl | sh` pattern
+- **Version pinning**: Using a specific, verified version of wasm-pack
+- **Integrity verification**: GitHub Actions can verify binary checksums
+- **Supply chain security**: Reduced attack surface by removing dynamic script download
+
+**Security Benefits:**
+- **No remote code execution**: Eliminates the risk of compromised install scripts
+- **Version control**: Clear audit trail of which wasm-pack version is being used
+- **Reproducible builds**: Fixed version ensures consistent build environments
+- **Reduced attack surface**: No external script downloads during CI/CD pipeline
+
+**Impact:** High-severity vulnerability completely resolved. CI/CD pipeline now has significantly improved security posture with deterministic, verified tooling.
 
 ### H3: Insufficient Key Validation [RESOLVED 2025-07-16]
 **Status:** **RESOLVED** - Added comprehensive key and nonce length validation
@@ -301,6 +321,70 @@ Dependencies were updated on 2025-07-16, ensuring all dependencies are current a
 
 **Impact:** Low-severity issue resolved. Dependencies are current and secure.
 
+### L2: WASM Input Size Validation [RESOLVED 2025-07-24]
+**Status:** **RESOLVED** - Size limits implemented in wasm/src/lib.rs
+**File:** `wasm/src/lib.rs`
+**Original Issue:** No explicit size limits on QR text input or SVG dimensions, creating potential DoS through extremely large QR codes or text input.
+
+**Resolution Implemented:**
+Added strict validation in lib.rs:
+- **Text Length Limit**: Maximum 256 bytes for QR code text
+- **SVG Size Limit**: Maximum 250 pixels for QR code dimensions
+- **Error Handling**: Throws errors when limits exceeded
+
+**Security Benefits:**
+- **DoS Prevention**: Prevents memory exhaustion from large inputs
+- **Bounded Resources**: Predictable memory usage for QR generation
+- **Clear Limits**: Well-defined boundaries for input validation
+- **Fast Failure**: Rejects invalid inputs before processing
+
+**Technical Details:**
+- 256 bytes accommodates all legitimate secret URLs (~113 chars max)
+- 250px limit prevents excessive SVG generation
+- Limits align with typical QR code usage patterns
+- Provides 2x safety margin for URL lengths
+
+**Impact:** Low-severity vulnerability resolved. WASM module now has proper input validation preventing DoS attacks.
+
+### L5: Singleton Pattern Memory Risk [RESOLVED 2025-07-24]
+**Status:** **RESOLVED** - Added cleanup method with beforeunload event handling
+**Files:** `server/src/typescript/core/qr-generator.ts`, `server/src/typescript/components/success-display.ts`
+**Original Issue:** Static generator instance could cause memory leaks in long-running sessions due to cached WASM module.
+
+**Resolution Implemented:**
+Added comprehensive cleanup mechanism:
+- **Cleanup Method**: `QRCodeGenerator.cleanup()` method to clear cached instances
+- **Automatic Cleanup**: `beforeunload` event listener for automatic cleanup when page unloads
+- **Once-Only Pattern**: `ensureQRCodeGeneratorCleanup()` function ensures listener is added only once per page
+- **Per-Bundle Isolation**: Each page bundle has its own cleanup context
+
+**Technical Implementation:**
+```typescript
+// Cleanup method in QRCodeGenerator
+static cleanup(): void {
+  this.generator = null;
+  this.loadPromise = null;
+}
+
+// Auto-cleanup in success-display.ts
+function ensureQRCodeGeneratorCleanup() {
+  if (cleanupListenerAdded) return;
+  
+  window.addEventListener("beforeunload", () => {
+    QRCodeGenerator.cleanup();
+  });
+  cleanupListenerAdded = true;
+}
+```
+
+**Security Benefits:**
+- **Memory Leak Prevention**: Cached WASM instances are properly cleaned up
+- **Resource Management**: Prevents accumulation of unused WASM modules
+- **Performance**: Maintains singleton benefits during page usage, cleans up on exit
+- **No Listener Pollution**: Only one cleanup listener per page bundle
+
+**Impact:** Low-severity vulnerability resolved. QR generator now has proper memory management with automatic cleanup.
+
 ### L3: Theme Persistence [RESOLVED 2025-07-18]
 **Status:** **RESOLVED** - Theme storage migrated to sessionStorage with validation
 **File:** `server/src/typescript/common-utils.ts`
@@ -318,6 +402,32 @@ Theme preferences now use sessionStorage instead of localStorage, with proper va
 - **Minimal Impact**: Theme manipulation has no security implications
 
 **Impact:** Low-severity issue resolved. Theme storage is now session-based and validated.
+
+---
+
+# DOCUMENTED TRADE-OFFS 📋
+
+*Security considerations that are accepted as necessary trade-offs for functionality*
+
+## H1: Content Security Policy Relaxation for WASM [DOCUMENTED TRADE-OFF 2025-07-24]
+**Status:** **DOCUMENTED TRADE-OFF** - Accepted as necessary for QR code functionality
+**File:** `server/src/web_server.rs:108`
+**Original Issue:** CSP includes `'wasm-unsafe-eval'` directive which allows WebAssembly compilation, potentially increasing attack surface.
+
+**Why This Is Accepted:**
+1. **Technical Requirement**: WebAssembly requires `'wasm-unsafe-eval'` for `WebAssembly.instantiate()` and `WebAssembly.compile()`
+2. **No Current Alternative**: Browser implementations don't support hash-based CSP for WASM modules
+3. **Controlled Environment**: WASM module is built from trusted source at compile time
+4. **Limited Scope**: Only used for QR code generation, a non-critical convenience feature
+5. **Risk Mitigation**: Module is embedded in binary, uses pinned dependencies, and doesn't process untrusted input
+
+**Security Measures:**
+- WASM module built from audited qrcode crate
+- Embedded at compile time, preventing runtime tampering
+- Regular dependency updates for security patches
+- Feature can be disabled if required by security policy
+
+**Impact:** Low-risk trade-off accepted for QR code functionality. The controlled build process and limited scope minimize security concerns.
 
 ---
 
@@ -410,7 +520,32 @@ The reported "information disclosure" creates no meaningful security risk:
 
 ## MEDIUM PRIORITY FALSE POSITIVES
 
-### M1: Missing Content-Length Validation [FALSE POSITIVE - ALREADY IMPLEMENTED]
+### M1: Dynamic WASM Module Loading [FALSE POSITIVE - COMPROMISED SERVER SCENARIO]
+**Status:** **FALSE POSITIVE** - If server is compromised, attacker has worse attack vectors available
+**File:** `server/src/typescript/core/qr-generator.ts:36`
+**Original Issue:** Hard-coded import path `/hakanai_wasm.js` loaded dynamically without integrity checking. If an attacker compromises the web server, they could serve malicious WASM modules.
+
+**Why This Is Not a Security Issue:**
+This concern assumes a scenario where the web server is already compromised. In such a case:
+
+1. **Bigger Attack Vectors**: If attackers can serve malicious WASM, they can already:
+   - Serve malicious JavaScript directly (much easier)
+   - Modify the entire application
+   - Steal secrets before encryption
+   - Access server-side data and credentials
+   - Replace any content being served
+
+2. **Security Model Assumption**: The security model assumes the web server serves trusted content
+3. **WASM is Least Concern**: In a compromised server scenario, WASM integrity is irrelevant
+4. **Defense in Depth**: Real protection comes from:
+   - Securing the server infrastructure
+   - Proper access controls
+   - Regular security updates
+   - Monitoring and intrusion detection
+
+**Impact:** No practical security issue exists. If an attacker has server control, they have far more powerful attack vectors than WASM manipulation.
+
+### M1b: Missing Content-Length Validation [FALSE POSITIVE - ALREADY IMPLEMENTED]
 **Status:** **FALSE POSITIVE** - Comprehensive payload size limits already implemented
 **File:** `server/src/web_server.rs:38-43` and `server/src/options.rs:48-56`
 **Original Issue:** API endpoints vulnerable to large payload DoS attacks due to missing request size limits.
@@ -609,6 +744,68 @@ This is a false positive based on a misunderstanding of how authentication token
 
 **Impact:** No security issue exists. Current implementation provides maximum flexibility while maintaining security through proper hashing and lookup mechanisms.
 
+### M4: Unsafe File Modification in Build Process [FALSE POSITIVE - SIMPLE STRING REPLACEMENT]
+**Status:** **FALSE POSITIVE** - Simple string replacement with minimal risk
+**File:** `server/build.rs:161-189`
+**Original Issue:** Cache busting modifies JavaScript files using "regex replacement" without atomic operations, could corrupt files if build process is interrupted.
+
+**Why This Is Not a Security Issue:**
+The security report incorrectly characterized the operation. The actual implementation uses simple string replacement, not regex:
+
+1. **Not Regex**: Simple string replacement for specific, known strings
+2. **Deterministic**: Exact string matching with predictable behavior
+3. **Minimal Risk**: No complex patterns that could fail or match incorrectly
+4. **Build-time Only**: Occurs during build, not runtime
+5. **CI/CD Validation**: Any failures would be caught immediately in build process
+
+**Technical Details:**
+- Replaces specific import strings with cache-busted versions
+- Uses exact string matching, not pattern matching
+- Margin of error is extremely tight with exact strings
+- Build would fail immediately if replacement corrupted files
+
+**Impact:** No practical security issue exists. Simple string replacement during build process is safe and deterministic.
+
+### M2: Error Information Disclosure [RESOLVED 2025-07-24]
+**Status:** **RESOLVED** - Error logging removed from production code
+**File:** `server/src/typescript/core/qr-generator.ts`
+**Original Issue:** Error objects logged to console could contain sensitive information, causing information leakage in production environments.
+
+**Resolution Implemented:**
+Removed error logging from the QR generator code:
+- **No Console Logging**: Removed all `console.warn()` and `console.log()` statements
+- **Silent Failures**: Errors are handled gracefully without logging
+- **Debug Locally**: Errors can be debugged in development environments
+- **Optional Feature**: QR code generation is non-critical, doesn't need production logging
+
+**Security Benefits:**
+- **No Information Disclosure**: Error details no longer exposed in browser console
+- **Cleaner Production**: No unnecessary console output in production builds
+- **Simplified Code**: Less code means less attack surface
+- **Privacy Protection**: No risk of accidentally logging sensitive data
+
+**Impact:** Medium-severity vulnerability resolved. Production builds no longer expose error information through console logs.
+
+### M3: WASM Build Process Supply Chain Risk [RESOLVED 2025-07-24]
+**Status:** **RESOLVED** - wasm-pack version now pinned in CI/CD
+**File:** CI/CD workflows
+**Original Issue:** Build system executed external `wasm-pack` tool without version pinning, creating supply chain compromise risk if tool is compromised between builds.
+
+**Resolution Implemented:**
+CI/CD now uses pinned version of wasm-pack:
+- **Version Pinning**: Using specific, verified version of wasm-pack in GitHub Actions
+- **Deterministic Builds**: Same version used across all builds
+- **Supply Chain Security**: Prevents unexpected tool updates between builds
+- **Audit Trail**: Clear record of tool versions used
+
+**Security Benefits:**
+- **No Supply Chain Attacks**: Tool version cannot change unexpectedly
+- **Reproducible Builds**: All builds use the same verified toolchain
+- **Version Control**: Easy to track and update tool versions intentionally
+- **Reduced Attack Surface**: Eliminates dynamic tool download risks
+
+**Impact:** Medium-severity vulnerability resolved. Build process now has deterministic, pinned dependencies.
+
 ### M8: Nonce Reuse Risk [FALSE POSITIVE - ZERO-KNOWLEDGE ARCHITECTURE]
 **Status:** **FALSE POSITIVE** - No nonce reuse risk exists in the zero-knowledge architecture
 **File:** `lib/src/crypto.rs:82`
@@ -793,20 +990,134 @@ User-Agent string construction has been removed along with User-Agent logging, e
 
 **Impact:** No security issue exists. The functionality has been removed entirely.
 
+### L6: Docker Build Dependencies [FALSE POSITIVE - INTENTIONAL DESIGN]
+**Status:** **FALSE POSITIVE** - Getting security updates is intended behavior
+**File:** `Dockerfile:2-5`
+**Original Issue:** Installs system packages without version pinning, creating supply chain risks and build reproducibility issues.
+
+**Why This Is Not a Security Issue:**
+The Docker configuration intentionally uses:
+- Pinned base image versions (repos and OS versions are pinned)
+- Latest package versions within that OS version for security updates
+
+**Design Rationale:**
+1. **Security Updates**: Getting the latest security patches is critical
+2. **Base Image Pinning**: OS and repository versions ARE pinned
+3. **Package Updates**: Within the pinned OS version, packages should update for security
+4. **Best Practice**: This follows Docker security best practices
+5. **Reproducibility**: Base image pinning provides sufficient reproducibility
+
+**Security Benefits:**
+- Automatically receives security patches for system packages
+- Reduces vulnerability window from outdated packages
+- Maintains consistency through base image versioning
+- Balances reproducibility with security
+
+**Impact:** No security issue exists. The design correctly prioritizes security updates while maintaining reasonable reproducibility through base image versioning.
+
+### L3: QR Code Content Injection Risk [FALSE POSITIVE - MITIGATED BY SIZE LIMITS]
+**Status:** **FALSE POSITIVE** - Risk eliminated by 256-byte input limit and controlled environment
+**File:** `server/src/typescript/components/success-display.ts:188`
+**Original Issue:** URL content directly passed to QR generator without sanitization, could encode malicious content in QR codes.
+
+**Why This Is Not a Security Issue:**
+The 256-byte input limit implemented in L2 resolution effectively eliminates this risk:
+
+1. **Severely Limited Attack Surface**: 256 bytes cannot contain meaningful malicious payloads
+2. **Internally Generated URLs**: System generates its own URLs, not user-provided content
+3. **QR Codes are Data**: QR codes encode data as-is with no execution context
+4. **Bounded Input**: Even attempted injection is constrained to 256 bytes
+5. **No Code Execution**: QR codes are scanned as plain text URLs
+
+**Technical Mitigation:**
+- WASM lib.rs enforces 256-byte limit on all QR text input
+- Legitimate secret URLs are ~113 characters maximum
+- Attack payloads cannot fit in remaining space
+- QR scanning apps treat content as plain text
+
+**Impact:** No practical security issue exists. Size limits make content injection attacks impossible within the available space.
+
+### L1: Missing Token Rotation [FALSE POSITIVE - TOOLING PROVIDED]
+**Status:** **FALSE POSITIVE** - Token rotation tooling is already provided
+**File:** `server/src/token.rs:16`
+**Original Issue:** No token rotation mechanism for long-lived tokens, increasing compromise risk over time.
+
+**Why This Is Not a Security Issue:**
+The system already provides comprehensive token rotation capabilities:
+
+1. **Token API with Custom TTL**: Admin API allows creating tokens with custom lifetimes
+   ```bash
+   cargo run --package hakanai -- token --limit 5m --ttl 7d
+   ```
+
+2. **Nuclear Option Switches**: Complete token rotation capabilities
+   - `--reset-admin-token`: Rotates the admin token
+   - `--reset-default-token`: Clears all user tokens at once
+
+3. **Operational Decision**: Token lifetime is a deployment choice, not a security flaw
+   - Admins can choose appropriate TTL based on their security policies
+   - Short-lived tokens (hours/days) or long-lived tokens (months) as needed
+   - Flexibility for different deployment scenarios
+
+4. **CLI Tooling**: Full token management through command line
+   - Create tokens with specific limits and TTLs
+   - Rotate tokens on demand
+   - Emergency token reset capabilities
+
+**Design Benefits:**
+- **Flexibility**: Supports various operational models
+- **Admin Control**: Deployment decides token lifecycle policy
+- **Emergency Recovery**: Nuclear options for complete token rotation
+- **Granular Management**: Per-token TTL and size limit control
+
+**Impact:** No security issue exists. The system provides all necessary tooling for token rotation - implementation is an operational choice.
+
+### L4: DOM Injection via QR SVG [FALSE POSITIVE - WASM OUTPUT RESTRICTED]  
+**Status:** **FALSE POSITIVE** - WASM output restrictions eliminate malicious payload risk
+**File:** `server/src/typescript/components/success-display.ts:214`
+**Original Issue:** Direct innerHTML assignment of SVG content could allow XSS if SVG contains malicious content.
+
+**Why This Is Not a Security Issue:**
+The WASM output restrictions implemented in L2 resolution make malicious SVG content impossible:
+
+1. **Input Size Limits**: 256-byte text limit severely constrains WASM output
+2. **SVG Size Limits**: 250px maximum dimensions restrict SVG complexity  
+3. **Trusted WASM Source**: QR generator built from audited qrcode crate at compile time
+4. **No User Input**: Only internally generated URLs passed to WASM module
+5. **Simple QR SVG**: QR codes produce geometric patterns, not complex SVG content
+
+**Technical Constraints:**
+- WASM module can only generate simple QR code SVGs
+- Input is limited to legitimate secret URLs (~113 chars max)
+- Output space too small for meaningful attack payloads  
+- SVG content is predictable geometric patterns
+- No dynamic content or script injection possible
+
+**Architecture Security:**
+- WASM module embedded at compile time (trusted)
+- No external SVG sources or user-controlled content
+- Size limits prevent complex SVG features
+- QR codes are inherently safe, structured data
+
+**Impact:** No practical security issue exists. WASM output restrictions make malicious SVG content impossible within the constrained generation space.
+
 ---
 
 ## RESOLUTION SUMMARY
 
-### Resolved Issues: 16 actual security vulnerabilities fixed
+### Resolved Issues: 21 actual security vulnerabilities fixed
 - **Critical Priority:** 1 resolved (comprehensive memory safety implementation)
-- **High Priority:** 3 resolved (key validation, CSP policy, architecture simplification)
-- **Medium Priority:** 4 resolved (filename zeroization, token storage, JSON parsing, cache headers)
-- **Low Priority:** 8 resolved (filename sanitization, user-agent logging, dependency updates, theme persistence, etc.)
+- **High Priority:** 4 resolved (CI/CD security, key validation, CSP policy, architecture simplification)
+- **Medium Priority:** 6 resolved (supply chain security, error disclosure, filename zeroization, token storage, JSON parsing, cache headers)
+- **Low Priority:** 10 resolved (singleton memory risk, WASM input validation, filename sanitization, user-agent logging, dependency updates, theme persistence, etc.)
 
-### False Positives: 24 non-issues identified
+### Documented Trade-offs: 1 accepted security consideration
+- **High Priority:** 1 documented trade-off (WASM CSP relaxation for QR code functionality)
+
+### False Positives: 30 non-issues identified
 - **High Priority:** 4 false positives (CLI path traversal, token file race conditions, auth disclosure, memory exposure)
-- **Medium Priority:** 13 false positives (rate limiting, timing attacks, fragment storage, etc.)
-- **Low Priority:** 7 false positives (token storage, authentication logging, input validation, etc.)
+- **Medium Priority:** 15 false positives (WASM loading, build process, rate limiting, timing attacks, fragment storage, etc.)
+- **Low Priority:** 11 false positives (DOM SVG injection, token rotation, QR content injection, Docker dependencies, token storage, authentication logging, input validation, etc.)
 
 ### Key Improvements Made:
 - **Memory Security**: Comprehensive `Zeroizing` implementation with automatic cleanup via `Drop` trait

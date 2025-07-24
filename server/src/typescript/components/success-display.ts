@@ -19,6 +19,9 @@ interface SuccessDisplayOptions {
  * @param url - The secret URL to display
  * @param options - Configuration options
  */
+// Flag to ensure we only add the cleanup listener once
+let cleanupListenerAdded = false;
+
 export function displaySuccessResult(
   url: string,
   options: SuccessDisplayOptions,
@@ -35,6 +38,19 @@ export function displaySuccessResult(
   createQRCodeSection(container, url);
 
   createNoteSection(container);
+
+  ensureQRCodeGeneratorCleanup();
+}
+
+function ensureQRCodeGeneratorCleanup() {
+  if (cleanupListenerAdded) {
+    return;
+  }
+
+  window.addEventListener("beforeunload", () => {
+    QRCodeGenerator.cleanup();
+  });
+  cleanupListenerAdded = true;
 }
 
 /**
