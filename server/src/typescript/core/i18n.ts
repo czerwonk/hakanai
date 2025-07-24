@@ -26,8 +26,8 @@ const translations: Translations = {
     // Labels
     "label.secret": "Secret message:",
     "label.secretType": "Secret Type:",
-    "label.text": "Text Message",
-    "label.file": "File",
+    "label.text": "📝 Text Message",
+    "label.file": "🗂️ File",
     "label.fileSelect": "Select file to share:",
     "label.token": "Token:",
     "label.expires": "Expires after:",
@@ -68,17 +68,14 @@ const translations: Translations = {
     "time.7days": "7 days",
 
     // Buttons
-    "button.create": "Create Secret",
-    "button.retrieve": "Retrieve Secret",
-    "button.copy": "Copy",
+    "button.create": "🔐 Create Secret",
+    "button.retrieve": "🔓 Retrieve Secret",
+    "button.copy": "📋 Copy",
     "button.copied": "Copied!",
-    "button.copyUrl": "Copy URL",
-    "button.copyKey": "Copy Key",
-    "button.copySecret": "Copy Secret",
-    "button.download": "Download",
-    "button.createAnother": "Create Another",
+    "button.copySecret": "📋 Copy",
+    "button.download": "💾 Download",
     "button.chooseFile": "📁 Choose File",
-    "button.readClipboard": "Read Clipboard",
+    "button.readClipboard": "📄 Read Clipboard",
     "button.createSecret": "Create Secret",
 
     // Messages
@@ -156,10 +153,10 @@ const translations: Translations = {
     "homepage.tagline": "Share secrets securely with zero-knowledge encryption",
     "homepage.create.description":
       "Share text messages or files securely. All encryption happens in your browser.",
-    "homepage.create.button": "Create Secret",
+    "homepage.create.button": "✨ Create Secret",
     "homepage.retrieve.description":
       "Have a secret URL? Enter it here to decrypt and view your one-time secret.",
-    "homepage.retrieve.button": "Retrieve Secret",
+    "homepage.retrieve.button": "📨 Retrieve Secret",
     "homepage.how.feature1.title": "Zero-Knowledge",
     "homepage.how.feature1.description":
       "Your secrets are encrypted in your browser before being sent",
@@ -241,8 +238,8 @@ const translations: Translations = {
     // Labels
     "label.secret": "Text:",
     "label.secretType": "Secret-Typ:",
-    "label.text": "Text-Nachricht",
-    "label.file": "Datei",
+    "label.text": "📝 Text-Nachricht",
+    "label.file": "🗂️ Datei",
     "label.fileSelect": "Datei zum Teilen auswählen:",
     "label.token": "Token:",
     "label.expires": "Läuft ab nach:",
@@ -286,17 +283,14 @@ const translations: Translations = {
     "time.7days": "7 Tage",
 
     // Buttons
-    "button.create": "Secret erstellen",
-    "button.retrieve": "Secret abrufen",
-    "button.copy": "Kopieren",
+    "button.create": "🔐 Secret erstellen",
+    "button.retrieve": "🔓 Secret abrufen",
+    "button.copy": "📋 Kopieren",
     "button.copied": "Kopiert!",
-    "button.copyUrl": "URL kopieren",
-    "button.copyKey": "Schlüssel kopieren",
-    "button.copySecret": "Secret kopieren",
-    "button.download": "Herunterladen",
-    "button.createAnother": "Neues Secret erstellen",
+    "button.copySecret": "📋 Kopieren",
+    "button.download": "💾 Speichern",
     "button.chooseFile": "📁 Datei auswählen",
-    "button.readClipboard": "Zwischenablage lesen",
+    "button.readClipboard": "📄 Zwischenablage lesen",
     "button.createSecret": "Secret erstellen",
 
     // Messages
@@ -376,10 +370,10 @@ const translations: Translations = {
       "Secrets sicher teilen mit Zero-Knowledge-Verschlüsselung",
     "homepage.create.description":
       "Textnachrichten oder Dateien sicher teilen. Die Verschlüsselung erfolgt im Browser.",
-    "homepage.create.button": "Secret erstellen",
+    "homepage.create.button": "✨ Secret erstellen",
     "homepage.retrieve.description":
       "Hier kann der Secret-Link eingegeben werden, um das Einmal-Secret zu entschlüsseln und anzuzeigen.",
-    "homepage.retrieve.button": "Secret abrufen",
+    "homepage.retrieve.button": "📨 Secret abrufen",
     "homepage.how.feature1.title": "Zero-Knowledge",
     "homepage.how.feature1.description":
       "Die Secrets werden im Browser verschlüsselt, bevor sie gesendet werden",

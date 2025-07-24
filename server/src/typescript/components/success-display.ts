@@ -91,36 +91,56 @@ function createUrlSection(
 }
 
 /**
- * Create combined URL display (traditional mode)
+ * Create a labeled input field with copy button
  */
-function createCombinedUrlDisplay(container: HTMLElement, url: string): void {
-  const urlId = generateRandomId();
-
+function createLabeledInputWithCopy(
+  container: HTMLElement,
+  labelKey: string,
+  defaultLabel: string,
+  inputId: string,
+  value: string,
+  ariaLabel: string,
+): void {
   const label = document.createElement("label");
-  label.textContent = window.i18n?.t("label.url") ?? "Secret URL:";
-  label.setAttribute("for", urlId);
+  label.textContent = window.i18n?.t(labelKey) ?? defaultLabel;
+  label.setAttribute("for", inputId);
   container.appendChild(label);
 
   const inputContainer = document.createElement("div");
   inputContainer.className = "input-group";
 
-  const urlInput = document.createElement("input");
-  urlInput.type = "text";
-  urlInput.id = urlId;
-  urlInput.value = url;
-  urlInput.readOnly = true;
-  urlInput.className = "url-input";
-  inputContainer.appendChild(urlInput);
+  const input = document.createElement("input");
+  input.type = "text";
+  input.id = inputId;
+  input.value = value;
+  input.readOnly = true;
+  input.className = "url-input";
+  inputContainer.appendChild(input);
 
   const copyButton = createButton(
     "copy-button",
-    window.i18n?.t("button.copy") ?? "Copy URL",
-    "Copy secret URL to clipboard",
-    () => copyToClipboardByElementId(urlId, copyButton as HTMLButtonElement),
+    window.i18n?.t("button.copy") ?? "📋 Copy",
+    ariaLabel,
+    () => copyToClipboardByElementId(inputId, copyButton as HTMLButtonElement),
   );
   inputContainer.appendChild(copyButton);
 
   container.appendChild(inputContainer);
+}
+
+/**
+ * Create combined URL display (traditional mode)
+ */
+function createCombinedUrlDisplay(container: HTMLElement, url: string): void {
+  const urlId = generateRandomId();
+  createLabeledInputWithCopy(
+    container,
+    "label.url",
+    "Secret URL:",
+    urlId,
+    url,
+    "Copy secret URL to clipboard",
+  );
 }
 
 /**
@@ -131,69 +151,27 @@ function createSeparateUrlDisplay(
   fullUrl: string,
 ): void {
   const [url, key] = fullUrl.split("#");
-  const id = generateRandomId();
-  const urlId = id;
-  const keyId = id + "-key";
+  const baseId = generateRandomId();
 
   // URL section
-  const urlLabel = document.createElement("label");
-  urlLabel.textContent = window.i18n?.t("label.url") ?? "Secret URL:";
-  urlLabel.setAttribute("for", urlId);
-  container.appendChild(urlLabel);
-
-  const urlInputContainer = document.createElement("div");
-  urlInputContainer.className = "input-group";
-
-  const urlInput = document.createElement("input");
-  urlInput.type = "text";
-  urlInput.id = urlId;
-  urlInput.value = url;
-  urlInput.readOnly = true;
-  urlInput.className = "url-input";
-  urlInputContainer.appendChild(urlInput);
-
-  const urlCopyButton = createButton(
-    "copy-button",
-    window.i18n?.t("button.copy") ?? "Copy URL",
+  createLabeledInputWithCopy(
+    container,
+    "label.url",
+    "Secret URL:",
+    baseId,
+    url,
     "Copy secret URL to clipboard",
-    () =>
-      copyToClipboardByElementId(
-        urlInput.id,
-        urlCopyButton as HTMLButtonElement,
-      ),
   );
-  urlInputContainer.appendChild(urlCopyButton);
-  container.appendChild(urlInputContainer);
 
   // Key section
-  const keyLabel = document.createElement("label");
-  keyLabel.textContent = window.i18n?.t("label.key") ?? "Decryption Key:";
-  keyLabel.setAttribute("for", keyId);
-  container.appendChild(keyLabel);
-
-  const keyInputContainer = document.createElement("div");
-  keyInputContainer.className = "input-group";
-
-  const keyInput = document.createElement("input");
-  keyInput.type = "text";
-  keyInput.id = keyId;
-  keyInput.value = key;
-  keyInput.readOnly = true;
-  keyInput.className = "url-input";
-  keyInputContainer.appendChild(keyInput);
-
-  const keyCopyButton = createButton(
-    "copy-button",
-    window.i18n?.t("button.copy") ?? "Copy Key",
+  createLabeledInputWithCopy(
+    container,
+    "label.key",
+    "Decryption Key:",
+    baseId + "-key",
+    key,
     "Copy decryption key to clipboard",
-    () =>
-      copyToClipboardByElementId(
-        keyInput.id,
-        keyCopyButton as HTMLButtonElement,
-      ),
   );
-  keyInputContainer.appendChild(keyCopyButton);
-  container.appendChild(keyInputContainer);
 }
 
 /**
