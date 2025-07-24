@@ -21,16 +21,10 @@ describe("Clipboard Operations", () => {
       writable: true,
     });
 
-    // Mock window.i18n
+    // Mock window.i18n with key->key mapping
     Object.defineProperty(window, "i18n", {
       value: {
-        t: jest.fn((key: string) => {
-          const translations: Record<string, string> = {
-            "button.copied": "Copied!",
-            "msg.copyFailed": "Copy Failed",
-          };
-          return translations[key] || key;
-        }),
+        t: jest.fn((key: string) => key), // Just return the key
       },
       writable: true,
     });
@@ -52,7 +46,7 @@ describe("Clipboard Operations", () => {
       await Promise.resolve(); // Wait for promise to resolve
 
       expect(mockWriteText).toHaveBeenCalledWith("test content");
-      expect(mockButton.textContent).toBe("Copied!");
+      expect(mockButton.textContent).toBe("button.copied");
       expect(mockButton.classList.contains("copied")).toBe(true);
     });
 
@@ -93,7 +87,7 @@ describe("Clipboard Operations", () => {
     test("should show error when element not found", () => {
       copyToClipboardByElementId("non-existent", mockButton);
 
-      expect(mockButton.textContent).toBe("Copy Failed");
+      expect(mockButton.textContent).toBe("msg.copyFailed");
       expect(mockButton.classList.contains("copy-failed")).toBe(true);
     });
   });

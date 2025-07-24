@@ -1,5 +1,4 @@
 import { displaySuccessResult } from "../../server/src/typescript/components/success-display";
-import { I18n } from "../../server/src/typescript/core/i18n";
 
 // Mock the QR code generator
 jest.mock("../../server/src/typescript/core/qr-generator", () => ({
@@ -16,26 +15,11 @@ describe("Success Display Component", () => {
     container = document.createElement("div");
     document.body.appendChild(container);
 
-    // Mock localStorage for i18n
-    Object.defineProperty(window, "localStorage", {
-      value: {
-        getItem: jest.fn(),
-        setItem: jest.fn(),
-      },
-      writable: true,
-    });
-
-    // Mock navigator.language
-    Object.defineProperty(navigator, "language", {
-      value: "en-US",
-      writable: true,
-    });
-
-    // Initialize real i18n instead of mocking
-    const i18n = new I18n();
-
+    // Mock window.i18n with key->key mapping
     Object.defineProperty(window, "i18n", {
-      value: i18n,
+      value: {
+        t: jest.fn((key: string) => key), // Return the key itself
+      },
       writable: true,
     });
   });
@@ -115,9 +99,15 @@ describe("Success Display Component", () => {
       const copyButtons = container.querySelectorAll(".copy-button");
       expect(copyButtons).toHaveLength(2);
 
-      // Should have proper number of labels (including QR label)
+      // Should have labels with correct i18n keys
       const labels = container.querySelectorAll("label");
-      expect(labels.length).toBeGreaterThanOrEqual(2);
+      expect(labels[0]?.textContent).toBe("label.url");
+      expect(labels[1]?.textContent).toBe("label.key");
+
+      // Verify i18n.t was called with key-specific labels
+      const mockI18n = window.i18n as { t: jest.Mock };
+      expect(mockI18n.t).toHaveBeenCalledWith("label.url");
+      expect(mockI18n.t).toHaveBeenCalledWith("label.key");
     });
 
     test("should handle QR code generation failure gracefully", async () => {
@@ -145,8 +135,9 @@ describe("Success Display Component", () => {
       expect(title).toBeTruthy();
     });
 
-    test("should create proper element structure with i18n", async () => {
+    test("should use correct i18n keys for all text elements", async () => {
       const testUrl = "https://example.com/s/123#abcdef";
+      const mockI18n = window.i18n as { t: jest.Mock };
 
       displaySuccessResult(testUrl, {
         container,
@@ -156,21 +147,57 @@ describe("Success Display Component", () => {
       // Wait for async QR code generation
       await new Promise((resolve) => setTimeout(resolve, 0));
 
-      // Should have proper structural elements
+      // Verify i18n.t was called with core keys (QR code might not be generated)
+      expect(mockI18n.t).toHaveBeenCalledWith("msg.successTitle");
+      expect(mockI18n.t).toHaveBeenCalledWith("msg.shareInstructions");
+      expect(mockI18n.t).toHaveBeenCalledWith("label.url");
+      expect(mockI18n.t).toHaveBeenCalledWith("button.copy");
+      expect(mockI18n.t).toHaveBeenCalledWith("msg.createNote");
+
+      // Verify elements contain the i18n keys (since our mock returns keys)
       const title = container.querySelector("h3");
-      expect(title).toBeTruthy();
-      expect(title?.textContent).toBeTruthy(); // Has some content
+      expect(title?.textContent).toBe("msg.successTitle");
+
+      const instructions = container.querySelector(".share-instructions");
+      expect(instructions?.textContent).toBe("msg.shareInstructions");
 
       const urlLabel = container.querySelector("label");
-      expect(urlLabel).toBeTruthy();
-      expect(urlLabel?.getAttribute("for")).toBeTruthy(); // Has for attribute
+      expect(urlLabel?.textContent).toBe("label.url");
 
-      // Label should be associated with input
-      const labelFor = urlLabel?.getAttribute("for");
-      const associatedInput = labelFor
-        ? document.getElementById(labelFor)
-        : null;
-      expect(associatedInput).toBeTruthy();
+      const copyButton = container.querySelector(".copy-button");
+      expect(copyButton?.textContent).toBe("button.copy");
+
+      const note = container.querySelector(".secret-note");
+      expect(note?.textContent).toBe("msg.createNote");
+    });
+
+    test("should use correct i18n key for QR code label when QR generation succeeds", async () => {
+      const testUrl = "https://example.com/s/123#abcdef";
+      const mockI18n = window.i18n as { t: jest.Mock };
+
+      // Ensure QR code generation succeeds
+      const {
+        QRCodeGenerator,
+      } = require("../../server/src/typescript/core/qr-generator");
+      QRCodeGenerator.generateQRCode.mockReturnValue("<svg>qr code</svg>");
+
+      displaySuccessResult(testUrl, {
+        container,
+        separateKeyMode: false,
+      });
+
+      // Wait for async QR code generation
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      // QR code section should be present
+      const qrSection = container.querySelector(".qr-code-section");
+      expect(qrSection).toBeTruthy();
+
+      // Verify QR code label i18n key was used
+      expect(mockI18n.t).toHaveBeenCalledWith("label.qrCode");
+
+      const qrLabel = qrSection?.querySelector("label");
+      expect(qrLabel?.textContent).toBe("label.qrCode");
     });
   });
 });

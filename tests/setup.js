@@ -81,14 +81,7 @@ global.locationMock = {
 
 // Setup i18n mock
 const mockI18n = {
-  t: (key) => {
-    // Return English translations for aria labels to fix common-utils tests
-    const translations = {
-      'aria.switchToLight': 'Switch to light mode',
-      'aria.switchToDark': 'Switch to dark mode',
-    };
-    return translations[key] || key;
-  },
+  t: (key) => key, // Simple key->key mapping for robustness
   setLanguage: () => {},
   getCurrentLanguage: () => 'en'
 };
