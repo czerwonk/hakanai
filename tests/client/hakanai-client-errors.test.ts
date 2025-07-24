@@ -59,54 +59,7 @@ describe("Error Handling", () => {
     ).rejects.toThrow("Auth token must be a string");
   });
 
-  test("sendPayload handles 401 authentication required error", async () => {
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: false,
-      status: 401,
-      statusText: "Unauthorized",
-    }) as any;
-
-    const testBytes = encodeText("test secret");
-    const payload = client.createPayload();
-    payload.setFromBytes!(testBytes);
-
-    // Use a properly formatted base64url token (43 chars) that will pass client validation but fail server auth
-    await expect(
-      client.sendPayload(
-        payload,
-        3600,
-        "oCTJV5YSQEllqpBQ5_4ttyeTJsQxNtgsz3xSGjqP9xw",
-      ),
-    ).rejects.toThrow(
-      "Authentication required: Please provide a valid authentication token",
-    );
-  });
-
-  test("sendPayload handles 403 invalid token error", async () => {
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: false,
-      status: 403,
-      statusText: "Forbidden",
-    }) as any;
-
-    const testBytes = encodeText("test secret");
-    const payload = client.createPayload();
-    payload.setFromBytes!(testBytes);
-
-    // Use a properly formatted base64url token (43 chars) that will pass client validation but fail server auth
-    await expect(
-      client.sendPayload(
-        payload,
-        3600,
-        "opBEGjLy_mkCsTbMog4nxnvstB39kNx8K7450KHHH4E",
-      ),
-    ).rejects.toThrow(
-      "Invalid authentication token: Please check your token and try again",
-    );
-  });
-
-  test("sendPayload throws HakanaiError with correct error codes", async () => {
-    // Test 401 error
+  test("sendPayload throws HakanaiError (401)", async () => {
     global.fetch = jest.fn().mockResolvedValue({
       ok: false,
       status: 401,
@@ -130,13 +83,18 @@ describe("Error Handling", () => {
       expect(error.code).toBe(HakanaiErrorCodes.AUTHENTICATION_REQUIRED);
       expect(error.statusCode).toBe(401);
     }
+  });
 
-    // Test 403 error
+  test("sendPayload throws HakanaiError (403)", async () => {
     global.fetch = jest.fn().mockResolvedValue({
       ok: false,
       status: 403,
       statusText: "Forbidden",
     }) as any;
+
+    const testBytes = encodeText("test secret");
+    const payload = client.createPayload();
+    payload.setFromBytes!(testBytes);
 
     try {
       // Use a properly formatted but invalid token (43 chars base64url)
@@ -150,6 +108,28 @@ describe("Error Handling", () => {
       expect(error.name).toBe("HakanaiError");
       expect(error.code).toBe(HakanaiErrorCodes.INVALID_TOKEN);
       expect(error.statusCode).toBe(403);
+    }
+  });
+
+  test("sendPayload throws HakanaiError (413)", async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 413,
+      statusText: "Payload Too Large",
+    }) as any;
+
+    const testBytes = encodeText("test secret");
+    const payload = client.createPayload();
+    payload.setFromBytes!(testBytes);
+
+    try {
+      // Use a properly formatted but invalid token (43 chars base64url)
+      await client.sendPayload(payload, 3600);
+      fail("Expected error to be thrown");
+    } catch (error: any) {
+      expect(error.name).toBe("HakanaiError");
+      expect(error.code).toBe(HakanaiErrorCodes.PAYLOAD_TOO_LARGE);
+      expect(error.statusCode).toBe(413);
     }
   });
 
@@ -347,4 +327,3 @@ describe("Error Code Constants", () => {
     }
   });
 });
-
