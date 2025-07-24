@@ -10,7 +10,7 @@ const HIGHLY_VOLATILE_CACHE_MAX_AGE: u64 = 300; // 5 minutes
 /// This function registers the API routes and sets up the application data,
 /// including the data store that will be shared across all handlers.
 pub fn configure(cfg: &mut web::ServiceConfig) {
-    cfg.route("/", web::get().to(serve_homepage))
+    cfg.route("/", web::get().to(serve_index))
         .route("/banner.svg", web::get().to(serve_banner))
         .route("/config.json", web::get().to(serve_config))
         .route("/create", web::get().to(serve_create_secret_html))
@@ -134,10 +134,9 @@ async fn serve_openapi_json() -> impl Responder {
     )
 }
 
-/// Serves the homepage HTML
-async fn serve_homepage() -> HttpResponse {
+async fn serve_index() -> HttpResponse {
     serve_with_caching_header(
-        include_bytes!("includes/homepage.html"),
+        include_bytes!("includes/index.html"),
         "text/html",
         VOLATILE_CACHE_MAX_AGE,
     )

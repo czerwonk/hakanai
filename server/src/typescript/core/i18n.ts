@@ -168,6 +168,9 @@ const translations: Translations = {
     "homepage.how.feature4.title": "Private",
     "homepage.how.feature4.description":
       "The server never sees your unencrypted data",
+    "homepage.how.feature5.title": "Open Source",
+    "homepage.how.feature5.description":
+      "Fully open source and auditable on GitHub",
     "homepage.docs.link": "View API Documentation",
 
     // Footer links
@@ -384,6 +387,9 @@ const translations: Translations = {
     "homepage.how.feature4.title": "Privat",
     "homepage.how.feature4.description":
       "Der Server sieht niemals die unverschlüsselten Daten",
+    "homepage.how.feature5.title": "Open Source",
+    "homepage.how.feature5.description":
+      "Vollständig Open Source und auf GitHub auditierbar",
     "homepage.docs.link": "API-Dokumentation anzeigen",
 
     // Footer links

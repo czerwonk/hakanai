@@ -29,16 +29,7 @@ wasm/pkg
 
 docker-compose.override.yml
 
-# Build-time generated HTML files
-server/src/includes/docs_generated.html
-server/src/includes/create-secret.html
-server/src/includes/get-secret.html
-server/src/includes/homepage.html
-server/src/includes/impressum.html
-server/src/includes/privacy.html
-server/src/includes/share.html
-
-# TypeScript compiled JavaScript files
+server/src/includes/*.html
 server/src/includes/*.js
 server/src/includes/*.wasm
 server/src/includes/components/
