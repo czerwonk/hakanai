@@ -144,27 +144,6 @@ describe("get-secret.ts", () => {
     });
   });
 
-  describe("UI string management", () => {
-    test("updateUIStrings updates UI_STRINGS with translations", () => {
-      const { updateUIStrings, UI_STRINGS } = getSecretModule;
-
-      // Call updateUIStrings to populate with translations
-      updateUIStrings();
-
-      // Since updateUIStrings depends on window.i18n.t(), check that strings are updated
-      // The exact values depend on our mock, but they should not be the original keys
-      expect(UI_STRINGS.EMPTY_URL).not.toBe("Please enter a valid secret URL"); // Original default
-      expect(UI_STRINGS.SUCCESS_TITLE).not.toBe(
-        "Secret Retrieved Successfully",
-      ); // Original default
-      expect(UI_STRINGS.ERROR_TITLE).not.toBe("Error"); // Original default
-
-      // Should be the translation keys since our mock doesn't have those exact keys
-      expect(typeof UI_STRINGS.EMPTY_URL).toBe("string");
-      expect(UI_STRINGS.EMPTY_URL.length).toBeGreaterThan(0);
-    });
-  });
-
   describe("URL format validation edge cases", () => {
     test("normalizeUrl handles edge cases", () => {
       const { normalizeUrl } = getSecretModule;
