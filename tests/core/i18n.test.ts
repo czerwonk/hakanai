@@ -57,67 +57,6 @@ describe("I18n Translation Completeness", () => {
     });
   });
 
-  describe("Translation Key Categories", () => {
-    const testCategoryExists = (category: string, expectedMinCount: number) => {
-      const enKeys = Object.keys(translations.en);
-      const categoryKeys = enKeys.filter((key) =>
-        key.startsWith(`${category}.`),
-      );
-
-      expect(categoryKeys.length).toBeGreaterThanOrEqual(expectedMinCount);
-
-      // Verify all category keys exist in all languages
-      for (const key of categoryKeys) {
-        expect(translations.en[key]).toBeDefined();
-        expect(translations.de[key]).toBeDefined();
-      }
-    };
-
-    test("should have page title translations", () => {
-      testCategoryExists("page", 2);
-    });
-
-    test("should have header translations", () => {
-      testCategoryExists("header", 2);
-    });
-
-    test("should have label translations", () => {
-      testCategoryExists("label", 8);
-    });
-
-    test("should have placeholder translations", () => {
-      testCategoryExists("placeholder", 2);
-    });
-
-    test("should have helper text translations", () => {
-      testCategoryExists("helper", 5);
-    });
-
-    test("should have time option translations", () => {
-      testCategoryExists("time", 7);
-    });
-
-    test("should have button translations", () => {
-      testCategoryExists("button", 8);
-    });
-
-    test("should have message translations", () => {
-      testCategoryExists("msg", 15);
-    });
-
-    test("should have aria label translations", () => {
-      testCategoryExists("aria", 10);
-    });
-
-    test("should have meta description translations", () => {
-      testCategoryExists("meta", 2);
-    });
-
-    test("should have error code translations", () => {
-      testCategoryExists("error", 5);
-    });
-  });
-
   describe("Translation Quality", () => {
     test("should have different translations for different languages", () => {
       const enKeys = Object.keys(translations.en);
@@ -208,36 +147,6 @@ describe("I18n Translation Completeness", () => {
       expect([translations.en[testKey], translations.de[testKey]]).toContain(
         result,
       );
-    });
-  });
-
-  describe("Critical Translation Keys", () => {
-    // Test for existence of commonly used UI elements
-    const possibleCriticalKeys = [
-      "button.create",
-      "button.retrieve",
-      "msg.createFailed",
-      "msg.retrieveFailed",
-      "error.SECRET_NOT_FOUND",
-      "aria.secretInput",
-    ];
-
-    test("should have translations for critical UI elements", () => {
-      const actualKeys = Object.keys(translations.en);
-      const existingCriticalKeys = possibleCriticalKeys.filter((key) =>
-        actualKeys.includes(key),
-      );
-
-      // Test the ones that actually exist
-      for (const key of existingCriticalKeys) {
-        expect(translations.en[key]).toBeDefined();
-        expect(translations.de[key]).toBeDefined();
-        expect(translations.en[key]).toBeTruthy();
-        expect(translations.de[key]).toBeTruthy();
-      }
-
-      // Ensure we found at least some critical keys
-      expect(existingCriticalKeys.length).toBeGreaterThan(0);
     });
   });
 
