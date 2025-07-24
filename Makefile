@@ -37,7 +37,7 @@ test-ts: build-ts
 
 # Clean builds
 .PHONY: clean
-clean: clean-rust clean-ts
+clean: clean-rust clean-ts clean-wasm
 
 .PHONY: clean-rust
 clean-rust:
@@ -47,3 +47,7 @@ clean-rust:
 clean-ts:
 	rm -rf server/src/includes/*.js server/src/includes/core server/src/includes/components
 	rm -rf tests/node_modules tests/coverage
+
+.PHONY: clean-wasm
+clean-ts:
+	rm -rf server/src/includes/*.wasm

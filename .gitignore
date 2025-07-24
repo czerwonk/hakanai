@@ -40,6 +40,6 @@ server/src/includes/share.html
 
 # TypeScript compiled JavaScript files
 server/src/includes/*.js
+server/src/includes/*.wasm
 server/src/includes/components/
 server/src/includes/core/
-server/src/includes/wasm/

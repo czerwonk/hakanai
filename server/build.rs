@@ -134,17 +134,15 @@ fn compile_wasm() -> Result<()> {
         return Ok(());
     }
 
-    // Copy WASM files to includes directory
-    fs::create_dir_all("src/includes/wasm")?;
-
+    // Copy WASM files to includes directory (root level for direct access)
     let wasm_files = [
         (
             "../wasm/pkg/hakanai_wasm_bg.wasm",
-            "src/includes/wasm/hakanai_wasm_bg.wasm",
+            "src/includes/hakanai_wasm_bg.wasm",
         ),
         (
             "../wasm/pkg/hakanai_wasm.js",
-            "src/includes/wasm/hakanai_wasm.js",
+            "src/includes/hakanai_wasm.js",
         ),
     ];
 
