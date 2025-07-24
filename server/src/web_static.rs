@@ -242,7 +242,7 @@ async fn serve_common_js() -> impl Responder {
 
 async fn serve_wasm_js() -> impl Responder {
     serve_with_caching_header(
-        include_bytes!("includes/wasm/hakanai_wasm.js"),
+        include_bytes!("includes/hakanai_wasm.js"),
         "application/javascript",
         HIGHLY_VOLATILE_CACHE_MAX_AGE,
     )
@@ -250,7 +250,7 @@ async fn serve_wasm_js() -> impl Responder {
 
 async fn serve_wasm_binary() -> impl Responder {
     serve_with_caching_header(
-        include_bytes!("includes/wasm/hakanai_wasm_bg.wasm"),
+        include_bytes!("includes/hakanai_wasm_bg.wasm"),
         "application/wasm",
         HIGHLY_VOLATILE_CACHE_MAX_AGE,
     )
