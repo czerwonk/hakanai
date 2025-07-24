@@ -5,6 +5,15 @@ describe("Theme Management", () => {
     // Clear document theme attributes
     document.body.removeAttribute("data-theme");
 
+    // Mock matchMedia (always needed)
+    Object.defineProperty(window, "matchMedia", {
+      value: jest.fn(() => ({
+        matches: false,
+        addEventListener: jest.fn(),
+      })),
+      writable: true,
+    });
+
     // Reset mocks
     jest.clearAllMocks();
   });
@@ -37,12 +46,6 @@ describe("Theme Management", () => {
     // Mock localStorage with no stored theme
     Object.defineProperty(window, "localStorage", {
       value: { getItem: () => null },
-      writable: true,
-    });
-
-    // Mock matchMedia for system dark preference
-    Object.defineProperty(window, "matchMedia", {
-      value: () => ({ matches: true, addEventListener: jest.fn() }),
       writable: true,
     });
 
