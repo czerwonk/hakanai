@@ -7,6 +7,15 @@ import {
 } from "../../server/src/typescript/core/error";
 import { HakanaiErrorCodes } from "../../server/src/typescript/hakanai-client";
 
+// Type declaration for window.i18n used in tests
+declare global {
+  interface Window {
+    i18n: {
+      t: (key: string) => string;
+    };
+  }
+}
+
 describe("Error Module", () => {
   beforeEach(() => {
     Object.defineProperty(window, "i18n", {
