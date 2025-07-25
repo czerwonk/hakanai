@@ -97,7 +97,9 @@ export function handleAPIError(
       error.code === HakanaiErrorCodes.AUTHENTICATION_REQUIRED ||
       error.code === HakanaiErrorCodes.INVALID_TOKEN
     ) {
+      handler.displayError(message);
       handler.onAuthenticationError?.();
+      return;
     }
   } else if (isStandardError(error)) {
     message = error.message;
