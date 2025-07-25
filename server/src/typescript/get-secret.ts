@@ -17,7 +17,7 @@ import {
 import { copyToClipboard } from "./core/clipboard";
 import { formatFileSize } from "./core/formatters";
 import { initTheme } from "./core/theme";
-import { isHakanaiError, isStandardError, isErrorLike } from "./core/error";
+import { ErrorHandler, handleAPIError } from "./core/error";
 import { initFeatures } from "./core/app-config";
 
 const TIMEOUTS = {
@@ -138,20 +138,22 @@ async function processRetrieveRequest(): Promise<void> {
   }
 }
 
-function handleRetrieveError(error: unknown): void {
-  if (isHakanaiError(error)) {
-    const errorKey = `error.${error.code}`;
-    const localizedMessage = window.i18n.t(errorKey);
-    const finalMessage =
-      localizedMessage !== errorKey ? localizedMessage : error.message;
-    showError(finalMessage);
-  } else if (isStandardError(error)) {
-    showError(error.message);
-  } else if (isErrorLike(error)) {
-    showError(error.message ?? window.i18n.t(I18nKeys.Msg.RetrieveFailed));
-  } else {
-    showError(window.i18n.t(I18nKeys.Msg.RetrieveFailed));
+// Error handler implementation for get-secret page
+class GetSecretErrorHandler implements ErrorHandler {
+  displayError(message: string): void {
+    showError(message);
   }
+}
+
+// Create a singleton instance
+const errorHandler = new GetSecretErrorHandler();
+
+function handleRetrieveError(error: unknown): void {
+  handleAPIError(
+    error,
+    window.i18n.t(I18nKeys.Msg.RetrieveFailed),
+    errorHandler,
+  );
 }
 
 const retrieveSecretDebounced = debounce(

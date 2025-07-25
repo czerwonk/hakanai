@@ -1,8 +1,4 @@
-import {
-  HakanaiClient,
-  HakanaiErrorCodes,
-  type PayloadData,
-} from "./hakanai-client";
+import { HakanaiClient, type PayloadData } from "./hakanai-client";
 import { initI18n, I18nKeys } from "./core/i18n";
 import {
   announceToScreenReader,
@@ -18,7 +14,7 @@ import {
 } from "./core/auth-storage";
 import { formatFileSize, sanitizeFileName } from "./core/formatters";
 import { displaySuccessResult } from "./components/create-result";
-import { isHakanaiError, isStandardError, isErrorLike } from "./core/error";
+import { ErrorHandler, handleAPIError } from "./core/error";
 import { initFeatures } from "./core/app-config";
 
 interface Elements {
@@ -216,34 +212,28 @@ function getFormValues(elements: Elements): FormValues {
   };
 }
 
-function handleCreateError(error: unknown): void {
-  if (isHakanaiError(error)) {
-    const errorKey = `error.${error.code}`;
-    const localizedMessage = window.i18n.t(errorKey);
-    const finalMessage =
-      localizedMessage !== errorKey ? localizedMessage : error.message;
-    showError(finalMessage);
-
-    // Focus auth token input for authentication errors
-    if (
-      error.code === HakanaiErrorCodes.AUTHENTICATION_REQUIRED ||
-      error.code === HakanaiErrorCodes.INVALID_TOKEN
-    ) {
-      const authTokenInput = document.getElementById(
-        "authToken",
-      ) as HTMLInputElement;
-      if (authTokenInput) {
-        authTokenInput.focus();
-        authTokenInput.select();
-      }
-    }
-  } else if (isStandardError(error)) {
-    showError(error.message);
-  } else if (isErrorLike(error)) {
-    showError(error.message ?? window.i18n.t(I18nKeys.Msg.CreateFailed));
-  } else {
-    showError(window.i18n.t(I18nKeys.Msg.CreateFailed));
+// Error handler implementation for create-secret page
+class CreateSecretErrorHandler implements ErrorHandler {
+  displayError(message: string): void {
+    showError(message);
   }
+
+  onAuthenticationError(): void {
+    const authTokenInput = document.getElementById(
+      "authToken",
+    ) as HTMLInputElement;
+    if (authTokenInput) {
+      authTokenInput.focus();
+      authTokenInput.select();
+    }
+  }
+}
+
+// Create a singleton instance
+const errorHandler = new CreateSecretErrorHandler();
+
+function handleCreateError(error: unknown): void {
+  handleAPIError(error, window.i18n.t(I18nKeys.Msg.CreateFailed), errorHandler);
 }
 
 async function createSecret(): Promise<void> {

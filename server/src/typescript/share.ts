@@ -9,6 +9,8 @@ import { formatFileSize, formatTTL, sanitizeFileName } from "./core/formatters";
 import { hideElement, showElement } from "./core/dom-utils";
 import { displaySuccessResult } from "./components/create-result";
 import { ShareData, ShareDataError } from "./core/share-data";
+import { ErrorHandler, handleAPIError } from "./core/error";
+import { announceToScreenReader } from "./core/dom-utils";
 import { initFeatures } from "./core/app-config";
 
 let sharePayload: ShareData | null = null;
@@ -85,11 +87,16 @@ function showShareContent(payload: ShareData): void {
 /**
  * Show clipboard error
  */
-function showClipboardError(message: string): void {
+function showError(message: string): void {
   document.getElementById("error-message")!.textContent = message;
   const clipboardError = document.getElementById("clipboard-error")!;
   showElement(clipboardError);
   hideOtherSections("clipboard-error");
+
+  // Add screen reader announcement for share page
+  announceToScreenReader(
+    `${window.i18n.t(I18nKeys.Msg.ErrorTitle)}: ${message}`,
+  );
 }
 
 /**
@@ -114,31 +121,41 @@ function showSuccess(url: string): void {
   hideOtherSections("result-success");
 }
 
+// Error handler implementation for share page
+class ShareErrorHandler implements ErrorHandler {
+  displayError(message: string): void {
+    showError(message);
+  }
+}
+
+// Create a singleton instance
+const errorHandler = new ShareErrorHandler();
+
 /**
  * Handle share data reading errors
  */
 function handleShareError(error: unknown, context: string): void {
   hideLoading();
 
+  // Handle share-specific errors first
   if (error instanceof Error && error.name === "NotAllowedError") {
-    showClipboardError(window.i18n.t(I18nKeys.Msg.ClipboardPermissionDenied));
+    showError(window.i18n.t(I18nKeys.Msg.ClipboardPermissionDenied));
   } else if (error instanceof ShareDataError) {
     // Handle validation errors with translations
     const translationKey = `validation.${error.code}`;
     const translatedMessage = window.i18n.t(translationKey);
-
-    showClipboardError(
-      translatedMessage || error.message, // Fallback to original message
-    );
+    showError(translatedMessage || error.message);
   } else if (
     error instanceof Error &&
     error.message === "Invalid JSON format"
   ) {
-    showClipboardError(window.i18n.t(I18nKeys.Msg.ClipboardInvalidJson));
+    showError(window.i18n.t(I18nKeys.Msg.ClipboardInvalidJson));
   } else {
-    showClipboardError(
-      `Error ${context}: ${error instanceof Error ? error.message : "Unknown error"}`,
-    );
+    // For all other errors, use the generic handler
+    const fallbackMessage = context
+      ? `Error ${context}: ${error instanceof Error ? error.message : "Unknown error"}`
+      : "Unknown error occurred";
+    handleAPIError(error, fallbackMessage, errorHandler);
   }
 }
 
@@ -170,7 +187,7 @@ function readClipboard(): void {
  */
 async function createSecret(): Promise<void> {
   if (!sharePayload) {
-    showClipboardError("No share data available");
+    showError("No share data available");
     return;
   }
 
@@ -202,7 +219,7 @@ async function createSecret(): Promise<void> {
     showSuccess(url);
   } catch (error) {
     hideLoading();
-    showClipboardError(
+    showError(
       `Failed to create secret: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
   }
@@ -218,7 +235,7 @@ function initShareData() {
         return;
       }
     } catch (error) {
-      showClipboardError(
+      showError(
         `Invalid share data: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
       return;
