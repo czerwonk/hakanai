@@ -8,9 +8,9 @@ import { initI18n, I18nKeys } from "./core/i18n";
 import { formatFileSize, formatTTL, sanitizeFileName } from "./core/formatters";
 import { hideElement, showElement } from "./core/dom-utils";
 import { displaySuccessResult } from "./components/create-result";
+import { displayErrorMessage } from "./components/error-display";
 import { ShareData, ShareDataError } from "./core/share-data";
 import { ErrorHandler, handleAPIError } from "./core/error";
-import { announceToScreenReader } from "./core/dom-utils";
 import { initFeatures } from "./core/app-config";
 
 let sharePayload: ShareData | null = null;
@@ -88,15 +88,13 @@ function showShareContent(payload: ShareData): void {
  * Show clipboard error
  */
 function showError(message: string): void {
-  document.getElementById("error-message")!.textContent = message;
+  // Page-specific behavior: show error section and hide others
   const clipboardError = document.getElementById("clipboard-error")!;
   showElement(clipboardError);
   hideOtherSections("clipboard-error");
 
-  // Add screen reader announcement for share page
-  announceToScreenReader(
-    `${window.i18n.t(I18nKeys.Msg.ErrorTitle)}: ${message}`,
-  );
+  // Use generic error display in the error-message container
+  displayErrorMessage(message, { containerId: "error-message" });
 }
 
 /**

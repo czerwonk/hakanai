@@ -15,6 +15,7 @@ import {
   showElement,
 } from "./core/dom-utils";
 import { copyToClipboard } from "./core/clipboard";
+import { displayErrorMessage } from "./components/error-display";
 import { formatFileSize } from "./core/formatters";
 import { initTheme } from "./core/theme";
 import { ErrorHandler, handleAPIError } from "./core/error";
@@ -138,14 +139,17 @@ async function processRetrieveRequest(): Promise<void> {
   }
 }
 
-// Error handler implementation for get-secret page
+function showError(message: string): void {
+  document.body.classList.remove("expanded-view");
+  displayErrorMessage(message);
+}
+
 class GetSecretErrorHandler implements ErrorHandler {
   displayError(message: string): void {
     showError(message);
   }
 }
 
-// Create a singleton instance
 const errorHandler = new GetSecretErrorHandler();
 
 function handleRetrieveError(error: unknown): void {
@@ -361,26 +365,6 @@ function showSuccess(payload: PayloadData): void {
 
   resultDiv.appendChild(createNoteElement());
   announceToScreenReader(window.i18n.t(I18nKeys.Msg.SuccessTitle));
-}
-
-function showError(message: string): void {
-  const { resultDiv } = getElements();
-
-  resultDiv.className = "result error";
-  resultDiv.innerHTML = "";
-  document.body.classList.remove("expanded-view");
-
-  const title = document.createElement("h3");
-  title.textContent = window.i18n.t(I18nKeys.Msg.ErrorTitle);
-  resultDiv.appendChild(title);
-
-  const errorDiv = document.createElement("div");
-  errorDiv.textContent = message;
-  resultDiv.appendChild(errorDiv);
-
-  announceToScreenReader(
-    `${window.i18n.t(I18nKeys.Msg.ErrorTitle)}: ${message}`,
-  );
 }
 
 function copySecret(secretId: string, button: HTMLButtonElement): void {

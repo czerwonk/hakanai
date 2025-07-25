@@ -14,6 +14,7 @@ import {
 } from "./core/auth-storage";
 import { formatFileSize, sanitizeFileName } from "./core/formatters";
 import { displaySuccessResult } from "./components/create-result";
+import { displayErrorMessage } from "./components/error-display";
 import { ErrorHandler, handleAPIError } from "./core/error";
 import { initFeatures } from "./core/app-config";
 
@@ -212,6 +213,16 @@ function getFormValues(elements: Elements): FormValues {
   };
 }
 
+function showError(message: string): void {
+  // Page-specific behavior: show form after error
+  const form = document.getElementById("create-secret-form");
+  if (form) {
+    showElement(form);
+  }
+
+  displayErrorMessage(message);
+}
+
 // Error handler implementation for create-secret page
 class CreateSecretErrorHandler implements ErrorHandler {
   displayError(message: string): void {
@@ -309,35 +320,6 @@ function showSuccess(secretUrl: string): void {
     separateKeyMode: isSeparateKeyMode(),
   });
   announceToScreenReader(window.i18n.t(I18nKeys.Msg.SuccessTitle));
-}
-
-function showError(message: string): void {
-  const resultDiv = document.getElementById("result");
-  if (!resultDiv) return;
-
-  resultDiv.className = "result error";
-  resultDiv.innerHTML = "";
-
-  showForm();
-
-  const title = document.createElement("h3");
-  title.textContent = window.i18n.t(I18nKeys.Msg.ErrorTitle);
-  resultDiv.appendChild(title);
-
-  const errorDiv = document.createElement("div");
-  errorDiv.textContent = message;
-  resultDiv.appendChild(errorDiv);
-
-  announceToScreenReader(
-    `${window.i18n.t(I18nKeys.Msg.ErrorTitle)}: ${message}`,
-  );
-}
-
-function showForm(): void {
-  const form = document.getElementById("create-secret-form");
-  if (form) {
-    showElement(form);
-  }
 }
 
 function getFileElements(): FileElements {

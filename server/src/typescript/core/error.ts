@@ -112,3 +112,6 @@ export function handleAPIError(
   handler.displayError(message);
 }
 
+// Export for testing only
+export { isHakanaiError, isStandardError, isErrorLike };
+
