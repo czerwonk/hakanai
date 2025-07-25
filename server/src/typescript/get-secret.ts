@@ -16,7 +16,7 @@ import {
 } from "./core/dom-utils";
 import { copyToClipboard } from "./core/clipboard";
 import { formatFileSize } from "./core/formatters";
-import { initTheme, updateThemeToggleButton } from "./core/theme";
+import { initTheme } from "./core/theme";
 import { isHakanaiError, isStandardError, isErrorLike } from "./core/types";
 import { initFeatures } from "./core/app-config";
 
@@ -458,10 +458,6 @@ function setupForm(): void {
     });
   }
 }
-
-document.addEventListener("languageChanged", () => {
-  updateThemeToggleButton();
-});
 
 document.addEventListener("DOMContentLoaded", () => {
   initI18n();

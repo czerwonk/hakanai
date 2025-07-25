@@ -87,7 +87,7 @@ function getThemeToggleLabel(isDark: boolean): string {
 /**
  * Update theme toggle button appearance and accessibility
  */
-export function updateThemeToggleButton(): void {
+function updateThemeToggleButton(): void {
   const button = getThemeToggleButton();
   if (!button) return;
 

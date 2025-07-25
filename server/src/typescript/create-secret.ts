@@ -10,7 +10,7 @@ import {
   showElement,
   hideElement,
 } from "./core/dom-utils";
-import { initTheme, updateThemeToggleButton } from "./core/theme";
+import { initTheme } from "./core/theme";
 import {
   saveAuthTokenToStorage,
   getAuthTokenFromStorage,
