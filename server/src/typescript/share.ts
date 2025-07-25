@@ -231,7 +231,7 @@ function initShareData() {
   hideOtherSections("permission-prompt");
 }
 
-function init(): void {
+document.addEventListener("DOMContentLoaded", () => {
   initI18n();
   initFeatures();
 
@@ -243,6 +243,4 @@ function init(): void {
     ?.addEventListener("click", createSecret);
 
   initShareData();
-}
-
-document.addEventListener("DOMContentLoaded", init);
+});
