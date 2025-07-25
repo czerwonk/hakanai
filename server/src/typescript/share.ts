@@ -94,7 +94,7 @@ function showError(message: string): void {
   hideOtherSections("result");
 
   // Use generic error display
-  displayErrorMessage(message);
+  displayErrorMessage(message, result);
 }
 
 /**

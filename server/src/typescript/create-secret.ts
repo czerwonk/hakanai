@@ -220,7 +220,8 @@ function showError(message: string): void {
     showElement(form);
   }
 
-  displayErrorMessage(message);
+  const resultContainer = document.getElementById("result")!;
+  displayErrorMessage(message, resultContainer);
 }
 
 // Error handler implementation for create-secret page

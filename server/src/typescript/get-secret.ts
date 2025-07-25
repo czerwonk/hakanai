@@ -141,7 +141,8 @@ async function processRetrieveRequest(): Promise<void> {
 
 function showError(message: string): void {
   document.body.classList.remove("expanded-view");
-  displayErrorMessage(message);
+  const resultContainer = document.getElementById("result")!;
+  displayErrorMessage(message, resultContainer);
 }
 
 class GetSecretErrorHandler implements ErrorHandler {

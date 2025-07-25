@@ -28,10 +28,10 @@ describe("Error Display Component", () => {
   });
 
   describe("displayErrorMessage", () => {
-    test("should create error display with default container", () => {
+    test("should create error display with container element", () => {
       const testMessage = "Test error message";
 
-      displayErrorMessage(testMessage);
+      displayErrorMessage(testMessage, container);
 
       expect(container.className).toBe("result error");
       expect(container.innerHTML).not.toBe("");
@@ -53,7 +53,7 @@ describe("Error Display Component", () => {
 
       const testMessage = "Custom container error";
 
-      displayErrorMessage(testMessage, { containerId: "custom-error" });
+      displayErrorMessage(testMessage, customContainer);
 
       expect(customContainer.className).toBe("result error");
       expect(customContainer.innerHTML).not.toBe("");
@@ -71,7 +71,7 @@ describe("Error Display Component", () => {
       container.innerHTML = "<p>Previous content</p>";
       container.className = "previous-class";
 
-      displayErrorMessage("New error");
+      displayErrorMessage("New error", container);
 
       expect(container.className).toBe("result error");
       expect(container.querySelector("p")).toBeNull();
@@ -82,14 +82,11 @@ describe("Error Display Component", () => {
       expect(errorDiv).toBeTruthy();
     });
 
-    test("should handle missing container gracefully", () => {
+    test("should handle null container gracefully", () => {
       const consoleSpy = jest.spyOn(console, "error").mockImplementation();
+      const nullContainer = null as any;
 
-      displayErrorMessage("Test message", { containerId: "non-existent" });
-
-      expect(consoleSpy).toHaveBeenCalledWith(
-        "Error container 'non-existent' not found",
-      );
+      expect(() => displayErrorMessage("Test message", nullContainer)).toThrow();
 
       consoleSpy.mockRestore();
     });
@@ -100,7 +97,7 @@ describe("Error Display Component", () => {
       } = require("../../server/src/typescript/core/dom-utils");
       const testMessage = "Screen reader test";
 
-      displayErrorMessage(testMessage);
+      displayErrorMessage(testMessage, container);
 
       expect(announceToScreenReader).toHaveBeenCalledWith(
         "msg.errorTitle: " + testMessage,
@@ -108,7 +105,7 @@ describe("Error Display Component", () => {
     });
 
     test("should handle empty message", () => {
-      displayErrorMessage("");
+      displayErrorMessage("", container);
 
       const errorDiv = container.querySelector("div");
       expect(errorDiv?.textContent).toBe("");
@@ -118,7 +115,7 @@ describe("Error Display Component", () => {
       const specialMessage =
         "Error with <script>alert('xss')</script> & symbols";
 
-      displayErrorMessage(specialMessage);
+      displayErrorMessage(specialMessage, container);
 
       const errorDiv = container.querySelector("div");
       expect(errorDiv?.textContent).toBe(specialMessage);
@@ -127,7 +124,7 @@ describe("Error Display Component", () => {
     });
 
     test("should use i18n for error title", () => {
-      displayErrorMessage("Test message");
+      displayErrorMessage("Test message", container);
 
       expect((window as any).i18n.t).toHaveBeenCalledWith("msg.errorTitle");
     });
