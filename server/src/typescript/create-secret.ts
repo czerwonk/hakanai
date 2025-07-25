@@ -301,31 +301,6 @@ function showSuccess(secretUrl: string): void {
   announceToScreenReader(window.i18n.t(I18nKeys.Msg.SuccessTitle));
 }
 
-function resetToCreateMode(): void {
-  const form = document.getElementById("create-secret-form");
-  const resultContainer = document.getElementById("result");
-
-  if (form) {
-    showElement(form);
-  }
-  if (resultContainer) {
-    resultContainer.innerHTML = "";
-    resultContainer.className = "";
-  }
-
-  focusTextMode();
-}
-
-function focusTextMode(): void {
-  const textRadio = document.getElementById("textRadio") as HTMLInputElement;
-  const secretText = document.getElementById("secretText") as HTMLInputElement;
-  if (textRadio && secretText) {
-    textRadio.checked = true;
-    toggleSecretType();
-    secretText.focus();
-  }
-}
-
 function showError(message: string): void {
   const resultDiv = document.getElementById("result");
   if (!resultDiv) return;
@@ -343,7 +318,9 @@ function showError(message: string): void {
   errorDiv.textContent = message;
   resultDiv.appendChild(errorDiv);
 
-  announceToScreenReader(`${window.i18n.t(I18nKeys.Msg.ErrorTitle)}: ${message}`);
+  announceToScreenReader(
+    `${window.i18n.t(I18nKeys.Msg.ErrorTitle)}: ${message}`,
+  );
 }
 
 function showForm(): void {
@@ -532,10 +509,6 @@ function focusSecretInput(): void {
   }
 }
 
-document.addEventListener("languageChanged", () => {
-  updateThemeToggleButton();
-});
-
 document.addEventListener("DOMContentLoaded", () => {
   initI18n();
   initTheme();
@@ -546,16 +519,3 @@ document.addEventListener("DOMContentLoaded", () => {
   initializeAuthToken();
   initFeatures();
 });
-
-// Export functions for testing
-export {
-  formatFileSize,
-  createSecret,
-  showError,
-  showSuccess,
-  updateFileInfo,
-  toggleSecretType,
-  resetToCreateMode,
-  initializeAuthToken,
-  handleAuthTokenSave,
-};

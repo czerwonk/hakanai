@@ -322,7 +322,8 @@ function createNoteElement(): HTMLElement {
   note.className = "note-element";
 
   const strong = document.createElement("strong");
-  strong.textContent = window.i18n.t(I18nKeys.Msg.RetrieveNote).split(":")[0] + ":";
+  strong.textContent =
+    window.i18n.t(I18nKeys.Msg.RetrieveNote).split(":")[0] + ":";
   note.appendChild(strong);
   note.appendChild(
     document.createTextNode(" " + window.i18n.t(I18nKeys.Msg.RetrieveNoteText)),
@@ -375,7 +376,9 @@ function showError(message: string): void {
   errorDiv.textContent = message;
   resultDiv.appendChild(errorDiv);
 
-  announceToScreenReader(`${window.i18n.t(I18nKeys.Msg.ErrorTitle)}: ${message}`);
+  announceToScreenReader(
+    `${window.i18n.t(I18nKeys.Msg.ErrorTitle)}: ${message}`,
+  );
 }
 
 function copySecret(secretId: string, button: HTMLButtonElement): void {

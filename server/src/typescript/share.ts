@@ -113,24 +113,6 @@ function showSuccess(url: string): void {
 }
 
 /**
- * Read share data from clipboard or URL fragment
- * @returns Parsed share data
- * @throws Error if no data found or validation fails
- */
-async function readShareData(): Promise<ShareData> {
-  // First try URL fragment
-  const fragment = window.location.hash.substring(1);
-  const fragmentData = ShareData.fromFragment(fragment);
-  if (fragmentData) {
-    return fragmentData;
-  }
-
-  // Fall back to clipboard
-  const clipboardText = await navigator.clipboard.readText();
-  return ShareData.fromJSON(clipboardText);
-}
-
-/**
  * Handle share data reading errors
  */
 function handleShareError(error: unknown, context: string): void {
@@ -155,21 +137,6 @@ function handleShareError(error: unknown, context: string): void {
     showClipboardError(
       `Error ${context}: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
-  }
-}
-
-/**
- * Read and parse share data from fragment or clipboard
- */
-async function readShare(): Promise<void> {
-  try {
-    showLoading(window.i18n.t(I18nKeys.Msg.ReadingClipboard));
-    const payload = await readShareData();
-
-    hideLoading();
-    showShareContent(payload);
-  } catch (error) {
-    handleShareError(error, "reading data");
   }
 }
 
@@ -239,23 +206,8 @@ async function createSecret(): Promise<void> {
   }
 }
 
-/**
- * Initialize the page
- */
-function init(): void {
-  initI18n();
-  initFeatures();
-  // Always add event listeners first
-  document
-    .getElementById("read-clipboard")
-    ?.addEventListener("click", readClipboard);
-  document
-    .getElementById("share-button")
-    ?.addEventListener("click", createSecret);
-
-  // Check for fragment data first
+function initShareData() {
   const fragment = window.location.hash.substring(1);
-
   if (fragment) {
     try {
       const fragmentData = ShareData.fromFragment(fragment);
@@ -275,20 +227,20 @@ function init(): void {
   const permissionPrompt = document.getElementById("permission-prompt")!;
   showElement(permissionPrompt);
   hideOtherSections("permission-prompt");
-
-  // Auto-read if auto parameter is present (clipboard only)
-  const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get("auto") === "true") {
-    // Small delay to let the page render
-    setTimeout(readShare, 100);
-  }
 }
 
-// Initialize when DOM is ready
-if (typeof document !== "undefined") {
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init);
-  } else {
-    init();
-  }
+function init(): void {
+  initI18n();
+  initFeatures();
+
+  document
+    .getElementById("read-clipboard")
+    ?.addEventListener("click", readClipboard);
+  document
+    .getElementById("share-button")
+    ?.addEventListener("click", createSecret);
+
+  initShareData();
 }
+
+document.addEventListener("DOMContentLoaded", init);
