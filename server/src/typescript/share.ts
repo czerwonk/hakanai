@@ -7,7 +7,7 @@ import { HakanaiClient } from "./hakanai-client";
 import { initI18n, I18nKeys } from "./core/i18n";
 import { formatFileSize, formatTTL, sanitizeFileName } from "./core/formatters";
 import { hideElement, showElement } from "./core/dom-utils";
-import { displaySuccessResult } from "./components/success-display";
+import { displaySuccessResult } from "./components/create-result";
 import { ShareData, ShareDataError } from "./core/types";
 import { initFeatures } from "./core/app-config";
 

@@ -1,7 +1,6 @@
-// Constants
-const THEME_KEY = "hakanai-theme";
-
 import { I18nKeys } from "./i18n";
+
+const THEME_KEY = "hakanai-theme";
 
 type Theme = "light" | "dark";
 

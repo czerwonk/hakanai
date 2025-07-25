@@ -1,4 +1,4 @@
-import { displaySuccessResult } from "../../server/src/typescript/components/success-display";
+import { displaySuccessResult } from "../../server/src/typescript/components/create-result";
 
 // Mock the QR code generator
 jest.mock("../../server/src/typescript/core/qr-generator", () => ({

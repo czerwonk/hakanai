@@ -1,11 +1,7 @@
-import {
-  createButton,
-  generateRandomId,
-  hideElement,
-} from "../core/dom-utils.js";
-import { copyToClipboardByElementId } from "../core/clipboard.js";
-import { QRCodeGenerator } from "../core/qr-generator.js";
-import { I18nKeys } from "../core/i18n.js";
+import { createButton, generateRandomId, hideElement } from "../core/dom-utils";
+import { copyToClipboardByElementId } from "../core/clipboard";
+import { QRCodeGenerator } from "../core/qr-generator";
+import { I18nKeys } from "../core/i18n";
 
 /**
  * Options for success result display

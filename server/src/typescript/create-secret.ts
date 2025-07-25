@@ -17,7 +17,7 @@ import {
   clearAuthTokenStorage,
 } from "./core/auth-storage";
 import { formatFileSize, sanitizeFileName } from "./core/formatters";
-import { displaySuccessResult } from "./components/success-display";
+import { displaySuccessResult } from "./components/create-result";
 import {
   type RequiredElements,
   type FileElements,

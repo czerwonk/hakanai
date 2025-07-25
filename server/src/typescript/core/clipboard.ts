@@ -1,4 +1,4 @@
-import { announceToScreenReader } from "./dom-utils.js";
+import { announceToScreenReader } from "./dom-utils";
 
 // Constants
 const COPY_FEEDBACK_TIMEOUT = 2000;
