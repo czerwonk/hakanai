@@ -285,7 +285,7 @@ function createBinarySecret(
 function createCopyButton(secretId: string): HTMLButtonElement {
   return createButton(
     "copy-button",
-    window.i18n.t(I18nKeys.Button.CopySecret),
+    window.i18n.t(I18nKeys.Button.Copy),
     window.i18n.t(I18nKeys.Aria.CopySecret),
     function (this: HTMLButtonElement) {
       copySecret(secretId, this);
