@@ -376,7 +376,7 @@ const translations: Translations = {
       "Secret has been accessed and is no longer available",
     [I18nKeys.Error.RetrieveFailed]: "Failed to retrieve secret",
     [I18nKeys.Error.MissingDecryptionKey]: "No decryption key found in URL",
-    [I18nKeys.Error.PayloadTooLarge]: "Secret size exeeds the limit",
+    [I18nKeys.Error.PayloadTooLarge]: "Secret size exceeds the limit",
 
     [I18nKeys.Validation.MissingData]: "Missing or invalid data field",
     [I18nKeys.Validation.InvalidFilename]:
