@@ -13,6 +13,8 @@ import { initFeatures } from "./core/app-config";
 
 let sharePayload: ShareData | null = null;
 
+const DEFAULT_TTL = 86400; // Default TTL in seconds (1 day)
+
 /**
  * Show loading state
  */
@@ -61,7 +63,7 @@ function showShareContent(payload: ShareData): void {
     payload.getContentSize(),
   );
   document.getElementById("content-ttl")!.textContent = formatTTL(
-    payload.ttl ?? 86400,
+    payload.ttl ?? DEFAULT_TTL,
   );
 
   // Show filename if present (sanitized for security)
