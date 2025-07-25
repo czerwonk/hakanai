@@ -77,13 +77,9 @@ function getThemeToggleButton(): HTMLButtonElement | null {
 }
 
 function getThemeToggleLabel(isDark: boolean): string {
-  if (window.i18n?.t) {
-    return isDark
-      ? window.i18n.t("aria.switchToLight")
-      : window.i18n.t("aria.switchToDark");
-  }
-
-  return isDark ? "Switch to light mode" : "Switch to dark mode";
+  return isDark
+    ? window.i18n.t("aria.switchToLight")
+    : window.i18n.t("aria.switchToDark");
 }
 
 /**

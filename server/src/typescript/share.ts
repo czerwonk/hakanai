@@ -141,14 +141,11 @@ function handleShareError(error: unknown, context: string): void {
   hideLoading();
 
   if (error instanceof Error && error.name === "NotAllowedError") {
-    showClipboardError(
-      window.i18n?.t("msg.clipboardPermissionDenied") ||
-        "Clipboard access denied. Please grant permission and try again.",
-    );
+    showClipboardError(window.i18n.t("msg.clipboardPermissionDenied"));
   } else if (error instanceof ShareDataError) {
     // Handle validation errors with translations
     const translationKey = `validation.${error.code}`;
-    const translatedMessage = window.i18n?.t(translationKey);
+    const translatedMessage = window.i18n.t(translationKey);
 
     showClipboardError(
       translatedMessage || error.message, // Fallback to original message
@@ -157,10 +154,7 @@ function handleShareError(error: unknown, context: string): void {
     error instanceof Error &&
     error.message === "Invalid JSON format"
   ) {
-    showClipboardError(
-      window.i18n?.t("msg.clipboardInvalidJson") ||
-        "Invalid JSON format in clipboard or URL",
-    );
+    showClipboardError(window.i18n.t("msg.clipboardInvalidJson"));
   } else {
     showClipboardError(
       `Error ${context}: ${error instanceof Error ? error.message : "Unknown error"}`,
@@ -173,7 +167,7 @@ function handleShareError(error: unknown, context: string): void {
  */
 async function readShare(): Promise<void> {
   try {
-    showLoading(window.i18n?.t("msg.readingClipboard") || "Reading data...");
+    showLoading(window.i18n.t("msg.readingClipboard"));
     const payload = await readShareData();
 
     hideLoading();
@@ -188,7 +182,7 @@ async function readShare(): Promise<void> {
  * Must be called directly from button click handler
  */
 function readClipboard(): void {
-  showLoading(window.i18n?.t("msg.readingClipboard") || "Reading data...");
+  showLoading(window.i18n.t("msg.readingClipboard"));
 
   navigator.clipboard
     .readText()
@@ -216,7 +210,7 @@ async function createSecret(): Promise<void> {
   }
 
   try {
-    showLoading(window.i18n?.t("msg.creatingSecret") || "Creating secret...");
+    showLoading(window.i18n.t("msg.creatingSecret"));
 
     const client = new HakanaiClient(window.location.origin);
 

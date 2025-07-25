@@ -103,19 +103,14 @@ async function validateAndProcessFileInput(
 ): Promise<PayloadData | null> {
   const file = fileInput.files?.[0];
   if (!file) {
-    showError(
-      window.i18n?.t("msg.emptyFile") ?? "Please select a file to share",
-    );
+    showError(window.i18n.t("msg.emptyFile"));
     fileInput.focus();
     return null;
   }
 
   const fileName = sanitizeFileName(file.name);
   if (!validateFilename(file.name)) {
-    showError(
-      window.i18n?.t("msg.invalidFilename") ??
-        "Invalid filename. Please select a file with a valid name.",
-    );
+    showError(window.i18n.t("msg.invalidFilename"));
     fileInput.focus();
     return null;
   }
@@ -126,7 +121,7 @@ async function validateAndProcessFileInput(
     payload.setFromBytes(fileBytes);
     return payload;
   } catch {
-    showError(window.i18n?.t("msg.fileReadError") ?? "Error reading file");
+    showError(window.i18n.t("msg.fileReadError"));
     return null;
   }
 }
@@ -134,9 +129,7 @@ async function validateAndProcessFileInput(
 function validateTextInput(secretInput: HTMLInputElement): PayloadData | null {
   const secret = secretInput.value.trim();
   if (!secret) {
-    showError(
-      window.i18n?.t("msg.emptySecret") ?? "Please enter a secret to share",
-    );
+    showError(window.i18n.t("msg.emptySecret"));
     secretInput.focus();
     return null;
   }
@@ -206,7 +199,7 @@ function getFormValues(elements: Elements): FormValues {
 function handleCreateError(error: unknown): void {
   if (isHakanaiError(error)) {
     const errorKey = `error.${error.code}`;
-    const localizedMessage = window.i18n?.t(errorKey) ?? error.code;
+    const localizedMessage = window.i18n.t(errorKey);
     const finalMessage =
       localizedMessage !== errorKey ? localizedMessage : error.message;
     showError(finalMessage);
@@ -227,13 +220,9 @@ function handleCreateError(error: unknown): void {
   } else if (isStandardError(error)) {
     showError(error.message);
   } else if (isErrorLike(error)) {
-    showError(
-      error.message ??
-        window.i18n?.t("msg.createFailed") ??
-        "Failed to create secret",
-    );
+    showError(error.message ?? window.i18n.t("msg.createFailed"));
   } else {
-    showError(window.i18n?.t("msg.createFailed") ?? "Failed to create secret");
+    showError(window.i18n.t("msg.createFailed"));
   }
 }
 
@@ -309,9 +298,7 @@ function showSuccess(secretUrl: string): void {
     container: resultContainer,
     separateKeyMode: isSeparateKeyMode(),
   });
-  announceToScreenReader(
-    window.i18n?.t("msg.successTitle") ?? "Secret Created Successfully",
-  );
+  announceToScreenReader(window.i18n.t("msg.successTitle"));
 }
 
 function resetToCreateMode(): void {
@@ -349,16 +336,14 @@ function showError(message: string): void {
   showForm();
 
   const title = document.createElement("h3");
-  title.textContent = window.i18n?.t("msg.errorTitle") ?? "Error";
+  title.textContent = window.i18n.t("msg.errorTitle");
   resultDiv.appendChild(title);
 
   const errorDiv = document.createElement("div");
   errorDiv.textContent = message;
   resultDiv.appendChild(errorDiv);
 
-  announceToScreenReader(
-    `${window.i18n?.t("msg.errorTitle") ?? "Error"}: ${message}`,
-  );
+  announceToScreenReader(`${window.i18n.t("msg.errorTitle")}: ${message}`);
 }
 
 function showForm(): void {
@@ -548,10 +533,6 @@ function focusSecretInput(): void {
 }
 
 document.addEventListener("languageChanged", () => {
-  updateThemeToggleButton();
-});
-
-document.addEventListener("i18nInitialized", () => {
   updateThemeToggleButton();
 });
 

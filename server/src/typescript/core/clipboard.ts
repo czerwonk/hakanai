@@ -21,18 +21,10 @@ export function copyToClipboard(text: string, button: HTMLButtonElement): void {
   navigator.clipboard
     .writeText(text)
     .then(() =>
-      showCopySuccess(
-        button,
-        originalText,
-        window.i18n?.t("button.copied") ?? "Copied!",
-      ),
+      showCopySuccess(button, originalText, window.i18n.t("button.copied")),
     )
     .catch(() =>
-      showCopyFailure(
-        button,
-        originalText,
-        window.i18n?.t("msg.copyFailed") ?? "Copy Failed",
-      ),
+      showCopyFailure(button, originalText, window.i18n.t("msg.copyFailed")),
     );
 }
 
@@ -78,7 +70,7 @@ export function copyToClipboardByElementId(
     showCopyFailure(
       button,
       button.textContent ?? "Copy",
-      window.i18n?.t("msg.copyFailed") || "Copy Failed",
+      window.i18n.t("msg.copyFailed"),
     );
   }
 }
