@@ -53,19 +53,7 @@
           </div>
         </div>
 
-        <div id="clipboard-error" style="display: none">
-          <div class="result error">
-            <h3 data-i18n="msg.clipboardError">Clipboard Error</h3>
-            <p id="error-message"></p>
-            <p data-i18n="msg.expectedJsonFormat">Expected JSON format:</p>
-            <pre><code>&#123;
-  "data": "base64-encoded-content",
-  "filename": "document.pdf",  // optional
-  "token": "auth-token",        // optional
-  "ttl": 86400                 // optional
-&#125;</code></pre>
-          </div>
-        </div>
+        <div id="result" class="hidden"></div>
 
         <div id="permission-prompt" style="display: none">
           <div class="result">

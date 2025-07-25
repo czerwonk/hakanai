@@ -41,7 +41,7 @@ function hideLoading(): void {
 function hideOtherSections(except: string): void {
   const sections = [
     "clipboard-content",
-    "clipboard-error",
+    "result",
     "permission-prompt",
     "loading",
     "result-success",
@@ -88,13 +88,13 @@ function showShareContent(payload: ShareData): void {
  * Show clipboard error
  */
 function showError(message: string): void {
-  // Page-specific behavior: show error section and hide others
-  const clipboardError = document.getElementById("clipboard-error")!;
-  showElement(clipboardError);
-  hideOtherSections("clipboard-error");
+  // Page-specific behavior: show result section and hide others
+  const result = document.getElementById("result")!;
+  showElement(result);
+  hideOtherSections("result");
 
-  // Use generic error display in the error-message container
-  displayErrorMessage(message, { containerId: "error-message" });
+  // Use generic error display
+  displayErrorMessage(message);
 }
 
 /**
