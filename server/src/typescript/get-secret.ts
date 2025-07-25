@@ -17,7 +17,7 @@ import {
 import { copyToClipboard } from "./core/clipboard";
 import { formatFileSize } from "./core/formatters";
 import { initTheme } from "./core/theme";
-import { isHakanaiError, isStandardError, isErrorLike } from "./core/types";
+import { isHakanaiError, isStandardError, isErrorLike } from "./core/error";
 import { initFeatures } from "./core/app-config";
 
 const TIMEOUTS = {

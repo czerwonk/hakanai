@@ -18,18 +18,38 @@ import {
 } from "./core/auth-storage";
 import { formatFileSize, sanitizeFileName } from "./core/formatters";
 import { displaySuccessResult } from "./components/create-result";
-import {
-  type RequiredElements,
-  type FileElements,
-  type FormValues,
-  isHakanaiError,
-  isStandardError,
-  isErrorLike,
-} from "./core/types";
+import { isHakanaiError, isStandardError, isErrorLike } from "./core/error";
 import { initFeatures } from "./core/app-config";
 
-// Use the RequiredElements type from types.ts
-type Elements = RequiredElements;
+interface Elements {
+  loadingDiv: HTMLElement;
+  button: HTMLButtonElement;
+  secretInput: HTMLInputElement;
+  fileInput: HTMLInputElement;
+  authTokenInput: HTMLInputElement;
+  ttlSelect: HTMLSelectElement;
+  textRadio: HTMLInputElement;
+  fileRadio: HTMLInputElement;
+  resultDiv: HTMLElement;
+}
+
+interface FileElements {
+  fileInput: HTMLInputElement;
+  fileInfoDiv: HTMLElement;
+  fileNameSpan: HTMLElement;
+  fileSizeSpan: HTMLElement;
+  radioGroup: HTMLElement;
+  textInputGroup: HTMLElement;
+  fileInputGroup: HTMLElement;
+  fileRadio: HTMLInputElement;
+  textRadio: HTMLInputElement;
+}
+
+interface FormValues {
+  authToken: string;
+  ttl: number;
+  isFileMode: boolean;
+}
 
 const baseUrl = window.location.origin.includes("file://")
   ? "http://localhost:8080"

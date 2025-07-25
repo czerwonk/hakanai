@@ -189,11 +189,12 @@ const I18nKeys = {
   },
 } as const;
 
+export type LanguageCode = "en" | "de";
+
 // Create a union type of all possible translation keys
 type I18nKeyValues =
   (typeof I18nKeys)[keyof typeof I18nKeys][keyof (typeof I18nKeys)[keyof typeof I18nKeys]];
 type TranslationKey = I18nKeyValues | string; // Allow string fallback for HTML data attributes
-type LanguageCode = "en" | "de";
 
 interface TranslationDictionary {
   [key: string]: string;
@@ -450,10 +451,12 @@ const translations: Translations = {
       "Der geheime Schlüssel nach dem # wird niemals an den Server gesendet",
     [I18nKeys.Helper.Secret]:
       "Die Nachricht wird verschlüsselt, bevor sie den Browser verlässt",
-    [I18nKeys.Helper.FileSelect]: "Die Datei wird vor dem Upload verschlüsselt.",
+    [I18nKeys.Helper.FileSelect]:
+      "Die Datei wird vor dem Upload verschlüsselt.",
     [I18nKeys.Helper.Token]:
       "Kann leer gelassen werden, wenn keine Authentifizierung erforderlich ist",
-    [I18nKeys.Helper.Key]: "Base64-kodierter geheimer Schlüssel (separat geteilt)",
+    [I18nKeys.Helper.Key]:
+      "Base64-kodierter geheimer Schlüssel (separat geteilt)",
     [I18nKeys.Helper.SeparateKey]:
       "Wenn aktiviert, werden URL und geheimer Schlüssel separat angezeigt, so dass sie über verschiedene Kanäle für erweiterte Sicherheit geteilt werden können.",
     [I18nKeys.Helper.SaveToken]:
@@ -510,7 +513,8 @@ const translations: Translations = {
       "Bitte den Button klicken, um den geteilten Inhalt aus der Zwischenablage zu lesen.",
     [I18nKeys.Msg.ClipboardPermissionDenied]:
       "Zwischenablage-Zugriff verweigert. Bitte Berechtigung erteilen und erneut versuchen.",
-    [I18nKeys.Msg.ClipboardInvalidJson]: "Zwischenablage enthält kein gültiges JSON",
+    [I18nKeys.Msg.ClipboardInvalidJson]:
+      "Zwischenablage enthält kein gültiges JSON",
     [I18nKeys.Msg.ClipboardEmpty]: "Zwischenablage ist leer",
     [I18nKeys.Msg.ReadingClipboard]: "Zwischenablage wird gelesen...",
     [I18nKeys.Msg.CreatingSecret]: "Secret wird erstellt...",
@@ -537,15 +541,18 @@ const translations: Translations = {
       "Bitte die Zeit auswählen, nach der das Secret abläuft",
     [I18nKeys.Aria.UrlInput]:
       "Bitte die vollständige URL einschließlich des Schlüssels nach dem Hash eingeben",
-    [I18nKeys.Aria.KeyInput]: "Bitte den Base64-kodierten geheimen Schlüssel eingeben",
+    [I18nKeys.Aria.KeyInput]:
+      "Bitte den Base64-kodierten geheimen Schlüssel eingeben",
     [I18nKeys.Aria.ThemeToggle]: "Zwischen hellem und dunklem Modus wechseln",
     [I18nKeys.Aria.SwitchToLight]: "Zum hellen Modus wechseln",
     [I18nKeys.Aria.SwitchToDark]: "Zum dunklen Modus wechseln",
     [I18nKeys.Aria.LogoHome]: "Zur Startseite gehen",
 
-    [I18nKeys.Meta.Create]: "One-Time-Secrets sicher erstellen und teilen mit Hakanai",
+    [I18nKeys.Meta.Create]:
+      "One-Time-Secrets sicher erstellen und teilen mit Hakanai",
     [I18nKeys.Meta.Get]: "One-Time-Secrets sicher teilen mit Hakanai",
-    [I18nKeys.Meta.Homepage]: "Hakanai - Zero-Knowledge One-Time Secret-Sharing Service",
+    [I18nKeys.Meta.Homepage]:
+      "Hakanai - Zero-Knowledge One-Time Secret-Sharing Service",
 
     [I18nKeys.Homepage.Tagline]:
       "Secrets sicher teilen mit Zero-Knowledge-Verschlüsselung",
@@ -588,7 +595,8 @@ const translations: Translations = {
     [I18nKeys.Error.MissingDecryptionKey]: "Kein Schlüssel in der URL gefunden",
 
     [I18nKeys.Validation.MissingData]: "Fehlende oder ungültige Daten",
-    [I18nKeys.Validation.InvalidFilename]: "Ungültiger Dateiname - muss Text sein",
+    [I18nKeys.Validation.InvalidFilename]:
+      "Ungültiger Dateiname - muss Text sein",
     [I18nKeys.Validation.InvalidToken]: "Ungültiger Token - muss Text sein",
     [I18nKeys.Validation.InvalidTtl]:
       "Ungültige Ablaufzeit - muss eine positive Zahl sein",
@@ -608,8 +616,10 @@ const translations: Translations = {
     [I18nKeys.Error.CryptoApiUnavailable]:
       "Web Crypto API ist in diesem Browser nicht verfügbar",
     [I18nKeys.Error.InvalidTtl]: "TTL-Wert muss eine positive Ganzzahl sein",
-    [I18nKeys.Error.MissingAuthToken]: "Authentifizierungs-Token ist erforderlich",
-    [I18nKeys.Error.InvalidAuthToken]: "Authentifizierungs-Token-Format ist ungültig",
+    [I18nKeys.Error.MissingAuthToken]:
+      "Authentifizierungs-Token ist erforderlich",
+    [I18nKeys.Error.InvalidAuthToken]:
+      "Authentifizierungs-Token-Format ist ungültig",
     [I18nKeys.Error.Base64Error]: "Base64-Kodierung/Dekodierung fehlgeschlagen",
     [I18nKeys.Error.InvalidEncryptedData]:
       "Verschlüsselte Daten sind beschädigt oder ungültig",
@@ -618,8 +628,10 @@ const translations: Translations = {
     [I18nKeys.Error.InvalidUrlFormat]: "Ungültiges URL-Format",
     [I18nKeys.Error.MissingSecretId]: "URL fehlt die Secret-ID",
     [I18nKeys.Error.InvalidSecretId]: "Secret-ID-Format ist ungültig",
-    [I18nKeys.Error.InvalidPayload]: "Payload-Objekt ist ungültig oder fehlerhaft",
-    [I18nKeys.Error.InvalidServerResponse]: "Server-Antwort fehlt erforderliche Daten",
+    [I18nKeys.Error.InvalidPayload]:
+      "Payload-Objekt ist ungültig oder fehlerhaft",
+    [I18nKeys.Error.InvalidServerResponse]:
+      "Server-Antwort fehlt erforderliche Daten",
     [I18nKeys.Error.CryptoContextDisposed]:
       "Crypto-Kontext wurde entsorgt und kann nicht wiederverwendet werden",
   },
@@ -884,11 +896,4 @@ export function initI18n() {
 
 // Note: No exports needed for browser usage - i18n is attached to window.i18n
 // Exports below are for testing purposes only and will be removed in compiled JS
-export {
-  I18n,
-  I18nKeys,
-  translations,
-  type LanguageCode,
-  type TranslationKey,
-  type Translations,
-};
+export { I18n, I18nKeys, translations, type TranslationKey, type Translations };
