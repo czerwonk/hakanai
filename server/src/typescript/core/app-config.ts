@@ -29,12 +29,14 @@ async function initializeOptionalFeature(
   enabled: boolean,
 ): Promise<void> {
   const element = document.getElementById(elementId);
-  if (element) {
-    if (enabled) {
-      showElement(element);
-    } else {
-      hideElement(element);
-    }
+  if (!element) {
+    return;
+  }
+
+  if (enabled) {
+    showElement(element);
+  } else {
+    hideElement(element);
   }
 }
 

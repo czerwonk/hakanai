@@ -12,7 +12,6 @@ declare global {
   }
 }
 
-// Theme management
 function isValidTheme(theme: unknown): theme is Theme {
   return theme === "light" || theme === "dark";
 }
@@ -83,9 +82,6 @@ function getThemeToggleLabel(isDark: boolean): string {
     : window.i18n.t(I18nKeys.Aria.SwitchToDark);
 }
 
-/**
- * Update theme toggle button appearance and accessibility
- */
 function updateThemeToggleButton(): void {
   const button = getThemeToggleButton();
   if (!button) return;

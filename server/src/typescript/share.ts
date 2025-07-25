@@ -8,7 +8,7 @@ import { initI18n, I18nKeys } from "./core/i18n";
 import { formatFileSize, formatTTL, sanitizeFileName } from "./core/formatters";
 import { hideElement, showElement } from "./core/dom-utils";
 import { displaySuccessResult } from "./components/create-result";
-import { ShareData, ShareDataError } from "./core/types";
+import { ShareData, ShareDataError } from "./core/share-data";
 import { initFeatures } from "./core/app-config";
 
 let sharePayload: ShareData | null = null;

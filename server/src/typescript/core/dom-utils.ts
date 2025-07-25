@@ -21,9 +21,11 @@ export function createButton(
   button.type = "button";
   button.textContent = text;
   button.setAttribute("aria-label", ariaLabel);
+
   if (clickHandler) {
     button.addEventListener("click", clickHandler);
   }
+
   return button;
 }
 
@@ -43,6 +45,7 @@ export function secureInputClear(input: HTMLInputElement): void {
   }
 
   const length = input.value.length;
+
   // Multiple overwrite passes
   for (let i = 0; i < 3; i++) {
     input.value = Array(length)
@@ -50,6 +53,7 @@ export function secureInputClear(input: HTMLInputElement): void {
       .map(() => String.fromCharCode(Math.floor(Math.random() * 256)))
       .join("");
   }
+
   input.value = "";
 }
 
@@ -72,6 +76,7 @@ function createScreenReaderAnnouncement(message: string): HTMLDivElement {
   announcement.setAttribute("aria-live", "polite");
   announcement.className = "sr-only";
   announcement.textContent = message;
+
   return announcement;
 }
 
