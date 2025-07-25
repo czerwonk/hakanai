@@ -1,8 +1,202 @@
-type TranslationKey = string;
+const I18nKeys = {
+  Page: {
+    CreateTitle: "page.create.title",
+    GetTitle: "page.get.title",
+    HomepageTitle: "page.homepage.title",
+    ShareTitle: "page.share.title",
+    PrivacyTitle: "page.privacy.title",
+  },
+
+  Header: {
+    Create: "header.create",
+    Get: "header.get",
+    Homepage: "header.homepage",
+    Share: "header.share",
+  },
+
+  Label: {
+    Secret: "label.secret",
+    SecretType: "label.secretType",
+    Text: "label.text",
+    File: "label.file",
+    FileSelect: "label.fileSelect",
+    Token: "label.token",
+    Expires: "label.expires",
+    Url: "label.url",
+    Key: "label.key",
+    SeparateKey: "label.separateKey",
+    SaveToken: "label.saveToken",
+    Filename: "label.filename",
+    Size: "label.size",
+    ExpiresIn: "label.expiresIn",
+    ContentPreview: "label.contentPreview",
+    QrCode: "label.qrCode",
+  },
+
+  Placeholder: {
+    Secret: "placeholder.secret",
+    Token: "placeholder.token",
+  },
+
+  Helper: {
+    Url: "helper.url",
+    Secret: "helper.secret",
+    FileSelect: "helper.fileSelect",
+    Token: "helper.token",
+    Key: "helper.key",
+    SeparateKey: "helper.separateKey",
+    SaveToken: "helper.saveToken",
+    Expires: "helper.expires",
+  },
+
+  Time: {
+    FiveMin: "time.5min",
+    ThirtyMin: "time.30min",
+    OneHour: "time.1hour",
+    TwoHours: "time.2hours",
+    TwelveHours: "time.12hours",
+    TwentyFourHours: "time.24hours",
+    SevenDays: "time.7days",
+  },
+
+  Button: {
+    Create: "button.create",
+    Retrieve: "button.retrieve",
+    Copy: "button.copy",
+    Copied: "button.copied",
+    CopySecret: "button.copySecret",
+    Download: "button.download",
+    ChooseFile: "button.chooseFile",
+    ReadClipboard: "button.readClipboard",
+  },
+
+  Msg: {
+    Creating: "msg.creating",
+    Retrieving: "msg.retrieving",
+    JsRequired: "msg.jsRequired",
+    JsRequiredDetail: "msg.jsRequiredDetail",
+    EmptySecret: "msg.emptySecret",
+    EmptyFile: "msg.emptyFile",
+    CreateFailed: "msg.createFailed",
+    FileReadError: "msg.fileReadError",
+    InvalidFilename: "msg.invalidFilename",
+    EmptyUrl: "msg.emptyUrl",
+    InvalidUrl: "msg.invalidUrl",
+    MissingKey: "msg.missingKey",
+    RetrieveFailed: "msg.retrieveFailed",
+    SuccessTitle: "msg.successTitle",
+    ErrorTitle: "msg.errorTitle",
+    CopyFailed: "msg.copyFailed",
+    CreateNote: "msg.createNote",
+    CreateNoteText: "msg.createNoteText",
+    ShareInstructions: "msg.shareInstructions",
+    ClipboardError: "msg.clipboardError",
+    ClipboardRequired: "msg.clipboardRequired",
+    ClipboardRequiredDetail: "msg.clipboardRequiredDetail",
+    ClipboardPermissionDenied: "msg.clipboardPermissionDenied",
+    ClipboardInvalidJson: "msg.clipboardInvalidJson",
+    ClipboardEmpty: "msg.clipboardEmpty",
+    ReadingClipboard: "msg.readingClipboard",
+    CreatingSecret: "msg.creatingSecret",
+    ShareSuccess: "msg.shareSuccess",
+    ExpectedJsonFormat: "msg.expectedJsonFormat",
+    RetrieveNote: "msg.retrieveNote",
+    RetrieveNoteText: "msg.retrieveNoteText",
+    Downloaded: "msg.downloaded",
+    BinaryDetected: "msg.binaryDetected",
+  },
+
+  Aria: {
+    CopySecret: "aria.copySecret",
+    DownloadSecret: "aria.downloadSecret",
+    SecretInput: "aria.secretInput",
+    FileInput: "aria.fileInput",
+    TokenInput: "aria.tokenInput",
+    ExpiresSelect: "aria.expiresSelect",
+    UrlInput: "aria.urlInput",
+    KeyInput: "aria.keyInput",
+    ThemeToggle: "aria.themeToggle",
+    SwitchToLight: "aria.switchToLight",
+    SwitchToDark: "aria.switchToDark",
+    LogoHome: "aria.logoHome",
+  },
+
+  Meta: {
+    Create: "meta.create",
+    Get: "meta.get",
+    Homepage: "meta.homepage",
+  },
+
+  Homepage: {
+    Tagline: "homepage.tagline",
+    CreateDescription: "homepage.create.description",
+    CreateButton: "homepage.create.button",
+    RetrieveDescription: "homepage.retrieve.description",
+    RetrieveButton: "homepage.retrieve.button",
+    Feature1Title: "homepage.how.feature1.title",
+    Feature1Description: "homepage.how.feature1.description",
+    Feature2Title: "homepage.how.feature2.title",
+    Feature2Description: "homepage.how.feature2.description",
+    Feature3Title: "homepage.how.feature3.title",
+    Feature3Description: "homepage.how.feature3.description",
+    Feature4Title: "homepage.how.feature4.title",
+    Feature4Description: "homepage.how.feature4.description",
+    Feature5Title: "homepage.how.feature5.title",
+    Feature5Description: "homepage.how.feature5.description",
+    DocsLink: "homepage.docs.link",
+  },
+
+  Footer: {
+    Privacy: "footer.privacy",
+  },
+
+  Error: {
+    SendFailed: "error.SEND_FAILED",
+    AuthenticationRequired: "error.AUTHENTICATION_REQUIRED",
+    InvalidToken: "error.INVALID_TOKEN",
+    SecretNotFound: "error.SECRET_NOT_FOUND",
+    SecretAlreadyAccessed: "error.SECRET_ALREADY_ACCESSED",
+    RetrieveFailed: "error.RETRIEVE_FAILED",
+    MissingDecryptionKey: "error.MISSING_DECRYPTION_KEY",
+    PayloadTooLarge: "error.PAYLOAD_TOO_LARGE",
+    ExpectedUint8Array: "error.EXPECTED_UINT8_ARRAY",
+    ExpectedString: "error.EXPECTED_STRING",
+    InvalidInputFormat: "error.INVALID_INPUT_FORMAT",
+    MissingKey: "error.MISSING_KEY",
+    InvalidKey: "error.INVALID_KEY",
+    CryptoApiUnavailable: "error.CRYPTO_API_UNAVAILABLE",
+    InvalidTtl: "error.INVALID_TTL",
+    MissingAuthToken: "error.MISSING_AUTH_TOKEN",
+    InvalidAuthToken: "error.INVALID_AUTH_TOKEN",
+    Base64Error: "error.BASE64_ERROR",
+    InvalidEncryptedData: "error.INVALID_ENCRYPTED_DATA",
+    DecryptionFailed: "error.DECRYPTION_FAILED",
+    InvalidUrlFormat: "error.INVALID_URL_FORMAT",
+    MissingSecretId: "error.MISSING_SECRET_ID",
+    InvalidSecretId: "error.INVALID_SECRET_ID",
+    InvalidPayload: "error.INVALID_PAYLOAD",
+    InvalidServerResponse: "error.INVALID_SERVER_RESPONSE",
+    CryptoContextDisposed: "error.CRYPTO_CONTEXT_DISPOSED",
+  },
+
+  Validation: {
+    MissingData: "validation.MISSING_DATA",
+    InvalidFilename: "validation.INVALID_FILENAME",
+    InvalidToken: "validation.INVALID_TOKEN",
+    InvalidTtl: "validation.INVALID_TTL",
+    EmptyJson: "validation.EMPTY_JSON",
+    InvalidJsonFormat: "validation.INVALID_JSON_FORMAT",
+  },
+} as const;
+
+// Create a union type of all possible translation keys
+type I18nKeyValues =
+  (typeof I18nKeys)[keyof typeof I18nKeys][keyof (typeof I18nKeys)[keyof typeof I18nKeys]];
+type TranslationKey = I18nKeyValues | string; // Allow string fallback for HTML data attributes
 type LanguageCode = "en" | "de";
 
 interface TranslationDictionary {
-  [key: TranslationKey]: string;
+  [key: string]: string;
 }
 
 type Translations = {
@@ -11,442 +205,422 @@ type Translations = {
 
 const translations: Translations = {
   en: {
-    // Page titles
-    "page.create.title": "Hakanai - Create Secret",
-    "page.get.title": "Hakanai - Retrieve Secret",
-    "page.homepage.title": "Hakanai - One-Time Secret Sharing",
-    "page.share.title": "Hakanai - Share Data",
+    [I18nKeys.Page.CreateTitle]: "Hakanai - Create Secret",
+    [I18nKeys.Page.GetTitle]: "Hakanai - Retrieve Secret",
+    [I18nKeys.Page.HomepageTitle]: "Hakanai - One-Time Secret Sharing",
+    [I18nKeys.Page.ShareTitle]: "Hakanai - Share Data",
 
-    // Headers
-    "header.create": "Create One-Time Secret",
-    "header.get": "One-Time Secret",
-    "header.homepage": "One-Time Secret Sharing",
-    "header.share": "Share Data",
+    [I18nKeys.Header.Create]: "Create One-Time Secret",
+    [I18nKeys.Header.Get]: "One-Time Secret",
+    [I18nKeys.Header.Homepage]: "One-Time Secret Sharing",
+    [I18nKeys.Header.Share]: "Share Data",
 
-    // Labels
-    "label.secret": "Secret message:",
-    "label.secretType": "Secret Type:",
-    "label.text": "📝 Text Message",
-    "label.file": "🗂️ File",
-    "label.fileSelect": "Select file to share:",
-    "label.token": "Token:",
-    "label.expires": "Expires after:",
-    "label.url": "Secret URL:",
-    "label.key": "Decryption Key:",
-    "label.separateKey": "Show Key separately",
-    "label.saveToken": "Remember authentication token",
-    "label.filename": "Filename:",
-    "label.size": "Size:",
-    "label.expiresIn": "Expires in:",
-    "label.contentPreview": "Content Preview",
-    "label.qrCode": "QR Code:",
+    [I18nKeys.Label.Secret]: "Secret message:",
+    [I18nKeys.Label.SecretType]: "Secret Type:",
+    [I18nKeys.Label.Text]: "📝 Text Message",
+    [I18nKeys.Label.File]: "🗂️ File",
+    [I18nKeys.Label.FileSelect]: "Select file to share:",
+    [I18nKeys.Label.Token]: "Token:",
+    [I18nKeys.Label.Expires]: "Expires after:",
+    [I18nKeys.Label.Url]: "Secret URL:",
+    [I18nKeys.Label.Key]: "Decryption Key:",
+    [I18nKeys.Label.SeparateKey]: "Show Key separately",
+    [I18nKeys.Label.SaveToken]: "Remember authentication token",
+    [I18nKeys.Label.Filename]: "Filename:",
+    [I18nKeys.Label.Size]: "Size:",
+    [I18nKeys.Label.ExpiresIn]: "Expires in:",
+    [I18nKeys.Label.ContentPreview]: "Content Preview",
+    [I18nKeys.Label.QrCode]: "QR Code:",
 
-    // Placeholders
-    "placeholder.secret": "Enter your secret message here...",
-    "placeholder.token": "Enter authentication token here...",
+    [I18nKeys.Placeholder.Secret]: "Enter your secret message here...",
+    [I18nKeys.Placeholder.Token]: "Enter authentication token here...",
 
-    // Helper texts
-    "helper.url": "The decryption key after # is never sent to the server",
-    "helper.secret":
+    [I18nKeys.Helper.Url]:
+      "The decryption key after # is never sent to the server",
+    [I18nKeys.Helper.Secret]:
       "Your message will be encrypted before leaving your browser",
-    "helper.fileSelect": "File will be encrypted before upload.",
-    "helper.token": "Leave empty if no authentication is required",
-    "helper.key": "Base64-encoded decryption key (shared separately)",
-    "helper.separateKey":
+    [I18nKeys.Helper.FileSelect]: "File will be encrypted before upload.",
+    [I18nKeys.Helper.Token]: "Leave empty if no authentication is required",
+    [I18nKeys.Helper.Key]: "Base64-encoded decryption key (shared separately)",
+    [I18nKeys.Helper.SeparateKey]:
       "When enabled, the URL and decryption key are displayed separately, allowing you to share them through different channels for enhanced security.",
-    "helper.saveToken":
+    [I18nKeys.Helper.SaveToken]:
       "Token will be stored securely in your browser for the current session only. You will need to re-enter it when you start a new browser session.",
-    "helper.expires": "Secret will self-destruct after this time or first view",
+    [I18nKeys.Helper.Expires]:
+      "Secret will self-destruct after this time or first view",
 
-    // Time options
-    "time.5min": "5 minutes",
-    "time.30min": "30 minutes",
-    "time.1hour": "1 hour",
-    "time.2hours": "2 hours",
-    "time.12hours": "12 hours",
-    "time.24hours": "24 hours",
-    "time.7days": "7 days",
+    [I18nKeys.Time.FiveMin]: "5 minutes",
+    [I18nKeys.Time.ThirtyMin]: "30 minutes",
+    [I18nKeys.Time.OneHour]: "1 hour",
+    [I18nKeys.Time.TwoHours]: "2 hours",
+    [I18nKeys.Time.TwelveHours]: "12 hours",
+    [I18nKeys.Time.TwentyFourHours]: "24 hours",
+    [I18nKeys.Time.SevenDays]: "7 days",
 
-    // Buttons
-    "button.create": "🔐 Create Secret",
-    "button.retrieve": "🔓 Retrieve Secret",
-    "button.copy": "📋 Copy",
-    "button.copied": "Copied!",
-    "button.copySecret": "📋 Copy",
-    "button.download": "💾 Download",
-    "button.chooseFile": "📁 Choose File",
-    "button.readClipboard": "📄 Read Clipboard",
+    [I18nKeys.Button.Create]: "🔐 Create Secret",
+    [I18nKeys.Button.Retrieve]: "🔓 Retrieve Secret",
+    [I18nKeys.Button.Copy]: "📋 Copy",
+    [I18nKeys.Button.Copied]: "Copied!",
+    [I18nKeys.Button.CopySecret]: "📋 Copy",
+    [I18nKeys.Button.Download]: "💾 Download",
+    [I18nKeys.Button.ChooseFile]: "📁 Choose File",
+    [I18nKeys.Button.ReadClipboard]: "📄 Read Clipboard",
 
-    // Messages
-    "msg.creating": "Creating secret...",
-    "msg.retrieving": "Retrieving secret...",
-    "msg.jsRequired": "JavaScript Required",
-    "msg.jsRequiredDetail":
+    [I18nKeys.Msg.Creating]: "Creating secret...",
+    [I18nKeys.Msg.Retrieving]: "Retrieving secret...",
+    [I18nKeys.Msg.JsRequired]: "JavaScript Required",
+    [I18nKeys.Msg.JsRequiredDetail]:
       "This application requires JavaScript to encrypt secrets securely in your browser.",
-    "msg.emptySecret": "Please enter a secret to share",
-    "msg.emptyFile": "Please select a file to share",
-    "msg.createFailed": "Failed to create secret",
-    "msg.fileReadError": "Error reading file",
-    "msg.invalidFilename":
+    [I18nKeys.Msg.EmptySecret]: "Please enter a secret to share",
+    [I18nKeys.Msg.EmptyFile]: "Please select a file to share",
+    [I18nKeys.Msg.CreateFailed]: "Failed to create secret",
+    [I18nKeys.Msg.FileReadError]: "Error reading file",
+    [I18nKeys.Msg.InvalidFilename]:
       "Invalid filename. Please select a file with a valid name.",
-    "msg.emptyUrl": "Please enter a valid secret URL",
-    "msg.invalidUrl":
+    [I18nKeys.Msg.EmptyUrl]: "Please enter a valid secret URL",
+    [I18nKeys.Msg.InvalidUrl]:
       "Invalid URL format. Please include the full URL with the secret key after #",
-    "msg.missingKey": "Please enter the decryption key",
-    "msg.retrieveFailed": "Failed to retrieve secret",
-    "msg.successTitle": "Success",
-    "msg.errorTitle": "Error",
-    "msg.copyFailed": "Failed to copy. Please select and copy manually.",
-    "msg.createNote":
+    [I18nKeys.Msg.MissingKey]: "Please enter the decryption key",
+    [I18nKeys.Msg.RetrieveFailed]: "Failed to retrieve secret",
+    [I18nKeys.Msg.SuccessTitle]: "Success",
+    [I18nKeys.Msg.ErrorTitle]: "Error",
+    [I18nKeys.Msg.CopyFailed]:
+      "Failed to copy. Please select and copy manually.",
+    [I18nKeys.Msg.CreateNote]:
       "Note: Share this URL carefully. The secret will be deleted after the first access or when it expires.",
-    "msg.createNoteText":
+    [I18nKeys.Msg.CreateNoteText]:
       "Share this URL carefully. The secret will be deleted after the first access or when it expires.",
-    "msg.shareInstructions":
+    [I18nKeys.Msg.ShareInstructions]:
       "Share this URL with the intended recipient. The secret is encrypted and can only be accessed once.",
-    "msg.clipboardError": "Clipboard Error",
-    "msg.clipboardRequired": "Clipboard Access Required",
-    "msg.clipboardRequiredDetail":
+    [I18nKeys.Msg.ClipboardError]: "Clipboard Error",
+    [I18nKeys.Msg.ClipboardRequired]: "Clipboard Access Required",
+    [I18nKeys.Msg.ClipboardRequiredDetail]:
       "Click the button below to read the shared content from your clipboard.",
-    "msg.clipboardPermissionDenied":
+    [I18nKeys.Msg.ClipboardPermissionDenied]:
       "Clipboard access denied. Please grant permission and try again.",
-    "msg.clipboardInvalidJson": "Clipboard does not contain valid JSON",
-    "msg.clipboardEmpty": "Clipboard is empty",
-    "msg.readingClipboard": "Reading clipboard...",
-    "msg.creatingSecret": "Creating secret...",
-    "msg.shareSuccess":
+    [I18nKeys.Msg.ClipboardInvalidJson]:
+      "Clipboard does not contain valid JSON",
+    [I18nKeys.Msg.ClipboardEmpty]: "Clipboard is empty",
+    [I18nKeys.Msg.ReadingClipboard]: "Reading clipboard...",
+    [I18nKeys.Msg.CreatingSecret]: "Creating secret...",
+    [I18nKeys.Msg.ShareSuccess]:
       "Your secret has been created and the URL copied to clipboard:",
-    "msg.expectedJsonFormat": "Expected JSON format:",
-    "msg.retrieveNote":
+    [I18nKeys.Msg.ExpectedJsonFormat]: "Expected JSON format:",
+    [I18nKeys.Msg.RetrieveNote]:
       "Note: This secret has been deleted from the server and cannot be accessed again.",
-    "msg.retrieveNoteText":
+    [I18nKeys.Msg.RetrieveNoteText]:
       "This secret has been deleted from the server and cannot be accessed again.",
-    "msg.downloaded": "Secret downloaded as text file",
-    "msg.binaryDetected": "Use download button to save the file.",
+    [I18nKeys.Msg.Downloaded]: "Secret downloaded as text file",
+    [I18nKeys.Msg.BinaryDetected]: "Use download button to save the file.",
 
-    // Aria labels
-    "aria.copySecret": "Copy secret to clipboard",
-    "aria.downloadSecret": "Download secret as file",
-    "aria.secretInput": "Enter the secret message you want to share securely",
-    "aria.fileInput":
+    [I18nKeys.Aria.CopySecret]: "Copy secret to clipboard",
+    [I18nKeys.Aria.DownloadSecret]: "Download secret as file",
+    [I18nKeys.Aria.SecretInput]:
+      "Enter the secret message you want to share securely",
+    [I18nKeys.Aria.FileInput]:
       "Select a file to share securely. The file will be encrypted before being sent.",
-    "aria.tokenInput":
+    [I18nKeys.Aria.TokenInput]:
       "Enter the authentication token if required by the server",
-    "aria.expiresSelect":
+    [I18nKeys.Aria.ExpiresSelect]:
       "Select how long the secret should be available before it expires",
-    "aria.urlInput":
+    [I18nKeys.Aria.UrlInput]:
       "Enter the full URL including the secret key after the hash",
-    "aria.keyInput": "Enter the base64-encoded decryption key",
-    "aria.themeToggle": "Switch between light and dark mode",
-    "aria.switchToLight": "Switch to light mode",
-    "aria.switchToDark": "Switch to dark mode",
-    "aria.logoHome": "Go to home page",
+    [I18nKeys.Aria.KeyInput]: "Enter the base64-encoded decryption key",
+    [I18nKeys.Aria.ThemeToggle]: "Switch between light and dark mode",
+    [I18nKeys.Aria.SwitchToLight]: "Switch to light mode",
+    [I18nKeys.Aria.SwitchToDark]: "Switch to dark mode",
+    [I18nKeys.Aria.LogoHome]: "Go to home page",
 
-    // Meta descriptions
-    "meta.create":
+    [I18nKeys.Meta.Create]:
       "Create and share one-time secrets securely with Hakanai - zero-knowledge secret sharing",
-    "meta.get":
+    [I18nKeys.Meta.Get]:
       "Retrieve your one-time secret securely with Hakanai - zero-knowledge secret sharing",
-    "meta.homepage": "Hakanai - Zero-knowledge one-time secret sharing service",
+    [I18nKeys.Meta.Homepage]:
+      "Hakanai - Zero-knowledge one-time secret sharing service",
 
-    // Homepage content
-    "homepage.tagline": "Share secrets securely with zero-knowledge encryption",
-    "homepage.create.description":
+    [I18nKeys.Homepage.Tagline]:
+      "Share secrets securely with zero-knowledge encryption",
+    [I18nKeys.Homepage.CreateDescription]:
       "Share text messages or files securely. All encryption happens in your browser.",
-    "homepage.create.button": "✨ Create Secret",
-    "homepage.retrieve.description":
+    [I18nKeys.Homepage.CreateButton]: "✨ Create Secret",
+    [I18nKeys.Homepage.RetrieveDescription]:
       "Have a secret URL? Enter it here to decrypt and view your one-time secret.",
-    "homepage.retrieve.button": "📨 Retrieve Secret",
-    "homepage.how.feature1.title": "Zero-Knowledge",
-    "homepage.how.feature1.description":
+    [I18nKeys.Homepage.RetrieveButton]: "📨 Retrieve Secret",
+    [I18nKeys.Homepage.Feature1Title]: "Zero-Knowledge",
+    [I18nKeys.Homepage.Feature1Description]:
       "Your secrets are encrypted in your browser before being sent",
-    "homepage.how.feature2.title": "One-Time",
-    "homepage.how.feature2.description":
+    [I18nKeys.Homepage.Feature2Title]: "One-Time",
+    [I18nKeys.Homepage.Feature2Description]:
       "Secrets are destroyed after being viewed once",
-    "homepage.how.feature3.title": "Secure",
-    "homepage.how.feature3.description":
+    [I18nKeys.Homepage.Feature3Title]: "Secure",
+    [I18nKeys.Homepage.Feature3Description]:
       "AES-256-GCM encryption with secure key generation",
-    "homepage.how.feature4.title": "Private",
-    "homepage.how.feature4.description":
+    [I18nKeys.Homepage.Feature4Title]: "Private",
+    [I18nKeys.Homepage.Feature4Description]:
       "The server never sees your unencrypted data",
-    "homepage.how.feature5.title": "Open Source",
-    "homepage.how.feature5.description":
+    [I18nKeys.Homepage.Feature5Title]: "Open Source",
+    [I18nKeys.Homepage.Feature5Description]:
       "Fully open source and auditable on GitHub",
-    "homepage.docs.link": "View API Documentation",
+    [I18nKeys.Homepage.DocsLink]: "View API Documentation",
 
-    // Footer links
-    "footer.privacy": "Privacy Policy",
+    [I18nKeys.Footer.Privacy]: "Privacy Policy",
 
-    // Page privacy
-    "page.privacy.title": "Privacy Policy",
+    [I18nKeys.Page.PrivacyTitle]: "Privacy Policy",
 
-    // Error codes
-    "error.SEND_FAILED": "Failed to send secret",
-    "error.AUTHENTICATION_REQUIRED":
+    [I18nKeys.Error.SendFailed]: "Failed to send secret",
+    [I18nKeys.Error.AuthenticationRequired]:
       "Authentication required - Please enter your authentication token",
-    "error.INVALID_TOKEN":
+    [I18nKeys.Error.InvalidToken]:
       "Invalid authentication token - Please check your token and try again",
-    "error.SECRET_NOT_FOUND": "Secret not found or has expired",
-    "error.SECRET_ALREADY_ACCESSED":
+    [I18nKeys.Error.SecretNotFound]: "Secret not found or has expired",
+    [I18nKeys.Error.SecretAlreadyAccessed]:
       "Secret has been accessed and is no longer available",
-    "error.RETRIEVE_FAILED": "Failed to retrieve secret",
-    "error.MISSING_DECRYPTION_KEY": "No decryption key found in URL",
-    "error.PAYLOAD_TOO_LARGE": "Secret size exeeds the limit",
+    [I18nKeys.Error.RetrieveFailed]: "Failed to retrieve secret",
+    [I18nKeys.Error.MissingDecryptionKey]: "No decryption key found in URL",
+    [I18nKeys.Error.PayloadTooLarge]: "Secret size exeeds the limit",
 
-    // Validation error messages
-    "validation.MISSING_DATA": "Missing or invalid data field",
-    "validation.INVALID_FILENAME": "Invalid filename field - must be text",
-    "validation.INVALID_TOKEN": "Invalid token field - must be text",
-    "validation.INVALID_TTL":
+    [I18nKeys.Validation.MissingData]: "Missing or invalid data field",
+    [I18nKeys.Validation.InvalidFilename]:
+      "Invalid filename field - must be text",
+    [I18nKeys.Validation.InvalidToken]: "Invalid token field - must be text",
+    [I18nKeys.Validation.InvalidTtl]:
       "Invalid expiration time - must be a positive number",
-    "validation.EMPTY_JSON": "Clipboard content is empty",
-    "validation.INVALID_JSON_FORMAT":
+    [I18nKeys.Validation.EmptyJson]: "Clipboard content is empty",
+    [I18nKeys.Validation.InvalidJsonFormat]:
       "Invalid clipboard format - not valid JSON",
 
-    // Client validation error messages - specific for better translations
-    "error.EXPECTED_UINT8_ARRAY": "Input must be a Uint8Array (binary data)",
-    "error.EXPECTED_STRING": "Input must be a string (text data)",
-    "error.INVALID_INPUT_FORMAT": "Input contains invalid characters or format",
-    "error.MISSING_KEY": "Secret key is required",
-    "error.INVALID_KEY": "Secret key has invalid length or format",
-    "error.CRYPTO_API_UNAVAILABLE":
+    [I18nKeys.Error.ExpectedUint8Array]:
+      "Input must be a Uint8Array (binary data)",
+    [I18nKeys.Error.ExpectedString]: "Input must be a string (text data)",
+    [I18nKeys.Error.InvalidInputFormat]:
+      "Input contains invalid characters or format",
+    [I18nKeys.Error.MissingKey]: "Secret key is required",
+    [I18nKeys.Error.InvalidKey]: "Secret key has invalid length or format",
+    [I18nKeys.Error.CryptoApiUnavailable]:
       "Web Crypto API is not available in this browser",
-    "error.INVALID_TTL": "TTL value must be a positive integer",
-    "error.MISSING_AUTH_TOKEN": "Authentication token is required",
-    "error.INVALID_AUTH_TOKEN": "Authentication token format is invalid",
-    "error.BASE64_ERROR": "Base64 encoding/decoding failed",
-    "error.INVALID_ENCRYPTED_DATA": "Encrypted data is corrupted or too short",
-    "error.DECRYPTION_FAILED":
+    [I18nKeys.Error.InvalidTtl]: "TTL value must be a positive integer",
+    [I18nKeys.Error.MissingAuthToken]: "Authentication token is required",
+    [I18nKeys.Error.InvalidAuthToken]: "Authentication token format is invalid",
+    [I18nKeys.Error.Base64Error]: "Base64 encoding/decoding failed",
+    [I18nKeys.Error.InvalidEncryptedData]:
+      "Encrypted data is corrupted or too short",
+    [I18nKeys.Error.DecryptionFailed]:
       "Decryption failed: invalid key or corrupted data",
-    "error.INVALID_URL_FORMAT": "Invalid URL format",
-    "error.MISSING_SECRET_ID": "URL is missing secret ID",
-    "error.INVALID_SECRET_ID": "Secret ID format is invalid",
-    "error.INVALID_PAYLOAD": "Payload object is invalid or malformed",
-    "error.INVALID_SERVER_RESPONSE": "Server response is missing required data",
-    "error.CRYPTO_CONTEXT_DISPOSED":
+    [I18nKeys.Error.InvalidUrlFormat]: "Invalid URL format",
+    [I18nKeys.Error.MissingSecretId]: "URL is missing secret ID",
+    [I18nKeys.Error.InvalidSecretId]: "Secret ID format is invalid",
+    [I18nKeys.Error.InvalidPayload]: "Payload object is invalid or malformed",
+    [I18nKeys.Error.InvalidServerResponse]:
+      "Server response is missing required data",
+    [I18nKeys.Error.CryptoContextDisposed]:
       "Crypto context has been disposed and cannot be reused",
   },
   de: {
-    // Page titles
-    "page.create.title": "Hakanai - Secret erstellen",
-    "page.get.title": "Hakanai - Secret abrufen",
-    "page.homepage.title": "Hakanai - Einmal-Secret-Sharing",
-    "page.share.title": "Hakanai - Daten teilen",
+    [I18nKeys.Page.CreateTitle]: "Hakanai - Secret erstellen",
+    [I18nKeys.Page.GetTitle]: "Hakanai - Secret abrufen",
+    [I18nKeys.Page.HomepageTitle]: "Hakanai - Einmal-Secret-Sharing",
+    [I18nKeys.Page.ShareTitle]: "Hakanai - Daten teilen",
 
-    // Headers
-    "header.create": "Einmal-Secret erstellen",
-    "header.get": "Einmal-Secret",
-    "header.homepage": "Einmal-Secret-Sharing",
-    "header.share": "Daten teilen",
+    [I18nKeys.Header.Create]: "Einmal-Secret erstellen",
+    [I18nKeys.Header.Get]: "Einmal-Secret",
+    [I18nKeys.Header.Homepage]: "Einmal-Secret-Sharing",
+    [I18nKeys.Header.Share]: "Daten teilen",
 
-    // Labels
-    "label.secret": "Text:",
-    "label.secretType": "Secret-Typ:",
-    "label.text": "📝 Text-Nachricht",
-    "label.file": "🗂️ Datei",
-    "label.fileSelect": "Datei zum Teilen auswählen:",
-    "label.token": "Token:",
-    "label.expires": "Läuft ab nach:",
-    "label.url": "Secret-URL:",
-    "label.key": "Geheimer Schlüssel:",
-    "label.separateKey": "Schlüssel separat anzeigen",
-    "label.saveToken": "Token merken",
-    "label.filename": "Dateiname:",
-    "label.size": "Größe:",
-    "label.expiresIn": "Läuft ab in:",
-    "label.contentPreview": "Inhaltsvorschau",
-    "label.qrCode": "QR-Code:",
+    [I18nKeys.Label.Secret]: "Text:",
+    [I18nKeys.Label.SecretType]: "Secret-Typ:",
+    [I18nKeys.Label.Text]: "📝 Text-Nachricht",
+    [I18nKeys.Label.File]: "🗂️ Datei",
+    [I18nKeys.Label.FileSelect]: "Datei zum Teilen auswählen:",
+    [I18nKeys.Label.Token]: "Token:",
+    [I18nKeys.Label.Expires]: "Läuft ab nach:",
+    [I18nKeys.Label.Url]: "Secret-URL:",
+    [I18nKeys.Label.Key]: "Geheimer Schlüssel:",
+    [I18nKeys.Label.SeparateKey]: "Schlüssel separat anzeigen",
+    [I18nKeys.Label.SaveToken]: "Token merken",
+    [I18nKeys.Label.Filename]: "Dateiname:",
+    [I18nKeys.Label.Size]: "Größe:",
+    [I18nKeys.Label.ExpiresIn]: "Läuft ab in:",
+    [I18nKeys.Label.ContentPreview]: "Inhaltsvorschau",
+    [I18nKeys.Label.QrCode]: "QR-Code:",
 
-    // Placeholders
-    "placeholder.secret": "Hier wird gen geheime Text eingegeben...",
-    "placeholder.token": "Authentifizierungs-Token eingeben",
+    [I18nKeys.Placeholder.Secret]: "Hier wird gen geheime Text eingegeben...",
+    [I18nKeys.Placeholder.Token]: "Authentifizierungs-Token eingeben",
 
-    // Helper texts
-    "helper.url":
+    [I18nKeys.Helper.Url]:
       "Der geheime Schlüssel nach dem # wird niemals an den Server gesendet",
-    "helper.secret":
+    [I18nKeys.Helper.Secret]:
       "Die Nachricht wird verschlüsselt, bevor sie den Browser verlässt",
-    "helper.fileSelect": "Die Datei wird vor dem Upload verschlüsselt.",
-    "helper.token":
+    [I18nKeys.Helper.FileSelect]: "Die Datei wird vor dem Upload verschlüsselt.",
+    [I18nKeys.Helper.Token]:
       "Kann leer gelassen werden, wenn keine Authentifizierung erforderlich ist",
-    "helper.key": "Base64-kodierter geheimer Schlüssel (separat geteilt)",
-    "helper.separateKey":
+    [I18nKeys.Helper.Key]: "Base64-kodierter geheimer Schlüssel (separat geteilt)",
+    [I18nKeys.Helper.SeparateKey]:
       "Wenn aktiviert, werden URL und geheimer Schlüssel separat angezeigt, so dass sie über verschiedene Kanäle für erweiterte Sicherheit geteilt werden können.",
-    "helper.saveToken":
+    [I18nKeys.Helper.SaveToken]:
       "Token wird sicher für die Session im Browser gespeichert. Nach dem Schließen des Tabs muss dieses neu eigegeben werden.",
-    "helper.expires":
+    [I18nKeys.Helper.Expires]:
       "Das Secret wird nach dieser Zeit oder beim ersten Zugriff selbst zerstört",
 
-    // Time options
-    "time.5min": "5 Minuten",
-    "time.30min": "30 Minuten",
-    "time.1hour": "1 Stunde",
-    "time.2hours": "2 Stunden",
-    "time.12hours": "12 Stunden",
-    "time.24hours": "24 Stunden",
-    "time.7days": "7 Tage",
+    [I18nKeys.Time.FiveMin]: "5 Minuten",
+    [I18nKeys.Time.ThirtyMin]: "30 Minuten",
+    [I18nKeys.Time.OneHour]: "1 Stunde",
+    [I18nKeys.Time.TwoHours]: "2 Stunden",
+    [I18nKeys.Time.TwelveHours]: "12 Stunden",
+    [I18nKeys.Time.TwentyFourHours]: "24 Stunden",
+    [I18nKeys.Time.SevenDays]: "7 Tage",
 
-    // Buttons
-    "button.create": "🔐 Secret erstellen",
-    "button.retrieve": "🔓 Secret abrufen",
-    "button.copy": "📋 Kopieren",
-    "button.copied": "Kopiert!",
-    "button.copySecret": "📋 Kopieren",
-    "button.download": "💾 Speichern",
-    "button.chooseFile": "📁 Datei auswählen",
-    "button.readClipboard": "📄 Zwischenablage lesen",
+    [I18nKeys.Button.Create]: "🔐 Secret erstellen",
+    [I18nKeys.Button.Retrieve]: "🔓 Secret abrufen",
+    [I18nKeys.Button.Copy]: "📋 Kopieren",
+    [I18nKeys.Button.Copied]: "Kopiert!",
+    [I18nKeys.Button.CopySecret]: "📋 Kopieren",
+    [I18nKeys.Button.Download]: "💾 Speichern",
+    [I18nKeys.Button.ChooseFile]: "📁 Datei auswählen",
+    [I18nKeys.Button.ReadClipboard]: "📄 Zwischenablage lesen",
 
-    // Messages
-    "msg.creating": "Secret wird erstellt...",
-    "msg.retrieving": "Secret wird abgerufen...",
-    "msg.jsRequired": "JavaScript erforderlich",
-    "msg.jsRequiredDetail":
+    [I18nKeys.Msg.Creating]: "Secret wird erstellt...",
+    [I18nKeys.Msg.Retrieving]: "Secret wird abgerufen...",
+    [I18nKeys.Msg.JsRequired]: "JavaScript erforderlich",
+    [I18nKeys.Msg.JsRequiredDetail]:
       "Diese Anwendung benötigt JavaScript, um Secrets sicher im Browser zu verschlüsseln.",
-    "msg.emptySecret": "Bitte den Text für das Secret eingeben",
-    "msg.emptyFile": "Bitte eine Datei zum Teilen auswählen",
-    "msg.createFailed": "Fehler beim Erstellen des Secrets",
-    "msg.fileReadError": "Fehler beim Lesen der Datei",
-    "msg.invalidFilename":
+    [I18nKeys.Msg.EmptySecret]: "Bitte den Text für das Secret eingeben",
+    [I18nKeys.Msg.EmptyFile]: "Bitte eine Datei zum Teilen auswählen",
+    [I18nKeys.Msg.CreateFailed]: "Fehler beim Erstellen des Secrets",
+    [I18nKeys.Msg.FileReadError]: "Fehler beim Lesen der Datei",
+    [I18nKeys.Msg.InvalidFilename]:
       "Ungültiger Dateiname. Bitte eine Datei mit einem gültigen Namen auswählen.",
-    "msg.emptyUrl": "Bitte eine gültige Secret-URL eingeben",
-    "msg.invalidUrl":
+    [I18nKeys.Msg.EmptyUrl]: "Bitte eine gültige Secret-URL eingeben",
+    [I18nKeys.Msg.InvalidUrl]:
       "Ungültiges URL-Format. Bitte vollständige URL einschließlich des Teils nach dem # eingeben",
-    "msg.missingKey": "Bitte den geheimen Schlüssel eingeben",
-    "msg.retrieveFailed": "Fehler beim Abrufen des Secrets",
-    "msg.successTitle": "Erfolg",
-    "msg.errorTitle": "Fehler",
-    "msg.copyFailed":
+    [I18nKeys.Msg.MissingKey]: "Bitte den geheimen Schlüssel eingeben",
+    [I18nKeys.Msg.RetrieveFailed]: "Fehler beim Abrufen des Secrets",
+    [I18nKeys.Msg.SuccessTitle]: "Erfolg",
+    [I18nKeys.Msg.ErrorTitle]: "Fehler",
+    [I18nKeys.Msg.CopyFailed]:
       "Kopieren fehlgeschlagen. Bitte manuell auswählen und kopieren.",
-    "msg.createNote":
+    [I18nKeys.Msg.CreateNote]:
       "Hinweis: Das Secret wird nach dem ersten Zugriff oder bei Ablauf gelöscht.",
-    "msg.createNoteText":
+    [I18nKeys.Msg.CreateNoteText]:
       "Bitte Vorsicht beim Teilen der URL. Das Secret wird nach dem ersten Zugriff oder bei Ablauf gelöscht.",
-    "msg.shareInstructions":
+    [I18nKeys.Msg.ShareInstructions]:
       "Diese URL kann nun mit dem vorgesehenen Empfänger geteilt werden. Das Secret ist verschlüsselt und kann nur einmal abgerufen werden.",
-    "msg.clipboardError": "Zwischenablage-Fehler",
-    "msg.clipboardRequired": "Zwischenablage-Zugriff erforderlich",
-    "msg.clipboardRequiredDetail":
+    [I18nKeys.Msg.ClipboardError]: "Zwischenablage-Fehler",
+    [I18nKeys.Msg.ClipboardRequired]: "Zwischenablage-Zugriff erforderlich",
+    [I18nKeys.Msg.ClipboardRequiredDetail]:
       "Bitte den Button klicken, um den geteilten Inhalt aus der Zwischenablage zu lesen.",
-    "msg.clipboardPermissionDenied":
+    [I18nKeys.Msg.ClipboardPermissionDenied]:
       "Zwischenablage-Zugriff verweigert. Bitte Berechtigung erteilen und erneut versuchen.",
-    "msg.clipboardInvalidJson": "Zwischenablage enthält kein gültiges JSON",
-    "msg.clipboardEmpty": "Zwischenablage ist leer",
-    "msg.readingClipboard": "Zwischenablage wird gelesen...",
-    "msg.creatingSecret": "Secret wird erstellt...",
-    "msg.shareSuccess":
+    [I18nKeys.Msg.ClipboardInvalidJson]: "Zwischenablage enthält kein gültiges JSON",
+    [I18nKeys.Msg.ClipboardEmpty]: "Zwischenablage ist leer",
+    [I18nKeys.Msg.ReadingClipboard]: "Zwischenablage wird gelesen...",
+    [I18nKeys.Msg.CreatingSecret]: "Secret wird erstellt...",
+    [I18nKeys.Msg.ShareSuccess]:
       "Das Secret wurde erstellt und die URL in die Zwischenablage kopiert:",
-    "msg.expectedJsonFormat": "Erwartetes JSON-Format:",
-    "msg.retrieveNote":
+    [I18nKeys.Msg.ExpectedJsonFormat]: "Erwartetes JSON-Format:",
+    [I18nKeys.Msg.RetrieveNote]:
       "Hinweis: Dieses Secret wurde vom Server gelöscht und kann nicht erneut abgerufen werden.",
-    "msg.retrieveNoteText":
+    [I18nKeys.Msg.RetrieveNoteText]:
       "Dieses Secret wurde vom Server gelöscht und kann nicht erneut abgerufen werden.",
-    "msg.downloaded": "Secret als Textdatei heruntergeladen",
-    "msg.binaryDetected":
+    [I18nKeys.Msg.Downloaded]: "Secret als Textdatei heruntergeladen",
+    [I18nKeys.Msg.BinaryDetected]:
       "Bitte Download-Button verwenden, um die Datei zu speichern.",
 
-    // Aria labels
-    "aria.copySecret": "Secret in die Zwischenablage kopieren",
-    "aria.downloadSecret": "Secret als Datei herunterladen",
-    "aria.secretInput":
+    [I18nKeys.Aria.CopySecret]: "Secret in die Zwischenablage kopieren",
+    [I18nKeys.Aria.DownloadSecret]: "Secret als Datei herunterladen",
+    [I18nKeys.Aria.SecretInput]:
       "Bitte die geheime Nachricht eingeben, die sicher geteult werden soll",
-    "aria.fileInput":
+    [I18nKeys.Aria.FileInput]:
       "Datei zum sicheren Teilen auswählen. Die Datei wird vor dem Versenden verschlüsselt.",
-    "aria.tokenInput":
+    [I18nKeys.Aria.TokenInput]:
       "Bitte den Authentifizierungs-Token eingeben, falls vom Server erforderlich",
-    "aria.expiresSelect":
+    [I18nKeys.Aria.ExpiresSelect]:
       "Bitte die Zeit auswählen, nach der das Secret abläuft",
-    "aria.urlInput":
+    [I18nKeys.Aria.UrlInput]:
       "Bitte die vollständige URL einschließlich des Schlüssels nach dem Hash eingeben",
-    "aria.keyInput": "Bitte den Base64-kodierten geheimen Schlüssel eingeben",
-    "aria.themeToggle": "Zwischen hellem und dunklem Modus wechseln",
-    "aria.switchToLight": "Zum hellen Modus wechseln",
-    "aria.switchToDark": "Zum dunklen Modus wechseln",
-    "aria.logoHome": "Zur Startseite gehen",
+    [I18nKeys.Aria.KeyInput]: "Bitte den Base64-kodierten geheimen Schlüssel eingeben",
+    [I18nKeys.Aria.ThemeToggle]: "Zwischen hellem und dunklem Modus wechseln",
+    [I18nKeys.Aria.SwitchToLight]: "Zum hellen Modus wechseln",
+    [I18nKeys.Aria.SwitchToDark]: "Zum dunklen Modus wechseln",
+    [I18nKeys.Aria.LogoHome]: "Zur Startseite gehen",
 
-    // Meta descriptions
-    "meta.create": "One-Time-Secrets sicher erstellen und teilen mit Hakanai",
-    "meta.get": "One-Time-Secrets sicher teilen mit Hakanai",
-    "meta.homepage": "Hakanai - Zero-Knowledge One-Time Secret-Sharing Service",
+    [I18nKeys.Meta.Create]: "One-Time-Secrets sicher erstellen und teilen mit Hakanai",
+    [I18nKeys.Meta.Get]: "One-Time-Secrets sicher teilen mit Hakanai",
+    [I18nKeys.Meta.Homepage]: "Hakanai - Zero-Knowledge One-Time Secret-Sharing Service",
 
-    // Homepage content
-    "homepage.tagline":
+    [I18nKeys.Homepage.Tagline]:
       "Secrets sicher teilen mit Zero-Knowledge-Verschlüsselung",
-    "homepage.create.description":
+    [I18nKeys.Homepage.CreateDescription]:
       "Textnachrichten oder Dateien sicher teilen. Die Verschlüsselung erfolgt im Browser.",
-    "homepage.create.button": "✨ Secret erstellen",
-    "homepage.retrieve.description":
+    [I18nKeys.Homepage.CreateButton]: "✨ Secret erstellen",
+    [I18nKeys.Homepage.RetrieveDescription]:
       "Hier kann der Secret-Link eingegeben werden, um das Einmal-Secret zu entschlüsseln und anzuzeigen.",
-    "homepage.retrieve.button": "📨 Secret abrufen",
-    "homepage.how.feature1.title": "Zero-Knowledge",
-    "homepage.how.feature1.description":
+    [I18nKeys.Homepage.RetrieveButton]: "📨 Secret abrufen",
+    [I18nKeys.Homepage.Feature1Title]: "Zero-Knowledge",
+    [I18nKeys.Homepage.Feature1Description]:
       "Die Secrets werden im Browser verschlüsselt, bevor sie gesendet werden",
-    "homepage.how.feature2.title": "Einmalig",
-    "homepage.how.feature2.description":
+    [I18nKeys.Homepage.Feature2Title]: "Einmalig",
+    [I18nKeys.Homepage.Feature2Description]:
       "Secrets werden nach dem ersten Abruf gelöscht",
-    "homepage.how.feature3.title": "Sicher",
-    "homepage.how.feature3.description":
+    [I18nKeys.Homepage.Feature3Title]: "Sicher",
+    [I18nKeys.Homepage.Feature3Description]:
       "AES-256-GCM-Verschlüsselung mit sicherer Schlüsselerzeugung",
-    "homepage.how.feature4.title": "Privat",
-    "homepage.how.feature4.description":
+    [I18nKeys.Homepage.Feature4Title]: "Privat",
+    [I18nKeys.Homepage.Feature4Description]:
       "Der Server sieht niemals die unverschlüsselten Daten",
-    "homepage.how.feature5.title": "Open Source",
-    "homepage.how.feature5.description":
+    [I18nKeys.Homepage.Feature5Title]: "Open Source",
+    [I18nKeys.Homepage.Feature5Description]:
       "Vollständig Open Source und auf GitHub auditierbar",
-    "homepage.docs.link": "API-Dokumentation anzeigen",
+    [I18nKeys.Homepage.DocsLink]: "API-Dokumentation anzeigen",
 
-    // Footer links
-    "footer.privacy": "Datenschutzerklärung",
+    [I18nKeys.Footer.Privacy]: "Datenschutzerklärung",
 
-    // Page privacy
-    "page.privacy.title": "Datenschutzerklärung",
+    [I18nKeys.Page.PrivacyTitle]: "Datenschutzerklärung",
 
-    // Error codes
-    "error.SEND_FAILED": "Fehler beim Senden des Secrets",
-    "error.AUTHENTICATION_REQUIRED":
+    [I18nKeys.Error.SendFailed]: "Fehler beim Senden des Secrets",
+    [I18nKeys.Error.AuthenticationRequired]:
       "Authentifizierung erforderlich - Bitte Authentifizierungs-Token eingeben",
-    "error.INVALID_TOKEN":
+    [I18nKeys.Error.InvalidToken]:
       "Ungültiges Authentifizierungs-Token - Bitte Token überprüfen und erneut versuchen",
-    "error.SECRET_NOT_FOUND": "Secret nicht gefunden oder abgelaufen",
-    "error.SECRET_ALREADY_ACCESSED":
+    [I18nKeys.Error.SecretNotFound]: "Secret nicht gefunden oder abgelaufen",
+    [I18nKeys.Error.SecretAlreadyAccessed]:
       "Secret wurde bereits abgerufen und ist nicht mehr verfügbar",
-    "error.RETRIEVE_FAILED": "Fehler beim Abrufen des Secrets",
-    "error.MISSING_DECRYPTION_KEY": "Kein Schlüssel in der URL gefunden",
+    [I18nKeys.Error.RetrieveFailed]: "Fehler beim Abrufen des Secrets",
+    [I18nKeys.Error.MissingDecryptionKey]: "Kein Schlüssel in der URL gefunden",
 
-    // Validation error messages
-    "validation.MISSING_DATA": "Fehlende oder ungültige Daten",
-    "validation.INVALID_FILENAME": "Ungültiger Dateiname - muss Text sein",
-    "validation.INVALID_TOKEN": "Ungültiger Token - muss Text sein",
-    "validation.INVALID_TTL":
+    [I18nKeys.Validation.MissingData]: "Fehlende oder ungültige Daten",
+    [I18nKeys.Validation.InvalidFilename]: "Ungültiger Dateiname - muss Text sein",
+    [I18nKeys.Validation.InvalidToken]: "Ungültiger Token - muss Text sein",
+    [I18nKeys.Validation.InvalidTtl]:
       "Ungültige Ablaufzeit - muss eine positive Zahl sein",
-    "validation.EMPTY_JSON": "Zwischenablage ist leer",
-    "validation.INVALID_JSON_FORMAT":
+    [I18nKeys.Validation.EmptyJson]: "Zwischenablage ist leer",
+    [I18nKeys.Validation.InvalidJsonFormat]:
       "Ungültiges Format der Zwischenablage - kein gültiges JSON",
-    "error.PAYLOAD_TOO_LARGE": "Secret-Größe überschreitet das Limit",
+    [I18nKeys.Error.PayloadTooLarge]: "Secret-Größe überschreitet das Limit",
 
-    // Client validation error messages - specific for better translations
-    "error.EXPECTED_UINT8_ARRAY":
+    [I18nKeys.Error.ExpectedUint8Array]:
       "Eingabe muss ein Uint8Array (binäre Daten) sein",
-    "error.EXPECTED_STRING": "Eingabe muss ein String (Textdaten) sein",
-    "error.INVALID_INPUT_FORMAT":
+    [I18nKeys.Error.ExpectedString]: "Eingabe muss ein String (Textdaten) sein",
+    [I18nKeys.Error.InvalidInputFormat]:
       "Eingabe enthält ungültige Zeichen oder Format",
-    "error.MISSING_KEY": "Geheimer Schlüssel ist erforderlich",
-    "error.INVALID_KEY":
+    [I18nKeys.Error.MissingKey]: "Geheimer Schlüssel ist erforderlich",
+    [I18nKeys.Error.InvalidKey]:
       "Verschlüsselungsschlüssel hat ungültige Länge oder Format",
-    "error.CRYPTO_API_UNAVAILABLE":
+    [I18nKeys.Error.CryptoApiUnavailable]:
       "Web Crypto API ist in diesem Browser nicht verfügbar",
-    "error.INVALID_TTL": "TTL-Wert muss eine positive Ganzzahl sein",
-    "error.MISSING_AUTH_TOKEN": "Authentifizierungs-Token ist erforderlich",
-    "error.INVALID_AUTH_TOKEN": "Authentifizierungs-Token-Format ist ungültig",
-    "error.BASE64_ERROR": "Base64-Kodierung/Dekodierung fehlgeschlagen",
-    "error.INVALID_ENCRYPTED_DATA":
+    [I18nKeys.Error.InvalidTtl]: "TTL-Wert muss eine positive Ganzzahl sein",
+    [I18nKeys.Error.MissingAuthToken]: "Authentifizierungs-Token ist erforderlich",
+    [I18nKeys.Error.InvalidAuthToken]: "Authentifizierungs-Token-Format ist ungültig",
+    [I18nKeys.Error.Base64Error]: "Base64-Kodierung/Dekodierung fehlgeschlagen",
+    [I18nKeys.Error.InvalidEncryptedData]:
       "Verschlüsselte Daten sind beschädigt oder ungültig",
-    "error.DECRYPTION_FAILED":
+    [I18nKeys.Error.DecryptionFailed]:
       "Entschlüsselung fehlgeschlagen: ungültiger Schlüssel oder beschädigte Daten",
-    "error.INVALID_URL_FORMAT": "Ungültiges URL-Format",
-    "error.MISSING_SECRET_ID": "URL fehlt die Secret-ID",
-    "error.INVALID_SECRET_ID": "Secret-ID-Format ist ungültig",
-    "error.INVALID_PAYLOAD": "Payload-Objekt ist ungültig oder fehlerhaft",
-    "error.INVALID_SERVER_RESPONSE": "Server-Antwort fehlt erforderliche Daten",
-    "error.CRYPTO_CONTEXT_DISPOSED":
+    [I18nKeys.Error.InvalidUrlFormat]: "Ungültiges URL-Format",
+    [I18nKeys.Error.MissingSecretId]: "URL fehlt die Secret-ID",
+    [I18nKeys.Error.InvalidSecretId]: "Secret-ID-Format ist ungültig",
+    [I18nKeys.Error.InvalidPayload]: "Payload-Objekt ist ungültig oder fehlerhaft",
+    [I18nKeys.Error.InvalidServerResponse]: "Server-Antwort fehlt erforderliche Daten",
+    [I18nKeys.Error.CryptoContextDisposed]:
       "Crypto-Kontext wurde entsorgt und kann nicht wiederverwendet werden",
   },
 };
@@ -712,6 +886,7 @@ export function initI18n() {
 // Exports below are for testing purposes only and will be removed in compiled JS
 export {
   I18n,
+  I18nKeys,
   translations,
   type LanguageCode,
   type TranslationKey,

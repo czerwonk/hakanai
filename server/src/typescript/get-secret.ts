@@ -3,7 +3,7 @@ import {
   ContentAnalysis,
   type PayloadData,
 } from "./hakanai-client";
-import { initI18n } from "./core/i18n";
+import { initI18n, I18nKeys } from "./core/i18n";
 import {
   announceToScreenReader,
   createButton,
@@ -63,8 +63,8 @@ function validateInputs(
   key: string,
   hasFragment: boolean,
 ): string | null {
-  if (!url) return window.i18n.t("msg.emptyUrl");
-  if (!hasFragment && !key) return window.i18n.t("msg.missingKey");
+  if (!url) return window.i18n.t(I18nKeys.Msg.EmptyUrl);
+  if (!hasFragment && !key) return window.i18n.t(I18nKeys.Msg.MissingKey);
   return null;
 }
 
@@ -110,7 +110,7 @@ async function processRetrieveRequest(): Promise<void> {
   try {
     new URL(processedUrl);
   } catch {
-    showError(window.i18n.t("msg.invalidUrl"));
+    showError(window.i18n.t(I18nKeys.Msg.InvalidUrl));
     urlInput.focus();
     return;
   }
@@ -148,9 +148,9 @@ function handleRetrieveError(error: unknown): void {
   } else if (isStandardError(error)) {
     showError(error.message);
   } else if (isErrorLike(error)) {
-    showError(error.message ?? window.i18n.t("msg.retrieveFailed"));
+    showError(error.message ?? window.i18n.t(I18nKeys.Msg.RetrieveFailed));
   } else {
-    showError(window.i18n.t("msg.retrieveFailed"));
+    showError(window.i18n.t(I18nKeys.Msg.RetrieveFailed));
   }
 }
 
@@ -264,7 +264,7 @@ function createBinarySecret(
 
   const message = document.createElement("p");
   message.className = "binary-message";
-  message.textContent = window.i18n.t("msg.binaryDetected");
+  message.textContent = window.i18n.t(I18nKeys.Msg.BinaryDetected);
   container.appendChild(message);
 
   const buttonsContainer = createButtonContainer();
@@ -279,8 +279,8 @@ function createBinarySecret(
 function createCopyButton(secretId: string): HTMLButtonElement {
   return createButton(
     "copy-button",
-    window.i18n.t("button.copySecret"),
-    window.i18n.t("aria.copySecret"),
+    window.i18n.t(I18nKeys.Button.CopySecret),
+    window.i18n.t(I18nKeys.Aria.CopySecret),
     function (this: HTMLButtonElement) {
       copySecret(secretId, this);
     },
@@ -294,8 +294,8 @@ function createDownloadButton(
 ): HTMLButtonElement {
   return createButton(
     "download-button",
-    window.i18n.t("button.download"),
-    window.i18n.t("aria.downloadSecret"),
+    window.i18n.t(I18nKeys.Button.Download),
+    window.i18n.t(I18nKeys.Aria.DownloadSecret),
     () => downloadSecret(payload, decodedBytes, isBinary),
   );
 }
@@ -305,7 +305,7 @@ function createFilenameInfo(filename: string, size: number): HTMLElement {
   fileInfo.className = "file-info";
 
   const fileLabel = document.createElement("strong");
-  fileLabel.textContent = window.i18n.t("label.filename") + " ";
+  fileLabel.textContent = window.i18n.t(I18nKeys.Label.Filename) + " ";
   fileInfo.appendChild(fileLabel);
   fileInfo.appendChild(document.createTextNode(filename));
 
@@ -322,10 +322,10 @@ function createNoteElement(): HTMLElement {
   note.className = "note-element";
 
   const strong = document.createElement("strong");
-  strong.textContent = window.i18n.t("msg.retrieveNote").split(":")[0] + ":";
+  strong.textContent = window.i18n.t(I18nKeys.Msg.RetrieveNote).split(":")[0] + ":";
   note.appendChild(strong);
   note.appendChild(
-    document.createTextNode(" " + window.i18n.t("msg.retrieveNoteText")),
+    document.createTextNode(" " + window.i18n.t(I18nKeys.Msg.RetrieveNoteText)),
   );
 
   return note;
@@ -338,7 +338,7 @@ function showSuccess(payload: PayloadData): void {
   resultDiv.innerHTML = "";
 
   const title = document.createElement("h3");
-  title.textContent = window.i18n.t("msg.successTitle");
+  title.textContent = window.i18n.t(I18nKeys.Msg.SuccessTitle);
   resultDiv.appendChild(title);
 
   const decodedBytes = payload.decodeBytes();
@@ -357,7 +357,7 @@ function showSuccess(payload: PayloadData): void {
   }
 
   resultDiv.appendChild(createNoteElement());
-  announceToScreenReader(window.i18n.t("msg.successTitle"));
+  announceToScreenReader(window.i18n.t(I18nKeys.Msg.SuccessTitle));
 }
 
 function showError(message: string): void {
@@ -368,14 +368,14 @@ function showError(message: string): void {
   document.body.classList.remove("expanded-view");
 
   const title = document.createElement("h3");
-  title.textContent = window.i18n.t("msg.errorTitle");
+  title.textContent = window.i18n.t(I18nKeys.Msg.ErrorTitle);
   resultDiv.appendChild(title);
 
   const errorDiv = document.createElement("div");
   errorDiv.textContent = message;
   resultDiv.appendChild(errorDiv);
 
-  announceToScreenReader(`${window.i18n.t("msg.errorTitle")}: ${message}`);
+  announceToScreenReader(`${window.i18n.t(I18nKeys.Msg.ErrorTitle)}: ${message}`);
 }
 
 function copySecret(secretId: string, button: HTMLButtonElement): void {
@@ -383,7 +383,7 @@ function copySecret(secretId: string, button: HTMLButtonElement): void {
     secretId,
   ) as HTMLTextAreaElement;
   if (!secretElement) {
-    showError(window.i18n.t("msg.copyFailed"));
+    showError(window.i18n.t(I18nKeys.Msg.CopyFailed));
     return;
   }
 
@@ -428,7 +428,7 @@ function downloadSecret(
     window.URL.revokeObjectURL(url);
   }, TIMEOUTS.CLEANUP_DELAY);
 
-  announceToScreenReader(window.i18n.t("msg.downloaded"));
+  announceToScreenReader(window.i18n.t(I18nKeys.Msg.Downloaded));
 }
 
 function setupUrlInput(): void {

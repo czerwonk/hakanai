@@ -3,16 +3,12 @@
  * Reads JSON data from clipboard and creates secrets
  */
 
-import { HakanaiClient } from "./hakanai-client.js";
-import { initI18n } from "./core/i18n.js";
-import {
-  formatFileSize,
-  formatTTL,
-  sanitizeFileName,
-} from "./core/formatters.js";
+import { HakanaiClient } from "./hakanai-client";
+import { initI18n, I18nKeys } from "./core/i18n";
+import { formatFileSize, formatTTL, sanitizeFileName } from "./core/formatters";
 import { hideElement, showElement } from "./core/dom-utils";
-import { displaySuccessResult } from "./components/success-display.js";
-import { ShareData, ShareDataError } from "./core/types.js";
+import { displaySuccessResult } from "./components/success-display";
+import { ShareData, ShareDataError } from "./core/types";
 import { initFeatures } from "./core/app-config";
 
 let sharePayload: ShareData | null = null;
@@ -141,7 +137,7 @@ function handleShareError(error: unknown, context: string): void {
   hideLoading();
 
   if (error instanceof Error && error.name === "NotAllowedError") {
-    showClipboardError(window.i18n.t("msg.clipboardPermissionDenied"));
+    showClipboardError(window.i18n.t(I18nKeys.Msg.ClipboardPermissionDenied));
   } else if (error instanceof ShareDataError) {
     // Handle validation errors with translations
     const translationKey = `validation.${error.code}`;
@@ -154,7 +150,7 @@ function handleShareError(error: unknown, context: string): void {
     error instanceof Error &&
     error.message === "Invalid JSON format"
   ) {
-    showClipboardError(window.i18n.t("msg.clipboardInvalidJson"));
+    showClipboardError(window.i18n.t(I18nKeys.Msg.ClipboardInvalidJson));
   } else {
     showClipboardError(
       `Error ${context}: ${error instanceof Error ? error.message : "Unknown error"}`,
@@ -167,7 +163,7 @@ function handleShareError(error: unknown, context: string): void {
  */
 async function readShare(): Promise<void> {
   try {
-    showLoading(window.i18n.t("msg.readingClipboard"));
+    showLoading(window.i18n.t(I18nKeys.Msg.ReadingClipboard));
     const payload = await readShareData();
 
     hideLoading();
@@ -182,7 +178,7 @@ async function readShare(): Promise<void> {
  * Must be called directly from button click handler
  */
 function readClipboard(): void {
-  showLoading(window.i18n.t("msg.readingClipboard"));
+  showLoading(window.i18n.t(I18nKeys.Msg.ReadingClipboard));
 
   navigator.clipboard
     .readText()
@@ -210,7 +206,7 @@ async function createSecret(): Promise<void> {
   }
 
   try {
-    showLoading(window.i18n.t("msg.creatingSecret"));
+    showLoading(window.i18n.t(I18nKeys.Msg.CreatingSecret));
 
     const client = new HakanaiClient(window.location.origin);
 

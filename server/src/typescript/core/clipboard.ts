@@ -3,6 +3,8 @@ import { announceToScreenReader } from "./dom-utils.js";
 // Constants
 const COPY_FEEDBACK_TIMEOUT = 2000;
 
+import { I18nKeys } from "./i18n";
+
 declare global {
   interface Window {
     i18n: {
@@ -21,10 +23,18 @@ export function copyToClipboard(text: string, button: HTMLButtonElement): void {
   navigator.clipboard
     .writeText(text)
     .then(() =>
-      showCopySuccess(button, originalText, window.i18n.t("button.copied")),
+      showCopySuccess(
+        button,
+        originalText,
+        window.i18n.t(I18nKeys.Button.Copied),
+      ),
     )
     .catch(() =>
-      showCopyFailure(button, originalText, window.i18n.t("msg.copyFailed")),
+      showCopyFailure(
+        button,
+        originalText,
+        window.i18n.t(I18nKeys.Msg.CopyFailed),
+      ),
     );
 }
 
@@ -70,7 +80,7 @@ export function copyToClipboardByElementId(
     showCopyFailure(
       button,
       button.textContent ?? "Copy",
-      window.i18n.t("msg.copyFailed"),
+      window.i18n.t(I18nKeys.Msg.CopyFailed),
     );
   }
 }

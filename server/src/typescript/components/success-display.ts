@@ -5,6 +5,7 @@ import {
 } from "../core/dom-utils.js";
 import { copyToClipboardByElementId } from "../core/clipboard.js";
 import { QRCodeGenerator } from "../core/qr-generator.js";
+import { I18nKeys } from "../core/i18n.js";
 
 /**
  * Options for success result display
@@ -58,12 +59,12 @@ function ensureQRCodeGeneratorCleanup() {
  */
 function createSuccessHeader(container: HTMLElement): void {
   const title = document.createElement("h3");
-  title.textContent = window.i18n.t("msg.successTitle");
+  title.textContent = window.i18n.t(I18nKeys.Msg.SuccessTitle);
   container.appendChild(title);
 
   const instructions = document.createElement("p");
   instructions.className = "share-instructions";
-  instructions.textContent = window.i18n.t("msg.shareInstructions");
+  instructions.textContent = window.i18n.t(I18nKeys.Msg.ShareInstructions);
   container.appendChild(instructions);
 }
 
@@ -115,7 +116,7 @@ function createLabeledInputWithCopy(
 
   const copyButton = createButton(
     "copy-button",
-    window.i18n.t("button.copy"),
+    window.i18n.t(I18nKeys.Button.Copy),
     ariaLabel,
     () => copyToClipboardByElementId(inputId, copyButton as HTMLButtonElement),
   );
@@ -131,7 +132,7 @@ function createCombinedUrlDisplay(container: HTMLElement, url: string): void {
   const urlId = generateRandomId();
   createLabeledInputWithCopy(
     container,
-    "label.url",
+    I18nKeys.Label.Url,
     urlId,
     url,
     "Copy secret URL to clipboard",
@@ -151,7 +152,7 @@ function createSeparateUrlDisplay(
   // URL section
   createLabeledInputWithCopy(
     container,
-    "label.url",
+    I18nKeys.Label.Url,
     baseId,
     url,
     "Copy secret URL to clipboard",
@@ -160,7 +161,7 @@ function createSeparateUrlDisplay(
   // Key section
   createLabeledInputWithCopy(
     container,
-    "label.key",
+    I18nKeys.Label.Key,
     baseId + "-key",
     key,
     "Copy decryption key to clipboard",
@@ -196,7 +197,7 @@ function createQRDisplayElement(qrSvg: string): HTMLElement {
   qrSection.className = "qr-code-section";
 
   const qrLabel = document.createElement("label");
-  qrLabel.textContent = window.i18n.t("label.qrCode");
+  qrLabel.textContent = window.i18n.t(I18nKeys.Label.QrCode);
   qrSection.appendChild(qrLabel);
 
   const qrContainer = document.createElement("div");
@@ -214,7 +215,7 @@ function createNoteSection(container: HTMLElement): void {
   const note = document.createElement("p");
   note.className = "secret-note";
 
-  const noteText = window.i18n.t("msg.createNote");
+  const noteText = window.i18n.t(I18nKeys.Msg.CreateNote);
   const colonIndex = noteText.indexOf(":");
 
   if (colonIndex > 0) {

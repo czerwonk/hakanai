@@ -3,7 +3,7 @@ import {
   HakanaiErrorCodes,
   type PayloadData,
 } from "./hakanai-client";
-import { initI18n } from "./core/i18n";
+import { initI18n, I18nKeys } from "./core/i18n";
 import {
   announceToScreenReader,
   secureInputClear,
@@ -103,14 +103,14 @@ async function validateAndProcessFileInput(
 ): Promise<PayloadData | null> {
   const file = fileInput.files?.[0];
   if (!file) {
-    showError(window.i18n.t("msg.emptyFile"));
+    showError(window.i18n.t(I18nKeys.Msg.EmptyFile));
     fileInput.focus();
     return null;
   }
 
   const fileName = sanitizeFileName(file.name);
   if (!validateFilename(file.name)) {
-    showError(window.i18n.t("msg.invalidFilename"));
+    showError(window.i18n.t(I18nKeys.Msg.InvalidFilename));
     fileInput.focus();
     return null;
   }
@@ -121,7 +121,7 @@ async function validateAndProcessFileInput(
     payload.setFromBytes(fileBytes);
     return payload;
   } catch {
-    showError(window.i18n.t("msg.fileReadError"));
+    showError(window.i18n.t(I18nKeys.Msg.FileReadError));
     return null;
   }
 }
@@ -129,7 +129,7 @@ async function validateAndProcessFileInput(
 function validateTextInput(secretInput: HTMLInputElement): PayloadData | null {
   const secret = secretInput.value.trim();
   if (!secret) {
-    showError(window.i18n.t("msg.emptySecret"));
+    showError(window.i18n.t(I18nKeys.Msg.EmptySecret));
     secretInput.focus();
     return null;
   }
@@ -220,9 +220,9 @@ function handleCreateError(error: unknown): void {
   } else if (isStandardError(error)) {
     showError(error.message);
   } else if (isErrorLike(error)) {
-    showError(error.message ?? window.i18n.t("msg.createFailed"));
+    showError(error.message ?? window.i18n.t(I18nKeys.Msg.CreateFailed));
   } else {
-    showError(window.i18n.t("msg.createFailed"));
+    showError(window.i18n.t(I18nKeys.Msg.CreateFailed));
   }
 }
 
@@ -298,7 +298,7 @@ function showSuccess(secretUrl: string): void {
     container: resultContainer,
     separateKeyMode: isSeparateKeyMode(),
   });
-  announceToScreenReader(window.i18n.t("msg.successTitle"));
+  announceToScreenReader(window.i18n.t(I18nKeys.Msg.SuccessTitle));
 }
 
 function resetToCreateMode(): void {
@@ -336,14 +336,14 @@ function showError(message: string): void {
   showForm();
 
   const title = document.createElement("h3");
-  title.textContent = window.i18n.t("msg.errorTitle");
+  title.textContent = window.i18n.t(I18nKeys.Msg.ErrorTitle);
   resultDiv.appendChild(title);
 
   const errorDiv = document.createElement("div");
   errorDiv.textContent = message;
   resultDiv.appendChild(errorDiv);
 
-  announceToScreenReader(`${window.i18n.t("msg.errorTitle")}: ${message}`);
+  announceToScreenReader(`${window.i18n.t(I18nKeys.Msg.ErrorTitle)}: ${message}`);
 }
 
 function showForm(): void {

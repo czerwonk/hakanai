@@ -1,6 +1,8 @@
 // Constants
 const THEME_KEY = "hakanai-theme";
 
+import { I18nKeys } from "./i18n";
+
 type Theme = "light" | "dark";
 
 declare global {
@@ -78,8 +80,8 @@ function getThemeToggleButton(): HTMLButtonElement | null {
 
 function getThemeToggleLabel(isDark: boolean): string {
   return isDark
-    ? window.i18n.t("aria.switchToLight")
-    : window.i18n.t("aria.switchToDark");
+    ? window.i18n.t(I18nKeys.Aria.SwitchToLight)
+    : window.i18n.t(I18nKeys.Aria.SwitchToDark);
 }
 
 /**
