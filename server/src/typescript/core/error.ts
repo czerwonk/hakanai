@@ -1,4 +1,3 @@
-// Error Types
 import { HakanaiError } from "../hakanai-client.js";
 
 export interface StandardError extends Error {
