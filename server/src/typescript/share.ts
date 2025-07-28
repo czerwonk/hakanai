@@ -13,9 +13,9 @@ import { ShareData, ShareDataError } from "./core/share-data";
 import { ErrorHandler, handleAPIError } from "./core/error";
 import { initFeatures } from "./core/app-config";
 
-let sharePayload: ShareData | null = null;
+const DEFAULT_TTL = 3600; // Default TTL in seconds (1 hour)
 
-const DEFAULT_TTL = 86400; // Default TTL in seconds (1 day)
+let sharePayload: ShareData | null = null;
 
 /**
  * Show loading state
@@ -41,6 +41,7 @@ function hideLoading(): void {
 function hideOtherSections(except: string): void {
   const sections = [
     "clipboard-content",
+    "ttl-select",
     "result",
     "permission-prompt",
     "loading",
@@ -55,6 +56,41 @@ function hideOtherSections(except: string): void {
 }
 
 /**
+ * Preselect TTL value in the select element, adding custom option if needed
+ */
+function preselectTTL(selectElement: HTMLSelectElement, ttl: number): void {
+  // Check if the TTL value exists in the select options
+  const options = Array.from(selectElement.options);
+  const valueExists = options.some((opt) => opt.value === ttl.toString());
+  if (!valueExists) {
+    addCustomTTL(selectElement, ttl);
+  }
+
+  selectElement.value = ttl.toString();
+}
+
+function addCustomTTL(selectElement: HTMLSelectElement, ttl: number) {
+  const customOption = document.createElement("option");
+  customOption.value = ttl.toString();
+  customOption.textContent = formatTTL(ttl);
+
+  // insert at the top of the list, sinc if the user sets a custom TTL he will likely want to use it
+  selectElement.insertBefore(customOption, selectElement.firstChild);
+}
+
+function showTTLSelect(payload: ShareData): void {
+  const ttlSelect = document.getElementById("ttl-select")!;
+  showElement(ttlSelect);
+  hideOtherSections("ttl-select");
+
+  const ttl = payload.ttl || DEFAULT_TTL;
+  const selectElement = document.getElementById(
+    "ttlSelect",
+  ) as HTMLSelectElement;
+  preselectTTL(selectElement, ttl);
+}
+
+/**
  * Show share content preview
  */
 function showShareContent(payload: ShareData): void {
@@ -63,9 +99,6 @@ function showShareContent(payload: ShareData): void {
   // Update UI
   document.getElementById("content-size")!.textContent = formatFileSize(
     payload.getContentSize(),
-  );
-  document.getElementById("content-ttl")!.textContent = formatTTL(
-    payload.ttl ?? DEFAULT_TTL,
   );
 
   // Show filename if present (sanitized for security)
@@ -82,6 +115,7 @@ function showShareContent(payload: ShareData): void {
   const clipboardContent = document.getElementById("clipboard-content")!;
   showElement(clipboardContent);
   hideOtherSections("clipboard-content");
+  showTTLSelect(payload);
 }
 
 /**
@@ -201,9 +235,14 @@ async function createSecret(): Promise<void> {
     const hakanaiPayload = client.createPayload(sanitizedFilename || undefined);
     hakanaiPayload.setFromBase64(sharePayload.data);
 
+    const ttlSelect = document.getElementById(
+      "ttl-select",
+    ) as HTMLSelectElement;
+    const ttl = parseInt(ttlSelect?.value);
+
     const url = await client.sendPayload(
       hakanaiPayload,
-      sharePayload.ttl || 86400,
+      ttl,
       sharePayload.token,
     );
 
