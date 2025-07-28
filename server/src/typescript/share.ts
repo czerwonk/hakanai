@@ -222,6 +222,12 @@ async function createSecret(): Promise<void> {
       sharePayload.token,
     );
 
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch (e) {
+      console.warn("Could not copy URL to clipboard:", e);
+    }
+
     hideLoading();
     showSuccess(url);
   } catch (error) {
