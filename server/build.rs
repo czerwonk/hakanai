@@ -389,6 +389,8 @@ fn load_partials() -> Result<TemplatePartials> {
         .context("failed to read footer partial")?;
     let header = fs::read_to_string("src/templates/partials/header.html")
         .context("failed to read header partial")?;
+    let ttl_selector = fs::read_to_string("src/templates/partials/ttl-selector.html")
+        .context("failed to read ttl-selector partial")?;
 
     Ok(TemplatePartials {
         head,
@@ -396,6 +398,7 @@ fn load_partials() -> Result<TemplatePartials> {
         header,
         theme_switcher,
         language_selector,
+        ttl_selector,
     })
 }
 
@@ -473,6 +476,7 @@ fn apply_partials(template_content: String, partials: &TemplatePartials) -> Stri
         .replace("[[LANGUAGE_SELECTOR]]", &partials.language_selector)
         .replace("[[FOOTER]]", &partials.footer)
         .replace("[[HEADER]]", &partials.header)
+        .replace("[[TTL_SELECTOR]]", &partials.ttl_selector)
 }
 
 fn apply_impressum_content(template_content: String) -> String {
@@ -497,6 +501,7 @@ struct TemplatePartials {
     language_selector: String,
     footer: String,
     header: String,
+    ttl_selector: String,
 }
 
 fn create_version_context() -> HashMap<&'static str, String> {

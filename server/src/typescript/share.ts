@@ -5,17 +5,19 @@
 
 import { HakanaiClient } from "./hakanai-client";
 import { initI18n, I18nKeys } from "./core/i18n";
-import { formatFileSize, formatTTL, sanitizeFileName } from "./core/formatters";
+import { formatFileSize, sanitizeFileName } from "./core/formatters";
 import { hideElement, showElement } from "./core/dom-utils";
 import { displaySuccessResult } from "./components/create-result";
 import { displayErrorMessage } from "./components/error-display";
 import { ShareData, ShareDataError } from "./core/share-data";
 import { ErrorHandler, handleAPIError } from "./core/error";
 import { initFeatures } from "./core/app-config";
+import { TTLSelector } from "./components/ttl-selector";
 
 const DEFAULT_TTL = 3600; // Default TTL in seconds (1 hour)
 
 let sharePayload: ShareData | null = null;
+let ttlSelector: TTLSelector | null = null;
 
 /**
  * Show loading state
@@ -41,7 +43,7 @@ function hideLoading(): void {
 function hideOtherSections(except: string): void {
   const sections = [
     "clipboard-content",
-    "ttl-select",
+    "ttl-selector",
     "result",
     "permission-prompt",
     "loading",
@@ -55,39 +57,12 @@ function hideOtherSections(except: string): void {
   });
 }
 
-/**
- * Preselect TTL value in the select element, adding custom option if needed
- */
-function preselectTTL(selectElement: HTMLSelectElement, ttl: number): void {
-  // Check if the TTL value exists in the select options
-  const options = Array.from(selectElement.options);
-  const valueExists = options.some((opt) => opt.value === ttl.toString());
-  if (!valueExists) {
-    addCustomTTL(selectElement, ttl);
-  }
-
-  selectElement.value = ttl.toString();
-}
-
-function addCustomTTL(selectElement: HTMLSelectElement, ttl: number) {
-  const customOption = document.createElement("option");
-  customOption.value = ttl.toString();
-  customOption.textContent = formatTTL(ttl);
-
-  // insert at the top of the list, sinc if the user sets a custom TTL he will likely want to use it
-  selectElement.insertBefore(customOption, selectElement.firstChild);
-}
-
 function showTTLSelect(payload: ShareData): void {
-  const ttlSelect = document.getElementById("ttl-select")!;
-  showElement(ttlSelect);
-  hideOtherSections("ttl-select");
+  const ttlSelectDiv = document.getElementById("ttl-selector")!;
+  showElement(ttlSelectDiv);
 
   const ttl = payload.ttl || DEFAULT_TTL;
-  const selectElement = document.getElementById(
-    "ttlSelect",
-  ) as HTMLSelectElement;
-  preselectTTL(selectElement, ttl);
+  ttlSelector?.setValue(ttl);
 }
 
 /**
@@ -235,22 +210,17 @@ async function createSecret(): Promise<void> {
     const hakanaiPayload = client.createPayload(sanitizedFilename || undefined);
     hakanaiPayload.setFromBase64(sharePayload.data);
 
-    const ttlSelect = document.getElementById(
-      "ttl-select",
-    ) as HTMLSelectElement;
-    const ttl = parseInt(ttlSelect?.value);
+    if (!ttlSelector) {
+      throw new Error("TTL selector not initialized");
+    }
+    const ttl = ttlSelector.getValue();
 
+    console.log("Creating secret with TTL:", ttl);
     const url = await client.sendPayload(
       hakanaiPayload,
       ttl,
       sharePayload.token,
     );
-
-    try {
-      await navigator.clipboard.writeText(url);
-    } catch (e) {
-      console.warn("Could not copy URL to clipboard:", e);
-    }
 
     hideLoading();
     showSuccess(url);
@@ -285,8 +255,18 @@ function initShareData() {
   hideOtherSections("permission-prompt");
 }
 
+function initTTLSelector(): void {
+  const ttlContainer = document.getElementById("ttl-selector") as HTMLElement;
+  if (!ttlContainer) {
+    throw new Error("TTL container not found");
+  }
+
+  ttlSelector = new TTLSelector(ttlContainer);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   initI18n();
+  initTTLSelector();
   initFeatures();
 
   document

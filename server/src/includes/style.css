@@ -1013,6 +1013,7 @@ textarea::placeholder {
 
 input[type="text"],
 input[type="password"],
+input[type="number"],
 textarea,
 select {
   width: 100%;
@@ -1031,6 +1032,7 @@ select {
 
 input[type="text"]:focus-visible,
 input[type="password"]:focus-visible,
+input[type="number"]:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
   outline: none;
@@ -1043,6 +1045,7 @@ select:focus-visible {
 
 input[type="text"]:disabled,
 input[type="password"]:disabled,
+input[type="number"]:disabled,
 textarea:disabled,
 select:disabled {
   opacity: 0.6;
@@ -1471,7 +1474,8 @@ button.loading::after {
 
   /* Ensure select elements have consistent sizing on mobile */
   select,
-  #ttlSelect {
+  #ttlSelect,
+  .ttl-select {
     font-size: 16px !important; /* Prevents zoom on iOS */
     min-height: 3rem !important;
     height: 3rem !important; /* Force consistent height */
@@ -1482,9 +1486,37 @@ button.loading::after {
     align-items: center !important;
   }
 
+  /* TTL Selector custom input styling */
+  #ttl-custom {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-sm);
+    align-items: stretch;
+  }
+
+  #ttl-custom .ttl-custom-value {
+    width: 5rem;
+  }
+
+  #ttl-custom .ttl-custom-unit {
+    flex: 1;
+  }
+
+  /* Ensure TTL custom inputs follow mobile sizing rules */
+  .ttl-custom-value,
+  .ttl-custom-unit {
+    font-size: 16px !important; /* Prevents zoom on iOS */
+    min-height: 3rem !important;
+    height: 3rem !important;
+    padding: var(--spacing-sm) var(--spacing-md) !important;
+    box-sizing: border-box !important;
+    line-height: 1.5 !important;
+  }
+
   /* Larger touch targets on mobile */
   input[type="text"],
   input[type="password"],
+  input[type="number"],
   textarea,
   select,
   #language-switcher,
@@ -2106,6 +2138,86 @@ body:has(.privacy-content) {
 .impressum-content tr:last-child td,
 .privacy-content tr:last-child td {
   border-bottom: none;
+}
+
+/* TTL Selector custom input styling */
+#ttl-custom {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-sm);
+  align-items: stretch;
+}
+
+#ttl-custom .ttl-custom-value {
+  width: 10rem;
+  flex-shrink: 0;
+}
+
+#ttl-custom .ttl-custom-unit {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Style number input spinner arrows */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox spinner styling */
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Custom spinner buttons for better styling */
+.ttl-custom-value {
+  position: relative;
+}
+
+.ttl-custom-value::-webkit-outer-spin-button,
+.ttl-custom-value::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Add custom spinner styling if needed */
+.number-input-container {
+  position: relative;
+  display: inline-block;
+}
+
+.number-input-container .spinner-button {
+  position: absolute;
+  right: 1px;
+  width: 2rem;
+  height: 50%;
+  border: none;
+  background: var(--theme-bg-input);
+  color: var(--theme-text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-xs);
+  transition: background-color var(--transition-fast);
+  border-left: 1px solid var(--theme-border);
+}
+
+.number-input-container .spinner-button:hover {
+  background: var(--theme-primary);
+  color: var(--button-text);
+}
+
+.number-input-container .spinner-up {
+  top: 1px;
+  border-radius: 0 var(--border-radius) 0 0;
+  border-bottom: 1px solid var(--theme-border);
+}
+
+.number-input-container .spinner-down {
+  bottom: 1px;
+  border-radius: 0 0 var(--border-radius) 0;
 }
 
 /* Utility classes for show/hide (CSP-friendly) */

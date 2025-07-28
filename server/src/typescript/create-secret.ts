@@ -17,6 +17,9 @@ import { displaySuccessResult } from "./components/create-result";
 import { displayErrorMessage } from "./components/error-display";
 import { ErrorHandler, handleAPIError } from "./core/error";
 import { initFeatures } from "./core/app-config";
+import { TTLSelector } from "./components/ttl-selector";
+
+let ttlSelector: TTLSelector | null = null;
 
 interface Elements {
   loadingDiv: HTMLElement;
@@ -24,7 +27,6 @@ interface Elements {
   secretInput: HTMLInputElement;
   fileInput: HTMLInputElement;
   authTokenInput: HTMLInputElement;
-  ttlSelect: HTMLSelectElement;
   textRadio: HTMLInputElement;
   fileRadio: HTMLInputElement;
   resultDiv: HTMLElement;
@@ -62,7 +64,6 @@ function getElements(): Elements | null {
   const authTokenInput = document.getElementById(
     "authToken",
   ) as HTMLInputElement;
-  const ttlSelect = document.getElementById("ttlSelect") as HTMLSelectElement;
   const textRadio = document.getElementById("textRadio") as HTMLInputElement;
   const fileRadio = document.getElementById("fileRadio") as HTMLInputElement;
   const resultDiv = document.getElementById("result");
@@ -73,7 +74,6 @@ function getElements(): Elements | null {
     !secretInput ||
     !fileInput ||
     !authTokenInput ||
-    !ttlSelect ||
     !textRadio ||
     !fileRadio ||
     !resultDiv
@@ -87,7 +87,6 @@ function getElements(): Elements | null {
     secretInput,
     fileInput,
     authTokenInput,
-    ttlSelect,
     textRadio,
     fileRadio,
     resultDiv,
@@ -172,7 +171,6 @@ function setElementsState(elements: Elements, disabled: boolean): void {
     secretInput,
     fileInput,
     authTokenInput,
-    ttlSelect,
     textRadio,
     fileRadio,
     resultDiv,
@@ -187,7 +185,7 @@ function setElementsState(elements: Elements, disabled: boolean): void {
   secretInput.disabled = disabled;
   fileInput.disabled = disabled;
   authTokenInput.disabled = disabled;
-  ttlSelect.disabled = disabled;
+  ttlSelector?.setEnabled(!disabled);
   textRadio.disabled = disabled;
   fileRadio.disabled = disabled;
 
@@ -208,7 +206,7 @@ function clearInputs(
 function getFormValues(elements: Elements): FormValues {
   return {
     authToken: elements.authTokenInput.value.trim(),
-    ttl: parseInt(elements.ttlSelect.value),
+    ttl: ttlSelector?.getValue() || 3600,
     isFileMode: elements.fileRadio.checked,
   };
 }
@@ -502,8 +500,19 @@ function focusSecretInput(): void {
   }
 }
 
+function initTTLSelector(): void {
+  const ttlContainer = document.getElementById("ttl-selector") as HTMLElement;
+  if (!ttlContainer) {
+    console.error("TTL container not found!");
+    throw new Error("TTL container not found");
+  }
+
+  ttlSelector = new TTLSelector(ttlContainer);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   initI18n();
+  initTTLSelector();
   initTheme();
   focusSecretInput();
   setupFormHandler();

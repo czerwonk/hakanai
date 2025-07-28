@@ -57,6 +57,11 @@ const I18nKeys = {
     TwelveHours: "time.12hours",
     TwentyFourHours: "time.24hours",
     SevenDays: "time.7days",
+    Custom: "time.custom",
+    Minutes: "time.minutes",
+    Hours: "time.hours",
+    Days: "time.days",
+    Seconds: "time.seconds",
   },
 
   Button: {
@@ -256,6 +261,11 @@ const translations: Translations = {
     [I18nKeys.Time.TwelveHours]: "12 hours",
     [I18nKeys.Time.TwentyFourHours]: "24 hours",
     [I18nKeys.Time.SevenDays]: "7 days",
+    [I18nKeys.Time.Custom]: "Custom...",
+    [I18nKeys.Time.Minutes]: "minutes",
+    [I18nKeys.Time.Hours]: "hours",
+    [I18nKeys.Time.Days]: "days",
+    [I18nKeys.Time.Seconds]: "seconds",
 
     [I18nKeys.Button.Create]: "🛡️ Create Secret",
     [I18nKeys.Button.Retrieve]: "📖 Retrieve Secret",
@@ -469,6 +479,11 @@ const translations: Translations = {
     [I18nKeys.Time.TwelveHours]: "12 Stunden",
     [I18nKeys.Time.TwentyFourHours]: "24 Stunden",
     [I18nKeys.Time.SevenDays]: "7 Tage",
+    [I18nKeys.Time.Custom]: "Benutzerdefiniert...",
+    [I18nKeys.Time.Minutes]: "Minuten",
+    [I18nKeys.Time.Hours]: "Stunden",
+    [I18nKeys.Time.Days]: "Tage",
+    [I18nKeys.Time.Seconds]: "Sekunden",
 
     [I18nKeys.Button.Create]: "🛡️ Secret erstellen",
     [I18nKeys.Button.Retrieve]: "📖 Secret abrufen",

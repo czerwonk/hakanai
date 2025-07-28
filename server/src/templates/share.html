@@ -13,7 +13,7 @@
       <div class="content-wrapper">
         <h1 data-i18n="header.share">Share from Clipboard</h1>
 
-        <div id="clipboard-content" style="display: none">
+        <div id="clipboard-content" class="hidden">
           <div class="input-group">
             <h2 data-i18n="label.contentPreview">Content Preview</h2>
             <div class="clipboard-info">
@@ -21,36 +21,14 @@
                 <strong data-i18n="label.size">Size:</strong>
                 <span id="content-size">-</span>
               </p>
-              <p id="filename-row" style="display: none">
+              <p id="filename-row" class="hidden">
                 <strong data-i18n="label.filename">Filename:</strong>
                 <span id="content-filename">-</span>
               </p>
             </div>
           </div>
 
-          <div id="ttl-select" class="input-group">
-            <label for="ttlSelect" data-i18n="label.expires"
-              >Expires after:</label
-            >
-            <select id="ttlSelect" aria-describedby="ttl-help">
-              <option value="300" data-i18n="time.5min">5 minutes</option>
-              <option value="1800" data-i18n="time.30min">30 minutes</option>
-              <option value="3600" selected data-i18n="time.1hour">
-                1 hour
-              </option>
-              <option value="7200" data-i18n="time.2hours">2 hours</option>
-              <option value="43200" data-i18n="time.12hours">12 hours</option>
-              <option value="86400" data-i18n="time.24hours">24 hours</option>
-              <option value="604800" data-i18n="time.7days">7 days</option>
-            </select>
-            <span data-i18n="helper.expires" class="input-helper"
-              >Secret will self-destruct after this time or first view</span
-            >
-            <span id="ttl-help" class="sr-only" data-i18n="aria.expiresSelect"
-              >Select how long the secret should be available before it
-              expires</span
-            >
-          </div>
+          [[TTL_SELECTOR]]
 
           <div class="input-group">
             <label class="checkbox-label">
@@ -75,7 +53,7 @@
 
         <div id="result" class="hidden"></div>
 
-        <div id="permission-prompt" style="display: none">
+        <div id="permission-prompt" class="hidden">
           <div class="result">
             <h3 data-i18n="msg.clipboardRequired">Clipboard Access Required</h3>
             <p data-i18n="msg.clipboardRequiredDetail">
@@ -94,12 +72,12 @@
           </div>
         </div>
 
-        <div id="loading" class="loading" style="display: none">
+        <div id="loading" class="loading hidden">
           <div class="spinner"></div>
           <span id="loading-text">Reading clipboard...</span>
         </div>
 
-        <div id="result-success" class="result success" style="display: none">
+        <div id="result-success" class="result success hidden">
           <h3 data-i18n="msg.successTitle">Success!</h3>
           <div class="share-instructions">
             <p data-i18n="msg.shareSuccess">
