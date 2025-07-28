@@ -214,8 +214,6 @@ async function createSecret(): Promise<void> {
       throw new Error("TTL selector not initialized");
     }
     const ttl = ttlSelector.getValue();
-
-    console.log("Creating secret with TTL:", ttl);
     const url = await client.sendPayload(
       hakanaiPayload,
       ttl,
