@@ -9,14 +9,14 @@ describe("InputValidation", () => {
     require("../../server/src/typescript/hakanai-client") as any;
 
   describe("validateHash", () => {
-    test("accepts valid 64-character hex hashes", () => {
+    test("accepts valid 22-character base64url hashes", () => {
       const validHashes = [
-        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", // SHA-256 of empty string
-        "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824", // SHA-256 of "hello"
-        "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", // Uppercase
-        "E3b0C44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", // Mixed case
-        "0000000000000000000000000000000000000000000000000000000000000000", // All zeros
-        "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", // All f's
+        "47DEQpj8HBSa-_TImW-5JA", // Truncated SHA-256 of empty string
+        "LPJNul-wow4m6Dsqxbning", // Truncated SHA-256 of "hello"
+        "XohImNooBHFR0OVvjcYpJw", // Truncated SHA-256 of "password"
+        "AAAAAAAAAAAAAAAAAAAAAA", // All A's (valid base64url) - 22 chars
+        "0123456789_-0123456789", // With valid base64url chars - 22 chars
+        "zzzzzzzzzzzzzzzzzzzzzz", // All z's (valid base64url) - 22 chars
       ];
 
       for (const hash of validHashes) {
@@ -27,11 +27,13 @@ describe("InputValidation", () => {
     test("rejects invalid hash formats", () => {
       const invalidHashes = [
         "too_short",
-        "this_is_way_too_long_to_be_a_valid_64_character_hash_and_should_fail",
-        "63_chars_123456789abcdef0123456789abcdef0123456789abcdef012345678", // 63 chars
-        "65_chars_123456789abcdef0123456789abcdef0123456789abcdef0123456789a", // 65 chars
-        "contains_invalid_chars_zzzz456789abcdef0123456789abcdef0123456789ab", // Contains 'z'
-        "contains_special_chars!@#456789abcdef0123456789abcdef0123456789ab", // Special chars
+        "this_is_way_too_long_to_be_a_valid_22_character_hash_and_should_fail",
+        "21_chars_12345678abc", // 21 chars
+        "23_chars_123456789abcde", // 23 chars
+        "contains_invalid+char1", // Contains + (not URL-safe)
+        "contains_invalid/char2", // Contains / (not URL-safe)
+        "contains_invalid=char3", // Contains = (padding not allowed)
+        "contains_special@char4", // Contains @ (invalid)
       ];
 
       for (const hash of invalidHashes) {
@@ -41,7 +43,7 @@ describe("InputValidation", () => {
         } catch (error: any) {
           expect(error.code).toBe(HakanaiErrorCodes.INVALID_HASH);
           expect(error.message).toBe(
-            "Hash must be a 64-character hexadecimal string",
+            "Hash must be a 22-character base64url string (truncated SHA-256)",
           );
         }
       }

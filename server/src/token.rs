@@ -11,7 +11,7 @@ use rand::{TryRngCore, rngs::OsRng};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use hakanai_lib::hash::hash_string;
+use hakanai_lib::hash::sha256_hex_from_string;
 
 const DEFAULT_TOKEN_TTL: u64 = 60 * 60 * 24 * 30; // 30 days in seconds
 
@@ -136,7 +136,7 @@ impl<T: TokenStore> TokenManager<T> {
         ttl: Duration,
     ) -> Result<String, TokenError> {
         let token = Self::generate_token()?;
-        let token_hash = hash_string(&token);
+        let token_hash = sha256_hex_from_string(&token);
         self.token_store
             .store_token(&token_hash, ttl, token_data)
             .await?;
@@ -162,7 +162,7 @@ impl<T: TokenStore> TokenManager<T> {
     /// Create admin token (always creates new token).
     pub async fn create_admin_token(&self) -> Result<String, TokenError> {
         let token = Self::generate_token()?;
-        let token_hash = hash_string(&token);
+        let token_hash = sha256_hex_from_string(&token);
         self.token_store.store_admin_token(&token_hash).await?;
 
         Ok(token)
@@ -187,7 +187,7 @@ impl<T: TokenStore> TokenManager<T> {
 impl<T: TokenStore> TokenValidator for TokenManager<T> {
     /// Validate token and return metadata.
     async fn validate_user_token(&self, token: &str) -> Result<TokenData, TokenError> {
-        let token_hash = hash_string(token);
+        let token_hash = sha256_hex_from_string(token);
 
         match self.token_store.get_token(&token_hash).await? {
             Some(token_data) => Ok(token_data),
@@ -197,7 +197,7 @@ impl<T: TokenStore> TokenValidator for TokenManager<T> {
 
     /// Validate admin token.
     async fn validate_admin_token(&self, token: &str) -> Result<(), TokenError> {
-        let token_hash = hash_string(token);
+        let token_hash = sha256_hex_from_string(token);
 
         match self.token_store.get_admin_token().await? {
             Some(stored_hash) if stored_hash == token_hash => Ok(()),
@@ -215,7 +215,7 @@ impl<T: TokenStore> TokenCreator for TokenManager<T> {
         ttl: Duration,
     ) -> Result<String, TokenError> {
         let token = Self::generate_token()?;
-        let token_hash = hash_string(&token);
+        let token_hash = sha256_hex_from_string(&token);
         self.token_store
             .store_token(&token_hash, ttl, token_data)
             .await?;
@@ -382,7 +382,7 @@ mod tests {
         let manager = TokenManager::new(mock_store.clone());
 
         let test_token = "test_token_123";
-        let test_hash = hash_string(test_token);
+        let test_hash = sha256_hex_from_string(test_token);
         let test_data = TokenData {
             upload_size_limit: Some(5000),
         };
@@ -484,7 +484,7 @@ mod tests {
         let manager = TokenManager::new(mock_store.clone());
 
         let test_token = "admin_token_123";
-        let test_hash = hash_string(test_token);
+        let test_hash = sha256_hex_from_string(test_token);
         mock_store.set_admin_token(&test_hash).await;
 
         let result = manager.validate_admin_token(test_token).await;
@@ -511,7 +511,7 @@ mod tests {
 
         let correct_token = "admin_token_123";
         let wrong_token = "wrong_admin_token";
-        let correct_hash = hash_string(correct_token);
+        let correct_hash = sha256_hex_from_string(correct_token);
         mock_store.set_admin_token(&correct_hash).await;
 
         let result = manager.validate_admin_token(wrong_token).await;

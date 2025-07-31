@@ -411,7 +411,7 @@ const translations: Translations = {
     [I18nKeys.Error.MissingKey]: "Secret key is required",
     [I18nKeys.Error.InvalidKey]: "Secret key has invalid length or format",
     [I18nKeys.Error.InvalidHash]:
-      "Hash format is invalid (must be 64 characters long)",
+      "Hash format is invalid (must be 22 characters long)",
     [I18nKeys.Error.CryptoApiUnavailable]:
       "Web Crypto API is not available in this browser",
     [I18nKeys.Error.InvalidTtl]: "TTL value must be a positive integer",
@@ -633,7 +633,7 @@ const translations: Translations = {
     [I18nKeys.Error.InvalidKey]:
       "Verschlüsselungsschlüssel hat ungültige Länge oder Format",
     [I18nKeys.Error.InvalidHash]:
-      "Hash-Format ist ungültig (muss 64 Zeichen lang sein)",
+      "Hash-Format ist ungültig (muss 22 Zeichen lang sein)",
     [I18nKeys.Error.CryptoApiUnavailable]:
       "Web Crypto API ist in diesem Browser nicht verfügbar",
     [I18nKeys.Error.InvalidTtl]: "TTL-Wert muss eine positive Ganzzahl sein",

@@ -10,7 +10,7 @@ use reqwest::Url;
 use zeroize::{Zeroize, Zeroizing};
 
 use crate::client::{Client, ClientError};
-use crate::hash::hash_bytes;
+use crate::hash::sha256_truncated_base64_from_bytes;
 use crate::models::Payload;
 use crate::options::{SecretReceiveOptions, SecretSendOptions};
 
@@ -185,7 +185,7 @@ impl Client<Payload> for CryptoClient {
         let mut crypto_context = CryptoContext::generate();
 
         let data = Zeroizing::new(payload.serialize()?);
-        let hash = hash_bytes(&data);
+        let hash = sha256_truncated_base64_from_bytes(&data);
 
         let ciphertext = crypto_context.encrypt(&data)?;
 
@@ -257,7 +257,7 @@ fn decrypt(
 }
 
 fn verify_hash(plaintext: &[u8], expected_hash: &str) -> Result<(), ClientError> {
-    let actual_hash = hash_bytes(plaintext);
+    let actual_hash = sha256_truncated_base64_from_bytes(plaintext);
     if actual_hash != expected_hash {
         return Err(ClientError::HashValidationError());
     }

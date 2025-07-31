@@ -12,19 +12,19 @@ describe("UrlParser", () => {
     test("parses URLs with hash correctly", () => {
       const testCases = [
         {
-          url: "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          url: "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:47DEQpj8HBSa-_TImW-5JA",
           expected: {
             secretId: "550e8400-e29b-41d4-a716-446655440000",
             secretKey: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", // 43 chars
-            hash: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            hash: "47DEQpj8HBSa-_TImW-5JA",
           },
         },
         {
-          url: "http://localhost:8080/s/123e4567-e89b-12d3-a456-426614174000#bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb:2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
+          url: "http://localhost:8080/s/123e4567-e89b-12d3-a456-426614174000#bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb:LPJNul-wow4m6Dsqxbning",
           expected: {
             secretId: "123e4567-e89b-12d3-a456-426614174000",
             secretKey: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", // 43 chars
-            hash: "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
+            hash: "LPJNul-wow4m6Dsqxbning",
           },
         },
       ];
@@ -61,10 +61,11 @@ describe("UrlParser", () => {
       }
     });
 
-    test("handles uppercase and mixed case hashes", () => {
+    test("handles valid base64url hash characters", () => {
       const urls = [
-        "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
-        "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:E3b0C44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:47DEQpj8HBSa-_TImW-5JA",
+        "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:LPJNul-wow4m6Dsqxbning",
+        "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:XohImNooBHFR0OVvjcYpJw",
       ];
 
       for (const url of urls) {
@@ -85,7 +86,7 @@ describe("UrlParser", () => {
 
     test("correctly strips hash prefix before splitting", () => {
       const url =
-        "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+        "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:47DEQpj8HBSa-_TImW-5JA";
 
       const result = UrlParser.parseSecretUrl(url);
 
@@ -96,9 +97,7 @@ describe("UrlParser", () => {
       expect(result.secretKey).not.toMatch(/^#/);
 
       // Hash should be valid
-      expect(result.hash).toBe(
-        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      );
+      expect(result.hash).toBe("47DEQpj8HBSa-_TImW-5JA");
     });
 
     test("handles legacy format correctly", () => {
@@ -119,9 +118,11 @@ describe("UrlParser", () => {
 
     test("rejects URLs with invalid hash format", () => {
       const invalidUrls = [
-        "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:invalid_hash",
+        "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:invalid_hash_format",
         "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:too_short",
-        "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:contains_invalid_chars_zzzz456789abcdef0123456789abcdef012345",
+        "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:contains_invalid+chars",
+        "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:contains_invalid/chars",
+        "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:contains_invalid=chars",
       ];
 
       for (const url of invalidUrls) {
@@ -131,7 +132,7 @@ describe("UrlParser", () => {
         } catch (error: any) {
           expect(error.code).toBe(HakanaiErrorCodes.INVALID_HASH);
           expect(error.message).toBe(
-            "Hash must be a 64-character hexadecimal string",
+            "Hash must be a 22-character base64url string (truncated SHA-256)",
           );
         }
       }
@@ -139,8 +140,8 @@ describe("UrlParser", () => {
 
     test("rejects URLs with invalid key format even with valid hash", () => {
       const invalidUrls = [
-        "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#invalid_key:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-        "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#too_short:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#invalid_key:47DEQpj8HBSa-_TImW-5JA",
+        "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#too_short:47DEQpj8HBSa-_TImW-5JA",
       ];
 
       for (const url of invalidUrls) {
@@ -155,8 +156,8 @@ describe("UrlParser", () => {
 
     test("rejects URLs with invalid secret ID even with valid key and hash", () => {
       const invalidUrls = [
-        "https://example.com/s/invalid-uuid#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-        "https://example.com/s/550e8400-e29b-41d4-a716-44665544000Z#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "https://example.com/s/invalid-uuid#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:47DEQpj8HBSa-_TImW-5JA",
+        "https://example.com/s/550e8400-e29b-41d4-a716-44665544000Z#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:47DEQpj8HBSa-_TImW-5JA",
       ];
 
       for (const url of invalidUrls) {
@@ -210,16 +211,14 @@ describe("UrlParser", () => {
       // So fragmentParts[1] would just be "hash", not "hash:extra:data"
       // Let's test this behavior
       const url =
-        "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855:extra:data";
+        "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:47DEQpj8HBSa-_TImW-5JA:extra:data";
 
       // This should actually succeed because fragmentParts[1] is just the valid hash
       const result = UrlParser.parseSecretUrl(url);
       expect(result.secretKey).toBe(
         "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
       );
-      expect(result.hash).toBe(
-        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      );
+      expect(result.hash).toBe("47DEQpj8HBSa-_TImW-5JA");
 
       // The extra parts after the second colon are ignored
     });
@@ -231,13 +230,13 @@ describe("UrlParser", () => {
         );
       } catch (error: any) {
         expect(error.message).toBe(
-          "Hash must be a 64-character hexadecimal string",
+          "Hash must be a 22-character base64url string (truncated SHA-256)",
         );
       }
 
       try {
         UrlParser.parseSecretUrl(
-          "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#invalid:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#invalid:47DEQpj8HBSa-_TImW-5JA",
         );
       } catch (error: any) {
         expect(error.message).toBe(

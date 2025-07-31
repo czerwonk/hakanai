@@ -143,12 +143,11 @@ class HakanaiClient {
     );
   }
 
-  private async sha256FromBytes(bytes: Uint8Array): Promise<string> {
+  private async hashFromBytes(bytes: Uint8Array): Promise<string> {
     const hashBuffer = await crypto.subtle.digest("SHA-256", bytes);
     const hashArray = new Uint8Array(hashBuffer);
-    return Array.from(hashArray)
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
+    const truncated = hashArray.slice(0, 16);
+    return Base64UrlSafe.encode(truncated);
   }
 
   /**
@@ -226,7 +225,7 @@ class HakanaiClient {
           : new Uint8Array(encodedBytes);
 
       const encryptedData = await cryptoContext.encrypt(payloadBytes);
-      const hash = await this.sha256FromBytes(payloadBytes);
+      const hash = await this.hashFromBytes(payloadBytes);
 
       // Clear payload bytes after encryption
       SecureMemory.clearUint8Array(payloadBytes);
@@ -299,7 +298,7 @@ class HakanaiClient {
     plaintext: Uint8Array,
     expectedHash: string,
   ): Promise<void> {
-    const actualHash = await this.sha256FromBytes(plaintext);
+    const actualHash = await this.hashFromBytes(plaintext);
     if (actualHash !== expectedHash) {
       throw new HakanaiError(
         HakanaiErrorCodes.HASH_MISMATCH,

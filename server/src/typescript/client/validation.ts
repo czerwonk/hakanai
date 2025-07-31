@@ -77,10 +77,10 @@ class InputValidation {
     }
 
     // Validate base64url format and length (32 bytes = 43 chars in base64url without padding)
-    if (!/^[0-9a-fA-F]{64}$/.test(hash)) {
+    if (!/^[A-Za-z0-9_-]{22}$/.test(hash)) {
       throw new HakanaiError(
         HakanaiErrorCodes.INVALID_HASH,
-        "Hash must be a 64-character hexadecimal string",
+        "Hash must be a 22-character base64url string (truncated SHA-256)",
       );
     }
   }
