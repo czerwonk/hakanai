@@ -68,6 +68,10 @@ pub async fn send<T: Factory>(factory: T, args: SendArgs) -> Result<()> {
 fn print_link(link: &mut Url, args: SendArgs) -> Result<()> {
     println!("Secret sent successfully!\n");
 
+    if args.no_hash {
+        remove_hash(link);
+    }
+
     if args.separate_key {
         print_link_separate_key(link);
     } else {
@@ -79,6 +83,18 @@ fn print_link(link: &mut Url, args: SendArgs) -> Result<()> {
     }
 
     Ok(())
+}
+
+fn remove_hash(link: &mut Url) {
+    let fragment = link
+        .fragment()
+        .unwrap_or_default()
+        .split(":")
+        .collect::<Vec<&str>>();
+
+    let mut key = fragment[0].to_string();
+    link.set_fragment(Some(&key));
+    key.zeroize();
 }
 
 fn print_qr_code(link: &Url) -> Result<()> {
