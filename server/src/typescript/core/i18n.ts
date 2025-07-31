@@ -248,7 +248,8 @@ const translations: Translations = {
       "Your message will be encrypted before leaving your browser",
     [I18nKeys.Helper.FileSelect]: "File will be encrypted before upload.",
     [I18nKeys.Helper.Token]: "Leave empty if no authentication is required",
-    [I18nKeys.Helper.Key]: "Base64-encoded decryption key (shared separately)",
+    [I18nKeys.Helper.Key]:
+      "Base64-encoded decryption key with optional hash (shared separately)",
     [I18nKeys.Helper.SeparateKey]:
       "When enabled, the URL and decryption key are displayed separately, allowing you to share them through different channels for enhanced security.",
     [I18nKeys.Helper.SaveToken]:
@@ -365,7 +366,7 @@ const translations: Translations = {
       "Secrets are destroyed after being viewed once",
     [I18nKeys.Homepage.Feature3Title]: "Secure",
     [I18nKeys.Homepage.Feature3Description]:
-      "AES-256-GCM encryption with secure key generation",
+      "AES-256-GCM encryption with SHA-256 based content integrity verification",
     [I18nKeys.Homepage.Feature4Title]: "Private",
     [I18nKeys.Homepage.Feature4Description]:
       "The server never sees your unencrypted data",
@@ -470,7 +471,7 @@ const translations: Translations = {
     [I18nKeys.Helper.Token]:
       "Kann leer gelassen werden, wenn keine Authentifizierung erforderlich ist",
     [I18nKeys.Helper.Key]:
-      "Base64-kodierter geheimer Schlüssel (separat geteilt)",
+      "Base64-kodierter geheimer Schlüssel mit optionalen Hash-Informationen (separat geteilt)",
     [I18nKeys.Helper.SeparateKey]:
       "Wenn aktiviert, werden URL und geheimer Schlüssel separat angezeigt, so dass sie über verschiedene Kanäle für erweiterte Sicherheit geteilt werden können.",
     [I18nKeys.Helper.SaveToken]:
@@ -588,7 +589,7 @@ const translations: Translations = {
       "Secrets werden nach dem ersten Abruf gelöscht",
     [I18nKeys.Homepage.Feature3Title]: "Sicher",
     [I18nKeys.Homepage.Feature3Description]:
-      "AES-256-GCM-Verschlüsselung mit sicherer Schlüsselerzeugung",
+      "AES-256-GCM-Verschlüsselung mit SHA-256 basierter Integritätsprüfung",
     [I18nKeys.Homepage.Feature4Title]: "Privat",
     [I18nKeys.Homepage.Feature4Description]:
       "Der Server sieht niemals die unverschlüsselten Daten",
