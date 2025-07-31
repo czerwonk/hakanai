@@ -20,6 +20,8 @@ const HakanaiErrorCodes = {
   MISSING_DECRYPTION_KEY: "MISSING_DECRYPTION_KEY",
   /** Secret is too large */
   PAYLOAD_TOO_LARGE: "PAYLOAD_TOO_LARGE",
+  /** Hash validation of the received secret has failed */
+  HASH_MISMATCH: "HASH_MISMATCH",
 
   // Validation error codes - specific for better translations
   /** Input must be a Uint8Array but received different type */
@@ -58,6 +60,8 @@ const HakanaiErrorCodes = {
   INVALID_SERVER_RESPONSE: "INVALID_SERVER_RESPONSE",
   /** CryptoContext has been disposed */
   CRYPTO_CONTEXT_DISPOSED: "CRYPTO_CONTEXT_DISPOSED",
+  /** Hash format is invalid */
+  INVALID_HASH: "INVALID_HASH",
 } as const;
 
 // Type for error codes

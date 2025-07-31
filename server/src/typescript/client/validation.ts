@@ -64,6 +64,33 @@ class InputValidation {
   }
 
   /**
+   * Validate the format of the hash
+   * @param hash - Hash of the secret key to validate
+   * @throws {HakanaiError} If key format or length is invalid
+   */
+  static validateHash(hash: string): void {
+    if (typeof hash !== "string") {
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_HASH,
+        "Hash must be a string",
+      );
+    }
+
+    if (!hash.trim()) {
+      // empty hash is allowed (no hash provided)
+      return;
+    }
+
+    // Validate base64url format and length (32 bytes = 43 chars in base64url without padding)
+    if (!/^[0-9a-fA-F]{64}$/.test(hash)) {
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_HASH,
+        "Hash must be a 64-character hexadecimal string",
+      );
+    }
+  }
+
+  /**
    * Validate secret ID format (UUID)
    * @param id - Secret ID string to validate
    * @throws {HakanaiError} If ID format is invalid
@@ -163,4 +190,3 @@ class InputValidation {
 }
 
 export { InputValidation };
-

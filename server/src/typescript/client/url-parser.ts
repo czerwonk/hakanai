@@ -9,12 +9,13 @@ class UrlParser {
   /**
    * Parse and validate a secret URL, returning its components
    * @param url - Complete secret URL
-   * @returns Object with validated secretId and secretKey
+   * @returns Object with validated secretId, secretKey and hash (optional)
    * @throws {HakanaiError} If URL or its components are invalid
    */
   static parseSecretUrl(url: string): {
     secretId: string;
     secretKey: string;
+    hash: string;
   } {
     // Basic URL validation
     if (typeof url !== "string" || !url.trim()) {
@@ -54,12 +55,16 @@ class UrlParser {
     const secretId = pathParts[2];
     InputValidation.validateSecretId(secretId);
 
-    const secretKey = urlObj.hash.slice(1);
+    const fragmentParts = urlObj.hash.slice(1).split(":");
+
+    const secretKey = fragmentParts[0];
     InputValidation.validateSecretKey(secretKey);
 
-    return { secretId, secretKey };
+    const hash = fragmentParts[1] ?? "";
+    InputValidation.validateHash(hash);
+
+    return { secretId, secretKey, hash };
   }
 }
 
 export { UrlParser };
-
