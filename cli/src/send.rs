@@ -82,14 +82,13 @@ fn print_link(link: &mut Url, args: SendArgs) -> Result<()> {
 }
 
 fn print_qr_code(link: &Url) -> Result<()> {
-    let code = QrCode::new(link.to_string())?;
+    let code = QrCode::with_error_correction_level(link.to_string(), qrcode::EcLevel::L)?;
     let ascii = code
         .render::<unicode::Dense1x2>()
         .dark_color(unicode::Dense1x2::Dark)
         .light_color(unicode::Dense1x2::Light)
-        .quiet_zone(false)
         .build();
-    println!("\n{ascii}");
+    println!("{ascii}");
 
     Ok(())
 }
