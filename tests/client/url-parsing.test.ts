@@ -80,7 +80,7 @@ describe("UrlParser", () => {
       expect(result.secretKey).toBe(
         "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
       );
-      expect(result.hash).toBe(""); // empty string when colon present but no hash
+      expect(result.hash).toBeUndefined();
     });
 
     test("correctly strips hash prefix before splitting", () => {

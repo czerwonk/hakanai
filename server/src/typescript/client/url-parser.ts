@@ -58,6 +58,12 @@ class UrlParser {
     const fragmentParts = urlObj.hash.slice(1).split(":");
 
     const secretKey = fragmentParts[0];
+    if (!secretKey) {
+      throw new HakanaiError(
+        HakanaiErrorCodes.MISSING_DECRYPTION_KEY,
+        "URL fragment must contain decryption key",
+      );
+    }
     InputValidation.validateSecretKey(secretKey);
 
     const hash = fragmentParts[1];
@@ -65,7 +71,7 @@ class UrlParser {
       InputValidation.validateHash(hash);
     }
 
-    return { secretId, secretKey, hash };
+    return { secretId, secretKey, hash: hash || undefined };
   }
 }
 
