@@ -199,9 +199,48 @@ function createQRDisplayElement(qrSvg: string): HTMLElement {
   const qrContainer = document.createElement("div");
   qrContainer.className = "qr-code-container";
   qrContainer.innerHTML = qrSvg;
+  qrContainer.title = "Click to view full screen";
+
+  // Add click handler for fullscreen
+  qrContainer.addEventListener("click", () => {
+    showQRFullscreen(qrSvg);
+  });
+
   qrSection.appendChild(qrContainer);
 
   return qrSection;
+}
+
+/**
+ * Show QR code in fullscreen modal
+ */
+function showQRFullscreen(qrSvg: string): void {
+  // Create fullscreen overlay
+  const overlay = document.createElement("div");
+  overlay.className = "qr-fullscreen-overlay";
+
+  // Create container for the QR code
+  const qrFullscreenContainer = document.createElement("div");
+  qrFullscreenContainer.className = "qr-fullscreen-container";
+  qrFullscreenContainer.innerHTML = qrSvg;
+
+  overlay.appendChild(qrFullscreenContainer);
+
+  // Close on click anywhere
+  overlay.addEventListener("click", () => {
+    overlay.remove();
+  });
+
+  // Close on Escape key
+  const escapeHandler = (e: KeyboardEvent) => {
+    if (e.key === "Escape") {
+      overlay.remove();
+      document.removeEventListener("keydown", escapeHandler);
+    }
+  };
+  document.addEventListener("keydown", escapeHandler);
+
+  document.body.appendChild(overlay);
 }
 
 /**

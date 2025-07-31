@@ -2254,3 +2254,66 @@ input[type="number"] {
 .button-spacing {
   margin-top: var(--spacing-lg);
 }
+
+/* QR Code styling */
+.qr-code-container {
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out;
+}
+
+.qr-code-container:hover {
+  transform: scale(1.05);
+}
+
+/* QR Code fullscreen overlay */
+.qr-fullscreen-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  cursor: pointer;
+  animation: fadeIn 0.2s ease-in;
+}
+
+.qr-fullscreen-container {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 90vmin;
+  max-height: 90vmin;
+  animation: scaleIn 0.2s ease-out;
+}
+
+.qr-fullscreen-container svg {
+  width: 100%;
+  height: 100%;
+  max-width: 80vmin;
+  max-height: 80vmin;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
