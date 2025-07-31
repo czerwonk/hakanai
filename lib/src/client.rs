@@ -227,6 +227,9 @@ pub enum ClientError {
     /// Base64 decoding error.
     #[error("base64 decoding error")]
     Base64DecodeError(#[from] base64::DecodeError),
+
+    #[error("decrypted data does not match expected hash")]
+    HashValidationError(),
 }
 
 impl From<aes_gcm::Error> for ClientError {

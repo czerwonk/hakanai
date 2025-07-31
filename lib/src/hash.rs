@@ -2,7 +2,12 @@ use sha2::{Digest, Sha256};
 
 /// Hashes a given string using SHA-256 and returns the hexadecimal representation.
 pub fn hash_string(input: &str) -> String {
-    let token_hash = Sha256::digest(input.as_bytes());
+    return hash_bytes(input.as_bytes());
+}
+
+/// Hashes given bytes using SHA-256 and returns the hexadecimal representation.
+pub fn hash_bytes(input: &[u8]) -> String {
+    let token_hash = Sha256::digest(input);
     format!("{token_hash:x}")
 }
 

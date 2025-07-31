@@ -1,4 +1,3 @@
-use core::convert::TryInto;
 use std::time::Duration;
 
 use aes_gcm::aead::rand_core::RngCore;
@@ -11,6 +10,7 @@ use reqwest::Url;
 use zeroize::{Zeroize, Zeroizing};
 
 use crate::client::{Client, ClientError};
+use crate::hash::hash_bytes;
 use crate::models::Payload;
 use crate::options::{SecretReceiveOptions, SecretSendOptions};
 
@@ -115,14 +115,6 @@ impl Drop for CryptoContext {
     }
 }
 
-impl TryFrom<&str> for CryptoContext {
-    type Error = ClientError;
-
-    fn try_from(fragment: &str) -> Result<Self, Self::Error> {
-        CryptoContext::from_key_base64(fragment)
-    }
-}
-
 /// A client that wraps another `Client` to provide cryptographic functionalities.
 ///
 /// This struct is responsible for encrypting data before sending and decrypting
@@ -190,7 +182,10 @@ impl Client<Payload> for CryptoClient {
         opts: Option<SecretSendOptions>,
     ) -> Result<Url, ClientError> {
         let mut crypto_context = CryptoContext::generate();
+
         let data = Zeroizing::new(payload.serialize()?);
+        let hash = hash_bytes(&data);
+
         let ciphertext = crypto_context.encrypt(&data)?;
 
         let payload = crypto_context.prepend_nonce_to_ciphertext(&ciphertext);
@@ -205,7 +200,7 @@ impl Client<Payload> for CryptoClient {
             .send_secret(base_url, encoded_data, ttl, token, opts)
             .await?;
 
-        let url = append_key_to_link(res, &crypto_context);
+        let url = append_to_link(res, &crypto_context, &hash);
 
         Ok(url)
     }
@@ -215,21 +210,28 @@ impl Client<Payload> for CryptoClient {
         url: Url,
         opts: Option<SecretReceiveOptions>,
     ) -> Result<Payload, ClientError> {
-        let crypto_context: CryptoContext = url
+        let parts = url
             .fragment()
             .ok_or(ClientError::Custom("No key in URL".to_string()))?
-            .try_into()?;
+            .split(':')
+            .collect::<Vec<&str>>();
+
+        let crypto_context = CryptoContext::from_key_base64(parts[0])?;
+        let hash = parts.get(1).map(|&s| s.to_string());
 
         let encoded_data = self.inner_client.receive_secret(url, opts).await?;
-        decrypt(encoded_data, crypto_context)
+        decrypt(encoded_data, crypto_context, hash)
     }
 }
 
-fn append_key_to_link(url: Url, crypto_context: &CryptoContext) -> Url {
+fn append_to_link(url: Url, crypto_context: &CryptoContext, hash: &str) -> Url {
     let mut link = url.clone();
 
-    let key_base64 = crypto_context.key_as_base64();
-    link.set_fragment(Some(&key_base64));
+    let mut fragment = crypto_context.key_as_base64();
+    fragment.push_str(&format!(":{}", hash));
+
+    link.set_fragment(Some(&fragment));
+    fragment.zeroize();
 
     link
 }
@@ -237,12 +239,20 @@ fn append_key_to_link(url: Url, crypto_context: &CryptoContext) -> Url {
 fn decrypt(
     encoded_data: Vec<u8>,
     mut crypto_context: CryptoContext,
+    hash: Option<String>,
 ) -> Result<Payload, ClientError> {
     let payload = Zeroizing::new(base64::prelude::BASE64_STANDARD.decode(encoded_data)?);
 
     crypto_context.import_nonce(&payload)?;
     let ciphertext = &payload[AES_GCM_NONCE_SIZE..];
     let plaintext = Zeroizing::new(crypto_context.decrypt(ciphertext)?);
+
+    if let Some(expected_hash) = hash {
+        let actual_hash = hash_bytes(&plaintext);
+        if actual_hash != expected_hash {
+            return Err(ClientError::HashValidationError());
+        }
+    }
 
     let payload = Payload::deserialize(&plaintext)?;
     Ok(payload)
@@ -335,7 +345,7 @@ mod tests {
         let crypto_context = CryptoContext::generate();
 
         let key = crypto_context.key();
-        let result = append_key_to_link(url.clone(), &crypto_context);
+        let result = append_to_link(url.clone(), &crypto_context, "xyz");
 
         assert!(
             result

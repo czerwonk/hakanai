@@ -11,7 +11,7 @@ use rand::{TryRngCore, rngs::OsRng};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use crate::hash::hash_string;
+use hakanai_lib::hash::hash_string;
 
 const DEFAULT_TOKEN_TTL: u64 = 60 * 60 * 24 * 30; // 30 days in seconds
 
