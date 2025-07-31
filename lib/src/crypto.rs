@@ -250,12 +250,21 @@ fn decrypt(
     if let Some(expected_hash) = hash {
         let actual_hash = hash_bytes(&plaintext);
         if actual_hash != expected_hash {
-            return Err(ClientError::HashValidationError());
+            verify_hash(&plaintext, &expected_hash)?;
         }
     }
 
     let payload = Payload::deserialize(&plaintext)?;
     Ok(payload)
+}
+
+fn verify_hash(plaintext: &[u8], expected_hash: &str) -> Result<(), ClientError> {
+    let actual_hash = hash_bytes(plaintext);
+    if actual_hash != expected_hash {
+        return Err(ClientError::HashValidationError());
+    }
+
+    Ok(())
 }
 
 #[cfg(test)]
