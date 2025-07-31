@@ -250,9 +250,10 @@ class HakanaiClient {
   private validateAndParseReceiveUrl(url: string): {
     secretId: string;
     key: Uint8Array;
+    hash?: string;
   } {
     // Use URL parser for parsing
-    const { secretId, secretKey } = UrlParser.parseSecretUrl(url);
+    const { secretId, secretKey, hash } = UrlParser.parseSecretUrl(url);
 
     // Convert validated key string to bytes
     let key: Uint8Array;
@@ -265,7 +266,7 @@ class HakanaiClient {
       );
     }
 
-    return { secretId, key };
+    return { secretId, key, hash };
   }
 
   /**
@@ -294,6 +295,19 @@ class HakanaiClient {
     );
   }
 
+  private async verifyHash(
+    plaintext: Uint8Array,
+    expectedHash: string,
+  ): Promise<void> {
+    const actualHash = await this.sha256FromBytes(plaintext);
+    if (actualHash !== expectedHash) {
+      throw new HakanaiError(
+        HakanaiErrorCodes.HASH_MISMATCH,
+        "Hash verification failed",
+      );
+    }
+  }
+
   /**
    * Retrieve and decrypt a payload from the server
    * @param url - Full URL with format: https://server/s/{id}#{key}
@@ -306,7 +320,7 @@ class HakanaiClient {
    * @throws {Error} For invalid URL format or decryption failures
    */
   async receivePayload(url: string): Promise<PayloadData> {
-    const { secretId, key } = this.validateAndParseReceiveUrl(url);
+    const { secretId, key, hash } = this.validateAndParseReceiveUrl(url);
 
     const response = await fetch(`${this.baseUrl}/api/v1/secret/${secretId}`);
 
@@ -328,6 +342,11 @@ class HakanaiClient {
     const cryptoContext = await CryptoContext.fromKey(key);
     try {
       const decryptedBytes = await cryptoContext.decrypt(encryptedData);
+
+      if (hash) {
+        await this.verifyHash(decryptedBytes, hash);
+      }
+
       const decryptedJson = new TextDecoder().decode(decryptedBytes);
 
       // Clear decrypted bytes after converting to string

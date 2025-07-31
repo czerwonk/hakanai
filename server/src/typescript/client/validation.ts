@@ -76,11 +76,6 @@ class InputValidation {
       );
     }
 
-    if (!hash.trim()) {
-      // empty hash is allowed (no hash provided)
-      return;
-    }
-
     // Validate base64url format and length (32 bytes = 43 chars in base64url without padding)
     if (!/^[0-9a-fA-F]{64}$/.test(hash)) {
       throw new HakanaiError(

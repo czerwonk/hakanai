@@ -42,7 +42,7 @@ describe("UrlParser", () => {
           expected: {
             secretId: "550e8400-e29b-41d4-a716-446655440000",
             secretKey: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", // 43 chars
-            hash: "", // No hash in legacy format
+            hash: undefined, // No hash in legacy format
           },
         },
         {
@@ -50,7 +50,7 @@ describe("UrlParser", () => {
           expected: {
             secretId: "123e4567-e89b-12d3-a456-426614174000",
             secretKey: "ccccccccccccccccccccccccccccccccccccccccccc", // 43 chars
-            hash: "",
+            hash: undefined,
           },
         },
       ];
@@ -80,7 +80,7 @@ describe("UrlParser", () => {
       expect(result.secretKey).toBe(
         "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
       );
-      expect(result.hash).toBe(""); // Empty string after colon
+      expect(result.hash).toBe(""); // empty string when colon present but no hash
     });
 
     test("correctly strips hash prefix before splitting", () => {
@@ -113,8 +113,8 @@ describe("UrlParser", () => {
       );
       expect(result.secretKey).not.toMatch(/^#/);
 
-      // Hash should be empty for legacy URLs
-      expect(result.hash).toBe("");
+      // Hash should be undefined for legacy URLs
+      expect(result.hash).toBeUndefined();
     });
 
     test("rejects URLs with invalid hash format", () => {
@@ -214,9 +214,13 @@ describe("UrlParser", () => {
 
       // This should actually succeed because fragmentParts[1] is just the valid hash
       const result = UrlParser.parseSecretUrl(url);
-      expect(result.secretKey).toBe("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-      expect(result.hash).toBe("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
-      
+      expect(result.secretKey).toBe(
+        "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      );
+      expect(result.hash).toBe(
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      );
+
       // The extra parts after the second colon are ignored
     });
 
@@ -249,4 +253,3 @@ describe("UrlParser", () => {
     });
   });
 });
-

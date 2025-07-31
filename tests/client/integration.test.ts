@@ -5,6 +5,7 @@
 
 import {
   HakanaiClient,
+  HakanaiErrorCodes,
   Base64UrlSafe,
 } from "../../server/src/typescript/hakanai-client";
 
@@ -278,5 +279,37 @@ describe("HakanaiClient Integration", () => {
     const decoder = new TextDecoder();
     const decodedString = decoder.decode(decodedBytes);
     expect(decodedString).toBe(originalText);
+  });
+
+  test("hash mismatch validation fails", async () => {
+    const originalText = "This is a test secret for hash validation";
+    const textBytes = encodeText(originalText);
+
+    const originalPayload = client.createPayload();
+    originalPayload.setFromBytes!(textBytes);
+
+    // Send the secret to get a valid URL
+    const secretUrl = await client.sendPayload(originalPayload, 3600);
+
+    // Parse the URL and tamper with the hash
+    const urlObj = new URL(secretUrl);
+    const fragmentParts = urlObj.hash.slice(1).split(":");
+    const key = fragmentParts[0];
+    const originalHash = fragmentParts[1];
+
+    // Create a tampered hash (flip the last character)
+    const tamperedHash =
+      originalHash.slice(0, -1) + (originalHash.slice(-1) === "a" ? "b" : "a");
+    const tamperedUrl = `${urlObj.origin}${urlObj.pathname}#${key}:${tamperedHash}`;
+
+    // Attempt to retrieve with tampered hash should fail
+    await expect(client.receivePayload(tamperedUrl)).rejects.toThrow();
+
+    try {
+      await client.receivePayload(tamperedUrl);
+    } catch (error: any) {
+      expect(error.code).toBe(HakanaiErrorCodes.HASH_MISMATCH);
+      expect(error.message).toContain("Hash verification failed");
+    }
   });
 });

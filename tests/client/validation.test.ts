@@ -24,11 +24,6 @@ describe("InputValidation", () => {
       }
     });
 
-    test("accepts empty hash (legacy URL support)", () => {
-      expect(() => InputValidation.validateHash("")).not.toThrow();
-      expect(() => InputValidation.validateHash("   ")).not.toThrow(); // Whitespace only
-    });
-
     test("rejects invalid hash formats", () => {
       const invalidHashes = [
         "too_short",

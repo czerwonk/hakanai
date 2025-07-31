@@ -15,7 +15,7 @@ class UrlParser {
   static parseSecretUrl(url: string): {
     secretId: string;
     secretKey: string;
-    hash: string;
+    hash?: string;
   } {
     // Basic URL validation
     if (typeof url !== "string" || !url.trim()) {
@@ -60,8 +60,10 @@ class UrlParser {
     const secretKey = fragmentParts[0];
     InputValidation.validateSecretKey(secretKey);
 
-    const hash = fragmentParts[1] ?? "";
-    InputValidation.validateHash(hash);
+    const hash = fragmentParts[1];
+    if (hash) {
+      InputValidation.validateHash(hash);
+    }
 
     return { secretId, secretKey, hash };
   }
