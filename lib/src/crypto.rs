@@ -248,10 +248,7 @@ fn decrypt(
     let plaintext = Zeroizing::new(crypto_context.decrypt(ciphertext)?);
 
     if let Some(expected_hash) = hash {
-        let actual_hash = hash_bytes(&plaintext);
-        if actual_hash != expected_hash {
-            verify_hash(&plaintext, &expected_hash)?;
-        }
+        verify_hash(&plaintext, &expected_hash)?;
     }
 
     let payload = Payload::deserialize(&plaintext)?;
@@ -419,6 +416,100 @@ mod tests {
         assert!(
             matches!(result, Err(ClientError::CryptoError(msg)) if msg.contains("AES-GCM error"))
         );
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_receive_secret_with_invalid_hash() -> Result<()> {
+        // First, create a valid encrypted secret
+        let mock_client =
+            MockClient::new().with_send_success(Url::parse("https://example.com/secret/test123")?);
+        let crypto_client = CryptoClient::new(Box::new(mock_client.clone()));
+
+        let base_url = Url::parse("https://example.com")?;
+        let payload = Payload {
+            data: "Test secret with hash".to_string(),
+            filename: None,
+        };
+        let ttl = Duration::from_secs(3600);
+        let token = "test_token".to_string();
+
+        // Send the secret to get encrypted data and URL with hash
+        let send_result = crypto_client
+            .send_secret(base_url, payload, ttl, token, None)
+            .await?;
+
+        // Extract the encrypted data
+        let encrypted_data = mock_client.get_sent_data().ok_or("No sent data")?;
+
+        // Modify the URL to have an invalid hash
+        let mut modified_url = send_result.clone();
+        let fragment_parts: Vec<&str> = send_result
+            .fragment()
+            .ok_or("No fragment")?
+            .split(':')
+            .collect();
+
+        // Keep the key but change the hash
+        let modified_fragment = format!("{}:invalidhash123", fragment_parts[0]);
+        modified_url.set_fragment(Some(&modified_fragment));
+
+        // Try to receive with invalid hash
+        let mock_client_receive = MockClient::new().with_receive_success(encrypted_data);
+        let crypto_client_receive = CryptoClient::new(Box::new(mock_client_receive));
+
+        let result = crypto_client_receive
+            .receive_secret(modified_url, None)
+            .await;
+
+        assert!(matches!(result, Err(ClientError::HashValidationError())));
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_receive_secret_without_hash() -> Result<()> {
+        // Create a valid encrypted secret
+        let mock_client =
+            MockClient::new().with_send_success(Url::parse("https://example.com/secret/test123")?);
+        let crypto_client = CryptoClient::new(Box::new(mock_client.clone()));
+
+        let base_url = Url::parse("https://example.com")?;
+        let payload = Payload {
+            data: "Test secret without hash".to_string(),
+            filename: None,
+        };
+        let ttl = Duration::from_secs(3600);
+        let token = "test_token".to_string();
+
+        // Send the secret
+        let send_result = crypto_client
+            .send_secret(base_url, payload.clone(), ttl, token, None)
+            .await?;
+
+        // Extract the encrypted data
+        let encrypted_data = mock_client.get_sent_data().ok_or("No sent data")?;
+
+        // Remove the hash from the URL (keep only the key)
+        let mut url_without_hash = send_result.clone();
+        let fragment_parts: Vec<&str> = send_result
+            .fragment()
+            .ok_or("No fragment")?
+            .split(':')
+            .collect();
+
+        // Set fragment to only the key (no hash)
+        url_without_hash.set_fragment(Some(fragment_parts[0]));
+
+        // Receive without hash - should succeed
+        let mock_client_receive = MockClient::new().with_receive_success(encrypted_data);
+        let crypto_client_receive = CryptoClient::new(Box::new(mock_client_receive));
+
+        let result = crypto_client_receive
+            .receive_secret(url_without_hash, None)
+            .await?;
+
+        // Should decrypt successfully without hash validation
+        assert_eq!(result.data, payload.data);
         Ok(())
     }
 }
