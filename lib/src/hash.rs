@@ -2,7 +2,7 @@ use sha2::{Digest, Sha256};
 
 /// Hashes a given string using SHA-256 and returns the hexadecimal representation.
 pub fn hash_string(input: &str) -> String {
-    return hash_bytes(input.as_bytes());
+    hash_bytes(input.as_bytes())
 }
 
 /// Hashes given bytes using SHA-256 and returns the hexadecimal representation.

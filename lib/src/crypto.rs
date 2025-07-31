@@ -229,7 +229,7 @@ fn append_to_link(url: Url, crypto_context: &CryptoContext, hash: &str) -> Url {
     let mut link = url.clone();
 
     let mut fragment = crypto_context.key_as_base64();
-    fragment.push_str(&format!(":{}", hash));
+    fragment.push_str(&format!(":{hash}"));
 
     link.set_fragment(Some(&fragment));
     fragment.zeroize();
