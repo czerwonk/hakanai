@@ -143,6 +143,14 @@ class HakanaiClient {
     );
   }
 
+  private async sha256FromBytes(bytes: Uint8Array): Promise<string> {
+    const hashBuffer = await crypto.subtle.digest("SHA-256", bytes);
+    const hashArray = new Uint8Array(hashBuffer);
+    return Array.from(hashArray)
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+  }
+
   /**
    * Send encrypted data to the server via HTTP
    * @private
@@ -218,6 +226,7 @@ class HakanaiClient {
           : new Uint8Array(encodedBytes);
 
       const encryptedData = await cryptoContext.encrypt(payloadBytes);
+      const hash = await this.sha256FromBytes(payloadBytes);
 
       // Clear payload bytes after encryption
       SecureMemory.clearUint8Array(payloadBytes);
@@ -228,7 +237,7 @@ class HakanaiClient {
         authToken,
       );
 
-      return `${this.baseUrl}/s/${secretId}#${cryptoContext.getKeyBase64()}`;
+      return `${this.baseUrl}/s/${secretId}#${cryptoContext.getKeyBase64()}:${hash}`;
     } finally {
       cryptoContext.dispose();
     }

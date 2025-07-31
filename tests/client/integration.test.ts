@@ -97,7 +97,7 @@ describe("HakanaiClient Integration", () => {
     const secretUrl = await client.sendPayload(originalPayload, 3600);
 
     expect(secretUrl).toMatch(
-      /^http:\/\/localhost:8080\/s\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}#[A-Za-z0-9_-]+$/i,
+      /^http:\/\/localhost:8080\/s\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}#[A-Za-z0-9_-]+:[0-9a-f]{64}$/i,
     );
 
     // Receive the secret
@@ -119,7 +119,7 @@ describe("HakanaiClient Integration", () => {
     const secretUrl = await client.sendPayload(originalPayload, 1800);
 
     expect(secretUrl).toMatch(
-      /^http:\/\/localhost:8080\/s\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}#[A-Za-z0-9_-]+$/i,
+      /^http:\/\/localhost:8080\/s\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}#[A-Za-z0-9_-]+:[0-9a-f]{64}$/i,
     );
 
     // Receive the secret
@@ -223,12 +223,22 @@ describe("HakanaiClient Integration", () => {
     expect(urlObj.pathname).toMatch(
       /^\/s\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
     );
-    expect(urlObj.hash).toMatch(/^#[A-Za-z0-9_-]+$/);
+    expect(urlObj.hash).toMatch(/^#[A-Za-z0-9_-]+:[0-9a-f]{64}$/);
+
+    // Parse key and hash from fragment
+    const fragmentParts = urlObj.hash.slice(1).split(":");
+    expect(fragmentParts).toHaveLength(2);
+
+    const keyBase64 = fragmentParts[0];
+    const hash = fragmentParts[1];
 
     // Key should be exactly 32 bytes when decoded
-    const keyBase64 = urlObj.hash.slice(1);
     const keyBytes = Base64UrlSafe.decode(keyBase64);
     expect(keyBytes).toHaveLength(32);
+
+    // Hash should be exactly 64 hex characters
+    expect(hash).toMatch(/^[0-9a-f]{64}$/);
+    expect(hash).toHaveLength(64);
   });
 
   test("PayloadData decode() method works correctly", async () => {
