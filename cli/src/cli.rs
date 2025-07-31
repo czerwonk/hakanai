@@ -81,6 +81,7 @@ pub struct SendArgs {
     pub separate_key: bool,
 
     #[arg(
+        short = 'q',
         long = "qr-code",
         env = "HAKANAI_QR_CODE",
         help = "Print URL also as QR code"
