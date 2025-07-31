@@ -46,11 +46,15 @@ export function secureInputClear(input: HTMLInputElement): void {
 
   const length = input.value.length;
 
-  // Multiple overwrite passes
+  // Multiple overwrite passes with cryptographically secure random values
   for (let i = 0; i < 3; i++) {
-    input.value = Array(length)
-      .fill(0)
-      .map(() => String.fromCharCode(Math.floor(Math.random() * 256)))
+    // Use crypto.getRandomValues for secure random data
+    const randomBytes = new Uint8Array(length);
+    crypto.getRandomValues(randomBytes);
+
+    // Convert to string characters
+    input.value = Array.from(randomBytes)
+      .map((byte) => String.fromCharCode(byte))
       .join("");
   }
 

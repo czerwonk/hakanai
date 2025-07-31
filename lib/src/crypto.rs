@@ -1,4 +1,3 @@
-use core::convert::TryInto;
 use std::time::Duration;
 
 use aes_gcm::aead::rand_core::RngCore;
@@ -11,6 +10,7 @@ use reqwest::Url;
 use zeroize::{Zeroize, Zeroizing};
 
 use crate::client::{Client, ClientError};
+use crate::hash::hash_bytes;
 use crate::models::Payload;
 use crate::options::{SecretReceiveOptions, SecretSendOptions};
 
@@ -115,21 +115,14 @@ impl Drop for CryptoContext {
     }
 }
 
-impl TryFrom<&str> for CryptoContext {
-    type Error = ClientError;
-
-    fn try_from(fragment: &str) -> Result<Self, Self::Error> {
-        CryptoContext::from_key_base64(fragment)
-    }
-}
-
 /// A client that wraps another `Client` to provide cryptographic functionalities.
 ///
 /// This struct is responsible for encrypting data before sending and decrypting
 /// it upon reception, ensuring that secrets are transmitted securely.
 ///
 /// The `CryptoClient` uses AES-256-GCM for authenticated encryption and embeds
-/// the encryption key in the URL fragment for secure sharing.
+/// the encryption key and content hash in the URL fragment (`#key:hash`) for secure sharing
+/// with automatic tamper detection.
 ///
 /// **Note:** This is an internal implementation detail. Users should use `client::new()`
 /// which returns a client with encryption already configured.
@@ -159,7 +152,7 @@ impl TryFrom<&str> for CryptoContext {
 ///     None,
 /// ).await?;
 ///
-/// // The URL contains the encryption key in the fragment
+/// // The URL contains the encryption key and hash in the fragment (#key:hash)
 /// println!("Share this URL: {}", secret_url);
 ///
 /// // Receive the secret (automatically decrypted)
@@ -190,7 +183,10 @@ impl Client<Payload> for CryptoClient {
         opts: Option<SecretSendOptions>,
     ) -> Result<Url, ClientError> {
         let mut crypto_context = CryptoContext::generate();
+
         let data = Zeroizing::new(payload.serialize()?);
+        let hash = hash_bytes(&data);
+
         let ciphertext = crypto_context.encrypt(&data)?;
 
         let payload = crypto_context.prepend_nonce_to_ciphertext(&ciphertext);
@@ -205,7 +201,7 @@ impl Client<Payload> for CryptoClient {
             .send_secret(base_url, encoded_data, ttl, token, opts)
             .await?;
 
-        let url = append_key_to_link(res, &crypto_context);
+        let url = append_to_link(res, &crypto_context, &hash);
 
         Ok(url)
     }
@@ -215,21 +211,28 @@ impl Client<Payload> for CryptoClient {
         url: Url,
         opts: Option<SecretReceiveOptions>,
     ) -> Result<Payload, ClientError> {
-        let crypto_context: CryptoContext = url
+        let parts = url
             .fragment()
             .ok_or(ClientError::Custom("No key in URL".to_string()))?
-            .try_into()?;
+            .split(':')
+            .collect::<Vec<&str>>();
+
+        let crypto_context = CryptoContext::from_key_base64(parts[0])?;
+        let hash = parts.get(1).map(|&s| s.to_string());
 
         let encoded_data = self.inner_client.receive_secret(url, opts).await?;
-        decrypt(encoded_data, crypto_context)
+        decrypt(encoded_data, crypto_context, hash)
     }
 }
 
-fn append_key_to_link(url: Url, crypto_context: &CryptoContext) -> Url {
+fn append_to_link(url: Url, crypto_context: &CryptoContext, hash: &str) -> Url {
     let mut link = url.clone();
 
-    let key_base64 = crypto_context.key_as_base64();
-    link.set_fragment(Some(&key_base64));
+    let mut fragment = crypto_context.key_as_base64();
+    fragment.push_str(&format!(":{hash}"));
+
+    link.set_fragment(Some(&fragment));
+    fragment.zeroize();
 
     link
 }
@@ -237,6 +240,7 @@ fn append_key_to_link(url: Url, crypto_context: &CryptoContext) -> Url {
 fn decrypt(
     encoded_data: Vec<u8>,
     mut crypto_context: CryptoContext,
+    hash: Option<String>,
 ) -> Result<Payload, ClientError> {
     let payload = Zeroizing::new(base64::prelude::BASE64_STANDARD.decode(encoded_data)?);
 
@@ -244,8 +248,21 @@ fn decrypt(
     let ciphertext = &payload[AES_GCM_NONCE_SIZE..];
     let plaintext = Zeroizing::new(crypto_context.decrypt(ciphertext)?);
 
+    if let Some(expected_hash) = hash {
+        verify_hash(&plaintext, &expected_hash)?;
+    }
+
     let payload = Payload::deserialize(&plaintext)?;
     Ok(payload)
+}
+
+fn verify_hash(plaintext: &[u8], expected_hash: &str) -> Result<(), ClientError> {
+    let actual_hash = hash_bytes(plaintext);
+    if actual_hash != expected_hash {
+        return Err(ClientError::HashValidationError());
+    }
+
+    Ok(())
 }
 
 #[cfg(test)]
@@ -335,7 +352,7 @@ mod tests {
         let crypto_context = CryptoContext::generate();
 
         let key = crypto_context.key();
-        let result = append_key_to_link(url.clone(), &crypto_context);
+        let result = append_to_link(url.clone(), &crypto_context, "xyz");
 
         assert!(
             result
@@ -400,6 +417,100 @@ mod tests {
         assert!(
             matches!(result, Err(ClientError::CryptoError(msg)) if msg.contains("AES-GCM error"))
         );
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_receive_secret_with_invalid_hash() -> Result<()> {
+        // First, create a valid encrypted secret
+        let mock_client =
+            MockClient::new().with_send_success(Url::parse("https://example.com/secret/test123")?);
+        let crypto_client = CryptoClient::new(Box::new(mock_client.clone()));
+
+        let base_url = Url::parse("https://example.com")?;
+        let payload = Payload {
+            data: "Test secret with hash".to_string(),
+            filename: None,
+        };
+        let ttl = Duration::from_secs(3600);
+        let token = "test_token".to_string();
+
+        // Send the secret to get encrypted data and URL with hash
+        let send_result = crypto_client
+            .send_secret(base_url, payload, ttl, token, None)
+            .await?;
+
+        // Extract the encrypted data
+        let encrypted_data = mock_client.get_sent_data().ok_or("No sent data")?;
+
+        // Modify the URL to have an invalid hash
+        let mut modified_url = send_result.clone();
+        let fragment_parts: Vec<&str> = send_result
+            .fragment()
+            .ok_or("No fragment")?
+            .split(':')
+            .collect();
+
+        // Keep the key but change the hash
+        let modified_fragment = format!("{}:invalidhash123", fragment_parts[0]);
+        modified_url.set_fragment(Some(&modified_fragment));
+
+        // Try to receive with invalid hash
+        let mock_client_receive = MockClient::new().with_receive_success(encrypted_data);
+        let crypto_client_receive = CryptoClient::new(Box::new(mock_client_receive));
+
+        let result = crypto_client_receive
+            .receive_secret(modified_url, None)
+            .await;
+
+        assert!(matches!(result, Err(ClientError::HashValidationError())));
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_receive_secret_without_hash() -> Result<()> {
+        // Create a valid encrypted secret
+        let mock_client =
+            MockClient::new().with_send_success(Url::parse("https://example.com/secret/test123")?);
+        let crypto_client = CryptoClient::new(Box::new(mock_client.clone()));
+
+        let base_url = Url::parse("https://example.com")?;
+        let payload = Payload {
+            data: "Test secret without hash".to_string(),
+            filename: None,
+        };
+        let ttl = Duration::from_secs(3600);
+        let token = "test_token".to_string();
+
+        // Send the secret
+        let send_result = crypto_client
+            .send_secret(base_url, payload.clone(), ttl, token, None)
+            .await?;
+
+        // Extract the encrypted data
+        let encrypted_data = mock_client.get_sent_data().ok_or("No sent data")?;
+
+        // Remove the hash from the URL (keep only the key)
+        let mut url_without_hash = send_result.clone();
+        let fragment_parts: Vec<&str> = send_result
+            .fragment()
+            .ok_or("No fragment")?
+            .split(':')
+            .collect();
+
+        // Set fragment to only the key (no hash)
+        url_without_hash.set_fragment(Some(fragment_parts[0]));
+
+        // Receive without hash - should succeed
+        let mock_client_receive = MockClient::new().with_receive_success(encrypted_data);
+        let crypto_client_receive = CryptoClient::new(Box::new(mock_client_receive));
+
+        let result = crypto_client_receive
+            .receive_secret(url_without_hash, None)
+            .await?;
+
+        // Should decrypt successfully without hash validation
+        assert_eq!(result.data, payload.data);
         Ok(())
     }
 }

@@ -227,6 +227,9 @@ pub enum ClientError {
     /// Base64 decoding error.
     #[error("base64 decoding error")]
     Base64DecodeError(#[from] base64::DecodeError),
+
+    #[error("decrypted data does not match expected hash")]
+    HashValidationError(),
 }
 
 impl From<aes_gcm::Error> for ClientError {
@@ -265,7 +268,7 @@ impl From<aes_gcm::Error> for ClientError {
 ///     None,
 /// ).await?;
 ///
-/// // The URL contains the encryption key in the fragment
+/// // The URL contains the encryption key and hash in the fragment (#key:hash)
 /// println!("Share this URL: {}", url);
 /// # Ok(())
 /// # }

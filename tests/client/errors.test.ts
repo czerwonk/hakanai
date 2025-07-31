@@ -176,7 +176,7 @@ describe("Error Handling", () => {
 describe("Error Code Constants", () => {
   test("Error codes are readonly constants", () => {
     const codes = Object.keys(HakanaiErrorCodes);
-    expect(codes.length).toBe(26);
+    expect(codes.length).toBe(28);
 
     expect(codes).toContain("AUTHENTICATION_REQUIRED");
     expect(codes).toContain("INVALID_TOKEN");
@@ -204,6 +204,8 @@ describe("Error Code Constants", () => {
     expect(codes).toContain("INVALID_PAYLOAD");
     expect(codes).toContain("INVALID_SERVER_RESPONSE");
     expect(codes).toContain("CRYPTO_CONTEXT_DISPOSED");
+    expect(codes).toContain("INVALID_HASH");
+    expect(codes).toContain("HASH_MISMATCH");
   });
 
   test("Error codes can be used for comparison", () => {

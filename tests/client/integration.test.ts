@@ -5,6 +5,7 @@
 
 import {
   HakanaiClient,
+  HakanaiErrorCodes,
   Base64UrlSafe,
 } from "../../server/src/typescript/hakanai-client";
 
@@ -97,7 +98,7 @@ describe("HakanaiClient Integration", () => {
     const secretUrl = await client.sendPayload(originalPayload, 3600);
 
     expect(secretUrl).toMatch(
-      /^http:\/\/localhost:8080\/s\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}#[A-Za-z0-9_-]+$/i,
+      /^http:\/\/localhost:8080\/s\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}#[A-Za-z0-9_-]+:[0-9a-f]{64}$/i,
     );
 
     // Receive the secret
@@ -119,7 +120,7 @@ describe("HakanaiClient Integration", () => {
     const secretUrl = await client.sendPayload(originalPayload, 1800);
 
     expect(secretUrl).toMatch(
-      /^http:\/\/localhost:8080\/s\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}#[A-Za-z0-9_-]+$/i,
+      /^http:\/\/localhost:8080\/s\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}#[A-Za-z0-9_-]+:[0-9a-f]{64}$/i,
     );
 
     // Receive the secret
@@ -223,12 +224,22 @@ describe("HakanaiClient Integration", () => {
     expect(urlObj.pathname).toMatch(
       /^\/s\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
     );
-    expect(urlObj.hash).toMatch(/^#[A-Za-z0-9_-]+$/);
+    expect(urlObj.hash).toMatch(/^#[A-Za-z0-9_-]+:[0-9a-f]{64}$/);
+
+    // Parse key and hash from fragment
+    const fragmentParts = urlObj.hash.slice(1).split(":");
+    expect(fragmentParts).toHaveLength(2);
+
+    const keyBase64 = fragmentParts[0];
+    const hash = fragmentParts[1];
 
     // Key should be exactly 32 bytes when decoded
-    const keyBase64 = urlObj.hash.slice(1);
     const keyBytes = Base64UrlSafe.decode(keyBase64);
     expect(keyBytes).toHaveLength(32);
+
+    // Hash should be exactly 64 hex characters
+    expect(hash).toMatch(/^[0-9a-f]{64}$/);
+    expect(hash).toHaveLength(64);
   });
 
   test("PayloadData decode() method works correctly", async () => {
@@ -268,5 +279,37 @@ describe("HakanaiClient Integration", () => {
     const decoder = new TextDecoder();
     const decodedString = decoder.decode(decodedBytes);
     expect(decodedString).toBe(originalText);
+  });
+
+  test("hash mismatch validation fails", async () => {
+    const originalText = "This is a test secret for hash validation";
+    const textBytes = encodeText(originalText);
+
+    const originalPayload = client.createPayload();
+    originalPayload.setFromBytes!(textBytes);
+
+    // Send the secret to get a valid URL
+    const secretUrl = await client.sendPayload(originalPayload, 3600);
+
+    // Parse the URL and tamper with the hash
+    const urlObj = new URL(secretUrl);
+    const fragmentParts = urlObj.hash.slice(1).split(":");
+    const key = fragmentParts[0];
+    const originalHash = fragmentParts[1];
+
+    // Create a tampered hash (flip the last character)
+    const tamperedHash =
+      originalHash.slice(0, -1) + (originalHash.slice(-1) === "a" ? "b" : "a");
+    const tamperedUrl = `${urlObj.origin}${urlObj.pathname}#${key}:${tamperedHash}`;
+
+    // Attempt to retrieve with tampered hash should fail
+    await expect(client.receivePayload(tamperedUrl)).rejects.toThrow();
+
+    try {
+      await client.receivePayload(tamperedUrl);
+    } catch (error: any) {
+      expect(error.code).toBe(HakanaiErrorCodes.HASH_MISMATCH);
+      expect(error.message).toContain("Hash verification failed");
+    }
   });
 });

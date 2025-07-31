@@ -1,7 +1,6 @@
 mod admin_api;
 mod app_data;
 mod data_store;
-mod hash;
 mod metrics;
 mod options;
 mod otel;
