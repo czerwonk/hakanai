@@ -14,6 +14,7 @@ Hakanai embodies the Japanese concept of transience - secrets that exist only fo
 - **Single View**: Secrets self-destruct after one access. No second chances.
 - **No Metadata**: We store only encrypted bytes and an ID. Nothing else.
 - **Minimalist**: One function only - share secrets that disappear.
+- **Content Integrity**: Optional hash verification ensures secrets haven't been tampered with.
 
 ## How It Works
 
@@ -26,7 +27,7 @@ Hakanai embodies the Japanese concept of transience - secrets that exist only fo
 
 With the `--separate-key` option, Hakanai provides enhanced security by separating the secret URL from the decryption key:
 
-1. **Traditional mode**: One URL contains both secret ID and key (`/s/uuid#key`)
+1. **Traditional mode**: One URL contains both secret ID and key (`/s/uuid#key:hash`)
 2. **Separate key mode**: Secret URL (`/s/uuid`) and key are provided separately
 3. **Defense in depth**: Share URL and key through different communication channels
 4. **Reduced attack surface**: No cryptographic material in any single URL
@@ -34,6 +35,8 @@ With the `--separate-key` option, Hakanai provides enhanced security by separati
 ## Security Model
 
 We implement true client-side encryption - your secrets are encrypted before leaving your device and decrypted only after retrieval. The server is just a temporary dead drop that forgets everything.
+
+**Content Integrity**: Hakanai automatically verifies that secrets haven't been tampered with using SHA-256 hashes. The URL format is now `#key:hash` where the hash validates the decrypted content. Legacy URLs with format `#key` (without hash) continue to work but without integrity verification.
 
 **Note**: This project focuses on the application-layer encryption. Transport security (HTTPS/TLS) should be handled by a reverse proxy or load balancer in front of the server.
 

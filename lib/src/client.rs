@@ -268,7 +268,7 @@ impl From<aes_gcm::Error> for ClientError {
 ///     None,
 /// ).await?;
 ///
-/// // The URL contains the encryption key in the fragment
+/// // The URL contains the encryption key and hash in the fragment (#key:hash)
 /// println!("Share this URL: {}", url);
 /// # Ok(())
 /// # }

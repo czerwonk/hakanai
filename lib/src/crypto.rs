@@ -121,7 +121,8 @@ impl Drop for CryptoContext {
 /// it upon reception, ensuring that secrets are transmitted securely.
 ///
 /// The `CryptoClient` uses AES-256-GCM for authenticated encryption and embeds
-/// the encryption key in the URL fragment for secure sharing.
+/// the encryption key and content hash in the URL fragment (`#key:hash`) for secure sharing
+/// with automatic tamper detection.
 ///
 /// **Note:** This is an internal implementation detail. Users should use `client::new()`
 /// which returns a client with encryption already configured.
@@ -151,7 +152,7 @@ impl Drop for CryptoContext {
 ///     None,
 /// ).await?;
 ///
-/// // The URL contains the encryption key in the fragment
+/// // The URL contains the encryption key and hash in the fragment (#key:hash)
 /// println!("Share this URL: {}", secret_url);
 ///
 /// // Receive the secret (automatically decrypted)
