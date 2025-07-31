@@ -79,6 +79,13 @@ pub struct SendArgs {
         help = "Does not include the key in the URL fragment, but instead prints it to stdout. This is useful for sharing the key separately."
     )]
     pub separate_key: bool,
+
+    #[arg(
+        long = "qr-code",
+        env = "HAKANAI_QR_CODE",
+        help = "Print URL also as QR code"
+    )]
+    pub print_qr_code: bool,
 }
 
 impl SendArgs {
@@ -112,6 +119,7 @@ impl SendArgs {
             as_file: false,
             filename: None,
             separate_key: false,
+            print_qr_code: false,
         }
     }
 

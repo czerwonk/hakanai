@@ -1,11 +1,13 @@
+use core::clone::Clone;
 use core::convert::AsRef;
 use std::io::{self, Read};
 
 use anyhow::{Result, anyhow};
 use colored::Colorize;
 use hakanai_lib::utils::content_analysis;
+use qrcode::{QrCode, render::unicode};
 use url::Url;
-use zeroize::Zeroizing;
+use zeroize::{Zeroize, Zeroizing};
 
 use hakanai_lib::client::Client;
 use hakanai_lib::models::Payload;
@@ -43,7 +45,7 @@ pub async fn send<T: Factory>(factory: T, args: SendArgs) -> Result<()> {
         as_file = true;
     }
 
-    let filename = get_filename(args.file, as_file, args.filename)?;
+    let filename = get_filename(&args.file, as_file, &args.filename)?;
     let payload = Payload::from_bytes(bytes.as_ref(), filename);
 
     let user_agent = get_user_agent_name();
@@ -52,46 +54,67 @@ pub async fn send<T: Factory>(factory: T, args: SendArgs) -> Result<()> {
         .with_user_agent(user_agent)
         .with_observer(observer);
 
-    let link = factory
+    let mut link = factory
         .new_client()
         .send_secret(args.server.clone(), payload, args.ttl, token, Some(opts))
-        .await?;
+        .await?
+        .clone();
 
-    print_link(link, args.separate_key);
+    print_link(&mut link, args)?;
 
     Ok(())
 }
 
-fn print_link(link: Url, separate_key: bool) {
+fn print_link(link: &mut Url, args: SendArgs) -> Result<()> {
     println!("Secret sent successfully!\n");
 
-    if separate_key {
+    if args.separate_key {
         print_link_separate_key(link);
     } else {
         println!("Secret link: {}", link.to_string().cyan());
     }
+
+    if args.print_qr_code {
+        print_qr_code(link)?;
+    }
+
+    Ok(())
 }
 
-fn print_link_separate_key(link: Url) {
-    let mut url = link.clone();
-    url.set_fragment(None);
-    println!("Secret link: {}", url.to_string().cyan());
+fn print_qr_code(link: &Url) -> Result<()> {
+    let code = QrCode::new(link.to_string())?;
+    let ascii = code
+        .render::<unicode::Dense1x2>()
+        .dark_color(unicode::Dense1x2::Dark)
+        .light_color(unicode::Dense1x2::Light)
+        .quiet_zone(false)
+        .build();
+    println!("\n{ascii}");
 
-    let key = link.fragment().unwrap_or_default();
-    println!("Key:         {}", key.cyan());
+    Ok(())
+}
+
+fn print_link_separate_key(link: &mut Url) {
+    let mut fragment = link.fragment().unwrap_or_default().to_string();
+    link.set_fragment(None);
+
+    println!("Secret link: {}", link.to_string().cyan());
+    println!("Key:         {}", fragment.cyan());
+
+    fragment.zeroize();
 }
 
 fn get_filename(
-    file: Option<String>,
+    file: &Option<String>,
     as_file: bool,
-    filename: Option<String>,
+    filename: &Option<String>,
 ) -> Result<Option<String>> {
     if !as_file {
         return Ok(None);
     }
 
     if let Some(name) = filename {
-        return Ok(Some(name));
+        return Ok(Some(name.clone()));
     }
 
     if let Some(file_path) = file {
