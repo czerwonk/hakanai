@@ -149,7 +149,7 @@ mod tests {
 
     #[test]
     fn test_get_filename_not_as_file() -> Result<()> {
-        let result = get_filename(Some("test.txt".to_string()), false, None)?;
+        let result = get_filename(&Some("test.txt".to_string()), false, &None)?;
         assert_eq!(result, None);
         Ok(())
     }
@@ -157,9 +157,9 @@ mod tests {
     #[test]
     fn test_get_filename_with_explicit_filename() -> Result<()> {
         let result = get_filename(
-            Some("path/to/test.txt".to_string()),
+            &Some("path/to/test.txt".to_string()),
             true,
-            Some("custom.txt".to_string()),
+            &Some("custom.txt".to_string()),
         )?;
         assert_eq!(result, Some("custom.txt".to_string()));
         Ok(())
@@ -167,21 +167,21 @@ mod tests {
 
     #[test]
     fn test_get_filename_from_file_path() -> Result<()> {
-        let result = get_filename(Some("/path/to/test.txt".to_string()), true, None)?;
+        let result = get_filename(&Some("/path/to/test.txt".to_string()), true, &None)?;
         assert_eq!(result, Some("test.txt".to_string()));
         Ok(())
     }
 
     #[test]
     fn test_get_filename_from_file_path_no_extension() -> Result<()> {
-        let result = get_filename(Some("/path/to/testfile".to_string()), true, None)?;
+        let result = get_filename(&Some("/path/to/testfile".to_string()), true, &None)?;
         assert_eq!(result, Some("testfile".to_string()));
         Ok(())
     }
 
     #[test]
     fn test_get_filename_no_file_path_as_file() {
-        let result = get_filename(None, true, None);
+        let result = get_filename(&None, true, &None);
         assert!(result.is_err());
         assert!(
             result
