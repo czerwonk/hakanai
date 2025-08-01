@@ -1341,8 +1341,12 @@ button.loading::after {
   border-top: 3px solid var(--color-primary);
   border-radius: 50%;
   animation: spin var(--animation-spin) linear infinite;
+  -webkit-animation: spin var(--animation-spin) linear infinite;
   vertical-align: middle;
   margin-right: var(--spacing-sm);
+  /* Force hardware acceleration for mobile */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
 }
 
 @keyframes spin {
@@ -1351,6 +1355,45 @@ button.loading::after {
   }
   100% {
     transform: rotate(360deg);
+  }
+}
+
+/* Webkit keyframes for better mobile support */
+@-webkit-keyframes spin {
+  0% {
+    -webkit-transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+  }
+}
+
+/* Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+    -webkit-animation: none;
+    /* Show a pulsing effect instead */
+    animation: pulse 1.5s ease-in-out infinite alternate;
+    -webkit-animation: pulse 1.5s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@-webkit-keyframes pulse {
+  0% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 1;
   }
 }
 
