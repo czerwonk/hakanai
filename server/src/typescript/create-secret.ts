@@ -267,9 +267,6 @@ async function createSecret(): Promise<void> {
 
   setElementsState(elements, true);
 
-  // Give the browser a chance to render the loading state
-  await new Promise((resolve) => setTimeout(resolve, 10));
-
   try {
     const secretUrl = await client.sendPayload(payload, ttl, authToken);
 
