@@ -18,7 +18,7 @@ import { displayErrorMessage } from "./components/error-display";
 import { ErrorHandler, handleAPIError } from "./core/error";
 import { initFeatures } from "./core/app-config";
 import { TTLSelector } from "./components/ttl-selector";
-import { PreferenceStorage, initSeparateKeyCheckbox } from "./core/preferences";
+import { initSeparateKeyCheckbox } from "./core/preferences";
 import { KeyboardShortcuts } from "./core/keyboard-shortcuts";
 
 let ttlSelector: TTLSelector | null = null;
@@ -266,6 +266,9 @@ async function createSecret(): Promise<void> {
   }
 
   setElementsState(elements, true);
+
+  // Give the browser a chance to render the loading state
+  await new Promise((resolve) => setTimeout(resolve, 10));
 
   try {
     const secretUrl = await client.sendPayload(payload, ttl, authToken);

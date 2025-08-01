@@ -203,6 +203,9 @@ async function createSecret(): Promise<void> {
   try {
     showLoading(window.i18n.t(I18nKeys.Msg.CreatingSecret));
 
+    // Give the browser a chance to render the loading state
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
     const client = new HakanaiClient(window.location.origin);
 
     // Sanitize filename before creating payload
