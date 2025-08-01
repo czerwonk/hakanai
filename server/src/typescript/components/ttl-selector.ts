@@ -4,6 +4,7 @@
 
 import { formatTTL } from "../core/formatters";
 import { hideElement, showElement } from "../core/dom-utils";
+import { PreferenceStorage } from "../core/preferences";
 
 export class TTLSelector {
   private selectElement: HTMLSelectElement;
@@ -38,7 +39,14 @@ export class TTLSelector {
       throw new Error("TTL selector elements not found");
     }
 
-    this.currentValue = parseInt(this.selectElement.value);
+    // Try to restore last used TTL
+    const lastTTL = PreferenceStorage.getLastTTL();
+    if (lastTTL !== undefined) {
+      this.setValue(lastTTL);
+    } else {
+      this.currentValue = parseInt(this.selectElement.value);
+    }
+
     this.setupEventListeners();
   }
 
@@ -50,6 +58,7 @@ export class TTLSelector {
       } else {
         this.hideCustomInput();
         this.currentValue = parseInt(value);
+        PreferenceStorage.saveLastTTL(this.currentValue);
       }
     });
 
@@ -57,6 +66,7 @@ export class TTLSelector {
       const value = parseInt(this.customValueInput.value) || 1;
       const unit = parseInt(this.customUnitSelect.value);
       this.currentValue = value * unit;
+      PreferenceStorage.saveLastTTL(this.currentValue);
     };
     this.customValueInput.addEventListener("input", updateCustomValue);
     this.customUnitSelect.addEventListener("change", updateCustomValue);

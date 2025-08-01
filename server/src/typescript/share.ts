@@ -7,6 +7,8 @@ import { HakanaiClient } from "./hakanai-client";
 import { initI18n, I18nKeys } from "./core/i18n";
 import { formatFileSize, sanitizeFileName } from "./core/formatters";
 import { hideElement, showElement } from "./core/dom-utils";
+import { initSeparateKeyCheckbox } from "./core/preferences";
+import { KeyboardShortcuts } from "./core/keyboard-shortcuts";
 import { displaySuccessResult } from "./components/create-result";
 import { displayErrorMessage } from "./components/error-display";
 import { ShareData, ShareDataError } from "./core/share-data";
@@ -268,10 +270,40 @@ function initTTLSelector(): void {
   ttlSelector = new TTLSelector(ttlContainer);
 }
 
+function initKeyboardShortcuts(): void {
+  const shortcuts = new KeyboardShortcuts();
+
+  // Ctrl + Enter to create secret
+  shortcuts.register({
+    key: "Enter",
+    ctrl: true,
+    handler: () => {
+      createSecret();
+    },
+    description: "Create secret",
+  });
+
+  // Ctrl + K to toggle separate key mode
+  shortcuts.register({
+    key: "k",
+    ctrl: true,
+    handler: () => {
+      const checkbox = document.getElementById(
+        "separate-key-mode",
+      ) as HTMLInputElement;
+      if (checkbox) {
+        checkbox.checked = !checkbox.checked;
+      }
+    },
+    description: "Toggle separate key mode",
+  });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   initI18n();
   initTTLSelector();
   initFeatures();
+  initKeyboardShortcuts();
 
   document
     .getElementById("read-clipboard")
@@ -279,6 +311,11 @@ document.addEventListener("DOMContentLoaded", () => {
   document
     .getElementById("share-button")
     ?.addEventListener("click", createSecret);
+
+  const separateKeyCheckbox = document.getElementById(
+    "separate-key-mode",
+  ) as HTMLInputElement;
+  initSeparateKeyCheckbox(separateKeyCheckbox);
 
   initShareData();
 });

@@ -18,6 +18,8 @@ import { displayErrorMessage } from "./components/error-display";
 import { ErrorHandler, handleAPIError } from "./core/error";
 import { initFeatures } from "./core/app-config";
 import { TTLSelector } from "./components/ttl-selector";
+import { PreferenceStorage, initSeparateKeyCheckbox } from "./core/preferences";
+import { KeyboardShortcuts } from "./core/keyboard-shortcuts";
 
 let ttlSelector: TTLSelector | null = null;
 
@@ -510,6 +512,35 @@ function initTTLSelector(): void {
   ttlSelector = new TTLSelector(ttlContainer);
 }
 
+function initKeyboardShortcuts(): void {
+  const shortcuts = new KeyboardShortcuts();
+
+  // Ctrl + Enter to create secret
+  shortcuts.register({
+    key: "Enter",
+    ctrl: true,
+    handler: () => {
+      createSecret();
+    },
+    description: "Create secret",
+  });
+
+  // Ctrl + K to toggle separate key mode
+  shortcuts.register({
+    key: "k",
+    ctrl: true,
+    handler: () => {
+      const checkbox = document.getElementById(
+        "separateKey",
+      ) as HTMLInputElement;
+      if (checkbox) {
+        checkbox.checked = !checkbox.checked;
+      }
+    },
+    description: "Toggle separate key mode",
+  });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   initI18n();
   initTTLSelector();
@@ -520,4 +551,10 @@ document.addEventListener("DOMContentLoaded", () => {
   setupFileInputHandler();
   initializeAuthToken();
   initFeatures();
+  initKeyboardShortcuts();
+
+  const separateKeyCheckbox = document.getElementById(
+    "separateKey",
+  ) as HTMLInputElement;
+  initSeparateKeyCheckbox(separateKeyCheckbox);
 });
