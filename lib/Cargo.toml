@@ -1,6 +1,6 @@
 [package]
 name = "hakanai-lib"
-version = "2.7.1"
+version = "2.7.2"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 description = "Client library for Hakanai, a secure secret sharing service."
