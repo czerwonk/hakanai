@@ -6,7 +6,7 @@ edition = "2024"
 [dependencies]
 actix-web = "4.11.0"
 hakanai-lib = { path = "../lib", features = ["minimal"] }
-clap = { version = "4.5.42", features = ["derive", "env"] }
+clap = { version = "4.5.43", features = ["derive", "env"] }
 serde = { version = "1.0.219", features = ["derive"] }
 uuid = { version = "1.17.0", features = ["serde", "v4"] }
 tokio = { version = "1.45.1", features = ["full"] }
