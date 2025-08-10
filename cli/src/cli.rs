@@ -55,7 +55,7 @@ pub struct SendArgs {
 
     #[arg(
         short = 'f',
-        long = "from-files",
+        long = "file",
         help = "File to read the secret from. If not specified, reads from stdin.",
         value_name = "FILE"
     )]
