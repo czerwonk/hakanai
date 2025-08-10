@@ -17,6 +17,7 @@ async-trait = "0.1.88"
 reqwest = { version = "0.12.22", features = ["json"] }
 rpassword = "7.3.1"
 qrcode = "0.14"
+zip = "4.3.0"
 
 [dev-dependencies]
 tempfile = "3.15.0"

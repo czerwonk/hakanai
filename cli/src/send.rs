@@ -1,6 +1,6 @@
 use core::clone::Clone;
 use core::convert::AsRef;
-use std::io::{self, Read};
+use std::io::{self, Cursor, Read, Write};
 
 use anyhow::{Result, anyhow};
 use colored::Colorize;
@@ -8,10 +8,12 @@ use hakanai_lib::utils::content_analysis;
 use qrcode::{QrCode, render::unicode};
 use url::Url;
 use zeroize::{Zeroize, Zeroizing};
+use zip::{ZipWriter, write::ExtendedFileOptions, write::FileOptions};
 
 use hakanai_lib::client::Client;
 use hakanai_lib::models::Payload;
 use hakanai_lib::options::SecretSendOptions;
+use hakanai_lib::timestamp;
 
 use crate::cli::SendArgs;
 use crate::factory::Factory;
@@ -74,9 +76,7 @@ fn read_secret(args: SendArgs) -> Result<Secret> {
 
 fn read_secret_from_files(files: Vec<String>) -> Result<Secret> {
     if files.len() != 1 {
-        return Err(anyhow!(
-            "Only one file can be provided for sending as a secret."
-        ));
+        return archive_files(files);
     }
 
     let file_path = files[0].clone();
@@ -87,6 +87,32 @@ fn read_secret_from_files(files: Vec<String>) -> Result<Secret> {
         .map(|s| s.to_string());
 
     Ok(Secret { bytes, filename })
+}
+
+fn archive_files(files: Vec<String>) -> Result<Secret> {
+    let mut buffer = Vec::new();
+    let cursor = Cursor::new(&mut buffer);
+
+    let mut zip = ZipWriter::new(cursor);
+    for file in files {
+        let bytes = Zeroizing::new(std::fs::read(&file)?);
+        let filename = std::path::Path::new(&file)
+            .file_name()
+            .unwrap_or_default()
+            .to_string_lossy();
+        zip.start_file(filename, FileOptions::<ExtendedFileOptions>::default())?;
+        zip.write_all(bytes.as_ref())?;
+    }
+
+    zip.finish()?;
+
+    let timestamp = timestamp::now_string()?;
+    let filename = format!("{timestamp}.zip");
+
+    Ok(Secret {
+        bytes: Zeroizing::new(buffer),
+        filename: Some(filename),
+    })
 }
 
 fn get_filename(secret: &Secret, args: SendArgs) -> Result<Option<String>> {
@@ -256,6 +282,33 @@ mod tests {
         let args = SendArgs::builder().with_file(file_path.to_string_lossy().as_ref());
         let result = read_secret(args)?;
         assert_eq!(result.bytes.to_vec(), test_content);
+        Ok(())
+    }
+
+    #[test]
+    fn test_read_secret_from_files_creates_archive() -> Result<()> {
+        let temp_dir = TempDir::new()?;
+        let file_path = temp_dir.path().join("test_secret.txt");
+        let test_content = b"test secret content";
+        fs::write(&file_path, test_content)?;
+
+        let file_path2 = temp_dir.path().join("test_secret2.txt");
+        let test_content2 = b"test secret content part 2";
+        fs::write(&file_path2, test_content2)?;
+
+        let args = SendArgs::builder().with_files(vec![
+            file_path.to_string_lossy().as_ref().to_string(),
+            file_path2.to_string_lossy().as_ref().to_string(),
+        ]);
+        let result = read_secret(args)?;
+        assert_eq!(&result.bytes[0..4], b"PK\x03\x04", "Invalid ZIP signature");
+
+        if let Some(filename) = &result.filename {
+            assert!(filename.ends_with(".zip"), "Filename should end with .zip");
+        } else {
+            panic!("Filename should be set for archive");
+        }
+
         Ok(())
     }
 
