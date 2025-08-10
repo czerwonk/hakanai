@@ -135,7 +135,7 @@ fn get_filename(secret: &Secret, args: SendArgs) -> Result<Option<String>> {
     }
 
     if let Some(filename) = &secret.filename {
-        return Ok(Some(filename.clone()));
+        Ok(Some(filename.clone()))
     } else {
         Err(anyhow!("File name is required when sending as a file."))
     }

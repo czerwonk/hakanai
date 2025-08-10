@@ -595,8 +595,8 @@ mod tests {
 
     #[test]
     fn test_send_command_with_file() {
-        let args = Args::try_parse_from(["hakanai", "send", "--from-files", "/path/to/secret.txt"])
-            .unwrap();
+        let args =
+            Args::try_parse_from(["hakanai", "send", "--file", "/path/to/secret.txt"]).unwrap();
 
         match args.command {
             Command::Send(send_args) => {
@@ -675,7 +675,7 @@ mod tests {
         let args = Args::try_parse_from([
             "hakanai",
             "send",
-            "--from-files",
+            "--file",
             "/path/to/document.pdf",
             "--as-file",
         ])
