@@ -17,14 +17,15 @@ import { displaySuccessResult } from "./components/create-result";
 import { displayErrorMessage } from "./components/error-display";
 import { ErrorHandler, handleAPIError } from "./core/error";
 import { initFeatures } from "./core/app-config";
+import { ProgressBar } from "./components/progress-bar";
 import { TTLSelector } from "./components/ttl-selector";
 import { initSeparateKeyCheckbox } from "./core/preferences";
 import { KeyboardShortcuts } from "./core/keyboard-shortcuts";
 
 let ttlSelector: TTLSelector | null = null;
+let progressBar: ProgressBar | null = null;
 
 interface Elements {
-  loadingDiv: HTMLElement;
   button: HTMLButtonElement;
   secretInput: HTMLInputElement;
   fileInput: HTMLInputElement;
@@ -59,7 +60,6 @@ const baseUrl = window.location.origin.includes("file://")
 const client = new HakanaiClient(baseUrl);
 
 function getElements(): Elements | null {
-  const loadingDiv = document.getElementById("loading");
   const button = document.getElementById("createBtn") as HTMLButtonElement;
   const secretInput = document.getElementById("secretText") as HTMLInputElement;
   const fileInput = document.getElementById("secretFile") as HTMLInputElement;
@@ -71,7 +71,6 @@ function getElements(): Elements | null {
   const resultDiv = document.getElementById("result");
 
   if (
-    !loadingDiv ||
     !button ||
     !secretInput ||
     !fileInput ||
@@ -84,7 +83,6 @@ function getElements(): Elements | null {
   }
 
   return {
-    loadingDiv,
     button,
     secretInput,
     fileInput,
@@ -168,7 +166,6 @@ function validateTextInput(secretInput: HTMLInputElement): PayloadData | null {
 
 function setElementsState(elements: Elements, disabled: boolean): void {
   const {
-    loadingDiv,
     button,
     secretInput,
     fileInput,
@@ -178,18 +175,39 @@ function setElementsState(elements: Elements, disabled: boolean): void {
     resultDiv,
   } = elements;
 
+  const fileInputButton = document.getElementById(
+    "fileInputButton",
+  ) as HTMLButtonElement;
+  const saveTokenCheckbox = document.getElementById(
+    "saveTokenCookie",
+  ) as HTMLInputElement;
+  const separateKeyCheckbox = document.getElementById(
+    "separateKey",
+  ) as HTMLInputElement;
+
   if (disabled) {
-    showElement(loadingDiv);
+    if (!progressBar) {
+      progressBar = new ProgressBar();
+    }
+    progressBar.show(window.i18n.t(I18nKeys.Msg.Creating), "spinner");
   } else {
-    hideElement(loadingDiv);
+    if (progressBar) {
+      progressBar.hide();
+    }
   }
+
   button.disabled = disabled;
   secretInput.disabled = disabled;
   fileInput.disabled = disabled;
   authTokenInput.disabled = disabled;
-  ttlSelector?.setEnabled(!disabled);
   textRadio.disabled = disabled;
   fileRadio.disabled = disabled;
+
+  if (fileInputButton) fileInputButton.disabled = disabled;
+  if (saveTokenCheckbox) saveTokenCheckbox.disabled = disabled;
+  if (separateKeyCheckbox) separateKeyCheckbox.disabled = disabled;
+
+  ttlSelector?.setEnabled(!disabled);
 
   if (disabled) {
     resultDiv.innerHTML = "";

@@ -1325,33 +1325,79 @@ button.loading::after {
   content: "✗ ";
 }
 
-.loading {
-  display: none;
+
+.progress-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(2px);
+}
+
+.progress-content {
+  background-color: var(--color-bg-container);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-xl);
+  min-width: 320px;
+  max-width: 400px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.progress-text {
   text-align: center;
-  color: var(--color-text-muted);
-  margin-top: var(--spacing-lg);
-  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  font-size: var(--font-size-base);
+  margin-bottom: var(--spacing-lg);
+  font-weight: 500;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 0.75rem;
+  background-color: var(--color-bg-input);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--color-primary),
+    var(--color-primary-hover)
+  );
+  width: 0%;
+  transition: width var(--transition-normal);
+  border-radius: var(--border-radius-sm);
+}
+
+.spinner-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 3rem;
 }
 
 .spinner {
-  display: inline-block;
-  width: 1.25rem;
-  height: 1.25rem;
-  border: 3px solid var(--color-bg-container);
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid var(--color-bg-input);
   border-top: 3px solid var(--color-primary);
   border-radius: 50%;
-  animation: spin var(--animation-spin) linear infinite;
-  vertical-align: middle;
-  margin-right: var(--spacing-sm);
+  animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .footer {
@@ -2185,39 +2231,6 @@ input[type="number"] {
 .number-input-container {
   position: relative;
   display: inline-block;
-}
-
-.number-input-container .spinner-button {
-  position: absolute;
-  right: 1px;
-  width: 2rem;
-  height: 50%;
-  border: none;
-  background: var(--theme-bg-input);
-  color: var(--theme-text);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--font-size-xs);
-  transition: background-color var(--transition-fast);
-  border-left: 1px solid var(--theme-border);
-}
-
-.number-input-container .spinner-button:hover {
-  background: var(--theme-primary);
-  color: var(--button-text);
-}
-
-.number-input-container .spinner-up {
-  top: 1px;
-  border-radius: 0 var(--border-radius) 0 0;
-  border-bottom: 1px solid var(--theme-border);
-}
-
-.number-input-container .spinner-down {
-  bottom: 1px;
-  border-radius: 0 0 var(--border-radius) 0;
 }
 
 /* Utility classes for show/hide (CSP-friendly) */

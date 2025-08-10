@@ -20,4 +20,5 @@ export { ContentAnalysis } from "./client/content-analysis";
 export { CryptoContext } from "./client/crypto-operations";
 export { SecureMemory } from "./client/secure-memory";
 export { type PayloadData, PayloadDataImpl } from "./client/payload";
+export { type DataTransferObserver } from "./client/progress-observer";
 export { HakanaiClient, SecretRequest, SecretResponse } from "./client/client";

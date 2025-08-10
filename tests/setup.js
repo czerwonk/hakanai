@@ -6,16 +6,40 @@
 // CRITICAL: Fix Date.now BEFORE any other imports to prevent jsdom issues
 const OriginalDate = Date;
 global.Date = OriginalDate;
-global.Date.now = OriginalDate.now || function() { return new OriginalDate().getTime(); };
+global.Date.now =
+  OriginalDate.now ||
+  function () {
+    return new OriginalDate().getTime();
+  };
 
 // Also monkey-patch the Date object to ensure it always has .now
 if (!Date.now) {
-  Date.now = function() { return new Date().getTime(); };
+  Date.now = function () {
+    return new Date().getTime();
+  };
 }
 
 // Setup Web Crypto API with real implementation
 const { Crypto } = require("@peculiar/webcrypto");
 const { TextEncoder, TextDecoder } = require("util");
+
+// Setup ReadableStream polyfill for Node.js tests
+if (!global.ReadableStream) {
+  const {
+    ReadableStream,
+    WritableStream,
+    TransformStream,
+  } = require("web-streams-polyfill");
+  global.ReadableStream = ReadableStream;
+  global.WritableStream = WritableStream;
+  global.TransformStream = TransformStream;
+
+  if (typeof window !== "undefined") {
+    window.ReadableStream = ReadableStream;
+    window.WritableStream = WritableStream;
+    window.TransformStream = TransformStream;
+  }
+}
 
 // Create crypto instance
 const cryptoInstance = new Crypto();
@@ -65,7 +89,11 @@ global.atob =
 // Additional Date.now setup for window context
 if (typeof window !== "undefined") {
   window.Date = OriginalDate;
-  window.Date.now = OriginalDate.now || function() { return new OriginalDate().getTime(); };
+  window.Date.now =
+    OriginalDate.now ||
+    function () {
+      return new OriginalDate().getTime();
+    };
 }
 
 // Also set it directly on global for early access
@@ -83,11 +111,10 @@ global.locationMock = {
 const mockI18n = {
   t: (key) => key, // Simple key->key mapping for robustness
   setLanguage: () => {},
-  getCurrentLanguage: () => 'en'
+  getCurrentLanguage: () => "en",
 };
 
 global.i18n = mockI18n;
 if (typeof window !== "undefined") {
   window.i18n = mockI18n;
 }
-

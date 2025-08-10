@@ -15,19 +15,22 @@ import { ShareData, ShareDataError } from "./core/share-data";
 import { ErrorHandler, handleAPIError } from "./core/error";
 import { initFeatures } from "./core/app-config";
 import { TTLSelector } from "./components/ttl-selector";
+import { ProgressBar } from "./components/progress-bar";
 
 const DEFAULT_TTL = 3600; // Default TTL in seconds (1 hour)
 
 let sharePayload: ShareData | null = null;
 let ttlSelector: TTLSelector | null = null;
+let progressBar: ProgressBar | null = null;
 
 /**
  * Show loading state
  */
 function showLoading(message: string): void {
-  document.getElementById("loading-text")!.textContent = message;
-  const loading = document.getElementById("loading")!;
-  showElement(loading);
+  if (!progressBar) {
+    progressBar = new ProgressBar();
+  }
+  progressBar.show(message, "spinner");
   hideOtherSections("loading");
 }
 
@@ -35,8 +38,9 @@ function showLoading(message: string): void {
  * Hide loading state
  */
 function hideLoading(): void {
-  const loading = document.getElementById("loading")!;
-  hideElement(loading);
+  if (progressBar) {
+    progressBar.hide();
+  }
 }
 
 /**

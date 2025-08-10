@@ -2,6 +2,7 @@ import {
   HakanaiClient,
   ContentAnalysis,
   type PayloadData,
+  type DataTransferObserver,
 } from "./hakanai-client";
 import { initI18n, I18nKeys } from "./core/i18n";
 import {
@@ -17,6 +18,7 @@ import {
 import { copyToClipboard } from "./core/clipboard";
 import { displayErrorMessage } from "./components/error-display";
 import { formatFileSize } from "./core/formatters";
+import { ProgressBar } from "./components/progress-bar";
 import { initTheme } from "./core/theme";
 import { ErrorHandler, handleAPIError } from "./core/error";
 import { initFeatures } from "./core/app-config";
@@ -38,7 +40,6 @@ function getElements() {
     keyInput: document.getElementById("secretKey") as HTMLInputElement,
     keyInputGroup: document.getElementById("keyInputGroup") as HTMLElement,
     resultDiv: document.getElementById("result") as HTMLElement,
-    loadingDiv: document.getElementById("loading") as HTMLElement,
     button: document.getElementById("retrieveBtn") as HTMLButtonElement,
   };
 }
@@ -83,19 +84,13 @@ function clearInputs(): void {
 }
 
 function showLoadingState(): void {
-  const { loadingDiv, resultDiv } = getElements();
-  showElement(loadingDiv);
-
+  const { resultDiv } = getElements();
   resultDiv.innerHTML = "";
-
   document.body.classList.remove("expanded-view");
   setElementsState(true);
 }
 
 function hideLoadingState(): void {
-  const { loadingDiv } = getElements();
-  hideElement(loadingDiv);
-
   setElementsState(false);
 }
 
@@ -125,16 +120,31 @@ async function processRetrieveRequest(): Promise<void> {
 
   const finalUrl = hasFragment ? processedUrl : `${processedUrl}#${key}`;
 
+  // Create progress bar overlay - no container needed
+  const progressBar = new ProgressBar();
+  const progressObserver: DataTransferObserver = {
+    onProgress: async (
+      bytesTransferred: number,
+      totalBytes: number,
+    ): Promise<void> => {
+      progressBar.updateProgress(bytesTransferred, totalBytes);
+    },
+  };
+
+  // Show loading state and progress overlay
   showLoadingState();
+  progressBar.show(window.i18n.t(I18nKeys.Msg.Retrieving));
 
   try {
-    const payload = await client.receivePayload(finalUrl);
+    const payload = await client.receivePayload(finalUrl, progressObserver);
     showSuccess(payload);
     clearInputs();
     toggleKeyInputVisibility();
   } catch (error: unknown) {
     handleRetrieveError(error);
   } finally {
+    // Always hide progress bar and reset loading state
+    progressBar.hide();
     hideLoadingState();
   }
 }

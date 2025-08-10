@@ -17,6 +17,7 @@ import { ContentAnalysis } from "./content-analysis";
 import { CryptoContext } from "./crypto-operations";
 import { type PayloadData, PayloadDataImpl } from "./payload";
 import { SecureMemory } from "./secure-memory";
+import { type DataTransferObserver } from "./progress-observer";
 
 interface SecretResponse {
   id: string;
@@ -151,7 +152,67 @@ class HakanaiClient {
   }
 
   /**
-   * Send encrypted data to the server via HTTP
+   * Process response stream with chunking and optional progress tracking
+   * @private
+   */
+  private async processResponseStream(
+    response: Response,
+    progressObserver?: DataTransferObserver,
+  ): Promise<string> {
+    if (!response.body) {
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_SERVER_RESPONSE,
+        "Response body is empty",
+      );
+    }
+
+    const contentLength = response.headers.get("content-length");
+    const totalBytes = contentLength ? parseInt(contentLength, 10) : 0;
+
+    // Error if content-length is missing/zero, like Rust client
+    if (totalBytes === 0) {
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_SERVER_RESPONSE,
+        "Response body is empty or content length is not set",
+      );
+    }
+
+    // Pre-allocate result array for efficiency, like Rust client
+    const result = new Uint8Array(totalBytes);
+    let downloadedBytes = 0;
+
+    const reader = response.body.getReader();
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) break;
+
+        if (value) {
+          // Copy chunk directly into result array at correct offset
+          result.set(value, downloadedBytes);
+          downloadedBytes += value.length;
+
+          // Call progress observer if provided
+          if (progressObserver) {
+            try {
+              await progressObserver.onProgress(downloadedBytes, totalBytes);
+            } catch (error) {
+              console.warn("Progress observer error:", error);
+            }
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+
+    return new TextDecoder().decode(result);
+  }
+
+  /**
+   * Send encrypted data to the server via HTTP with optional progress tracking
    * @private
    */
   private async sendEncryptedData(
@@ -159,6 +220,13 @@ class HakanaiClient {
     ttl: number,
     authToken?: string,
   ): Promise<string> {
+    const requestBody: SecretRequest = {
+      data: encryptedData,
+      expires_in: ttl,
+    };
+
+    const bodyData = JSON.stringify(requestBody);
+
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
     };
@@ -167,15 +235,10 @@ class HakanaiClient {
       headers["Authorization"] = `Bearer ${authToken}`;
     }
 
-    const requestBody: SecretRequest = {
-      data: encryptedData,
-      expires_in: ttl,
-    };
-
     const response = await fetch(`${this.baseUrl}/api/v1/secret`, {
       method: "POST",
       headers: headers,
-      body: JSON.stringify(requestBody),
+      body: bodyData,
     });
 
     if (!response.ok) {
@@ -198,6 +261,7 @@ class HakanaiClient {
    * @param payload - Data to encrypt and send (must have non-empty data field)
    * @param ttl - Time-to-live in seconds (default: 3600)
    * @param authToken - Optional authentication token for server access
+   * @param progressObserver - Optional progress observer for upload tracking
    * @returns Full URL with secret ID and decryption key in fragment
    * @throws {HakanaiError} With specific error codes:
    *   - AUTHENTICATION_REQUIRED: Server requires auth token
@@ -208,6 +272,7 @@ class HakanaiClient {
     payload: PayloadData,
     ttl: number = 3600,
     authToken?: string,
+    progressObserver?: DataTransferObserver,
   ): Promise<string> {
     this.validateSendPayloadParams(payload, ttl, authToken);
 
@@ -310,6 +375,7 @@ class HakanaiClient {
   /**
    * Retrieve and decrypt a payload from the server
    * @param url - Full URL with format: https://server/s/{id}#{key}
+   * @param progressObserver - Optional progress observer for download tracking
    * @returns Decrypted payload data with optional filename
    * @throws {HakanaiError} With specific error codes:
    *   - MISSING_DECRYPTION_KEY: No key found in URL fragment
@@ -318,7 +384,10 @@ class HakanaiClient {
    *   - RETRIEVE_FAILED: General retrieval failure
    * @throws {Error} For invalid URL format or decryption failures
    */
-  async receivePayload(url: string): Promise<PayloadData> {
+  async receivePayload(
+    url: string,
+    progressObserver?: DataTransferObserver,
+  ): Promise<PayloadData> {
     const { secretId, key, hash } = this.validateAndParseReceiveUrl(url);
 
     const response = await fetch(`${this.baseUrl}/api/v1/secret/${secretId}`);
@@ -327,13 +396,10 @@ class HakanaiClient {
       this.handleReceivePayloadError(response);
     }
 
-    const encryptedData = await response.text();
-    if (!encryptedData) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.INVALID_SERVER_RESPONSE,
-        "Empty response from server",
-      );
-    }
+    const encryptedData = await this.processResponseStream(
+      response,
+      progressObserver,
+    );
 
     // Validate encrypted data format
     InputValidation.validateEncryptedData(encryptedData);
@@ -396,6 +462,7 @@ export {
   Base64UrlSafe,
   ContentAnalysis,
   type PayloadData,
+  type DataTransferObserver,
   SecretRequest,
   SecretResponse,
 };

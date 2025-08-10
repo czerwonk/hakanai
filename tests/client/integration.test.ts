@@ -25,17 +25,54 @@ function generateUUID(): string {
   });
 }
 
+// Helper to read ReadableStream
+async function readStream(stream: any): Promise<string> {
+  if (typeof stream === "string") {
+    return stream;
+  }
+
+  if (stream && typeof stream.getReader === "function") {
+    const reader = stream.getReader();
+    const chunks: Uint8Array[] = [];
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+      }
+    } finally {
+      reader.releaseLock();
+    }
+
+    // Combine chunks
+    const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
+    const combined = new Uint8Array(totalLength);
+    let offset = 0;
+
+    for (const chunk of chunks) {
+      combined.set(chunk, offset);
+      offset += chunk.length;
+    }
+
+    return new TextDecoder().decode(combined);
+  }
+
+  return String(stream);
+}
+
 // Mock server responses only
 const createMockFetch = () => {
   const mockSecrets = new Map<string, string>();
 
-  return jest.fn((url: string, options?: any) => {
+  return jest.fn(async (url: string, options?: any) => {
     const urlObj = new URL(url);
 
     // POST /api/v1/secret - create secret
     if (urlObj.pathname === "/api/v1/secret" && options?.method === "POST") {
       const secretId = generateUUID();
-      const body = JSON.parse(options.body);
+      const bodyStr = await readStream(options.body);
+      const body = JSON.parse(bodyStr);
       mockSecrets.set(secretId, body.data);
 
       return Promise.resolve({
@@ -60,6 +97,17 @@ const createMockFetch = () => {
 
       return Promise.resolve({
         ok: true,
+        headers: {
+          get: (name: string) =>
+            name === "content-length" ? encryptedData.length.toString() : null,
+        },
+        body: new ReadableStream({
+          start(controller) {
+            const bytes = new TextEncoder().encode(encryptedData);
+            controller.enqueue(bytes);
+            controller.close();
+          },
+        }),
         text: () => Promise.resolve(encryptedData),
       });
     }
@@ -187,9 +235,10 @@ describe("HakanaiClient Integration", () => {
 
     // Mock fetch to capture what gets sent
     const sentData: any[] = [];
-    global.fetch = jest.fn((url: string, options?: any) => {
+    global.fetch = jest.fn(async (url: string, options?: any) => {
       if (options?.method === "POST") {
-        const body = JSON.parse(options.body);
+        const bodyStr = await readStream(options.body);
+        const body = JSON.parse(bodyStr);
         sentData.push(body);
         return Promise.resolve({
           ok: true,
