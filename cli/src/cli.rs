@@ -56,7 +56,7 @@ pub struct SendArgs {
     #[arg(
         short = 'f',
         long = "file",
-        help = "File to read the secret from. If not specified, reads from stdin.",
+        help = "File to read the secret from. If not specified, reads from stdin. This can be specified multiple times to send multiple files.",
         value_name = "FILE"
     )]
     pub files: Option<Vec<String>>,
