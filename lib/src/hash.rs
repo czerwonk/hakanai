@@ -12,6 +12,7 @@ pub fn sha256_hex_from_bytes(input: &[u8]) -> String {
     format!("{hash:x}")
 }
 
+/// Hashes given bytes using SHA-256, truncates the result to the first 16 bytes. Result is then encoded to a URL-safe base64 string without padding.
 pub fn sha256_truncated_base64_from_bytes(input: &[u8]) -> String {
     let hash = Sha256::digest(input);
     base64::prelude::BASE64_URL_SAFE_NO_PAD.encode(&hash[..16])
