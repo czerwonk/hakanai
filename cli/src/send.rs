@@ -17,6 +17,11 @@ use crate::cli::SendArgs;
 use crate::factory::Factory;
 use crate::helper::get_user_agent_name;
 
+struct Secret {
+    bytes: Zeroizing<Vec<u8>>,
+    filename: Option<String>,
+}
+
 pub async fn send<T: Factory>(factory: T, args: SendArgs) -> Result<()> {
     if args.ttl.as_secs() == 0 {
         return Err(anyhow!("TTL must be greater than zero seconds."));
@@ -27,26 +32,15 @@ pub async fn send<T: Factory>(factory: T, args: SendArgs) -> Result<()> {
         eprintln!("{}", "Warning: No token provided.".yellow());
     }
 
-    let bytes = read_secret(args.file.clone())?;
-
-    if bytes.is_empty() {
+    let secret = read_secret(args.clone())?;
+    if secret.bytes.is_empty() {
         return Err(anyhow!(
             "No secret provided. Please input a secret to send."
         ));
     }
 
-    let mut as_file = args.as_file;
-    if args.file.is_some() && !as_file && content_analysis::is_binary(bytes.as_ref()) {
-        println!(
-            "{}",
-            "Sending binary files as text may lead to data corruption. Sending as file instead."
-                .yellow()
-        );
-        as_file = true;
-    }
-
-    let filename = get_filename(&args.file, as_file, &args.filename)?;
-    let payload = Payload::from_bytes(bytes.as_ref(), filename);
+    let filename = get_filename(&secret, args.clone())?;
+    let payload = Payload::from_bytes(secret.bytes.as_ref(), filename);
 
     let user_agent = get_user_agent_name();
     let observer = factory.new_observer("Sending secret...")?;
@@ -63,6 +57,62 @@ pub async fn send<T: Factory>(factory: T, args: SendArgs) -> Result<()> {
     print_link(&mut link, args)?;
 
     Ok(())
+}
+
+fn read_secret(args: SendArgs) -> Result<Secret> {
+    if let Some(files) = args.files {
+        read_secret_from_files(files)
+    } else {
+        let mut bytes = Zeroizing::new(Vec::new());
+        io::stdin().read_to_end(&mut bytes)?;
+        Ok(Secret {
+            bytes,
+            filename: None,
+        })
+    }
+}
+
+fn read_secret_from_files(files: Vec<String>) -> Result<Secret> {
+    if files.len() != 1 {
+        return Err(anyhow!(
+            "Only one file can be provided for sending as a secret."
+        ));
+    }
+
+    let file_path = files[0].clone();
+    let bytes = Zeroizing::new(std::fs::read(&file_path)?);
+    let filename = std::path::Path::new(&file_path)
+        .file_name()
+        .and_then(|name| name.to_str())
+        .map(|s| s.to_string());
+
+    Ok(Secret { bytes, filename })
+}
+
+fn get_filename(secret: &Secret, args: SendArgs) -> Result<Option<String>> {
+    let mut as_file = args.as_file;
+    if args.files.is_some() && !as_file && content_analysis::is_binary(secret.bytes.as_ref()) {
+        println!(
+            "{}",
+            "Sending binary files as text may lead to data corruption. Sending as file instead."
+                .yellow()
+        );
+        as_file = true;
+    }
+
+    if !as_file {
+        return Ok(None);
+    }
+
+    if let Some(filename) = args.filename {
+        return Ok(Some(filename));
+    }
+
+    if let Some(filename) = &secret.filename {
+        return Ok(Some(filename.clone()));
+    } else {
+        Err(anyhow!("File name is required when sending as a file."))
+    }
 }
 
 fn print_link(link: &mut Url, args: SendArgs) -> Result<()> {
@@ -119,39 +169,6 @@ fn print_link_separate_key(link: &mut Url) {
     fragment.zeroize();
 }
 
-fn get_filename(
-    file: &Option<String>,
-    as_file: bool,
-    filename: &Option<String>,
-) -> Result<Option<String>> {
-    if !as_file {
-        return Ok(None);
-    }
-
-    if let Some(name) = filename {
-        return Ok(Some(name.clone()));
-    }
-
-    if let Some(file_path) = file {
-        Ok(std::path::Path::new(&file_path)
-            .file_name()
-            .and_then(|name| name.to_str())
-            .map(|s| s.to_string()))
-    } else {
-        Err(anyhow!("File name is required when sending as a file."))
-    }
-}
-
-fn read_secret(file: Option<String>) -> Result<Zeroizing<Vec<u8>>> {
-    if let Some(file_path) = file {
-        Ok(Zeroizing::new(std::fs::read(&file_path)?))
-    } else {
-        let mut bytes = Zeroizing::new(Vec::new());
-        io::stdin().read_to_end(&mut bytes)?;
-        Ok(bytes)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -164,39 +181,62 @@ mod tests {
 
     #[test]
     fn test_get_filename_not_as_file() -> Result<()> {
-        let result = get_filename(&Some("test.txt".to_string()), false, &None)?;
+        let args = SendArgs::builder().with_filename("test.txt");
+        let secret = Secret {
+            bytes: Zeroizing::new(b"test content".to_vec()),
+            filename: None,
+        };
+        let result = get_filename(&secret, args)?;
         assert_eq!(result, None);
         Ok(())
     }
 
     #[test]
     fn test_get_filename_with_explicit_filename() -> Result<()> {
-        let result = get_filename(
-            &Some("path/to/test.txt".to_string()),
-            true,
-            &Some("custom.txt".to_string()),
-        )?;
+        let args = SendArgs::builder()
+            .with_as_file()
+            .with_filename("custom.txt");
+        let secret = Secret {
+            bytes: Zeroizing::new(b"test content".to_vec()),
+            filename: Some("path/to/test.txt".to_string()),
+        };
+        let result = get_filename(&secret, args)?;
         assert_eq!(result, Some("custom.txt".to_string()));
         Ok(())
     }
 
     #[test]
-    fn test_get_filename_from_file_path() -> Result<()> {
-        let result = get_filename(&Some("/path/to/test.txt".to_string()), true, &None)?;
+    fn test_get_filename_from_secret() -> Result<()> {
+        let args = SendArgs::builder().with_as_file();
+        let secret = Secret {
+            bytes: Zeroizing::new(b"test content".to_vec()),
+            filename: Some("test.txt".to_string()),
+        };
+        let result = get_filename(&secret, args)?;
         assert_eq!(result, Some("test.txt".to_string()));
         Ok(())
     }
 
     #[test]
     fn test_get_filename_from_file_path_no_extension() -> Result<()> {
-        let result = get_filename(&Some("/path/to/testfile".to_string()), true, &None)?;
+        let args = SendArgs::builder().with_as_file();
+        let secret = Secret {
+            bytes: Zeroizing::new(b"test content".to_vec()),
+            filename: Some("testfile".to_string()),
+        };
+        let result = get_filename(&secret, args)?;
         assert_eq!(result, Some("testfile".to_string()));
         Ok(())
     }
 
     #[test]
     fn test_get_filename_no_file_path_as_file() {
-        let result = get_filename(&None, true, &None);
+        let args = SendArgs::builder().with_as_file();
+        let secret = Secret {
+            bytes: Zeroizing::new(b"test content".to_vec()),
+            filename: None,
+        };
+        let result = get_filename(&secret, args);
         assert!(result.is_err());
         assert!(
             result
@@ -213,14 +253,16 @@ mod tests {
         let test_content = b"test secret content";
         fs::write(&file_path, test_content)?;
 
-        let result = read_secret(Some(file_path.to_string_lossy().to_string()))?;
-        assert_eq!(result.to_vec(), test_content);
+        let args = SendArgs::builder().with_file(file_path.to_string_lossy().as_ref());
+        let result = read_secret(args)?;
+        assert_eq!(result.bytes.to_vec(), test_content);
         Ok(())
     }
 
     #[test]
     fn test_read_secret_file_not_found() {
-        let result = read_secret(Some("/nonexistent/file.txt".to_string()));
+        let args = SendArgs::builder().with_file("/nonexistent/file.txt");
+        let result = read_secret(args);
         assert!(result.is_err());
     }
 
@@ -230,8 +272,9 @@ mod tests {
         let file_path = temp_dir.path().join("empty.txt");
         fs::write(&file_path, b"")?;
 
-        let result = read_secret(Some(file_path.to_string_lossy().to_string()))?;
-        assert_eq!(result.to_vec(), b"");
+        let args = SendArgs::builder().with_file(file_path.to_string_lossy().as_ref());
+        let result = read_secret(args)?;
+        assert_eq!(result.bytes.to_vec(), b"");
         Ok(())
     }
 
@@ -242,8 +285,9 @@ mod tests {
         let binary_content = vec![0x00, 0x01, 0xFF, 0xFE, 0x42];
         fs::write(&file_path, &binary_content)?;
 
-        let result = read_secret(Some(file_path.to_string_lossy().to_string()))?;
-        assert_eq!(result.to_vec(), binary_content);
+        let args = SendArgs::builder().with_file(file_path.to_string_lossy().as_ref());
+        let result = read_secret(args)?;
+        assert_eq!(result.bytes.to_vec(), binary_content);
         Ok(())
     }
 

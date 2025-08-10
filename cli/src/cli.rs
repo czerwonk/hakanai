@@ -54,12 +54,12 @@ pub struct SendArgs {
     pub token_file: Option<String>,
 
     #[arg(
-        short,
-        long,
+        short = 'f',
+        long = "from-files",
         help = "File to read the secret from. If not specified, reads from stdin.",
         value_name = "FILE"
     )]
-    pub file: Option<String>,
+    pub files: Option<Vec<String>>,
 
     #[arg(
         short,
@@ -70,7 +70,7 @@ pub struct SendArgs {
 
     #[arg(
         long,
-        help = "Filename to use for the secret when sending as a file. Can be determined automatically from --file if provided."
+        help = "Filename to use for the secret when sending as a file. Can be determined automatically from -f if provided for a single file."
     )]
     pub filename: Option<String>,
 
@@ -123,7 +123,7 @@ impl SendArgs {
             ttl: Duration::from_secs(24 * 60 * 60), // 24h
             token: None,
             token_file: None,
-            file: None,
+            files: None,
             as_file: false,
             filename: None,
             separate_key: false,
@@ -152,7 +152,13 @@ impl SendArgs {
 
     #[cfg(test)]
     pub fn with_file(mut self, file: &str) -> Self {
-        self.file = Some(file.to_string());
+        self.files = Some(vec![file.to_string()]);
+        self
+    }
+
+    #[cfg(test)]
+    pub fn with_files(mut self, files: Vec<String>) -> Self {
+        self.files = Some(files);
         self
     }
 
@@ -589,12 +595,15 @@ mod tests {
 
     #[test]
     fn test_send_command_with_file() {
-        let args =
-            Args::try_parse_from(["hakanai", "send", "--file", "/path/to/secret.txt"]).unwrap();
+        let args = Args::try_parse_from(["hakanai", "send", "--from-files", "/path/to/secret.txt"])
+            .unwrap();
 
         match args.command {
             Command::Send(send_args) => {
-                assert_eq!(send_args.file, Some("/path/to/secret.txt".to_string()));
+                assert_eq!(
+                    send_args.files,
+                    Some(vec!("/path/to/secret.txt".to_string()))
+                );
             }
             _ => panic!("Expected Send command"),
         }
@@ -606,7 +615,7 @@ mod tests {
 
         match args.command {
             Command::Send(send_args) => {
-                assert_eq!(send_args.file, Some("/tmp/data.bin".to_string()));
+                assert_eq!(send_args.files, Some(vec!("/tmp/data.bin".to_string())));
             }
             _ => panic!("Expected Send command"),
         }
@@ -666,7 +675,7 @@ mod tests {
         let args = Args::try_parse_from([
             "hakanai",
             "send",
-            "--file",
+            "--from-files",
             "/path/to/document.pdf",
             "--as-file",
         ])
@@ -674,7 +683,10 @@ mod tests {
 
         match args.command {
             Command::Send(send_args) => {
-                assert_eq!(send_args.file, Some("/path/to/document.pdf".to_string()));
+                assert_eq!(
+                    send_args.files,
+                    Some(vec!("/path/to/document.pdf".to_string()))
+                );
                 assert!(send_args.as_file);
             }
             _ => panic!("Expected Send command"),
@@ -708,7 +720,10 @@ mod tests {
             .with_as_file()
             .with_filename("renamed_secret.bin");
 
-        assert_eq!(send_args.file, Some("/home/user/secret.bin".to_string()));
+        assert_eq!(
+            send_args.files,
+            Some(vec!("/home/user/secret.bin".to_string()))
+        );
         assert!(send_args.as_file);
         assert_eq!(send_args.filename, Some("renamed_secret.bin".to_string()));
     }
