@@ -89,6 +89,7 @@ mod tests {
 
     use crate::app_data::{AnonymousOptions, AppData};
     use crate::data_store::{DataStore, DataStoreError, DataStorePopResult};
+    use crate::observer::ObserverManager;
     use crate::test_utils::MockTokenManager;
     use uuid::Uuid;
 
@@ -131,6 +132,7 @@ mod tests {
             },
             impressum_html: None,
             privacy_html: None,
+            observer_manager: ObserverManager::new(),
         }
     }
 

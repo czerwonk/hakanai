@@ -274,6 +274,7 @@ mod tests {
             },
             impressum_html,
             privacy_html: None,
+            observer_manager: crate::observer::ObserverManager::new(),
         }
     }
 

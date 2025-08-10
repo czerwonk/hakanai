@@ -2,6 +2,7 @@ mod admin_api;
 mod app_data;
 mod data_store;
 mod metrics;
+mod observer;
 mod options;
 mod otel;
 mod redis_client;
@@ -11,6 +12,7 @@ mod token;
 mod web_api;
 mod web_server;
 mod web_static;
+mod webhook_observer;
 
 use std::io::Result;
 use std::sync::Arc;

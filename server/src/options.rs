@@ -10,7 +10,7 @@ fn parse_size_limit_bytes(s: &str) -> Result<u64, String> {
 }
 
 /// Represents the command-line arguments for the server.
-#[derive(Parser)]
+#[derive(Parser, Clone)]
 #[command(
     version,
     name = "hakanai-server",
@@ -131,6 +131,16 @@ pub struct Args {
         help = "Path to privacy policy/data protection text file. When provided, a privacy policy link appears in the footer."
     )]
     pub privacy_file: Option<String>,
+
+    #[arg(long, env = "HAKANAI_WEBHOOK_URL", help = "Enable webhook")]
+    pub webhook_url: Option<String>,
+
+    #[arg(
+        long,
+        env = "HAKANAI_WEBHOOK_TOKEN",
+        help = "Bearer token for webhook authentication"
+    )]
+    pub webhook_token: Option<String>,
 }
 
 impl Args {
@@ -185,6 +195,8 @@ mod tests {
             reset_user_tokens: false,
             impressum_file: None,
             privacy_file: None,
+            webhook_url: None,
+            webhook_token: None,
         }
     }
 

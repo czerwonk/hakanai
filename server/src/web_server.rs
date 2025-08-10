@@ -1,3 +1,4 @@
+use core::option::Option;
 use std::io::Result;
 
 use actix_cors::Cors;
@@ -7,13 +8,15 @@ use opentelemetry_instrumentation_actix_web::{RequestMetrics, RequestTracing};
 
 use tracing::{error, info, instrument};
 
-use crate::admin_api;
 use crate::app_data::{AnonymousOptions, AppData};
 use crate::data_store::DataStore;
+use crate::observer::ObserverManager;
 use crate::options::Args;
 use crate::token::{TokenCreator, TokenValidator};
 use crate::web_api;
 use crate::web_static;
+use crate::webhook_observer::WebhookObserver;
+use crate::{admin_api, observer};
 
 /// Starts the web server with the provided data store and tokens.
 pub async fn run<D, T>(data_store: D, token_manager: T, args: Args) -> Result<()>
@@ -31,7 +34,11 @@ where
     let impressum_html = build_impressum_html(&args)?;
     let privacy_html = build_privacy_html(&args)?;
 
+    let webhook_url = args.webhook_url;
+    let webhook_token = args.webhook_token;
+
     HttpServer::new(move || {
+        let observer_manager = init_observers(webhook_url.clone(), webhook_token.clone());
         let app_data = AppData {
             data_store: Box::new(data_store.clone()),
             token_validator: Box::new(token_manager.clone()),
@@ -40,6 +47,7 @@ where
             anonymous_usage: anonymous_usage.clone(),
             impressum_html: impressum_html.clone(),
             privacy_html: privacy_html.clone(),
+            observer_manager,
         };
         App::new()
             .app_data(web::Data::new(app_data))
@@ -64,6 +72,23 @@ where
     .bind((args.listen_address, args.port))?
     .run()
     .await
+}
+
+fn init_observers(webhook_url: Option<String>, webhook_token: Option<String>) -> ObserverManager {
+    let mut observer_manager = observer::ObserverManager::new();
+
+    if let Some(ref url) = webhook_url {
+        match WebhookObserver::new(url.clone(), webhook_token.clone()) {
+            Ok(obs) => {
+                observer_manager.register_observer(Box::new(obs));
+            }
+            Err(e) => {
+                error!("Failed to initialize webhook observer: {e}");
+            }
+        }
+    }
+
+    observer_manager
 }
 
 fn build_impressum_html(args: &Args) -> Result<Option<String>> {
@@ -149,7 +174,7 @@ async fn get_secret_short(
         return web_static::serve_get_secret_html().await;
     }
 
-    match web_api::get_secret_from_request(req, app_data).await {
+    match web_api::get_secret_from_request(http_req, req, app_data).await {
         Ok(secret) => HttpResponse::Ok().body(secret),
         Err(e) => e.error_response(),
     }

@@ -37,8 +37,9 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
 /// - The provided ID is not a valid UUID (`ErrorBadRequest`).
 /// - The secret is not found in the data store (`ErrorNotFound`).
 /// - An internal error occurs while accessing the data store (`ErrorInternalServerError`).
-#[instrument(skip(app_data), fields(id = tracing::field::Empty), err)]
+#[instrument(skip(app_data, http_req), fields(id = tracing::field::Empty), err)]
 pub async fn get_secret_from_request(
+    http_req: HttpRequest,
     req: web::Path<String>,
     app_data: web::Data<AppData>,
 ) -> Result<String> {
@@ -48,7 +49,13 @@ pub async fn get_secret_from_request(
 
     match app_data.data_store.pop(id).await {
         Ok(res) => match res {
-            DataStorePopResult::Found(secret) => Ok(secret),
+            DataStorePopResult::Found(secret) => {
+                app_data
+                    .observer_manager
+                    .notify_secret_retrieved(id, http_req.headers().clone())
+                    .await;
+                Ok(secret)
+            }
             DataStorePopResult::NotFound => Err(error::ErrorNotFound("Secret not found")),
             DataStorePopResult::AlreadyAccessed => {
                 Err(error::ErrorGone("Secret was already accessed"))
@@ -62,8 +69,12 @@ pub async fn get_secret_from_request(
 }
 
 #[get("/secret/{id}")]
-async fn get_secret(req: web::Path<String>, app_data: web::Data<AppData>) -> Result<String> {
-    get_secret_from_request(req, app_data).await
+async fn get_secret(
+    http_req: HttpRequest,
+    req: web::Path<String>,
+    app_data: web::Data<AppData>,
+) -> Result<String> {
+    get_secret_from_request(http_req, req, app_data).await
 }
 
 #[post("/secret")]
@@ -84,6 +95,10 @@ async fn post_secret(
         .put(id, req.data.clone(), req.expires_in)
         .await
         .map_err(error::ErrorInternalServerError)?;
+    app_data
+        .observer_manager
+        .notify_secret_created(id, http_req.headers().clone())
+        .await;
 
     Ok(web::Json(PostSecretResponse { id }))
 }
@@ -167,8 +182,53 @@ mod tests {
 
     use crate::app_data::AnonymousOptions;
     use crate::data_store::DataStore;
+    use crate::observer::{ObserverManager, SecretObserver};
     use crate::test_utils::{MockDataStore, MockTokenManager};
     use crate::token::TokenData;
+    use actix_web::http::header::HeaderMap;
+    use async_trait::async_trait;
+    use std::sync::{Arc, Mutex};
+
+    // Mock observer for testing
+    #[derive(Clone)]
+    struct MockObserver {
+        created_events: Arc<Mutex<Vec<(Uuid, HeaderMap)>>>,
+        retrieved_events: Arc<Mutex<Vec<(Uuid, HeaderMap)>>>,
+    }
+
+    impl MockObserver {
+        fn new() -> Self {
+            MockObserver {
+                created_events: Arc::new(Mutex::new(Vec::new())),
+                retrieved_events: Arc::new(Mutex::new(Vec::new())),
+            }
+        }
+
+        fn get_created_events(&self) -> Vec<(Uuid, HeaderMap)> {
+            self.created_events.lock().unwrap().clone()
+        }
+
+        fn get_retrieved_events(&self) -> Vec<(Uuid, HeaderMap)> {
+            self.retrieved_events.lock().unwrap().clone()
+        }
+    }
+
+    #[async_trait]
+    impl SecretObserver for MockObserver {
+        async fn on_secret_created(&self, secret_id: Uuid, headers: HeaderMap) {
+            self.created_events
+                .lock()
+                .unwrap()
+                .push((secret_id, headers));
+        }
+
+        async fn on_secret_retrieved(&self, secret_id: Uuid, headers: HeaderMap) {
+            self.retrieved_events
+                .lock()
+                .unwrap()
+                .push((secret_id, headers));
+        }
+    }
 
     // Helper function to create test AppData with default values
     fn create_test_app_data(
@@ -187,6 +247,7 @@ mod tests {
             },
             impressum_html: None,
             privacy_html: None,
+            observer_manager: ObserverManager::new(),
         }
     }
 
@@ -562,5 +623,146 @@ mod tests {
 
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), 401); // Unauthorized
+    }
+
+    #[actix_web::test]
+    async fn test_observer_notification_on_secret_creation() {
+        let mock_store = MockDataStore::new();
+        let mock_observer = MockObserver::new();
+        let observer_clone = mock_observer.clone();
+
+        let mut app_data = create_test_app_data(
+            Box::new(mock_store.clone()),
+            MockTokenManager::new(),
+            true, // Allow anonymous
+        );
+        app_data
+            .observer_manager
+            .register_observer(Box::new(mock_observer));
+
+        let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
+            |cfg| {
+                configure(cfg);
+            },
+        ))
+        .await;
+
+        let payload = PostSecretRequest {
+            data: "test_secret".to_string(),
+            expires_in: Duration::from_secs(3600),
+        };
+
+        let req = test::TestRequest::post()
+            .uri("/secret")
+            .insert_header(("User-Agent", "test-agent"))
+            .insert_header(("X-Request-Id", "test-123"))
+            .set_json(&payload)
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 200);
+
+        let body: PostSecretResponse = test::read_body_json(resp).await;
+
+        // Verify observer was notified
+        let created_events = observer_clone.get_created_events();
+        assert_eq!(created_events.len(), 1);
+        assert_eq!(created_events[0].0, body.id);
+
+        // Verify headers were passed
+        let headers = &created_events[0].1;
+        assert_eq!(headers.get("user-agent").unwrap(), "test-agent");
+        assert_eq!(headers.get("x-request-id").unwrap(), "test-123");
+    }
+
+    #[actix_web::test]
+    async fn test_observer_notification_on_secret_retrieval() {
+        let secret_id = Uuid::new_v4();
+        let mock_store = MockDataStore::new()
+            .with_pop_result(DataStorePopResult::Found("test_secret".to_string()));
+        let mock_observer = MockObserver::new();
+        let observer_clone = mock_observer.clone();
+
+        let mut app_data =
+            create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
+        app_data
+            .observer_manager
+            .register_observer(Box::new(mock_observer));
+
+        let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
+            |cfg| {
+                configure(cfg);
+            },
+        ))
+        .await;
+
+        let req = test::TestRequest::get()
+            .uri(&format!("/secret/{secret_id}"))
+            .insert_header(("User-Agent", "hakanai-cli"))
+            .insert_header(("X-Forwarded-For", "192.168.1.1"))
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 200);
+
+        // Verify observer was notified
+        let retrieved_events = observer_clone.get_retrieved_events();
+        assert_eq!(retrieved_events.len(), 1);
+        assert_eq!(retrieved_events[0].0, secret_id);
+
+        let headers = &retrieved_events[0].1;
+        assert_eq!(headers.get("user-agent").unwrap(), "hakanai-cli");
+        assert_eq!(headers.get("x-forwarded-for").unwrap(), "192.168.1.1");
+    }
+
+    #[actix_web::test]
+    async fn test_observer_notification_with_token() {
+        let mock_store = MockDataStore::new();
+        let mock_observer = MockObserver::new();
+        let observer_clone = mock_observer.clone();
+        let token_manager = MockTokenManager::new().with_user_token(
+            "valid_token",
+            TokenData {
+                upload_size_limit: None,
+            },
+        );
+
+        let mut app_data = create_test_app_data(Box::new(mock_store.clone()), token_manager, true);
+        app_data
+            .observer_manager
+            .register_observer(Box::new(mock_observer));
+
+        let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
+            |cfg| {
+                configure(cfg);
+            },
+        ))
+        .await;
+
+        let payload = PostSecretRequest {
+            data: "test_secret".to_string(),
+            expires_in: Duration::from_secs(3600),
+        };
+
+        let req = test::TestRequest::post()
+            .uri("/secret")
+            .insert_header(("Authorization", "Bearer valid_token"))
+            .insert_header(("User-Agent", "authenticated-client"))
+            .set_json(&payload)
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 200);
+
+        let body: PostSecretResponse = test::read_body_json(resp).await;
+
+        // Verify observer was notified with auth headers
+        let created_events = observer_clone.get_created_events();
+        assert_eq!(created_events.len(), 1);
+        assert_eq!(created_events[0].0, body.id);
+
+        let headers = &created_events[0].1;
+        assert_eq!(headers.get("authorization").unwrap(), "Bearer valid_token");
+        assert_eq!(headers.get("user-agent").unwrap(), "authenticated-client");
     }
 }

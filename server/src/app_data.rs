@@ -1,6 +1,7 @@
 use std::time;
 
 use crate::data_store::DataStore;
+use crate::observer::ObserverManager;
 use crate::token::{TokenCreator, TokenValidator};
 
 #[derive(Clone, Debug)]
@@ -33,4 +34,7 @@ pub struct AppData {
 
     /// Pre-rendered privacy policy HTML page (built at startup if configured)
     pub privacy_html: Option<String>,
+
+    /// The observer manager for secret lifecycle events.
+    pub observer_manager: ObserverManager,
 }

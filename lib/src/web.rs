@@ -63,7 +63,7 @@ impl Client<Vec<u8>> for WebClient {
             .timeout(timeout);
 
         if !token.is_empty() {
-            req = req.header("Authorization", format!("Bearer {token}"));
+            req = req.bearer_auth(token);
         }
 
         let resp = req.send().await?;
