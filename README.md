@@ -141,6 +141,10 @@ echo "my secret data" | hakanai send
 hakanai send --file secret.txt
 hakanai send -f /path/to/secret.dat
 
+# Send multiple files (automatically creates ZIP archive)
+hakanai send -f document.pdf -f image.png -f data.csv
+hakanai send --file report.pdf --file appendix.docx
+
 # Send with custom TTL
 echo "temporary password" | hakanai send --ttl 30m
 
