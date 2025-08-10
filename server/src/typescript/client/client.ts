@@ -261,7 +261,6 @@ class HakanaiClient {
    * @param payload - Data to encrypt and send (must have non-empty data field)
    * @param ttl - Time-to-live in seconds (default: 3600)
    * @param authToken - Optional authentication token for server access
-   * @param progressObserver - Optional progress observer for upload tracking
    * @returns Full URL with secret ID and decryption key in fragment
    * @throws {HakanaiError} With specific error codes:
    *   - AUTHENTICATION_REQUIRED: Server requires auth token
@@ -272,7 +271,6 @@ class HakanaiClient {
     payload: PayloadData,
     ttl: number = 3600,
     authToken?: string,
-    progressObserver?: DataTransferObserver,
   ): Promise<string> {
     this.validateSendPayloadParams(payload, ttl, authToken);
 
