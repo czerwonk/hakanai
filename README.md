@@ -121,6 +121,9 @@ hakanai-server --enable-admin-token
 
 # Production setup with admin token and monitoring
 hakanai-server --enable-admin-token --allow-anonymous --anonymous-size-limit 32k --upload-size-limit 10m
+
+# With webhook notifications for audit/monitoring (v2.8+)
+hakanai-server --webhook-url https://example.com/webhook --webhook-auth "Bearer token123"
 ```
 
 **Token System:**
@@ -128,6 +131,12 @@ hakanai-server --enable-admin-token --allow-anonymous --anonymous-size-limit 32k
 - **User tokens**: Auto-created on first startup with 30-day TTL
 - **Anonymous access**: Optional public access with size limits
 - **Token recovery**: Use `--reset-admin-token` or `--reset-default-token` flags
+
+**Webhook Notifications (v2.8+):**
+- **Lifecycle events**: Get notified when secrets are created or retrieved
+- **Zero-knowledge preserved**: Only metadata (UUID, headers) sent, never secret content
+- **Extensible**: Corporate deployments can implement custom observers for audit trails
+- **Fire-and-forget**: Webhooks don't block secret operations
 
 ### CLI
 
@@ -449,6 +458,8 @@ For production deployments:
 - `HAKANAI_MAX_TTL`: Maximum allowed TTL in seconds (default: 604800, 7 days)
 - `HAKANAI_IMPRESSUM_FILE`: Path to impressum/legal information text file (displays impressum link in footer when provided)
 - `HAKANAI_PRIVACY_FILE`: Path to privacy policy/data protection text file (displays privacy policy link in footer when provided)
+- `HAKANAI_WEBHOOK_URL`: Webhook URL for secret lifecycle notifications (optional)
+- `HAKANAI_WEBHOOK_AUTH`: Bearer token for webhook authentication (optional)
 - `OTEL_EXPORTER_OTLP_ENDPOINT`: OpenTelemetry collector endpoint (optional, enables OTEL when set)
 
 ### Server Command-line Options
@@ -463,6 +474,8 @@ For production deployments:
 - `--reset-user-tokens`: Clear all user tokens and create new default token
 - `--impressum-file`: Path to impressum/legal information text file (displays impressum link in footer when provided)
 - `--privacy-file`: Path to privacy policy/data protection text file (displays privacy policy link in footer when provided)
+- `--webhook-url`: Webhook URL for secret lifecycle notifications
+- `--webhook-auth`: Bearer token for webhook authentication
 
 ### Security Features
 
