@@ -13,7 +13,7 @@ const SAFE_HEADERS: [&str; 4] = [
     "user-agent",
     "x-forwarded-for",
     "x-forwarded-proto",
-    "x-request-id",
+    "x-real-ip",
 ];
 
 /// Webhook action types.
