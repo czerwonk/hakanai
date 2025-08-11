@@ -1358,25 +1358,51 @@ button.loading::after {
   font-weight: 500;
 }
 
-.progress-bar {
-  width: 100%;
-  height: 0.75rem;
-  background-color: var(--color-bg-input);
-  border-radius: var(--border-radius);
-  border: 1px solid var(--color-border);
-  overflow: hidden;
+/* Progress title - shown at top */
+.progress-title {
+  text-align: center;
+  color: var(--color-text);
+  font-size: var(--font-size-base);
+  margin-bottom: var(--spacing-md);
+  font-weight: 500;
 }
 
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    var(--color-primary),
-    var(--color-primary-hover)
-  );
-  width: 0%;
-  transition: width var(--transition-normal);
-  border-radius: var(--border-radius-sm);
+/* Progress status - shown at bottom, smaller */
+.progress-status {
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  margin-top: var(--spacing-md);
+  min-height: 1.2em; /* Prevent layout shift when text appears */
+}
+
+/* Circular Progress Bar */
+.circular-progress {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: var(--spacing-md) 0;
+}
+
+.circular-progress svg,
+.circular-progress img {
+  width: 100px;
+  height: 100px;
+  max-width: min(100px, 25vw);
+  max-height: min(100px, 25vw);
+}
+
+/* Pulse animation for initial loading state */
+@keyframes pulse {
+  0% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 0.3;
+  }
 }
 
 .spinner-container {

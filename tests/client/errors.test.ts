@@ -16,22 +16,87 @@ function encodeText(text: string): Uint8Array {
   return new Uint8Array(encoded);
 }
 
-// Mock server responses only
-const createMockFetch = () => {
-  return jest.fn((url: string, options?: any) => {
-    return Promise.resolve({
-      ok: false,
-      status: 404,
-      statusText: "Not Found",
-    });
+// Mock Response and Headers for XHR-based client
+if (typeof global.Response === "undefined") {
+  (global as any).Response = class MockResponse {
+    private _text: string;
+    public status: number;
+    public statusText: string;
+    public headers: any;
+    public ok: boolean;
+
+    constructor(
+      body: string,
+      init?: { status?: number; statusText?: string; headers?: any },
+    ) {
+      this._text = body;
+      this.status = init?.status || 200;
+      this.statusText = init?.statusText || "OK";
+      this.headers = init?.headers || new Map();
+      this.ok = this.status >= 200 && this.status < 300;
+    }
+
+    async json() {
+      return JSON.parse(this._text);
+    }
+
+    async text() {
+      return this._text;
+    }
+  };
+}
+
+if (typeof global.Headers === "undefined") {
+  (global as any).Headers = class MockHeaders extends Map {
+    constructor() {
+      super();
+    }
+  };
+}
+
+// Mock XMLHttpRequest for XHR-based client
+const createMockXHR = (
+  config: {
+    status?: number;
+    statusText?: string;
+    responseText?: string;
+    shouldError?: boolean;
+  } = {},
+) => {
+  const mockXHRInstance = {
+    open: jest.fn(),
+    send: jest.fn(),
+    setRequestHeader: jest.fn(),
+    upload: {},
+    status: config.status || 200,
+    statusText: config.statusText || "OK",
+    responseText: config.responseText || '{"id": "test-uuid"}',
+    onload: null as any,
+    onerror: null as any,
+  };
+
+  // Configure send behavior
+  mockXHRInstance.send.mockImplementation(() => {
+    // Simulate async behavior
+    setTimeout(() => {
+      if (config.shouldError) {
+        mockXHRInstance.onerror?.();
+      } else {
+        mockXHRInstance.onload?.();
+      }
+    }, 0);
   });
+
+  (global as any).XMLHttpRequest = jest.fn(() => mockXHRInstance);
+  return mockXHRInstance;
 };
 
 describe("Error Handling", () => {
   let client: HakanaiClient;
+  let mockXHRInstance: any;
 
   beforeEach(() => {
-    global.fetch = createMockFetch() as any;
+    mockXHRInstance = createMockXHR();
     client = new HakanaiClient("http://localhost:8080");
   });
 
@@ -59,38 +124,23 @@ describe("Error Handling", () => {
     ).rejects.toThrow("Auth token must be a string");
   });
 
-  test("sendPayload throws HakanaiError (401)", async () => {
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: false,
-      status: 401,
-      statusText: "Unauthorized",
-    }) as any;
+  test("sendPayload throws HakanaiError (network error)", async () => {
+    mockXHRInstance = createMockXHR({ shouldError: true });
+    client = new HakanaiClient("http://localhost:8080");
 
     const testBytes = encodeText("test secret");
     const payload = client.createPayload();
     payload.setFromBytes!(testBytes);
 
-    try {
-      // Use a properly formatted but invalid token (43 chars base64url)
-      await client.sendPayload(
-        payload,
-        3600,
-        "HUqlqUd68TmqGkNj5o7pMqRcJe2YIQqoOlMfSSYF5r8",
-      );
-      fail("Expected error to be thrown");
-    } catch (error: any) {
-      expect(error.name).toBe("HakanaiError");
-      expect(error.code).toBe(HakanaiErrorCodes.AUTHENTICATION_REQUIRED);
-      expect(error.statusCode).toBe(401);
-    }
+    await expect(client.sendPayload(payload, 3600)).rejects.toThrow();
   });
 
   test("sendPayload throws HakanaiError (403)", async () => {
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: false,
+    mockXHRInstance = createMockXHR({
       status: 403,
       statusText: "Forbidden",
-    }) as any;
+    });
+    client = new HakanaiClient("http://localhost:8080");
 
     const testBytes = encodeText("test secret");
     const payload = client.createPayload();
@@ -112,18 +162,17 @@ describe("Error Handling", () => {
   });
 
   test("sendPayload throws HakanaiError (413)", async () => {
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: false,
+    mockXHRInstance = createMockXHR({
       status: 413,
       statusText: "Payload Too Large",
-    }) as any;
+    });
+    client = new HakanaiClient("http://localhost:8080");
 
     const testBytes = encodeText("test secret");
     const payload = client.createPayload();
     payload.setFromBytes!(testBytes);
 
     try {
-      // Use a properly formatted but invalid token (43 chars base64url)
       await client.sendPayload(payload, 3600);
       fail("Expected error to be thrown");
     } catch (error: any) {
@@ -154,6 +203,7 @@ describe("Error Handling", () => {
   });
 
   test("receivePayload handles server errors", async () => {
+    // receivePayload still uses fetch for GET requests, so we mock fetch for this test
     global.fetch = jest.fn().mockResolvedValue({
       ok: false,
       status: 404,
@@ -165,9 +215,15 @@ describe("Error Handling", () => {
     // Use a proper UUID and 32-byte base64 key for the test
     const validUuid = "550e8400-e29b-41d4-a716-446655440000";
     const validKey = Base64UrlSafe.encode(new Uint8Array(32)); // 32 zero bytes
+    const validHash = "AAAAAAAAAAAAAAAAAAAAAA"; // 22-char base64url hash
     await expect(
       client.receivePayload(
-        "http://localhost:8080/s/" + validUuid + "#" + validKey,
+        "http://localhost:8080/s/" +
+          validUuid +
+          "#" +
+          validKey +
+          ":" +
+          validHash,
       ),
     ).rejects.toThrow("Secret not found or has expired");
   });

@@ -23,7 +23,6 @@ import { initSeparateKeyCheckbox } from "./core/preferences";
 import { KeyboardShortcuts } from "./core/keyboard-shortcuts";
 
 let ttlSelector: TTLSelector | null = null;
-let progressBar: ProgressBar | null = null;
 
 interface Elements {
   button: HTMLButtonElement;
@@ -185,17 +184,6 @@ function setElementsState(elements: Elements, disabled: boolean): void {
     "separateKey",
   ) as HTMLInputElement;
 
-  if (disabled) {
-    if (!progressBar) {
-      progressBar = new ProgressBar();
-    }
-    progressBar.show(window.i18n.t(I18nKeys.Msg.Creating), "spinner");
-  } else {
-    if (progressBar) {
-      progressBar.hide();
-    }
-  }
-
   button.disabled = disabled;
   secretInput.disabled = disabled;
   fileInput.disabled = disabled;
@@ -285,8 +273,18 @@ async function createSecret(): Promise<void> {
 
   setElementsState(elements, true);
 
+  // Create and show progress bar
+  const progressBar = new ProgressBar();
+  progressBar.show(window.i18n.t(I18nKeys.Msg.Creating));
+
   try {
-    const secretUrl = await client.sendPayload(payload, ttl, authToken);
+    // Pass the ProgressBar directly as it implements DataTransferObserver
+    const secretUrl = await client.sendPayload(
+      payload,
+      ttl,
+      authToken,
+      progressBar,
+    );
 
     // Handle auth token cookie saving
     const saveTokenCookie = document.getElementById(
@@ -301,6 +299,7 @@ async function createSecret(): Promise<void> {
   } catch (error: unknown) {
     handleCreateError(error);
   } finally {
+    progressBar.hide();
     setElementsState(elements, false);
     // Clear auth token from memory for security (unless saving to cookie)
     const saveTokenCookie = document.getElementById(

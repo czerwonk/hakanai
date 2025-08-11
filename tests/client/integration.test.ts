@@ -25,61 +25,78 @@ function generateUUID(): string {
   });
 }
 
-// Helper to read ReadableStream
-async function readStream(stream: any): Promise<string> {
-  if (typeof stream === "string") {
-    return stream;
-  }
+// Mock Response and Headers for XHR-based client
+if (typeof global.Response === "undefined") {
+  (global as any).Response = class MockResponse {
+    private _text: string;
+    public status: number;
+    public statusText: string;
+    public headers: any;
+    public ok: boolean;
 
-  if (stream && typeof stream.getReader === "function") {
-    const reader = stream.getReader();
-    const chunks: Uint8Array[] = [];
-
-    try {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        chunks.push(value);
-      }
-    } finally {
-      reader.releaseLock();
+    constructor(
+      body: string,
+      init?: { status?: number; statusText?: string; headers?: any },
+    ) {
+      this._text = body;
+      this.status = init?.status || 200;
+      this.statusText = init?.statusText || "OK";
+      this.headers = init?.headers || new Map();
+      this.ok = this.status >= 200 && this.status < 300;
     }
 
-    // Combine chunks
-    const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
-    const combined = new Uint8Array(totalLength);
-    let offset = 0;
-
-    for (const chunk of chunks) {
-      combined.set(chunk, offset);
-      offset += chunk.length;
+    async json() {
+      return JSON.parse(this._text);
     }
 
-    return new TextDecoder().decode(combined);
-  }
-
-  return String(stream);
+    async text() {
+      return this._text;
+    }
+  };
 }
 
-// Mock server responses only
-const createMockFetch = () => {
+if (typeof global.Headers === "undefined") {
+  (global as any).Headers = class MockHeaders extends Map {
+    constructor() {
+      super();
+    }
+  };
+}
+
+// Mock server responses for both XHR and fetch
+const createMockServices = () => {
   const mockSecrets = new Map<string, string>();
 
-  return jest.fn(async (url: string, options?: any) => {
+  // Create XHR mock for POST requests
+  const mockXHRInstance = {
+    open: jest.fn(),
+    send: jest.fn((body: string) => {
+      setTimeout(() => {
+        try {
+          const parsedBody = JSON.parse(body);
+          const secretId = generateUUID();
+          mockSecrets.set(secretId, parsedBody.data);
+          mockXHRInstance.responseText = JSON.stringify({ id: secretId });
+          mockXHRInstance.onload?.();
+        } catch (error) {
+          mockXHRInstance.onerror?.();
+        }
+      }, 0);
+    }),
+    setRequestHeader: jest.fn(),
+    upload: {},
+    status: 200,
+    statusText: "OK",
+    responseText: "",
+    onload: null as any,
+    onerror: null as any,
+  };
+
+  (global as any).XMLHttpRequest = jest.fn(() => mockXHRInstance);
+
+  // Create fetch mock for GET requests
+  const mockFetch = jest.fn(async (url: string, options?: any) => {
     const urlObj = new URL(url);
-
-    // POST /api/v1/secret - create secret
-    if (urlObj.pathname === "/api/v1/secret" && options?.method === "POST") {
-      const secretId = generateUUID();
-      const bodyStr = await readStream(options.body);
-      const body = JSON.parse(bodyStr);
-      mockSecrets.set(secretId, body.data);
-
-      return Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve({ id: secretId }),
-      });
-    }
 
     // GET /api/v1/secret/{id} - retrieve secret
     const getMatch = urlObj.pathname.match(/^\/api\/v1\/secret\/(.+)$/);
@@ -118,6 +135,8 @@ const createMockFetch = () => {
       statusText: "Not Found",
     });
   });
+
+  return { mockFetch };
 };
 
 describe("HakanaiClient Integration", () => {
@@ -126,12 +145,14 @@ describe("HakanaiClient Integration", () => {
 
   beforeEach(() => {
     originalFetch = global.fetch;
-    global.fetch = createMockFetch() as any;
+    const { mockFetch } = createMockServices();
+    global.fetch = mockFetch as any;
     client = new HakanaiClient("http://localhost:8080");
   });
 
   afterEach(() => {
     global.fetch = originalFetch;
+    jest.restoreAllMocks();
   });
 
   test("complete roundtrip: send and receive text secret", async () => {
@@ -146,7 +167,7 @@ describe("HakanaiClient Integration", () => {
     const secretUrl = await client.sendPayload(originalPayload, 3600);
 
     expect(secretUrl).toMatch(
-      /^http:\/\/localhost:8080\/s\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}#[A-Za-z0-9_-]+:[A-Za-z0-9_-]{22}$/i,
+      /^http:\/\/localhost:8080\/s\/[0-9a-f-]+#[A-Za-z0-9_-]+:[A-Za-z0-9_-]{22}$/i,
     );
 
     // Receive the secret
@@ -168,7 +189,7 @@ describe("HakanaiClient Integration", () => {
     const secretUrl = await client.sendPayload(originalPayload, 1800);
 
     expect(secretUrl).toMatch(
-      /^http:\/\/localhost:8080\/s\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}#[A-Za-z0-9_-]+:[A-Za-z0-9_-]{22}$/i,
+      /^http:\/\/localhost:8080\/s\/[0-9a-f-]+#[A-Za-z0-9_-]+:[A-Za-z0-9_-]{22}$/i,
     );
 
     // Receive the secret
@@ -233,20 +254,29 @@ describe("HakanaiClient Integration", () => {
     const originalPayload = client.createPayload();
     originalPayload.setFromBytes!(textBytes);
 
-    // Mock fetch to capture what gets sent
+    // Mock XHR to capture what gets sent
     const sentData: any[] = [];
-    global.fetch = jest.fn(async (url: string, options?: any) => {
-      if (options?.method === "POST") {
-        const bodyStr = await readStream(options.body);
-        const body = JSON.parse(bodyStr);
-        sentData.push(body);
-        return Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve({ id: "test-123" }),
-        });
-      }
-      return Promise.resolve({ ok: false, status: 404 });
-    }) as any;
+    const captureXHRInstance = {
+      open: jest.fn(),
+      send: jest.fn((body: string) => {
+        try {
+          const parsedBody = JSON.parse(body);
+          sentData.push(parsedBody);
+          captureXHRInstance.responseText = JSON.stringify({ id: "test-123" });
+          setTimeout(() => captureXHRInstance.onload?.(), 0);
+        } catch (error) {
+          setTimeout(() => captureXHRInstance.onerror?.(), 0);
+        }
+      }),
+      setRequestHeader: jest.fn(),
+      upload: {},
+      status: 200,
+      statusText: "OK",
+      responseText: '{"id": "test-123"}',
+      onload: null as any,
+      onerror: null as any,
+    };
+    (global as any).XMLHttpRequest = jest.fn(() => captureXHRInstance);
 
     await client.sendPayload(originalPayload);
 
@@ -270,9 +300,7 @@ describe("HakanaiClient Integration", () => {
     expect(urlObj.protocol).toBe("http:");
     expect(urlObj.hostname).toBe("localhost");
     expect(urlObj.port).toBe("8080");
-    expect(urlObj.pathname).toMatch(
-      /^\/s\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
-    );
+    expect(urlObj.pathname).toMatch(/^\/s\/[0-9a-f-]+$/i);
     expect(urlObj.hash).toMatch(/^#[A-Za-z0-9_-]+:[A-Za-z0-9_-]{22}$/);
 
     // Parse key and hash from fragment

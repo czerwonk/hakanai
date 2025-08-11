@@ -2,7 +2,6 @@ import {
   HakanaiClient,
   ContentAnalysis,
   type PayloadData,
-  type DataTransferObserver,
 } from "./hakanai-client";
 import { initI18n, I18nKeys } from "./core/i18n";
 import {
@@ -120,30 +119,19 @@ async function processRetrieveRequest(): Promise<void> {
 
   const finalUrl = hasFragment ? processedUrl : `${processedUrl}#${key}`;
 
-  // Create progress bar overlay - no container needed
   const progressBar = new ProgressBar();
-  const progressObserver: DataTransferObserver = {
-    onProgress: async (
-      bytesTransferred: number,
-      totalBytes: number,
-    ): Promise<void> => {
-      progressBar.updateProgress(bytesTransferred, totalBytes);
-    },
-  };
-
-  // Show loading state and progress overlay
-  showLoadingState();
   progressBar.show(window.i18n.t(I18nKeys.Msg.Retrieving));
 
+  showLoadingState();
+
   try {
-    const payload = await client.receivePayload(finalUrl, progressObserver);
+    const payload = await client.receivePayload(finalUrl, progressBar);
     showSuccess(payload);
     clearInputs();
     toggleKeyInputVisibility();
   } catch (error: unknown) {
     handleRetrieveError(error);
   } finally {
-    // Always hide progress bar and reset loading state
     progressBar.hide();
     hideLoadingState();
   }

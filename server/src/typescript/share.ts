@@ -21,25 +21,23 @@ const DEFAULT_TTL = 3600; // Default TTL in seconds (1 hour)
 
 let sharePayload: ShareData | null = null;
 let ttlSelector: TTLSelector | null = null;
-let progressBar: ProgressBar | null = null;
 
-/**
- * Show loading state
- */
 function showLoading(message: string): void {
-  if (!progressBar) {
-    progressBar = new ProgressBar();
+  const loadingDiv = document.getElementById("loading");
+  if (loadingDiv) {
+    const loadingText = loadingDiv.querySelector(".loading-text");
+    if (loadingText) {
+      loadingText.textContent = message;
+    }
+    showElement(loadingDiv);
+    hideOtherSections("loading");
   }
-  progressBar.show(message, "spinner");
-  hideOtherSections("loading");
 }
 
-/**
- * Hide loading state
- */
 function hideLoading(): void {
-  if (progressBar) {
-    progressBar.hide();
+  const loadingDiv = document.getElementById("loading");
+  if (loadingDiv) {
+    hideElement(loadingDiv);
   }
 }
 
@@ -103,12 +101,10 @@ function showShareContent(payload: ShareData): void {
  * Show clipboard error
  */
 function showError(message: string): void {
-  // Page-specific behavior: show result section and hide others
   const result = document.getElementById("result")!;
   showElement(result);
   hideOtherSections("result");
 
-  // Use generic error display
   displayErrorMessage(message, result);
 }
 
@@ -204,12 +200,13 @@ async function createSecret(): Promise<void> {
     return;
   }
 
-  try {
-    showLoading(window.i18n.t(I18nKeys.Msg.CreatingSecret));
+  const progressBar = new ProgressBar();
+  progressBar.show(window.i18n.t(I18nKeys.Msg.CreatingSecret));
+  hideOtherSections("loading");
 
+  try {
     const client = new HakanaiClient(window.location.origin);
 
-    // Sanitize filename before creating payload
     const sanitizedFilename = sharePayload.filename
       ? sanitizeFileName(sharePayload.filename)
       : undefined;
@@ -224,6 +221,7 @@ async function createSecret(): Promise<void> {
       hakanaiPayload,
       ttl,
       sharePayload.token,
+      progressBar,
     );
 
     try {
@@ -232,10 +230,10 @@ async function createSecret(): Promise<void> {
       console.warn("Could not copy URL to clipboard:", e);
     }
 
-    hideLoading();
+    progressBar.hide();
     showSuccess(url);
   } catch (error) {
-    hideLoading();
+    progressBar.hide();
     showError(
       `Failed to create secret: ${error instanceof Error ? error.message : "Unknown error"}`,
     );

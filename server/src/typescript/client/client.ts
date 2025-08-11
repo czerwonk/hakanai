@@ -212,6 +212,52 @@ class HakanaiClient {
   }
 
   /**
+   * Send data using XMLHttpRequest for real upload progress tracking
+   * @private
+   */
+  private async sendWithXHR(
+    bodyData: string,
+    headers: Record<string, string>,
+    progressObserver?: DataTransferObserver,
+  ): Promise<Response> {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+
+      // Track upload progress
+      if (progressObserver) {
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            progressObserver.onProgress(event.loaded, event.total);
+          }
+        };
+      }
+
+      xhr.onload = () => {
+        // Convert XHR response to fetch Response
+        const response = new Response(xhr.responseText, {
+          status: xhr.status,
+          statusText: xhr.statusText,
+          headers: new Headers(),
+        });
+        resolve(response);
+      };
+
+      xhr.onerror = () => {
+        reject(new Error(`Network error: ${xhr.status} ${xhr.statusText}`));
+      };
+
+      xhr.open("POST", `${this.baseUrl}/api/v1/secret`);
+
+      // Set headers
+      Object.entries(headers).forEach(([key, value]) => {
+        xhr.setRequestHeader(key, value);
+      });
+
+      xhr.send(bodyData);
+    });
+  }
+
+  /**
    * Send encrypted data to the server via HTTP with optional progress tracking
    * @private
    */
@@ -219,6 +265,7 @@ class HakanaiClient {
     encryptedData: string,
     ttl: number,
     authToken?: string,
+    progressObserver?: DataTransferObserver,
   ): Promise<string> {
     const requestBody: SecretRequest = {
       data: encryptedData,
@@ -235,11 +282,12 @@ class HakanaiClient {
       headers["Authorization"] = `Bearer ${authToken}`;
     }
 
-    const response = await fetch(`${this.baseUrl}/api/v1/secret`, {
-      method: "POST",
-      headers: headers,
-      body: bodyData,
-    });
+    // Use XMLHttpRequest for real upload progress tracking
+    const response = await this.sendWithXHR(
+      bodyData,
+      headers,
+      progressObserver,
+    );
 
     if (!response.ok) {
       this.handleSendPayloadError(response);
@@ -261,6 +309,7 @@ class HakanaiClient {
    * @param payload - Data to encrypt and send (must have non-empty data field)
    * @param ttl - Time-to-live in seconds (default: 3600)
    * @param authToken - Optional authentication token for server access
+   * @param progressObserver - Optional progress observer for upload tracking
    * @returns Full URL with secret ID and decryption key in fragment
    * @throws {HakanaiError} With specific error codes:
    *   - AUTHENTICATION_REQUIRED: Server requires auth token
@@ -271,6 +320,7 @@ class HakanaiClient {
     payload: PayloadData,
     ttl: number = 3600,
     authToken?: string,
+    progressObserver?: DataTransferObserver,
   ): Promise<string> {
     this.validateSendPayloadParams(payload, ttl, authToken);
 
@@ -297,6 +347,7 @@ class HakanaiClient {
         encryptedData,
         ttl,
         authToken,
+        progressObserver,
       );
 
       return `${this.baseUrl}/s/${secretId}#${cryptoContext.getKeyBase64()}:${hash}`;
