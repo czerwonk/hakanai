@@ -44,6 +44,21 @@ if (!global.ReadableStream) {
 // Create crypto instance
 const cryptoInstance = new Crypto();
 
+// Add randomUUID if not present (for older @peculiar/webcrypto versions)
+if (!cryptoInstance.randomUUID) {
+  cryptoInstance.randomUUID = () => {
+    // Generate a valid UUID v4
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
+      /[xy]/g,
+      function (c) {
+        const r = (Math.random() * 16) | 0;
+        const v = c === "x" ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+      },
+    );
+  };
+}
+
 // Setup globals for browser environment
 global.crypto = cryptoInstance;
 global.TextEncoder = TextEncoder;
@@ -54,6 +69,11 @@ if (typeof window !== "undefined") {
   window.crypto = cryptoInstance;
   window.TextEncoder = TextEncoder;
   window.TextDecoder = TextDecoder;
+
+  // Ensure randomUUID is also available on window.crypto
+  if (!window.crypto.randomUUID) {
+    window.crypto.randomUUID = cryptoInstance.randomUUID;
+  }
 }
 
 // Force setup of crypto.subtle on both global and window

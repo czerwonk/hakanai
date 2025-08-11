@@ -9,11 +9,12 @@ use tracing::{instrument, warn};
 
 use crate::observer::SecretObserver;
 
-const SAFE_HEADERS: [&str; 4] = [
+const SAFE_HEADERS: [&str; 5] = [
     "user-agent",
     "x-forwarded-for",
     "x-forwarded-proto",
     "x-real-ip",
+    "x-request-id",
 ];
 
 /// Webhook action types.

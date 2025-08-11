@@ -273,9 +273,11 @@ class HakanaiClient {
     };
 
     const bodyData = JSON.stringify(requestBody);
+    const requestId = crypto.randomUUID();
 
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
+      "X-Request-Id": requestId,
     };
 
     if (authToken?.length) {
@@ -438,8 +440,13 @@ class HakanaiClient {
     progressObserver?: DataTransferObserver,
   ): Promise<PayloadData> {
     const { secretId, key, hash } = this.validateAndParseReceiveUrl(url);
+    const requestId = crypto.randomUUID();
 
-    const response = await fetch(`${this.baseUrl}/api/v1/secret/${secretId}`);
+    const response = await fetch(`${this.baseUrl}/api/v1/secret/${secretId}`, {
+      headers: {
+        "X-Request-Id": requestId,
+      },
+    });
 
     if (!response.ok) {
       this.handleReceivePayloadError(response);

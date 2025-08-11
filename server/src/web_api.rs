@@ -37,7 +37,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
 /// - The provided ID is not a valid UUID (`ErrorBadRequest`).
 /// - The secret is not found in the data store (`ErrorNotFound`).
 /// - An internal error occurs while accessing the data store (`ErrorInternalServerError`).
-#[instrument(skip(app_data, http_req), fields(id = tracing::field::Empty), err)]
+#[instrument(skip(app_data, http_req), fields(id = tracing::field::Empty, request_id = tracing::field::Empty), err)]
 pub async fn get_secret_from_request(
     http_req: HttpRequest,
     req: web::Path<String>,
@@ -46,6 +46,10 @@ pub async fn get_secret_from_request(
     let id = Uuid::parse_str(&req.into_inner())
         .map_err(|_| error::ErrorBadRequest("Invalid link format"))?;
     Span::current().record("id", id.to_string());
+
+    if let Some(request_id) = extract_request_id(&http_req) {
+        Span::current().record("request_id", request_id);
+    }
 
     match app_data.data_store.pop(id).await {
         Ok(res) => match res {
@@ -78,12 +82,16 @@ async fn get_secret(
 }
 
 #[post("/secret")]
-#[instrument(skip(req, app_data, http_req), err)]
+#[instrument(skip(req, app_data, http_req), fields(request_id = tracing::field::Empty), err)]
 async fn post_secret(
     http_req: HttpRequest,
     req: web::Json<PostSecretRequest>,
     app_data: web::Data<AppData>,
 ) -> Result<web::Json<PostSecretResponse>> {
+    if let Some(request_id) = extract_request_id(&http_req) {
+        Span::current().record("request_id", request_id);
+    }
+
     let token_data = authorize_request(&http_req, &app_data).await?;
     enforce_size_limit(&req, token_data, &app_data)?;
     ensure_ttl_is_valid(req.expires_in, app_data.max_ttl)?;
@@ -135,6 +143,17 @@ async fn authorize_request(
     } else {
         Err(error::ErrorUnauthorized("Authorization token required"))
     }
+}
+
+/// Extracts and validates the X-Request-Id header from the request.
+/// Only accepts valid UUID v4 format to prevent log injection.
+fn extract_request_id(http_req: &HttpRequest) -> Option<String> {
+    http_req
+        .headers()
+        .get("x-request-id")
+        .and_then(|header_value| header_value.to_str().ok())
+        .filter(|request_id| Uuid::parse_str(request_id).is_ok())
+        .map(|s| s.to_string())
 }
 
 #[instrument]

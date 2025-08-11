@@ -4,6 +4,7 @@ use std::time::Duration;
 use async_trait::async_trait;
 use bytes::Bytes;
 use reqwest::{Body, Url};
+use uuid::Uuid;
 
 use crate::client::{Client, ClientError};
 use crate::models::{PostSecretRequest, PostSecretResponse};
@@ -52,6 +53,7 @@ impl Client<Vec<u8>> for WebClient {
 
         let timeout = opt.timeout.unwrap_or(DEFAULT_REQUEST_TIMEOUT);
         let user_agent = opt.user_agent.unwrap_or(DEFAULT_USER_AGENT.to_string());
+        let request_id = Uuid::new_v4().to_string();
 
         let mut req = self
             .web_client
@@ -59,6 +61,7 @@ impl Client<Vec<u8>> for WebClient {
             .header("User-Agent", user_agent)
             .header("Content-Type", "application/json")
             .header("Content-Length", content_length.to_string())
+            .header("X-Request-Id", request_id)
             .body(body)
             .timeout(timeout);
 
@@ -98,11 +101,13 @@ impl Client<Vec<u8>> for WebClient {
         let opt = opts.unwrap_or_default();
         let user_agent = opt.user_agent.unwrap_or(DEFAULT_USER_AGENT.to_string());
         let timeout = opt.timeout.unwrap_or(DEFAULT_REQUEST_TIMEOUT);
+        let request_id = Uuid::new_v4().to_string();
 
         let mut resp = self
             .web_client
             .get(url)
             .header("User-Agent", user_agent)
+            .header("X-Request-Id", request_id)
             .timeout(timeout)
             .send()
             .await?;
