@@ -11,7 +11,7 @@ export class TTLSelector {
   private customContainer: HTMLElement;
   private customValueInput: HTMLInputElement;
   private customUnitSelect: HTMLSelectElement;
-  private currentValue: number;
+  private currentValue: number = 0;
 
   constructor(container: HTMLElement) {
     this.selectElement = container.querySelector(
