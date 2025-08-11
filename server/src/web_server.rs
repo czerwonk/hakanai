@@ -62,12 +62,19 @@ where
             .route("/healthy", web::get().to(healthy))
             .route("/ready", web::get().to(ready))
             .configure(web_static::configure)
-            .service(web::scope("/api/v1").configure(|cfg| {
-                web_api::configure(cfg);
-                if args.enable_admin_token {
-                    admin_api::configure_routes(cfg);
-                }
-            }))
+            .service(
+                web::scope("/api/v1")
+                    .wrap(DefaultHeaders::new().add((
+                        "Cache-Control",
+                        "no-cache, no-store, must-revalidate, no-transform",
+                    )))
+                    .configure(|cfg| {
+                        web_api::configure(cfg);
+                        if args.enable_admin_token {
+                            admin_api::configure_routes(cfg);
+                        }
+                    }),
+            )
     })
     .bind((args.listen_address, args.port))?
     .run()
