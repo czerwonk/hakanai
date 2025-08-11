@@ -1325,7 +1325,6 @@ button.loading::after {
   content: "✗ ";
 }
 
-
 .progress-overlay {
   position: fixed;
   top: 0;
@@ -1422,8 +1421,12 @@ button.loading::after {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .footer {
