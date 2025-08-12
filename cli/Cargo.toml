@@ -4,19 +4,19 @@ version = "2.8.4"
 edition = "2024"
 
 [dependencies]
-hakanai-lib = { path = "../lib", features = ["testing"] }
-tokio = { version = "1.45.1", features = ["full"] }
-clap = { version = "4.5.42", features = ["derive", "env"] }
-url = "2.5.4"
 anyhow = "1.0.98"
-humantime = "2.2.0"
-colored = "3.0.0"
-indicatif = "0.18.0"
-zeroize = "1.8.1"
 async-trait = "0.1.88"
+clap = { version = "4.5.42", features = ["derive", "env"] }
+colored = "3.0.0"
+hakanai-lib = { path = "../lib", features = ["testing"] }
+humantime = "2.2.0"
+indicatif = "0.18.0"
+qrcode = "0.14"
 reqwest = { version = "0.12.22", features = ["json"] }
 rpassword = "7.3.1"
-qrcode = "0.14"
+tokio = { version = "1.45.1", features = ["full"] }
+url = "2.5.4"
+zeroize = "1.8.1"
 zip = "4.3.0"
 
 [dev-dependencies]
