@@ -10,67 +10,134 @@ import { formatFileSize } from "../core/formatters";
 export class ProgressBar implements DataTransferObserver {
   private overlay: HTMLElement | null = null;
   private progressCircle: HTMLImageElement | null = null;
-  private textElement: HTMLElement | null = null;
-  private lastUpdate: number = 0;
-  private lastBytes: number = 0;
+  private percentageElement: HTMLElement | null = null;
+  private sizeElement: HTMLElement | null = null;
   private hasReceivedProgress: boolean = false;
+  private showTimeout: number | null = null;
+  private pendingText: string = "";
+  private isVisible: boolean = false;
+  private isHiding: boolean = false;
+  private currentBytes: number = 0;
+  private totalBytes: number = 0;
 
   /**
-   * Show the progress bar overlay
+   * Show the progress bar overlay after a delay to avoid flickering
    * @param text - Text to display
    */
   show(text: string = "Processing..."): void {
-    if (this.overlay) {
-      this.hide(); // Remove any existing overlay
+    this.showDelayed(text);
+  }
+
+  /**
+   * Internal method to handle delayed show
+   * @param text - Text to display
+   * @param delayMs - Delay in milliseconds before showing (default 500ms)
+   */
+  private showDelayed(
+    text: string = "Processing...",
+    delayMs: number = 500,
+  ): void {
+    this.cancelDelayedShow();
+    this.pendingText = text;
+    this.currentBytes = 0;
+    this.totalBytes = 0;
+    this.hasReceivedProgress = false;
+
+    // Set a timeout to show the progress bar after the delay
+    this.showTimeout = window.setTimeout(() => {
+      this.showImmediately(this.pendingText);
+      this.showTimeout = null;
+    }, delayMs);
+  }
+
+  private showImmediately(text: string): void {
+    // Don't show if we're in the process of hiding or already visible
+    if (this.isHiding || this.isVisible) {
+      return;
     }
 
-    this.lastUpdate = Date.now();
-    this.lastBytes = 0;
-    this.hasReceivedProgress = false;
+    this.isVisible = true;
     this.createOverlay(text);
     document.body.appendChild(this.overlay!);
+
+    if (this.hasReceivedProgress) {
+      this.updateProgressDisplay();
+    }
+  }
+
+  private cancelDelayedShow(): void {
+    if (this.showTimeout !== null) {
+      window.clearTimeout(this.showTimeout);
+      this.showTimeout = null;
+    }
   }
 
   /**
    * Hide and remove the progress bar overlay
    */
   hide(): void {
+    this.isHiding = true;
+    this.cancelDelayedShow();
+    this.hideOverlay();
+    this.isHiding = false;
+  }
+
+  private hideOverlay(): void {
     if (this.overlay && this.overlay.parentNode) {
       this.overlay.parentNode.removeChild(this.overlay);
     }
     this.overlay = null;
     this.progressCircle = null;
-    this.textElement = null;
+    this.percentageElement = null;
+    this.sizeElement = null;
+    this.isVisible = false;
   }
 
-  /**
-   * Update progress (0-100) using simple opacity fade-in
-   */
   updateProgress(current: number, total: number): void {
+    this.currentBytes = current;
+    this.totalBytes = total;
+
+    if (!this.hasReceivedProgress && total > 0) {
+      this.hasReceivedProgress = true;
+    }
+
+    if (this.isVisible) {
+      this.updateProgressDisplay();
+    }
+  }
+
+  private updateProgressDisplay(): void {
     if (!this.progressCircle) return;
 
-    const percentage = total > 0 ? Math.min((current / total) * 100, 100) : 0;
+    const percentage =
+      this.totalBytes > 0
+        ? Math.min((this.currentBytes / this.totalBytes) * 100, 100)
+        : 0;
 
     // On first real progress, stop the pulse animation
-    if (!this.hasReceivedProgress && percentage > 0) {
-      this.hasReceivedProgress = true;
-      this.progressCircle.style.animation = "none";
+    if (
+      this.hasReceivedProgress &&
+      this.progressCircle.classList.contains("progress-logo-pulsing")
+    ) {
+      this.progressCircle.classList.remove("progress-logo-pulsing");
+      this.progressCircle.classList.add("progress-logo-loading");
     }
 
     // If we have progress, show it; otherwise keep pulsing
     if (this.hasReceivedProgress) {
-      // Fade in from 0% to 100% opacity based on progress
-      const opacity = percentage / 100;
-      this.progressCircle.style.opacity = opacity.toString();
+      // Update opacity based on progress using CSS custom property
+      this.progressCircle.style.setProperty(
+        "--progress-opacity",
+        (percentage / 100).toString(),
+      );
     }
-  }
 
-  /**
-   * Set the progress text
-   */
-  setText(text: string): void {
-    if (this.textElement) {
-      this.textElement.textContent = text;
+    if (this.percentageElement) {
+      this.percentageElement.textContent = `${Math.round(percentage)}%`;
+    }
+
+    if (this.sizeElement && this.totalBytes > 0) {
+      this.sizeElement.textContent = `${formatFileSize(this.currentBytes)} / ${formatFileSize(this.totalBytes)}`;
     }
   }
 
@@ -90,11 +157,17 @@ export class ProgressBar implements DataTransferObserver {
     // Logo in the middle
     content.appendChild(this.createCircularProgressElement());
 
-    // Status text at the bottom (smaller)
-    this.textElement = document.createElement("div");
-    this.textElement.className = "progress-status";
-    this.textElement.textContent = "";
-    content.appendChild(this.textElement);
+    // Progress percentage (large, standalone)
+    this.percentageElement = document.createElement("div");
+    this.percentageElement.className = "progress-percentage";
+    this.percentageElement.textContent = "";
+    content.appendChild(this.percentageElement);
+
+    // Size info (smaller, below percentage)
+    this.sizeElement = document.createElement("div");
+    this.sizeElement.className = "progress-size";
+    this.sizeElement.textContent = "";
+    content.appendChild(this.sizeElement);
 
     this.overlay.appendChild(content);
   }
@@ -103,22 +176,13 @@ export class ProgressBar implements DataTransferObserver {
     const progressContainer = document.createElement("div");
     progressContainer.className = "circular-progress";
 
-    // Use the cached icon.svg directly
-    const iconImg = document.createElement("img");
-    iconImg.src = "/icon.svg";
-    iconImg.alt = "Loading";
-    iconImg.style.width = "100px";
-    iconImg.style.height = "100px";
-    iconImg.style.transition = "opacity 0.3s ease";
+    const logoImg = document.createElement("img");
+    logoImg.src = "/logo.svg";
+    logoImg.className = "progress-logo progress-logo-pulsing";
 
-    // Start with pulsing animation until we get real progress
-    iconImg.style.opacity = "0.3";
-    iconImg.style.animation = "pulse 1.5s ease-in-out infinite";
+    this.progressCircle = logoImg;
 
-    // Store reference for opacity updates
-    this.progressCircle = iconImg;
-
-    progressContainer.appendChild(iconImg);
+    progressContainer.appendChild(logoImg);
     return progressContainer;
   }
 
@@ -130,35 +194,7 @@ export class ProgressBar implements DataTransferObserver {
     bytesTransferred: number,
     totalBytes: number,
   ): Promise<void> {
+    // Just update the progress values, display will be handled when/if overlay shows
     this.updateProgress(bytesTransferred, totalBytes);
-
-    const percentage =
-      totalBytes > 0 ? Math.round((bytesTransferred / totalBytes) * 100) : 0;
-
-    // Status text shows just percentage and size info (without the title)
-    let statusText = `${percentage}%`;
-    if (totalBytes > 0) {
-      statusText += ` • ${formatFileSize(bytesTransferred)} / ${formatFileSize(totalBytes)}`;
-    }
-
-    if (bytesTransferred > this.lastBytes) {
-      const now = Date.now();
-      const timeDiff = (now - this.lastUpdate) / 1000; // Convert to seconds
-
-      if (timeDiff > 0.1) {
-        // Only update speed every 100ms to avoid jitter
-        const bytesDiff = bytesTransferred - this.lastBytes;
-        const speed = bytesDiff / timeDiff;
-
-        if (speed > 0) {
-          statusText += ` • ${formatFileSize(speed)}/s`;
-        }
-
-        this.lastUpdate = now;
-        this.lastBytes = bytesTransferred;
-      }
-    }
-
-    this.setText(statusText);
   }
 }

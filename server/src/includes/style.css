@@ -1370,9 +1370,28 @@ button.loading::after {
 .progress-status {
   text-align: center;
   color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-xs);
   margin-top: var(--spacing-md);
   min-height: 1.2em; /* Prevent layout shift when text appears */
+}
+
+/* Progress percentage - large and prominent */
+.progress-percentage {
+  text-align: center;
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  margin-top: var(--spacing-md);
+  margin-bottom: var(--spacing-xs);
+}
+
+/* Progress size info - smaller, secondary */
+.progress-size {
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  margin-top: var(--spacing-xs);
+  min-height: 1.2em;
 }
 
 /* Circular Progress Bar */
@@ -1383,12 +1402,22 @@ button.loading::after {
   margin: var(--spacing-md) 0;
 }
 
-.circular-progress svg,
-.circular-progress img {
-  width: 100px;
-  height: 100px;
-  max-width: min(100px, 25vw);
-  max-height: min(100px, 25vw);
+/* Progress logo styles */
+.progress-logo {
+  width: 150px;
+  height: 150px;
+  transition: opacity 0.3s ease;
+}
+
+/* Pulsing state - before progress data */
+.progress-logo-pulsing {
+  opacity: 0.3;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Loading state - showing actual progress */
+.progress-logo-loading {
+  opacity: var(--progress-opacity, 0);
 }
 
 /* Pulse animation for initial loading state */
