@@ -41,11 +41,14 @@ async fn main() -> Result<()> {
         }
     };
 
+    info!("Hakanai Server (v{})", env!("CARGO_PKG_VERSION"));
+
     info!("Connecting to Redis");
     let redis_client = match RedisClient::new(&args.redis_dsn, args.max_ttl).await {
         Ok(store) => store,
         Err(e) => {
-            eprintln!("Failed to create Redis data store: {e}");
+            eprintln!("Failed to connect to Redis: {e}");
+            eprintln!("Please ensure Redis is running and accessible",);
             return Err(std::io::Error::other(e));
         }
     };
