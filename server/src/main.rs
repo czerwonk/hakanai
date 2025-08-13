@@ -1,4 +1,5 @@
 mod admin_api;
+mod admin_user;
 mod app_data;
 mod data_store;
 mod metrics;
@@ -6,9 +7,11 @@ mod observer;
 mod options;
 mod otel;
 mod redis_client;
+mod size_limited_json;
 #[cfg(test)]
 mod test_utils;
 mod token;
+mod user;
 mod web_api;
 mod web_server;
 mod web_static;

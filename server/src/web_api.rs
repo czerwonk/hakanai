@@ -9,7 +9,8 @@ use hakanai_lib::models::{PostSecretRequest, PostSecretResponse};
 
 use crate::app_data::AppData;
 use crate::data_store::DataStorePopResult;
-use crate::token::{TokenData, TokenError};
+use crate::size_limited_json::SizeLimitedJson;
+use crate::user::User;
 
 /// Configures the Actix Web services for the application.
 ///
@@ -82,18 +83,19 @@ async fn get_secret(
 }
 
 #[post("/secret")]
-#[instrument(skip(req, app_data, http_req), fields(request_id = tracing::field::Empty), err)]
+#[instrument(skip(req, app_data, http_req, user), fields(request_id = tracing::field::Empty, user_type = tracing::field::Empty), err)]
 async fn post_secret(
     http_req: HttpRequest,
-    req: web::Json<PostSecretRequest>,
+    req: SizeLimitedJson<PostSecretRequest>,
+    user: User, // This ensures authentication/authorization happens
     app_data: web::Data<AppData>,
 ) -> Result<web::Json<PostSecretResponse>> {
     if let Some(request_id) = extract_request_id(&http_req) {
         Span::current().record("request_id", request_id);
     }
+    Span::current().record("user_type", user.user_type.to_string());
 
-    let token_data = authorize_request(&http_req, &app_data).await?;
-    enforce_size_limit(&req, token_data, &app_data)?;
+    let req = req.into_inner();
     ensure_ttl_is_valid(req.expires_in, app_data.max_ttl)?;
 
     let id = uuid::Uuid::new_v4();
@@ -109,40 +111,6 @@ async fn post_secret(
         .await;
 
     Ok(web::Json(PostSecretResponse { id }))
-}
-
-#[instrument(skip(req, app_data), err)]
-async fn authorize_request(
-    req: &HttpRequest,
-    app_data: &web::Data<AppData>,
-) -> Result<Option<TokenData>> {
-    let token_header = req
-        .headers()
-        .get("Authorization")
-        .and_then(|h| h.to_str().ok());
-
-    if let Some(mut token) = token_header {
-        token = token.trim_start_matches("Bearer ").trim();
-
-        match app_data.token_validator.validate_user_token(token).await {
-            Ok(token_data) => {
-                return Ok(Some(token_data));
-            }
-            Err(TokenError::InvalidToken) => {
-                return Err(error::ErrorForbidden("Invalid token"));
-            }
-            Err(e) => {
-                error!("Token validation failed: {}", e);
-                return Err(error::ErrorInternalServerError("Token validation failed"));
-            }
-        }
-    }
-
-    if app_data.anonymous_usage.allowed {
-        Ok(None)
-    } else {
-        Err(error::ErrorUnauthorized("Authorization token required"))
-    }
 }
 
 /// Extracts and validates the X-Request-Id header from the request.
@@ -166,31 +134,6 @@ fn ensure_ttl_is_valid(expires_in: Duration, max_ttl: Duration) -> Result<()> {
     } else {
         Ok(())
     }
-}
-
-#[instrument(skip(req, app_data), err)]
-fn enforce_size_limit(
-    req: &web::Json<PostSecretRequest>,
-    token_data: Option<TokenData>,
-    app_data: &web::Data<AppData>,
-) -> Result<()> {
-    let size = req.data.len();
-
-    if let Some(token_data) = token_data {
-        if let Some(limit) = token_data.upload_size_limit {
-            if size > limit as usize {
-                return Err(error::ErrorPayloadTooLarge(
-                    "Upload size limit exceeded for user token",
-                ));
-            }
-        }
-    } else if size > app_data.anonymous_usage.upload_size_limit as usize {
-        return Err(error::ErrorPayloadTooLarge(
-            "Upload size limit exceeded for anonymous usage",
-        ));
-    }
-
-    Ok(())
 }
 
 #[cfg(test)]
@@ -269,6 +212,7 @@ mod tests {
             observer_manager: ObserverManager::new(),
         }
     }
+
 
     #[actix_web::test]
     async fn test_get_secret_found() {

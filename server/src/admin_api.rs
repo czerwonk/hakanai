@@ -5,13 +5,14 @@
 
 use std::time::Duration;
 
-use actix_web::{HttpRequest, HttpResponse, Result, web};
+use actix_web::{HttpResponse, Result, web};
 use tracing::info;
 
 use hakanai_lib::models::{CreateTokenRequest, CreateTokenResponse};
 
+use crate::admin_user::AdminUser;
 use crate::app_data::AppData;
-use crate::token::{TokenData, TokenError};
+use crate::token::TokenData;
 
 /// Configure admin API routes
 pub fn configure_routes(cfg: &mut web::ServiceConfig) {
@@ -25,16 +26,11 @@ pub fn configure_routes(cfg: &mut web::ServiceConfig) {
 /// Requires admin authentication via Authorization header.
 /// Creates a new user token with optional size limit and TTL.
 pub async fn create_token(
-    req: HttpRequest,
+    admin_user: AdminUser,
     request: web::Json<CreateTokenRequest>,
     app_data: web::Data<AppData>,
 ) -> Result<HttpResponse> {
-    // Authenticate admin token
-    if authenticate_admin(&req, &app_data).await.is_err() {
-        return Ok(HttpResponse::Unauthorized().json(serde_json::json!({
-            "error": "Invalid admin token"
-        })));
-    }
+    let _ = admin_user; // Ensure admin user is authenticated
 
     let token_data = TokenData {
         upload_size_limit: request.upload_size_limit,
@@ -61,24 +57,6 @@ pub async fn create_token(
     let response = CreateTokenResponse { token };
 
     Ok(HttpResponse::Ok().json(response))
-}
-
-/// Extract and validate admin token from Authorization header
-async fn authenticate_admin(
-    req: &HttpRequest,
-    app_data: &web::Data<AppData>,
-) -> Result<(), TokenError> {
-    let auth_header = req
-        .headers()
-        .get("Authorization")
-        .and_then(|h| h.to_str().ok())
-        .ok_or(TokenError::InvalidToken)?;
-
-    let token = auth_header
-        .strip_prefix("Bearer ")
-        .ok_or(TokenError::InvalidToken)?;
-
-    app_data.token_validator.validate_admin_token(token).await
 }
 
 #[cfg(test)]
@@ -193,9 +171,6 @@ mod tests {
 
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), 401);
-
-        let response: serde_json::Value = test::read_body_json(resp).await;
-        assert_eq!(response["error"], "Invalid admin token");
     }
 
     #[actix_web::test]
@@ -223,10 +198,7 @@ mod tests {
             .to_request();
 
         let resp = test::call_service(&app, req).await;
-        assert_eq!(resp.status(), 401);
-
-        let response: serde_json::Value = test::read_body_json(resp).await;
-        assert_eq!(response["error"], "Invalid admin token");
+        assert_eq!(resp.status(), 403);
     }
 
     #[actix_web::test]
@@ -255,9 +227,6 @@ mod tests {
 
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), 401);
-
-        let response: serde_json::Value = test::read_body_json(resp).await;
-        assert_eq!(response["error"], "Invalid admin token");
     }
 
     #[actix_web::test]
