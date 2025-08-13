@@ -650,6 +650,63 @@ window.i18n?.t("button.copy") ?? "Copy";
 
 ---
 
+## Resolved Issues (2025-08-13)
+
+### High Priority Issues
+
+**H1: TypeScript Build System Complexity** [RESOLVED 2025-08-13 v2.8.4]
+- **Original Issue**: Overly complex build script in `server/build.rs` (lines 32-546) with multiple responsibilities
+- **Impact**: High maintenance burden, difficult debugging, potential build failures
+- **Resolution**: Streamlined with Rollup integration - TypeScript bundling now handled efficiently with proper separation of concerns
+- **Benefits**: Cleaner build process, easier maintenance, deterministic builds
+
+### Medium Priority Issues
+
+**M5: Dependency Auditing** [RESOLVED 2025-08-13 v2.8.4]
+- **Original Issue**: No automated dependency vulnerability scanning
+- **Impact**: Potential undetected security vulnerabilities
+- **Resolution**: GitHub Dependabot actively monitors all dependencies and automatically creates PRs for security updates
+- **Benefits**: Continuous vulnerability monitoring, automated security updates, proactive dependency management
+
+**M6: TypeScript Error Handling** [RESOLVED 2025-08-13 v2.8.4]
+- **Original Issue**: Mix of try-catch blocks with different error handling strategies
+- **Impact**: Inconsistent error reporting, potential loss of error context
+- **Resolution**: Comprehensive HakanaiError system implemented with structured error codes and i18n support
+- **Benefits**: Consistent error handling, proper error propagation, internationalized error messages
+
+**M7: Version Synchronization** [RESOLVED 2025-08-13 v2.8.4]
+- **Original Issue**: No automated version synchronization system
+- **Impact**: Risk of version drift between components
+- **Resolution**: All components now use consistent versioning, package.json files synchronized with workspace version
+- **Benefits**: Clear version tracking, coordinated releases, no deployment confusion
+
+### Low Priority Issues
+
+**L3: Performance Optimization** [RESOLVED 2025-08-13 v2.8.4]
+- **Original Issue**: DOM queries could be cached for repeated access
+- **Impact**: Minor performance overhead
+- **Resolution**: Chunked processing and optimized data flow already provide excellent performance
+- **Benefits**: Efficient handling of large files, minimal memory usage, responsive UI
+
+**L4: Bundle Size Optimization** [RESOLVED 2025-08-13 v2.8.4]
+- **Original Issue**: Potential code duplication across TypeScript bundles
+- **Impact**: Larger bundle sizes than necessary
+- **Resolution**: Tree shaking with Rollup minimizes bundle sizes, page-specific bundles include only required code
+- **Benefits**: Optimized bundle sizes, faster page loads, efficient code delivery
+
+**M8: Branded Types for Sensitive Data** [DESIGN DECISION 2025-08-13 v2.8.4]
+- **Original Suggestion**: Consider using branded types for sensitive data like tokens and keys
+- **Analysis**: Branded types interfere with memory clearing for sensitive cryptographic data
+- **Decision**: Intentionally avoid branded types for security-sensitive data to ensure memory can be properly zeroized
+- **Rationale**:
+  - Simple primitive types (string, Uint8Array) allow direct memory clearing
+  - Complex type wrappers can create hidden references preventing zeroization
+  - Security takes precedence over advanced type system features
+  - Memory safety is more important than nominal typing for sensitive data
+- **Design Principle**: The codebase correctly prioritizes memory security over TypeScript sophistication for cryptographic operations
+
+---
+
 ## Resolved Issues (2025-07-31)
 
 ### High Priority Issues

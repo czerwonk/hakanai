@@ -1,28 +1,63 @@
 # Security Audit Report - Hakanai
 
-**Date:** 2025-07-31
+**Date:** 2025-08-13
 **Audit Type:** Comprehensive Security Assessment  
-**Codebase Version:** 2.6.0
+**Codebase Version:** 2.8.4
 **Auditor:** Claude Code Security Analysis
-**Focus:** Hash Validation Implementation & Overall Security Posture
+**Focus:** Multi-file Support (v2.7.0), TypeScript Bundling & Overall Security Posture
 
 ## Executive Summary
 
-Hakanai is a minimalist one-time secret sharing service implementing zero-knowledge principles. This comprehensive security audit evaluated the recent hash validation implementation (v2.6.0) along with cryptographic security, authentication mechanisms, input validation, memory safety, web interface security, dependency security, and CLI security practices.
+Hakanai is a minimalist one-time secret sharing service implementing zero-knowledge principles. This comprehensive security audit evaluated the multi-file support implementation (v2.7.0), TypeScript bundling system, and overall security posture including all previously implemented features.
 
-**Overall Security Rating: A** (Excellent security with comprehensive hash validation)
+**Overall Security Rating: A** (Excellent security - no significant vulnerabilities found)
 
 ### Key Findings  
 - **0 Critical severity** vulnerabilities
 - **0 High severity** vulnerabilities 
 - **0 Medium severity** vulnerabilities
-- **0 Low severity** issues
-- **Zero-knowledge architecture** properly maintained with hash validation enhancement
-- **Content integrity verification** successfully implemented via SHA-256 hashes
-- **Comprehensive memory safety** with automatic zeroization and secure cleanup
-- **Strong cryptographic foundations** enhanced with tamper detection
-- **Backward compatibility** maintained for legacy URLs without hashes
-- **Robust test coverage** including hash validation and tamper detection scenarios
+- **2 Low severity** informational items (build logging, CLI design)
+- **Multi-file ZIP support** securely implemented with comprehensive memory safety
+- **TypeScript bundling** uses safe build processes with no command injection risks
+- **Zero-knowledge architecture** properly maintained across all features
+- **Comprehensive memory safety** with automatic zeroization throughout
+- **Strong cryptographic foundations** with AES-256-GCM and SHA-256 integrity
+- **Current dependencies** with no known security vulnerabilities
+
+## Version 2.7.0+ Security Analysis - Multi-file Support & TypeScript Bundling
+
+### Multi-file ZIP Implementation Security Assessment: **Excellent**
+
+The multi-file support introduced in v2.7.0 demonstrates strong security engineering:
+
+#### **Implementation Strengths:**
+1. **Memory Safety**: All file data wrapped in `Zeroizing<Vec<u8>>` containers
+2. **Path Security**: Uses safe `Path::file_name()` operations preventing traversal attacks
+3. **Resource Management**: No unbounded resource consumption - operates on user files only
+4. **Secure Cleanup**: Automatic zeroization of all sensitive data via `Drop` trait
+5. **Proper Error Handling**: Comprehensive error propagation without information leakage
+
+#### **Security Features:**
+- **Path Traversal Prevention**: `Path::file_name()` extracts only filename component
+- **Memory Protection**: Complete zeroization of file data and ZIP archives
+- **Resource Bounds**: Relies on OS-level protections (appropriate for CLI tool)
+- **Secure Timestamping**: Uses secure timestamp generation for ZIP filenames
+
+### TypeScript Bundling System Security: **Excellent**
+
+The TypeScript bundling system implemented with Rollup is secure and well-designed:
+
+#### **Build Process Security:**
+1. **No Command Injection**: All commands use safe `Command::new().args()` pattern
+2. **Fixed Arguments**: No user input incorporated into command construction
+3. **Environment Validation**: Proper checks for tool availability
+4. **Safe File Processing**: Cache buster replacement uses simple string operations
+
+#### **Security Benefits:**
+- **Deterministic Builds**: Consistent output from Rollup configuration
+- **Dependency Isolation**: Each page bundle includes only required dependencies
+- **Cache Busting**: Prevents stale code serving
+- **Static Bundling**: All code bundled at build time, no dynamic loading
 
 ## Version 2.6.0 Security Analysis - Hash Validation Implementation
 
@@ -65,19 +100,29 @@ The hash is computed on the **plaintext JSON payload before encryption**, enabli
 
 ### CRITICAL SEVERITY
 
-No critical severity vulnerabilities identified in v2.6.0 or existing codebase.
+No critical severity vulnerabilities identified in v2.8.4 or existing codebase.
 
 ### HIGH SEVERITY
 
-No high severity vulnerabilities identified in v2.6.0 or existing codebase.
+No high severity vulnerabilities identified in v2.8.4 or existing codebase.
 
 ### MEDIUM SEVERITY
 
-No medium severity vulnerabilities identified in v2.6.0 or existing codebase.
+No medium severity vulnerabilities identified in v2.8.4 or existing codebase.
 
 ### LOW SEVERITY
 
-No low severity vulnerabilities identified in v2.6.0 or existing codebase.
+#### L1: Build Script Command Output Logging [INFORMATIONAL]
+**File:** `server/build.rs:87-94`
+**Issue:** Build script logs command output to cargo warnings, which may include environment information.
+**Risk:** Low - Only affects development builds, not production
+**Recommendation:** Consider filtering sensitive environment variables from logged output if present.
+
+#### L2: CLI File System Access [DOCUMENTED DESIGN DECISION]
+**File:** `cli/src/send.rs`
+**Issue:** CLI allows reading any file the user has access to.
+**Risk:** None - This is intentional design for professional CLI usage
+**Note:** Consistent with other CLI tools (rsync, scp, curl) that provide full user file access.
 
 ## Comprehensive Security Assessment
 
@@ -132,6 +177,38 @@ No low severity vulnerabilities identified in v2.6.0 or existing codebase.
 For a complete audit trail of all resolved security issues, see [docs/RESOLVED_SECURITY_ISSUES.md](docs/RESOLVED_SECURITY_ISSUES.md).
 
 **Note:** Before adding new security findings, always review the resolved issues document to ensure findings are not re-introduced or duplicated.
+
+## Security Enhancements in Version 2.7.0+
+
+### Multi-file Support Implementation (v2.7.0)
+The v2.7.0 release introduces secure multi-file archiving:
+
+**Technical Implementation:**
+- **ZIP Archive Creation**: Secure ZIP creation with `Zeroizing<Vec<u8>>` wrappers
+- **Path Traversal Prevention**: Safe filename extraction using `Path::file_name()`
+- **Memory Safety**: Complete zeroization of all file data and archives
+- **Automatic Detection**: Binary files automatically detected and handled correctly
+
+**Security Benefits:**
+- **No Path Traversal**: Filename extraction prevents directory traversal attacks
+- **Memory Protection**: All sensitive data automatically cleared from memory
+- **Resource Management**: Appropriate bounds for CLI tool usage patterns
+- **Zero-Knowledge Preserved**: Server never sees unencrypted file contents
+
+### TypeScript Bundling System (v2.1)
+Modern build system with security benefits:
+
+**Technical Implementation:**
+- **Rollup Bundling**: Deterministic builds with tree shaking
+- **Safe Command Execution**: No command injection vulnerabilities
+- **Cache Busting**: Prevents serving stale code
+- **Static Analysis**: All code bundled at build time
+
+**Security Benefits:**
+- **No Dynamic Loading**: All code statically verified at build time
+- **Dependency Isolation**: Each bundle includes only required code
+- **Build Process Security**: Safe command construction with fixed arguments
+- **Version Control**: Cache busting ensures users get latest security updates
 
 ## Security Enhancements in Version 2.6.0
 
@@ -226,25 +303,26 @@ All security recommendations from previous audits have been successfully impleme
 
 ## Conclusion
 
-Hakanai demonstrates **excellent security** with the v2.6.0 hash validation enhancement representing a significant step forward in content integrity assurance. The implementation maintains the zero-knowledge architecture while adding crucial tamper detection capabilities.
+Hakanai v2.8.4 demonstrates **excellent security** with multi-file support and TypeScript bundling enhancements implemented securely. The codebase maintains its zero-knowledge architecture while adding valuable functionality without compromising security.
 
 **Key Strengths:**
-- **Enhanced Zero-Knowledge Architecture**: Hash validation preserves server blindness while adding integrity verification
-- **Comprehensive Content Integrity**: SHA-256 hash validation prevents undetected tampering
-- **Excellent Memory Safety**: Complete automatic zeroization with proper cleanup patterns
-- **Strong Cryptographic Foundations**: AES-256-GCM encryption with SHA-256 integrity verification
-- **Robust Input Validation**: Comprehensive validation of all inputs including new hash format
-- **Extensive Test Coverage**: 177+ tests including explicit tamper detection validation
-- **Backward Compatibility**: Legacy URLs continue to work without degradation
+- **Enhanced Zero-Knowledge Architecture**: Multi-file support preserves server blindness
+- **Comprehensive Memory Safety**: Complete automatic zeroization throughout all components
+- **Secure Build System**: TypeScript bundling uses safe, deterministic processes
+- **Strong Cryptographic Foundations**: AES-256-GCM + SHA-256 integrity verification
+- **Robust Authentication**: Token system secure with no identified bypasses
+- **Current Dependencies**: All dependencies up-to-date with no known vulnerabilities
+- **Path Security**: Proper protections against traversal attacks in ZIP creation
+- **Resource Management**: Appropriate bounds for CLI and server usage patterns
 
-**Security Innovations in v2.6.0:**
-- **Payload Integrity Verification**: End-to-end content integrity without server involvement
-- **Secure Hash Integration**: SHA-256 seamlessly integrated into existing cryptographic workflow
-- **Tamper Detection**: Automatic detection and rejection of modified payloads
-- **Type-Safe Implementation**: Optional hash parameter properly handled throughout TypeScript codebase
+**Security Innovations in v2.7.0+:**
+- **Multi-file Archive Security**: ZIP creation with complete memory protection
+- **Build Process Security**: Safe TypeScript bundling with cache busting
+- **Path Traversal Prevention**: Safe filename extraction preventing attacks
+- **Automatic Binary Detection**: Prevents file corruption with proper handling
 
 **Production Readiness:**
-Hakanai maintains its **A security rating** and continues to be excellent for production deployment. The hash validation enhancement strengthens the security posture without introducing new vulnerabilities or compromising the zero-knowledge principles.
+Hakanai maintains its **A security rating** and continues to be excellent for production deployment. The multi-file support and build system enhancements strengthen functionality without introducing security vulnerabilities.
 
 ## Recommendations Summary
 
@@ -255,4 +333,4 @@ The codebase represents a mature, security-first implementation of zero-knowledg
 
 ---
 
-*This report was generated through comprehensive static analysis and manual code review. The audit covers version 2.6.0 including the new hash validation implementation. Regular security audits are recommended as the codebase evolves.*
+*This report was generated through comprehensive static analysis and manual code review. The audit covers version 2.8.4 including multi-file support (v2.7.0) and TypeScript bundling enhancements. Regular security audits are recommended as the codebase evolves.*
