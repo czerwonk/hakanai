@@ -595,13 +595,7 @@ export default [
 - **Solution**: Add unit tests for file operations and CLI argument parsing
 - **Status**: Open - Important for maintaining quality
 
-**M3: Performance - Redis KEYS Command**
-- **Issue**: O(N) KEYS command in `redis_client.rs:114` blocks Redis server
-- **Impact**: Performance degradation with large secret counts
-- **Solution**: Replace with O(1) counter-based approach or use SCAN
-- **Status**: Open - Performance optimization opportunity
-
-**M4: Documentation Enhancement**
+**M3: Documentation Enhancement**
 - **Issue**: Some internal Rust and TypeScript functions lack documentation
 - **Solution**: Add rustdoc and JSDoc comments for complex internal methods
 - **Impact**: Better maintainability and onboarding experience

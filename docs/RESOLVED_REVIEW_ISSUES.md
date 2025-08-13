@@ -717,6 +717,22 @@ window.i18n?.t("button.copy") ?? "Copy";
 - **Resolution**: Enhanced with cryptographically secure random values using `crypto.getRandomValues()`
 - **Benefits**: Unpredictable overwrite patterns, aligned with security-first approach, prevents data reconstruction
 
+**CR-M9: Redis KEYS Performance Consideration** [DESIGN DECISION 2025-08-13 v2.8.4]
+- **Original Concern**: O(N) Redis KEYS command used in `active_secret_count()`, `user_token_count()`, and `clear_all_user_tokens()`
+- **Perceived Impact**: Potential Redis server blocking with large key counts
+- **Analysis**: KEYS usage is limited to appropriate, controlled contexts:
+  - **Metrics collection**: `active_secret_count()` and `user_token_count()` run on timers, not per-request
+  - **Administrative operations**: `clear_all_user_tokens()` used only during startup/reset
+  - **Bounded scale**: Typical deployments have manageable secret/token counts due to TTL expiration
+  - **Infrequent usage**: Not in request-response path, only admin/metrics contexts
+- **Decision**: Keep KEYS commands due to appropriate usage context
+- **Rationale**:
+  - **Context matters**: Performance optimizations should target actual bottlenecks, not theoretical concerns
+  - **Simplicity vs complexity**: KEYS is simpler and more reliable than SCAN cursor iteration
+  - **Deterministic patterns**: Controlled timing and bounded usage scenarios
+  - **Real-world appropriateness**: Usage pattern matches KEYS command's intended purpose
+- **Design Principle**: Architectural decisions should be based on actual usage patterns and requirements, not generic performance rules applied without context
+
 ---
 
 ## Resolved Issues (2025-07-31)
