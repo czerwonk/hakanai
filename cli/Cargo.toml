@@ -6,7 +6,7 @@ edition = "2024"
 [dependencies]
 anyhow = "1.0.98"
 async-trait = "0.1.88"
-clap = { version = "4.5.42", features = ["derive", "env"] }
+clap = { version = "4.5.45", features = ["derive", "env"] }
 colored = "3.0.0"
 hakanai-lib = { path = "../lib", features = ["testing"] }
 humantime = "2.2.0"
