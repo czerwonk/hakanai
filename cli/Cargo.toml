@@ -12,7 +12,7 @@ hakanai-lib = { path = "../lib", features = ["testing"] }
 humantime = "2.2.0"
 indicatif = "0.18.0"
 qrcode = "0.14"
-reqwest = { version = "0.12.22", features = ["json"] }
+reqwest = { version = "0.12.23", features = ["json"] }
 rpassword = "7.3.1"
 tokio = { version = "1.45.1", features = ["full"] }
 url = "2.5.4"
