@@ -705,6 +705,18 @@ window.i18n?.t("button.copy") ?? "Copy";
   - Memory safety is more important than nominal typing for sensitive data
 - **Design Principle**: The codebase correctly prioritizes memory security over TypeScript sophistication for cryptographic operations
 
+**CR-H2: Rust Code Style Issues** [RESOLVED 2025-08-13 v2.8.4]
+- **Original Issue**: Clippy warnings and formatting inconsistencies throughout Rust codebase
+- **Impact**: Style inconsistency, potential performance overhead, CI/CD pipeline issues
+- **Resolution**: Fixed clippy warnings and formatting issues across all Rust modules
+- **Benefits**: Consistent code style, improved readability, clean CI/CD builds
+
+**CR-H3: Memory Security Enhancement** [RESOLVED 2025-08-13 v2.8.4]
+- **Original Issue**: `secureInputClear` function used predictable `Math.random()` for sensitive data overwriting
+- **Impact**: Security vulnerability allowing potential data reconstruction attacks
+- **Resolution**: Enhanced with cryptographically secure random values using `crypto.getRandomValues()`
+- **Benefits**: Unpredictable overwrite patterns, aligned with security-first approach, prevents data reconstruction
+
 ---
 
 ## Resolved Issues (2025-07-31)
