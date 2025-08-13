@@ -2,8 +2,8 @@ use std::future::Future;
 use std::pin::Pin;
 
 use actix_web::dev::Payload;
-use actix_web::web::Bytes;
 use actix_web::{Error, FromRequest, HttpRequest, error};
+use futures_util::StreamExt;
 use serde::de::DeserializeOwned;
 
 use crate::user::User;
@@ -32,21 +32,30 @@ where
 
     fn from_request(req: &HttpRequest, payload: &mut Payload) -> Self::Future {
         let req = req.clone();
-        let payload_future = Bytes::from_request(&req, payload);
+        let mut payload = payload.take();
 
         Box::pin(async move {
             let user = User::extract(&req).await?;
-
-            let body = payload_future
-                .await
-                .map_err(|e| error::ErrorBadRequest(format!("Failed to read request body: {e}")))?;
-            let body_size = body.len();
-
             let size_limit = user.upload_size_limit;
-            if body_size > size_limit {
-                return Err(error::ErrorPayloadTooLarge(format!(
-                    "Upload size limit exceeded. Maximum allowed: {size_limit} bytes"
-                )));
+
+            // Stream the payload and enforce size limit during upload
+            let mut body = actix_web::web::BytesMut::new();
+            let mut total_size = 0usize;
+
+            while let Some(chunk) = payload.next().await {
+                let chunk = chunk.map_err(|e| {
+                    error::ErrorBadRequest(format!("Failed to read request body: {e}"))
+                })?;
+
+                total_size += chunk.len();
+
+                if total_size > size_limit {
+                    return Err(error::ErrorPayloadTooLarge(format!(
+                        "Upload size limit exceeded. Maximum allowed: {size_limit} bytes"
+                    )));
+                }
+
+                body.extend_from_slice(&chunk);
             }
 
             let json = serde_json::from_slice::<T>(&body)
