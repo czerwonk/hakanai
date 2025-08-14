@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 mod admin_api;
 mod admin_user;
 mod app_data;

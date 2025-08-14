@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 use std::future::Future;
 use std::pin::Pin;
 
@@ -57,4 +59,3 @@ fn extract_admin_token_from_header(req: &HttpRequest) -> Result<String, Error> {
         .map(|token| token.trim().to_string())
         .ok_or_else(|| error::ErrorUnauthorized("Invalid authorization format"))
 }
-

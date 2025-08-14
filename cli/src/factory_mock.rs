@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 #[cfg(test)]
 pub mod test_utils {
     use crate::factory::Factory;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 /*
  * Hakanai JavaScript Client (TypeScript Implementation)
  *

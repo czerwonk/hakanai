@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 /**
  * Common functionality for static pages (homepage, impressum, privacy)
  * Contains shared theme and i18n components

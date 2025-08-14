@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 mod cli;
 mod factory;
 mod factory_mock;

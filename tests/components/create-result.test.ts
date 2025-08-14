@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 import { displaySuccessResult } from "../../server/src/typescript/components/create-result";
 
 // Mock the QR code generator

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 import { announceToScreenReader } from "./dom-utils";
 
 // Constants

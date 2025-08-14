@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 import { showElement, hideElement } from "./dom-utils";
 
 interface AppConfig {

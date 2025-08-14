@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 import { I18nKeys } from "./i18n";
 
 const THEME_KEY = "hakanai-theme";

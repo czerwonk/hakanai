@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 import { createButton, generateRandomId, hideElement } from "../core/dom-utils";
 import { copyToClipboardByElementId } from "../core/clipboard";
 import { QRCodeGenerator } from "../core/qr-generator";

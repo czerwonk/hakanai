@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 import { HakanaiClient, type PayloadData } from "./hakanai-client";
 import { initI18n, I18nKeys } from "./core/i18n";
 import {

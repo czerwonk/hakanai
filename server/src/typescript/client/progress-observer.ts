@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 /*
  * Progress Observer Interface for Hakanai TypeScript Client
  *

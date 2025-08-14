@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 use std::future::Future;
 use std::pin::Pin;
 
@@ -121,4 +123,3 @@ fn handle_anonymous_request(app_data: actix_web::web::Data<AppData>) -> Result<U
         Err(error::ErrorUnauthorized("Authorization token required"))
     }
 }
-

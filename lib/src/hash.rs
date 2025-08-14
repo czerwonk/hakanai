@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 use base64::Engine;
 use sha2::{Digest, Sha256};
 

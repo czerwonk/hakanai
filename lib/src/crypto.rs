@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 use std::time::Duration;
 
 use aes_gcm::aead::rand_core::RngCore;

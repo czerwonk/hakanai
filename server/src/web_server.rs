@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 use core::option::Option;
 use std::io::Result;
 

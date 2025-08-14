@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 /**
  * Error display component for consistent error UI across pages
  */

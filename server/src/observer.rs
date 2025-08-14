@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 use actix_web::http::header::HeaderMap;
 use async_trait::async_trait;
 use tracing::instrument;

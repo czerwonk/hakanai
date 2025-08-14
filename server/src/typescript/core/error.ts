@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 import { HakanaiError, HakanaiErrorCodes } from "../hakanai-client.js";
 
 // Error handler interface - UI classes implement this

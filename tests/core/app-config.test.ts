@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 import { initFeatures } from "../../server/src/typescript/core/app-config";
 
 describe("app-config", () => {

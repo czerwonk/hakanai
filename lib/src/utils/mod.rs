@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 //! Utility functions and helpers for the Hakanai library.
 //!
 //! This module provides various utility functions that support the core functionality

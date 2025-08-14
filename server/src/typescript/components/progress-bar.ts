@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 /**
  * Progress Bar Overlay Component
  *

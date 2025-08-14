@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 //! Test utilities for mocking token-related functionality.
 //!
 //! Provides a flexible mock implementation of TokenValidator and TokenCreator traits

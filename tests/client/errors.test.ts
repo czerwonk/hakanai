@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 /**
  * Error handling and validation tests for HakanaiClient
  */

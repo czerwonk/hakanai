@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 use std::time::{SystemTime, UNIX_EPOCH};
 
 /// Returns the current timestamp in seconds since the Unix epoch.

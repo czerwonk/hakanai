@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 use std::time;
 
 use crate::data_store::DataStore;

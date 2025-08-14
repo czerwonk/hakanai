@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 /**
  * Secure memory clearing utilities for sensitive data
  * @class SecureMemory

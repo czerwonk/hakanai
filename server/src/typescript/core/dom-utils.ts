@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 const SCREEN_READER_ANNOUNCEMENT_TIMEOUT = 1000;
 
 type ButtonClickHandler = (event: MouseEvent) => void;

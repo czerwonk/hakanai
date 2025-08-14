@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 use core::option::Option;
 use std::time::Duration;
 
@@ -212,7 +214,6 @@ mod tests {
             observer_manager: ObserverManager::new(),
         }
     }
-
 
     #[actix_web::test]
     async fn test_get_secret_found() {

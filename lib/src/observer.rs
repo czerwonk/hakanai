@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 /// A trait for observing the progress of upload operations.
 ///
 /// Implementors of this trait can receive real-time notifications about upload progress,

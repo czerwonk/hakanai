@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 /**
  * Simple preference storage for user settings
  */

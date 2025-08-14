@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 import { HakanaiError, HakanaiErrorCodes } from "./errors";
 
 interface PayloadData {

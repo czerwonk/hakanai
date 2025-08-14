@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 // SessionStorage management for auth tokens
 const AUTH_TOKEN_KEY = "hakanai-auth-token";
 

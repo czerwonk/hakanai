@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 import { HakanaiError, HakanaiErrorCodes } from "./errors";
 import { Base64UrlSafe } from "./base64-utils";
 import { SecureMemory } from "./secure-memory";

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 import { initTheme } from "../../server/src/typescript/core/theme";
 
 describe("Theme Management", () => {

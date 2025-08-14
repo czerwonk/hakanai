@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 /**
  * URL parsing tests for secret URLs with hash validation
  */

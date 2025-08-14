@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 /**
  * QR Code generator using WebAssembly
  */

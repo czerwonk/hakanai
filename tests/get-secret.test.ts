@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 describe("get-secret.ts", () => {
   let getSecretModule: any;
 

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 /**
  * Browser compatibility tests for HakanaiClient
  * Tests availability of required browser APIs

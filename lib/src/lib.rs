@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 //! Zero-knowledge secret sharing client library for Hakanai.
 //!
 //! This library provides a complete client implementation for sending and receiving

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 //! Token management for authentication and authorization.
 //!
 //! Provides token generation, validation, and storage abstraction.

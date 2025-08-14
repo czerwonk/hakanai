@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 /**
  * Reusable TTL selector component with preset options and custom input
  */

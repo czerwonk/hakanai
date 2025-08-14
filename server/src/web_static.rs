@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 use actix_web::http::header;
 use actix_web::{HttpResponse, Responder, web};
 

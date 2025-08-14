@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 use anyhow::{Result, anyhow};
 use colored::Colorize;
 use rpassword::prompt_password;

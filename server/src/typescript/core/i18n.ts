@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 const I18nKeys = {
   Page: {
     CreateTitle: "page.create.title",

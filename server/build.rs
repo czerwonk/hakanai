@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 use std::fs;
 use std::process::Command;
 use std::{collections::HashMap, time::SystemTime};

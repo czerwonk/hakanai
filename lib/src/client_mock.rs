@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 #[cfg(any(test, feature = "testing"))]
 use std::sync::{Arc, Mutex};
 #[cfg(any(test, feature = "testing"))]

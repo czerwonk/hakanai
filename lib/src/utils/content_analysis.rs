@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 //! Content analysis utilities for detecting binary vs text data.
 //!
 //! This module provides functions to analyze byte content and determine

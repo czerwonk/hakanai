@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 /**
  * Share page functionality for clipboard-based secret sharing
  * Reads JSON data from clipboard and creates secrets

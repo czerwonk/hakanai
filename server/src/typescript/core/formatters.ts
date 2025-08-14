@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 /**
  * Format file size in human readable format
  * @param bytes - File size in bytes

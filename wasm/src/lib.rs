@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 use qrcode::{QrCode, render::svg};
 use wasm_bindgen::prelude::*;
 

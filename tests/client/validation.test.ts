@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 /**
  * Input validation tests for all validation functions
  */

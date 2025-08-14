@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 interface CompatibilityCheck {
   readonly isCompatible: boolean;
   readonly missingFeatures: readonly string[];

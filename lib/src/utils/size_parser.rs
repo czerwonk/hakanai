@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 //! Size parsing utilities for human-readable input.
 //!
 //! This module provides functionality to parse size values from human-readable strings,

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 /**
  * Validation error codes for ShareData
  */

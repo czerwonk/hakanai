@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 /**
  * Integration tests for HakanaiClient
  * Tests real crypto operations with minimal mocking

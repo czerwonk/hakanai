@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 /**
  * Error codes for Hakanai operations
  * @readonly

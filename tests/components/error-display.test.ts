@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 import { displayErrorMessage } from "../../server/src/typescript/components/error-display";
 
 // Mock DOM utilities

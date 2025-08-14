@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 //! Admin API endpoints for token management.
 //!
 //! Provides REST endpoints for administrative operations like creating user tokens.

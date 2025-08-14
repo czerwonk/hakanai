@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::PathBuf;

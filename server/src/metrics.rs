@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 //! OpenTelemetry metrics for the Hakanai server.
 //!
 //! This module provides metrics collection for various server operations,
