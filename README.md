@@ -45,7 +45,7 @@ Built for those who believe privacy isn't about having something to hide - it's 
 ## Installation
 
 ### Prerequisites
-- Rust 2024 edition or later
+- Rust 1.89 or later (stable toolchain)
 - Redis server (for backend storage)
 - Node.js and npm (for TypeScript bundling)
 - Standard Rust toolchain (`cargo`, `rustc`)
@@ -123,7 +123,7 @@ hakanai-server --enable-admin-token
 hakanai-server --enable-admin-token --allow-anonymous --anonymous-size-limit 32k --upload-size-limit 10m
 
 # With webhook notifications for audit/monitoring (v2.8+)
-hakanai-server --webhook-url https://example.com/webhook --webhook-auth "Bearer token123"
+hakanai-server --webhook-url https://example.com/webhook --webhook-token "token123"
 ```
 
 **Token System:**
@@ -161,7 +161,9 @@ echo "temporary password" | hakanai send --ttl 30m
 echo "secret" | hakanai send --server https://hakanai.example.com
 
 # Send with authentication token (required if server has token whitelist)
-echo "secret" | hakanai send --token my-auth-token
+echo "secret" | HAKANAI_TOKEN=my-auth-token hakanai send
+# Or using token file
+echo "secret" | hakanai send --token-file /path/to/token.txt
 
 # Generate separate key for enhanced security (key and URL shared via different channels)
 echo "sensitive data" | hakanai send --separate-key
@@ -171,8 +173,11 @@ echo "sensitive data" | hakanai send --separate-key
 # Secret link: https://hakanai.example.com/s/uuid
 # Key:         base64-encoded-key
 
+# Display URL as QR code for easy mobile sharing
+echo "secret" | hakanai send --qr-code
+
 # Combine options
-hakanai send -f secret.txt -s https://hakanai.example.com --ttl 1h -t my-token
+HAKANAI_TOKEN=my-token hakanai send -f secret.txt -s https://hakanai.example.com --ttl 1h
 ```
 
 #### Retrieving a Secret
@@ -193,7 +198,7 @@ hakanai get https://hakanai.example.com/s/550e8400-e29b-41d4-a716-446655440000 -
 #### Creating User Tokens (Admin Only)
 
 ```bash
-# Create a user token with admin privileges
+# Create a user token with admin privileges (will prompt for admin token)
 hakanai token --limit 5m --ttl 7d
 
 # Create token with humanized size limits
@@ -438,7 +443,7 @@ For production deployments:
 ### Server Environment Variables
 
 - `HAKANAI_PORT`: Server port (default: 8080)
-- `HAKANAI_LISTEN_ADDRESS`: Bind address (default: 0.0.0.0)
+- `HAKANAI_LISTEN_ADDRESS`: Bind address (default: 127.0.0.1)
 - `HAKANAI_REDIS_DSN`: Redis connection string (default: redis://127.0.0.1:6379/)
 - `HAKANAI_UPLOAD_SIZE_LIMIT`: Maximum upload size (default: 10m, supports humanized format like 1m, 500k, 1024)
 - `HAKANAI_ALLOW_ANONYMOUS`: Allow anonymous access (default: false)
@@ -449,8 +454,17 @@ For production deployments:
 - `HAKANAI_IMPRESSUM_FILE`: Path to impressum/legal information text file (displays impressum link in footer when provided)
 - `HAKANAI_PRIVACY_FILE`: Path to privacy policy/data protection text file (displays privacy policy link in footer when provided)
 - `HAKANAI_WEBHOOK_URL`: Webhook URL for secret lifecycle notifications (optional)
-- `HAKANAI_WEBHOOK_AUTH`: Bearer token for webhook authentication (optional)
+- `HAKANAI_WEBHOOK_TOKEN`: Bearer token for webhook authentication (optional)
 - `OTEL_EXPORTER_OTLP_ENDPOINT`: OpenTelemetry collector endpoint (optional, enables OTEL when set)
+
+### CLI Environment Variables
+
+- `HAKANAI_SERVER`: Default server URL for CLI commands
+- `HAKANAI_TOKEN`: Authentication token for CLI operations
+- `HAKANAI_TTL`: Default TTL for send command
+- `HAKANAI_TOKEN_TTL`: Default TTL for token command
+- `HAKANAI_QR_CODE`: Enable QR code output by default
+- `HAKANAI_TO_STDOUT`: Output secrets to stdout by default
 
 ### Server Command-line Options
 
@@ -465,7 +479,7 @@ For production deployments:
 - `--impressum-file`: Path to impressum/legal information text file (displays impressum link in footer when provided)
 - `--privacy-file`: Path to privacy policy/data protection text file (displays privacy policy link in footer when provided)
 - `--webhook-url`: Webhook URL for secret lifecycle notifications
-- `--webhook-auth`: Bearer token for webhook authentication
+- `--webhook-token`: Bearer token for webhook authentication
 
 ### Security Features
 
