@@ -169,17 +169,18 @@ fn add_cache_busters_to_js_files() -> Result<()> {
         for entry in entries.filter_map(|e| e.ok()) {
             let path = entry.path();
             if path.extension().map(|ext| ext == "js").unwrap_or(false)
-                && let Ok(content) = fs::read_to_string(&path) {
-                    // Replace any relative .js import with versioned import
-                    let updated_content = content
-                        .replace(".js\"", &format!(".js?v={cache_buster}\""))
-                        .replace(".js'", &format!(".js?v={cache_buster}'"))
-                        .replace(".json\"", &format!(".json?v={cache_buster}\""))
-                        .replace(".json'", &format!(".json?v={cache_buster}'"));
+                && let Ok(content) = fs::read_to_string(&path)
+            {
+                // Replace any relative .js import with versioned import
+                let updated_content = content
+                    .replace(".js\"", &format!(".js?v={cache_buster}\""))
+                    .replace(".js'", &format!(".js?v={cache_buster}'"))
+                    .replace(".json\"", &format!(".json?v={cache_buster}\""))
+                    .replace(".json'", &format!(".json?v={cache_buster}'"));
 
-                    fs::write(&path, updated_content)
-                        .context(format!("failed to write updated {path:?}"))?;
-                }
+                fs::write(&path, updated_content)
+                    .context(format!("failed to write updated {path:?}"))?;
+            }
         }
     }
 
@@ -302,15 +303,16 @@ fn generate_status_codes(operation: &Value) -> String {
 fn generate_request_body(operation: &Value) -> String {
     if let Some(request_body) = operation["requestBody"].as_object()
         && let Some(content) = request_body["content"]["application/json"].as_object()
-            && let Some(example) = content["example"].as_object() {
-                return format!(
-                    r#"<h4>Request Body</h4>
+        && let Some(example) = content["example"].as_object()
+    {
+        return format!(
+            r#"<h4>Request Body</h4>
                     <div class="code-block">
                       <code>{}</code>
                     </div>"#,
-                    serde_json::to_string_pretty(example).unwrap_or_default()
-                );
-            }
+            serde_json::to_string_pretty(example).unwrap_or_default()
+        );
+    }
 
     String::new()
 }
@@ -518,9 +520,10 @@ fn get_latest_modified_time(path: &str, ext: &str) -> SystemTime {
         for entry in entries.filter_map(|e| e.ok()) {
             if entry.path().extension().is_some_and(|e| e == ext)
                 && let Ok(metadata) = entry.metadata()
-                    && let Ok(modified) = metadata.modified() {
-                        latest_time = latest_time.max(modified);
-                    }
+                && let Ok(modified) = metadata.modified()
+            {
+                latest_time = latest_time.max(modified);
+            }
         }
     }
 
