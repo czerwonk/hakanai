@@ -119,7 +119,7 @@ The client uses Web Crypto API and requires:
 
 ## License
 
-MIT
+Apache-2.0
 
 ## Links
 

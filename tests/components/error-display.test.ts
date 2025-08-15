@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 
 import { displayErrorMessage } from "../../server/src/typescript/components/error-display";
 

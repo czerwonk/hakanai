@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 
 const SCREEN_READER_ANNOUNCEMENT_TIMEOUT = 1000;
 

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 
 interface CompatibilityCheck {
   readonly isCompatible: boolean;

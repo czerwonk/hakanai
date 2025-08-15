@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 
 /// Returns the user agent name for the CLI application.
 pub fn get_user_agent_name() -> String {

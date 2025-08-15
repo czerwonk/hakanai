@@ -496,5 +496,7 @@ Contributions are welcome! Please:
 
 ## License
 
-Licensed under [MIT](LICENSE) license.
+Licensed under the [Apache License, Version 2.0](LICENSE).
+
+See [NOTICE](NOTICE) for attribution requirements.
 

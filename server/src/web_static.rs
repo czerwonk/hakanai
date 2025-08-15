@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 
 use actix_web::http::header;
 use actix_web::{HttpResponse, Responder, web};

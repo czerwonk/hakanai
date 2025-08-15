@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 
 import { HakanaiClient, type PayloadData } from "./hakanai-client";
 import { initI18n, I18nKeys } from "./core/i18n";
