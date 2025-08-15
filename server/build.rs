@@ -168,8 +168,8 @@ fn add_cache_busters_to_js_files() -> Result<()> {
     if let Ok(entries) = fs::read_dir(includes_dir) {
         for entry in entries.filter_map(|e| e.ok()) {
             let path = entry.path();
-            if path.extension().map(|ext| ext == "js").unwrap_or(false) {
-                if let Ok(content) = fs::read_to_string(&path) {
+            if path.extension().map(|ext| ext == "js").unwrap_or(false)
+                && let Ok(content) = fs::read_to_string(&path) {
                     // Replace any relative .js import with versioned import
                     let updated_content = content
                         .replace(".js\"", &format!(".js?v={cache_buster}\""))
@@ -180,7 +180,6 @@ fn add_cache_busters_to_js_files() -> Result<()> {
                     fs::write(&path, updated_content)
                         .context(format!("failed to write updated {path:?}"))?;
                 }
-            }
         }
     }
 
@@ -301,9 +300,9 @@ fn generate_status_codes(operation: &Value) -> String {
 }
 
 fn generate_request_body(operation: &Value) -> String {
-    if let Some(request_body) = operation["requestBody"].as_object() {
-        if let Some(content) = request_body["content"]["application/json"].as_object() {
-            if let Some(example) = content["example"].as_object() {
+    if let Some(request_body) = operation["requestBody"].as_object()
+        && let Some(content) = request_body["content"]["application/json"].as_object()
+            && let Some(example) = content["example"].as_object() {
                 return format!(
                     r#"<h4>Request Body</h4>
                     <div class="code-block">
@@ -312,8 +311,6 @@ fn generate_request_body(operation: &Value) -> String {
                     serde_json::to_string_pretty(example).unwrap_or_default()
                 );
             }
-        }
-    }
 
     String::new()
 }
@@ -519,13 +516,11 @@ fn get_latest_modified_time(path: &str, ext: &str) -> SystemTime {
 
     if let Ok(entries) = fs::read_dir(path) {
         for entry in entries.filter_map(|e| e.ok()) {
-            if entry.path().extension().is_some_and(|e| e == ext) {
-                if let Ok(metadata) = entry.metadata() {
-                    if let Ok(modified) = metadata.modified() {
+            if entry.path().extension().is_some_and(|e| e == ext)
+                && let Ok(metadata) = entry.metadata()
+                    && let Ok(modified) = metadata.modified() {
                         latest_time = latest_time.max(modified);
                     }
-                }
-            }
         }
     }
 
