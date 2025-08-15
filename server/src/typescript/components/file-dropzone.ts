@@ -14,7 +14,6 @@ export interface FileDropzoneOptions {
 
 /**
  * Detects if the current device supports drag and drop
- * Mobile devices and Firefox currently don't support drag and drop reliably
  */
 function supportsDragAndDrop(): boolean {
   // Check if we have the required APIs
