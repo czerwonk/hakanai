@@ -76,6 +76,12 @@ const I18nKeys = {
     Retrieve: "button.retrieve",
   },
 
+  Dropzone: {
+    Primary: "dropzone.primary",
+    Secondary: "dropzone.secondary",
+    Helper: "dropzone.helper",
+  },
+
   Msg: {
     BinaryDetected: "msg.binaryDetected",
     ClipboardEmpty: "msg.clipboardEmpty",
@@ -280,6 +286,10 @@ const translations: Translations = {
     [I18nKeys.Button.Download]: "💾 Download",
     [I18nKeys.Button.ChooseFile]: "📁 Choose File",
     [I18nKeys.Button.ReadClipboard]: "📄 Read Clipboard",
+
+    [I18nKeys.Dropzone.Primary]: "Drop files here or click to select",
+    [I18nKeys.Dropzone.Secondary]: "Supports all file types",
+    [I18nKeys.Dropzone.Helper]: "File will be encrypted before upload.",
 
     [I18nKeys.Msg.Creating]: "Creating secret...",
     [I18nKeys.Msg.Retrieving]: "Retrieving secret...",
@@ -504,6 +514,11 @@ const translations: Translations = {
     [I18nKeys.Button.Download]: "💾 Speichern",
     [I18nKeys.Button.ChooseFile]: "📁 Datei auswählen",
     [I18nKeys.Button.ReadClipboard]: "📄 Zwischenablage lesen",
+
+    [I18nKeys.Dropzone.Primary]:
+      "Dateien hier ablegen oder zum Auswählen klicken",
+    [I18nKeys.Dropzone.Secondary]: "Unterstützt alle Dateitypen",
+    [I18nKeys.Dropzone.Helper]: "Die Datei wird vor dem Upload verschlüsselt.",
 
     [I18nKeys.Msg.Creating]: "Secret wird erstellt...",
     [I18nKeys.Msg.Retrieving]: "Secret wird abgerufen...",

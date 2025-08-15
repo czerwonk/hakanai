@@ -2388,3 +2388,140 @@ input[type="number"] {
     opacity: 1;
   }
 }
+
+/* ============================================
+   File Dropzone Styles
+   ============================================ */
+
+.file-dropzone {
+  position: relative;
+  border: 2px dashed var(--color-border);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-xl);
+  text-align: center;
+  transition: all var(--transition-fast);
+  background-color: var(--color-bg-input);
+  cursor: pointer;
+}
+
+.file-dropzone--active {
+  border-color: var(--color-primary);
+  background-color: color-mix(
+    in srgb,
+    var(--theme-primary) 3%,
+    var(--color-bg-input)
+  );
+}
+
+.file-dropzone--dragover {
+  border-color: var(--theme-primary);
+  background-color: color-mix(
+    in srgb,
+    var(--theme-primary) 8%,
+    var(--color-bg-input)
+  );
+  border-style: solid;
+  transform: scale(1.02);
+  box-shadow:
+    0 4px 20px color-mix(in srgb, var(--theme-primary) 10%, transparent),
+    0 0 0 4px color-mix(in srgb, var(--theme-primary) 8%, transparent);
+}
+
+.file-dropzone--disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  border-color: var(--color-border);
+  background-color: var(--color-bg-input);
+}
+
+.file-dropzone-fallback {
+  border-style: solid;
+  border-color: var(--color-primary);
+  background-color: color-mix(
+    in srgb,
+    var(--theme-primary) 5%,
+    var(--color-bg-input)
+  );
+}
+
+.file-dropzone-fallback:hover:not(.file-dropzone--disabled) {
+  background-color: color-mix(
+    in srgb,
+    var(--theme-primary) 8%,
+    var(--color-bg-input)
+  );
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px
+    color-mix(in srgb, var(--theme-primary) 10%, transparent);
+}
+
+.file-dropzone:focus-visible {
+  outline: none;
+  border-color: var(--theme-primary);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--theme-primary) 8%, transparent),
+    0 0 20px color-mix(in srgb, var(--theme-primary) 6%, transparent);
+}
+
+.file-dropzone-content {
+  pointer-events: none;
+  color: var(--color-text);
+}
+
+.file-dropzone-content .icon {
+  font-size: 2rem;
+  margin-bottom: var(--spacing-sm);
+  color: var(--color-text-muted);
+  transition: color var(--transition-fast);
+}
+
+.file-dropzone--active .file-dropzone-content .icon {
+  color: var(--theme-primary);
+}
+
+.file-dropzone-content .primary-text {
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  margin-bottom: var(--spacing-xs);
+  color: var(--color-text);
+}
+
+.file-dropzone-content .secondary-text {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  margin-bottom: var(--spacing-sm);
+}
+
+.file-dropzone-content .helper-text {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  opacity: 0.8;
+}
+
+/* Hide the original file input when using dropzone */
+.file-dropzone input[type="file"] {
+  position: absolute;
+  left: -9999px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Animation for drag feedback */
+@keyframes dropzonePulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.file-dropzone--dragover .file-dropzone-content {
+  animation: dropzonePulse 1s infinite;
+}
+
+/* Fallback button when drag and drop is not supported */
+.file-input-button {
+  margin-top: var(--spacing-md);
+}

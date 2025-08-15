@@ -23,8 +23,10 @@ import { ProgressBar } from "./components/progress-bar";
 import { TTLSelector } from "./components/ttl-selector";
 import { initSeparateKeyCheckbox } from "./core/preferences";
 import { KeyboardShortcuts } from "./core/keyboard-shortcuts";
+import { FileDropzone } from "./components/file-dropzone";
 
 let ttlSelector: TTLSelector | null = null;
+let fileDropzone: FileDropzone | null = null;
 
 interface Elements {
   button: HTMLButtonElement;
@@ -198,6 +200,7 @@ function setElementsState(elements: Elements, disabled: boolean): void {
   if (separateKeyCheckbox) separateKeyCheckbox.disabled = disabled;
 
   ttlSelector?.setEnabled(!disabled);
+  fileDropzone?.setEnabled(!disabled);
 
   if (disabled) {
     resultDiv.innerHTML = "";
@@ -470,16 +473,36 @@ function setupFileInputHandler(): void {
   const fileInputButton = document.getElementById(
     "fileInputButton",
   ) as HTMLButtonElement;
+  const dropzoneContainer = document.getElementById("fileDropzone");
 
-  if (fileInput) {
-    fileInput.addEventListener("change", updateFileInfo);
+  if (!fileInput || !fileInputButton || !dropzoneContainer) {
+    return;
   }
 
-  if (fileInputButton && fileInput) {
-    fileInputButton.addEventListener("click", () => {
-      fileInput.click();
+  // Always listen for file input changes
+  fileInput.addEventListener("change", updateFileInfo);
+
+  if (FileDropzone.isDragAndDropSupported()) {
+    fileDropzone = new FileDropzone({
+      fileInput: fileInput,
+      container: dropzoneContainer,
     });
+    hideElement(fileInputButton);
+  } else {
+    // No drag and drop support - hide dropzone and show the button as fallback
+    hideElement(dropzoneContainer);
+    showFileInputButton(fileInputButton, fileInput);
   }
+}
+
+function showFileInputButton(
+  fileInputButton: HTMLButtonElement,
+  fileInput: HTMLInputElement,
+): void {
+  showElement(fileInputButton);
+  fileInputButton.addEventListener("click", () => {
+    fileInput.click();
+  });
 }
 
 function initializeAuthToken(): void {
