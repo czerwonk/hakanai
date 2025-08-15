@@ -14,7 +14,7 @@ Hakanai embodies the Japanese concept of transience - secrets that exist only fo
 - **Single View**: Secrets self-destruct after one access. No second chances.
 - **No Metadata**: We store only encrypted bytes and an ID. Nothing else.
 - **Minimalist**: One function only - share secrets that disappear.
-- **Content Integrity**: Optional hash verification ensures secrets haven't been tampered with.
+- **Content Integrity**: hash verification ensures secrets haven't been tampered with.
 
 ## How It Works
 
