@@ -126,9 +126,10 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Download artifacts
+      - name: Download platform artifacts
         uses: actions/download-artifact@v4
         with:
+          pattern: "hakanai-*"
           path: artifacts
 
       - name: Create Release
