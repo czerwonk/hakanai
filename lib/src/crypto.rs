@@ -313,7 +313,9 @@ mod tests {
         let crypto_client = CryptoClient::new(Box::new(mock_client));
 
         let mut url = Url::parse("https://example.com/secret/abc123")?;
-        url.set_fragment(Some(&key_base64));
+        // Include hash in fragment: key:hash format
+        let fragment = format!("{}:validhash123", key_base64);
+        url.set_fragment(Some(&fragment));
 
         let result = crypto_client.receive_secret(url, None).await;
         assert!(matches!(result, Err(ClientError::Base64DecodeError(_))));
@@ -333,7 +335,9 @@ mod tests {
         let crypto_client = CryptoClient::new(Box::new(mock_client));
 
         let mut url = Url::parse("https://example.com/secret/abc123")?;
-        url.set_fragment(Some(&key_base64));
+        // Include hash in fragment: key:hash format
+        let fragment = format!("{}:validhash123", key_base64);
+        url.set_fragment(Some(&fragment));
 
         let result = crypto_client.receive_secret(url, None).await;
         assert!(matches!(result, Err(ClientError::CryptoError(msg)) if msg == "Payload too short"));
@@ -416,7 +420,9 @@ mod tests {
         let crypto_client = CryptoClient::new(Box::new(mock_client));
 
         let mut url = Url::parse("https://example.com/secret/abc123")?;
-        url.set_fragment(Some(&key_base64));
+        // Include hash in fragment: key:hash format
+        let fragment = format!("{}:validhash123", key_base64);
+        url.set_fragment(Some(&fragment));
 
         let result = crypto_client.receive_secret(url, None).await;
         assert!(
