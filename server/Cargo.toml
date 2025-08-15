@@ -10,7 +10,7 @@ license = "Apache-2.0"
 actix-cors = "0.7.1"
 actix-web = "4.11.0"
 anyhow = "1.0.98"
-async-trait = "0.1.88"
+async-trait = "0.1.89"
 base64 = "0.22.1"
 clap = { version = "4.5.42", features = ["derive", "env"] }
 futures-util = "0.3"
