@@ -6,7 +6,7 @@ A minimalist one-time secret sharing service built on zero-knowledge principles.
 
 ## Philosophy
 
-Hakanai embodies the Japanese concept of transience - secrets that exist only for a moment before vanishing forever. No accounts, no tracking, no persistence. Just ephemeral data transfer with mathematical privacy guarantees.
+Hakanai embodies the Japanese concept of transience - secrets that exist only for a moment before vanishing forever. No accounts, no tracking, no permanent storage. Just ephemeral data transfer with mathematical privacy guarantees and automatic expiration.
 
 ## Core Principles
 
@@ -403,7 +403,7 @@ Hakanai implements a zero-knowledge architecture:
 1. **Client-side encryption**: All encryption/decryption happens in the client
 2. **Server ignorance**: Server only stores encrypted blobs with UUIDs
 3. **Automatic destruction**: Secrets self-destruct after first access or TTL
-4. **No persistence**: No logs, no backups, no recovery
+4. **Temporary storage**: Redis-based temporary persistence with automatic expiration and no permanent backups
 
 ### Components
 
