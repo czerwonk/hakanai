@@ -22,12 +22,6 @@ function supportsDragAndDrop(): boolean {
     return false;
   }
 
-  // Firefox has known issues with drag and drop file handling
-  const isFirefox = navigator.userAgent.toLowerCase().includes("firefox");
-  if (isFirefox) {
-    return false;
-  }
-
   // Basic mobile detection - mobile devices typically don't support drag and drop
   const isMobile =
     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
