@@ -17,7 +17,8 @@ fn parse_size_limit_bytes(s: &str) -> Result<u64, String> {
     version,
     name = "hakanai-server",
     author = "Daniel Brendgen-Czerwonk",
-    about = "A minimalist one-time secret sharing web service. Share sensitive data through ephemeral links that self-destruct after a single view. No accounts, no tracking, just a simple way to transmit secrets that vanish like morning mist."
+    about = "A minimalist one-time secret sharing web service. Share sensitive data through ephemeral links that self-destruct after a single view. No accounts, no tracking, just a simple way to transmit secrets that vanish like morning mist.",
+    after_help = "LICENSE:\n  Licensed under the Apache License, Version 2.0\n  <https://www.apache.org/licenses/LICENSE-2.0>\n\nSOURCE:\n  <https://github.com/czerwonk/hakanai>"
 )]
 pub struct Args {
     /// The port on which the server will listen for incoming connections.
