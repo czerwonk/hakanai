@@ -36,7 +36,7 @@ With the `--separate-key` option, Hakanai provides enhanced security by separati
 
 We implement true client-side encryption - your secrets are encrypted before leaving your device and decrypted only after retrieval. The server is just a temporary dead drop that forgets everything.
 
-**Content Integrity**: Hakanai automatically verifies that secrets haven't been tampered with using SHA-256 hashes truncated to 128 bits. This is a deliberate tradeoff between cryptographic security and usability - the 22-character hash keeps URLs manageable and QR codes scannable while still providing strong tamper detection. The URL format is `#key:hash` where the hash validates the decrypted content. Legacy URLs with format `#key` (without hash) continue to work but without integrity verification.
+**Content Integrity**: Hakanai automatically verifies that secrets haven't been tampered with using SHA-256 hashes truncated to 128 bits. This is a deliberate tradeoff between cryptographic security and usability - the 22-character hash keeps URLs manageable and QR codes scannable while still providing strong tamper detection. All URLs must use the format `#key:hash` where the hash validates the decrypted content for security.
 
 **Note**: This project focuses on the application-layer encryption. Transport security (HTTPS/TLS) should be handled by a reverse proxy or load balancer in front of the server.
 

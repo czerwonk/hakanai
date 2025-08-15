@@ -220,7 +220,12 @@ impl Client<Payload> for CryptoClient {
             .collect::<Vec<&str>>();
 
         let crypto_context = CryptoContext::from_key_base64(parts[0])?;
-        let hash = parts.get(1).map(|&s| s.to_string());
+        let hash = parts
+            .get(1)
+            .ok_or(ClientError::Custom(
+                "Missing hash in URL fragment".to_string(),
+            ))?
+            .to_string();
 
         let encoded_data = self.inner_client.receive_secret(url, opts).await?;
         decrypt(encoded_data, crypto_context, hash)
@@ -242,7 +247,7 @@ fn append_to_link(url: Url, crypto_context: &CryptoContext, hash: &str) -> Url {
 fn decrypt(
     encoded_data: Vec<u8>,
     mut crypto_context: CryptoContext,
-    hash: Option<String>,
+    hash: String,
 ) -> Result<Payload, ClientError> {
     let payload = Zeroizing::new(base64::prelude::BASE64_STANDARD.decode(encoded_data)?);
 
@@ -250,9 +255,7 @@ fn decrypt(
     let ciphertext = &payload[AES_GCM_NONCE_SIZE..];
     let plaintext = Zeroizing::new(crypto_context.decrypt(ciphertext)?);
 
-    if let Some(expected_hash) = hash {
-        verify_hash(&plaintext, &expected_hash)?;
-    }
+    verify_hash(&plaintext, &hash)?;
 
     let payload = Payload::deserialize(&plaintext)?;
     Ok(payload)
@@ -470,8 +473,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_receive_secret_without_hash() -> Result<()> {
-        // Create a valid encrypted secret
+    async fn test_receive_secret_without_hash_fails() -> Result<()> {
+        // Test that URLs without hash are rejected for security
         let mock_client =
             MockClient::new().with_send_success(Url::parse("https://example.com/secret/test123")?);
         let crypto_client = CryptoClient::new(Box::new(mock_client.clone()));
@@ -503,16 +506,16 @@ mod tests {
         // Set fragment to only the key (no hash)
         url_without_hash.set_fragment(Some(fragment_parts[0]));
 
-        // Receive without hash - should succeed
+        // Receive without hash - should fail with missing hash error
         let mock_client_receive = MockClient::new().with_receive_success(encrypted_data);
         let crypto_client_receive = CryptoClient::new(Box::new(mock_client_receive));
 
         let result = crypto_client_receive
             .receive_secret(url_without_hash, None)
-            .await?;
+            .await;
 
-        // Should decrypt successfully without hash validation
-        assert_eq!(result.data, payload.data);
+        // Should fail due to missing hash
+        assert!(matches!(result, Err(ClientError::Custom(msg)) if msg.contains("Missing hash")));
         Ok(())
     }
 }

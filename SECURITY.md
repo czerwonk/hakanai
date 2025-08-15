@@ -56,13 +56,15 @@ Hakanai implements a zero-knowledge architecture where:
 - All encryption/decryption happens client-side
 - Server never has access to plaintext data or encryption keys
 - Secrets are automatically deleted after first access
-- Optional content integrity verification via SHA-256 hashes
+- Mandatory content integrity verification via SHA-256 hashes
 
 ### Cryptographic Implementation
 - **Algorithm**: AES-256-GCM (authenticated encryption)
 - **Key Generation**: Cryptographically secure random generation
 - **Nonce**: Unique per encryption operation
-- **Hash Verification**: SHA-256 (truncated to 128 bits for URL practicality)
+- **Hash Verification**: SHA-256 truncated to 128 bits (tradeoff between security and URL practicality)
+  - 128-bit truncation provides 2^64 collision resistance
+  - Balances strong tamper detection with manageable URL length and QR code scannability
 
 ### Deployment Security
 
@@ -103,7 +105,7 @@ Hakanai implements a zero-knowledge architecture where:
 - Server compromise (zero-knowledge architecture)
 - Data persistence (automatic deletion after access)
 - Replay attacks (single-view design)
-- Content tampering (optional hash verification)
+- Content tampering (mandatory hash verification)
 - Unauthorized access (token authentication)
 
 #### What Hakanai DOES NOT protect against:

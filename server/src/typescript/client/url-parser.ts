@@ -49,8 +49,8 @@ class UrlParser {
     // Check if hash fragment is missing from URL
     if (!urlObj.hash) {
       throw new HakanaiError(
-        HakanaiErrorCodes.MISSING_DECRYPTION_KEY,
-        "URL must contain decryption key in fragment",
+        HakanaiErrorCodes.INVALID_URL_FORMAT,
+        "URL must contain decryption key and hash in fragment",
       );
     }
 
@@ -69,11 +69,15 @@ class UrlParser {
     InputValidation.validateSecretKey(secretKey);
 
     const hash = fragmentParts[1];
-    if (hash) {
-      InputValidation.validateHash(hash);
+    if (!hash) {
+      throw new HakanaiError(
+        HakanaiErrorCodes.MISSING_HASH,
+        "URL fragment must contain a hash for content integrity verification",
+      );
     }
+    InputValidation.validateHash(hash);
 
-    return { secretId, secretKey, hash: hash || undefined };
+    return { secretId, secretKey, hash };
   }
 }
 

@@ -201,7 +201,7 @@ describe("Error Handling", () => {
       client.receivePayload(
         "http://localhost/s/550e8400-e29b-41d4-a716-446655440000",
       ),
-    ).rejects.toThrow("URL must contain decryption key in fragment");
+    ).rejects.toThrow("URL must contain decryption key and hash in fragment");
   });
 
   test("receivePayload handles server errors", async () => {
@@ -234,7 +234,7 @@ describe("Error Handling", () => {
 describe("Error Code Constants", () => {
   test("Error codes are readonly constants", () => {
     const codes = Object.keys(HakanaiErrorCodes);
-    expect(codes.length).toBe(28);
+    expect(codes.length).toBe(29);
 
     expect(codes).toContain("AUTHENTICATION_REQUIRED");
     expect(codes).toContain("INVALID_TOKEN");
@@ -263,6 +263,7 @@ describe("Error Code Constants", () => {
     expect(codes).toContain("INVALID_SERVER_RESPONSE");
     expect(codes).toContain("CRYPTO_CONTEXT_DISPOSED");
     expect(codes).toContain("INVALID_HASH");
+    expect(codes).toContain("MISSING_HASH");
     expect(codes).toContain("HASH_MISMATCH");
   });
 

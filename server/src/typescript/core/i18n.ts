@@ -178,6 +178,7 @@ const I18nKeys = {
     InvalidUrlFormat: "error.INVALID_URL_FORMAT",
     MissingAuthToken: "error.MISSING_AUTH_TOKEN",
     MissingDecryptionKey: "error.MISSING_DECRYPTION_KEY",
+    MissingHash: "error.MISSING_HASH",
     MissingKey: "error.MISSING_KEY",
     MissingSecretId: "error.MISSING_SECRET_ID",
     PayloadTooLarge: "error.PAYLOAD_TOO_LARGE",
@@ -391,6 +392,8 @@ const translations: Translations = {
       "Secret has been accessed and is no longer available",
     [I18nKeys.Error.RetrieveFailed]: "Failed to retrieve secret",
     [I18nKeys.Error.MissingDecryptionKey]: "No decryption key found in URL",
+    [I18nKeys.Error.MissingHash]:
+      "No content integrity verification hash found in URL",
     [I18nKeys.Error.PayloadTooLarge]: "Secret size exceeds the limit",
     [I18nKeys.Error.HashValidationFailed]:
       "Hash validation failed - data may be tempered or corrupted",
@@ -614,6 +617,8 @@ const translations: Translations = {
       "Secret wurde bereits abgerufen und ist nicht mehr verfügbar",
     [I18nKeys.Error.RetrieveFailed]: "Fehler beim Abrufen des Secrets",
     [I18nKeys.Error.MissingDecryptionKey]: "Kein Schlüssel in der URL gefunden",
+    [I18nKeys.Error.MissingHash]:
+      "Kein Verifizierungs-Hash-Code in der URL gefunden",
 
     [I18nKeys.Validation.MissingData]: "Fehlende oder ungültige Daten",
     [I18nKeys.Validation.InvalidFilename]:

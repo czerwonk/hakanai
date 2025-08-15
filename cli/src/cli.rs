@@ -89,13 +89,6 @@ pub struct SendArgs {
         help = "Print URL also as QR code"
     )]
     pub print_qr_code: bool,
-
-    #[arg(
-        long = "no-hash",
-        env = "HAKANAI_NO_HASH",
-        help = "Remove the hash from the URL. This is not recommended as it disables the integrity check of the secret on receive."
-    )]
-    pub no_hash: bool,
 }
 
 impl SendArgs {
@@ -130,7 +123,6 @@ impl SendArgs {
             filename: None,
             separate_key: false,
             print_qr_code: false,
-            no_hash: false,
         }
     }
 

@@ -64,6 +64,8 @@ const HakanaiErrorCodes = {
   CRYPTO_CONTEXT_DISPOSED: "CRYPTO_CONTEXT_DISPOSED",
   /** Hash format is invalid */
   INVALID_HASH: "INVALID_HASH",
+  /** URL fragment is missing content integrity hash */
+  MISSING_HASH: "MISSING_HASH",
 } as const;
 
 // Type for error codes

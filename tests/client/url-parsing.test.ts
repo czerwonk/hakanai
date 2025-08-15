@@ -37,29 +37,22 @@ describe("UrlParser", () => {
       }
     });
 
-    test("parses URLs without hash correctly (legacy support)", () => {
+    test("rejects URLs without hash (no legacy support)", () => {
       const testCases = [
-        {
-          url: "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-          expected: {
-            secretId: "550e8400-e29b-41d4-a716-446655440000",
-            secretKey: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", // 43 chars
-            hash: undefined, // No hash in legacy format
-          },
-        },
-        {
-          url: "http://localhost:8080/s/123e4567-e89b-12d3-a456-426614174000#ccccccccccccccccccccccccccccccccccccccccccc",
-          expected: {
-            secretId: "123e4567-e89b-12d3-a456-426614174000",
-            secretKey: "ccccccccccccccccccccccccccccccccccccccccccc", // 43 chars
-            hash: undefined,
-          },
-        },
+        "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "http://localhost:8080/s/123e4567-e89b-12d3-a456-426614174000#ccccccccccccccccccccccccccccccccccccccccccc",
       ];
 
-      for (const testCase of testCases) {
-        const result = UrlParser.parseSecretUrl(testCase.url);
-        expect(result).toEqual(testCase.expected);
+      for (const url of testCases) {
+        expect(() => UrlParser.parseSecretUrl(url)).toThrow();
+        try {
+          UrlParser.parseSecretUrl(url);
+        } catch (error: any) {
+          expect(error.code).toBe(HakanaiErrorCodes.MISSING_HASH);
+          expect(error.message).toBe(
+            "URL fragment must contain a hash for content integrity verification"
+          );
+        }
       }
     });
 
@@ -75,15 +68,19 @@ describe("UrlParser", () => {
       }
     });
 
-    test("handles edge case: colon without hash", () => {
+    test("rejects URLs with colon but empty hash", () => {
       const url =
         "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:";
 
-      const result = UrlParser.parseSecretUrl(url);
-      expect(result.secretKey).toBe(
-        "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-      );
-      expect(result.hash).toBeUndefined();
+      expect(() => UrlParser.parseSecretUrl(url)).toThrow();
+      try {
+        UrlParser.parseSecretUrl(url);
+      } catch (error: any) {
+        expect(error.code).toBe(HakanaiErrorCodes.MISSING_HASH);
+        expect(error.message).toBe(
+          "URL fragment must contain a hash for content integrity verification"
+        );
+      }
     });
 
     test("correctly strips hash prefix before splitting", () => {
@@ -102,20 +99,19 @@ describe("UrlParser", () => {
       expect(result.hash).toBe("47DEQpj8HBSa-_TImW-5JA");
     });
 
-    test("handles legacy format correctly", () => {
+    test("rejects URLs without hash (former legacy format)", () => {
       const url =
         "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
 
-      const result = UrlParser.parseSecretUrl(url);
-
-      // Key should not include the '#' prefix
-      expect(result.secretKey).toBe(
-        "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-      );
-      expect(result.secretKey).not.toMatch(/^#/);
-
-      // Hash should be undefined for legacy URLs
-      expect(result.hash).toBeUndefined();
+      expect(() => UrlParser.parseSecretUrl(url)).toThrow();
+      try {
+        UrlParser.parseSecretUrl(url);
+      } catch (error: any) {
+        expect(error.code).toBe(HakanaiErrorCodes.MISSING_HASH);
+        expect(error.message).toBe(
+          "URL fragment must contain a hash for content integrity verification"
+        );
+      }
     });
 
     test("rejects URLs with invalid hash format", () => {
@@ -200,9 +196,9 @@ describe("UrlParser", () => {
       try {
         UrlParser.parseSecretUrl(url);
       } catch (error: any) {
-        expect(error.code).toBe(HakanaiErrorCodes.MISSING_DECRYPTION_KEY);
+        expect(error.code).toBe(HakanaiErrorCodes.INVALID_URL_FORMAT);
         expect(error.message).toBe(
-          "URL must contain decryption key in fragment",
+          "URL must contain decryption key and hash in fragment",
         );
       }
     });
