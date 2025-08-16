@@ -1,14 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 
+use std::env::current_dir;
 use std::fs::OpenOptions;
-use std::io::Write;
-use std::path::PathBuf;
+use std::io;
+use std::io::{Cursor, Read, Write};
+use std::path::{Path, PathBuf};
 
 use anyhow::{Result, anyhow};
 use colored::Colorize;
 use zeroize::Zeroizing;
+use zip::ZipArchive;
 
 use hakanai_lib::client::Client;
+use hakanai_lib::models::Payload;
 use hakanai_lib::options::SecretReceiveOptions;
 use hakanai_lib::timestamp;
 
@@ -17,6 +21,8 @@ use crate::factory::Factory;
 use crate::helper::get_user_agent_name;
 
 pub async fn get<T: Factory>(factory: T, args: GetArgs) -> Result<()> {
+    args.validate()?;
+
     let user_agent = get_user_agent_name();
     let observer = factory.new_observer("Receiving secret...")?;
     let opts = SecretReceiveOptions::default()
@@ -26,23 +32,41 @@ pub async fn get<T: Factory>(factory: T, args: GetArgs) -> Result<()> {
     let url = args.secret_url()?.clone();
     let payload = factory.new_client().receive_secret(url, Some(opts)).await?;
 
-    let bytes = Zeroizing::new(payload.decode_bytes()?);
-    let filename = args.filename.or_else(|| payload.filename.clone());
-    output_secret(&bytes, args.to_stdout, filename)?;
+    output_secret(payload, args.clone())?;
 
     Ok(())
 }
 
-fn output_secret(bytes: &[u8], to_stdout: bool, filename: Option<String>) -> Result<()> {
-    if to_stdout {
-        print_to_stdout(bytes)?;
+fn output_secret(payload: Payload, args: GetArgs) -> Result<()> {
+    let bytes = Zeroizing::new(payload.decode_bytes()?);
+    let filename = args.filename.or_else(|| payload.filename.clone());
+    let output_directory = match args.output_dir {
+        Some(dir) => PathBuf::from(dir),
+        None => current_dir()?,
+    };
+
+    if args.to_stdout {
+        print_to_stdout(&bytes)?;
+    } else if let Some(name) = payload.filename.clone()
+        && args.extract
+        && is_archive(&name)
+    {
+        extract_archive(name, &bytes, &output_directory)?;
     } else if let Some(file) = filename {
-        write_to_file(file, bytes)?;
+        write_to_file(
+            file,
+            Cursor::<&[u8]>::new(bytes.as_ref()),
+            &output_directory,
+        )?;
     } else {
-        print_to_stdout(bytes)?;
+        print_to_stdout(&bytes)?;
     }
 
     Ok(())
+}
+
+fn is_archive(filename: &str) -> bool {
+    filename.to_lowercase().ends_with(".zip")
 }
 
 fn print_to_stdout(bytes: &[u8]) -> Result<()> {
@@ -50,32 +74,61 @@ fn print_to_stdout(bytes: &[u8]) -> Result<()> {
     Ok(())
 }
 
-fn write_to_file(filename: String, bytes: &[u8]) -> Result<()> {
+fn extract_archive(filename: String, bytes: &[u8], target_dir: &Path) -> Result<()> {
+    let mut archive = ZipArchive::new(Cursor::new(bytes))?;
+
+    println!("Extracting archive: {}", filename.cyan());
+    for i in 0..archive.len() {
+        let file = archive.by_index(i)?;
+        if file.is_dir() {
+            continue; // skip directories
+        }
+
+        let name = file.name().to_string();
+        if name.contains("..") || name.starts_with('/') {
+            let message = format!("Skipping potentially unsafe path: {name}");
+            println!("{}", message.yellow());
+            continue;
+        }
+
+        // extract flat, just use the filename
+        let flat_name = PathBuf::from(&name)
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or(&name)
+            .to_string();
+        write_to_file(flat_name, file, target_dir)?;
+    }
+
+    Ok(())
+}
+
+fn write_to_file<T: Read>(filename: String, mut r: T, target_dir: &Path) -> Result<()> {
     if filename.is_empty() {
         return Err(anyhow!("Filename cannot be empty"));
     }
 
-    let path = PathBuf::from(&filename);
+    let path = PathBuf::from(&target_dir).join(filename.clone());
     let file_res = OpenOptions::new()
         .write(true)
-        .create_new(true) // Fail if file exists
+        .create_new(true) // fail if file exists
         .open(&path);
 
     match file_res {
-        Ok(mut f) => f.write_all(bytes)?,
+        Ok(mut f) => io::copy(&mut r, &mut f)?,
         Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {
-            return write_to_timestamped_file(filename, bytes);
+            return write_to_timestamped_file(filename, r, target_dir);
         }
         Err(e) => return Err(e)?,
     };
 
-    let success_message = format!("Secret saved to: {}", filename.cyan());
+    let success_message = format!("Saved to: {}", filename.cyan());
     println!("{success_message}");
 
     Ok(())
 }
 
-fn write_to_timestamped_file(filename: String, bytes: &[u8]) -> Result<()> {
+fn write_to_timestamped_file<T: Read>(filename: String, r: T, target_dir: &Path) -> Result<()> {
     let timestamp = timestamp::now_string()?;
     let filename_with_timestamp = format!("{filename}.{timestamp}");
 
@@ -84,7 +137,7 @@ fn write_to_timestamped_file(filename: String, bytes: &[u8]) -> Result<()> {
     );
     eprintln!("{}", warn_message.yellow());
 
-    write_to_file(filename_with_timestamp, bytes)
+    write_to_file(filename_with_timestamp, r, target_dir)
 }
 
 #[cfg(test)]
@@ -121,11 +174,15 @@ mod tests {
     #[test]
     fn test_write_to_file_text() -> Result<()> {
         let temp_dir = TempDir::new()?;
-        let file_path = temp_dir.path().join("test.txt");
         let content = "Test file content";
 
-        write_to_file(file_path.to_string_lossy().to_string(), content.as_bytes())?;
+        write_to_file(
+            "test.txt".to_string(),
+            Cursor::new(content.as_bytes()),
+            temp_dir.path(),
+        )?;
 
+        let file_path = temp_dir.path().join("test.txt");
         let read_content = fs::read_to_string(&file_path)?;
         assert_eq!(read_content, content);
 
@@ -135,14 +192,15 @@ mod tests {
     #[test]
     fn test_write_to_file_binary() -> Result<()> {
         let temp_dir = TempDir::new()?;
-        let file_path = temp_dir.path().join("test.bin");
         let binary_data = vec![0x00, 0x01, 0x02, 0xFF, 0xFE, 0xFD];
 
         write_to_file(
-            file_path.to_string_lossy().to_string(),
-            &binary_data.clone(),
+            "test.bin".to_string(),
+            Cursor::new(&binary_data),
+            temp_dir.path(),
         )?;
 
+        let file_path = temp_dir.path().join("test.bin");
         let read_content = fs::read(&file_path)?;
         assert_eq!(read_content, binary_data);
 
@@ -152,10 +210,14 @@ mod tests {
     #[test]
     fn test_write_to_file_empty() -> Result<()> {
         let temp_dir = TempDir::new()?;
+
+        write_to_file(
+            "empty.txt".to_string(),
+            Cursor::new(&[] as &[u8]),
+            temp_dir.path(),
+        )?;
+
         let file_path = temp_dir.path().join("empty.txt");
-
-        write_to_file(file_path.to_string_lossy().to_string(), &[])?;
-
         assert!(file_path.exists());
         let read_content = fs::read(&file_path)?;
         assert!(read_content.is_empty());
@@ -169,11 +231,15 @@ mod tests {
         let sub_dir = temp_dir.path().join("subdir");
         fs::create_dir(&sub_dir)?;
 
-        let file_path = sub_dir.join("nested.txt");
         let content = "Nested file content";
 
-        write_to_file(file_path.to_string_lossy().to_string(), content.as_bytes())?;
+        write_to_file(
+            "nested.txt".to_string(),
+            Cursor::new(content.as_bytes()),
+            &sub_dir,
+        )?;
 
+        let file_path = sub_dir.join("nested.txt");
         let read_content = fs::read_to_string(&file_path)?;
         assert_eq!(read_content, content);
 
@@ -191,8 +257,9 @@ mod tests {
         // Write new content - should create a new file with timestamp
         let new_content = "New content";
         write_to_file(
-            file_path.to_string_lossy().to_string(),
-            new_content.as_bytes(),
+            "overwrite.txt".to_string(),
+            Cursor::new(new_content.as_bytes()),
+            temp_dir.path(),
         )?;
 
         // Original file should still have initial content
@@ -222,11 +289,15 @@ mod tests {
     #[test]
     fn test_write_to_file_special_filename() -> Result<()> {
         let temp_dir = TempDir::new()?;
-        let file_path = temp_dir.path().join("file with spaces and !@#$.txt");
         let content = "Special filename content";
 
-        write_to_file(file_path.to_string_lossy().to_string(), content.as_bytes())?;
+        write_to_file(
+            "file with spaces and !@#$.txt".to_string(),
+            Cursor::new(content.as_bytes()),
+            temp_dir.path(),
+        )?;
 
+        let file_path = temp_dir.path().join("file with spaces and !@#$.txt");
         let read_content = fs::read_to_string(&file_path)?;
         assert_eq!(read_content, content);
 
@@ -235,7 +306,12 @@ mod tests {
 
     #[test]
     fn test_write_to_file_empty_filename() {
-        let result = write_to_file("".to_string(), b"content");
+        let temp_dir = TempDir::new().unwrap();
+        let result = write_to_file(
+            "".to_string(),
+            Cursor::new(&b"content"[..]),
+            temp_dir.path(),
+        );
         assert!(result.is_err());
         assert!(
             result
@@ -247,8 +323,9 @@ mod tests {
 
     #[test]
     fn test_output_secret_to_stdout() -> Result<()> {
-        let content = b"secret content";
-        output_secret(content, true, None)?;
+        let payload = Payload::from_bytes(b"secret content", None);
+        let args = GetArgs::builder("https://example.com/s/test#key").with_to_stdout();
+        output_secret(payload, args)?;
         Ok(())
     }
 
@@ -256,23 +333,22 @@ mod tests {
     fn test_output_secret_to_file() -> Result<()> {
         let temp_dir = TempDir::new()?;
         let file_path = temp_dir.path().join("output.txt");
-        let content = b"secret content";
 
-        output_secret(
-            content,
-            false,
-            Some(file_path.to_string_lossy().to_string()),
-        )?;
+        let payload = Payload::from_bytes(b"secret content", None);
+        let args = GetArgs::builder("https://example.com/s/test#key")
+            .with_filename(file_path.to_string_lossy().as_ref());
+        output_secret(payload, args)?;
 
         let read_content = fs::read(&file_path)?;
-        assert_eq!(read_content, content);
+        assert_eq!(read_content, b"secret content");
         Ok(())
     }
 
     #[test]
     fn test_output_secret_defaults_to_stdout() -> Result<()> {
-        let content = b"secret content";
-        output_secret(content, false, None)?;
+        let payload = Payload::from_bytes(b"secret content", None);
+        let args = GetArgs::builder("https://example.com/s/test#key");
+        output_secret(payload, args)?;
         Ok(())
     }
 
@@ -414,6 +490,232 @@ mod tests {
         assert_eq!(files.len(), 1);
         let timestamped_content = fs::read_to_string(files[0].path())?;
         assert_eq!(timestamped_content, "new content");
+        Ok(())
+    }
+
+    // Tests for archive extraction
+    #[test]
+    fn test_is_archive() {
+        assert!(is_archive("test.zip"));
+        assert!(is_archive("archive.ZIP"));
+        assert!(is_archive("my-files.zip"));
+        assert!(!is_archive("test.tar"));
+        assert!(!is_archive("test.gz"));
+        assert!(!is_archive("test.txt"));
+        assert!(!is_archive("test"));
+    }
+
+    #[test]
+    fn test_extract_archive_with_multiple_files() -> Result<()> {
+        use std::io::Write;
+        use zip::ZipWriter;
+        use zip::write::FileOptions;
+
+        let temp_dir = TempDir::new()?;
+
+        // Create a ZIP archive in memory
+        let mut zip_data = Vec::new();
+        {
+            let mut zip = ZipWriter::new(std::io::Cursor::new(&mut zip_data));
+
+            // Add files to the archive
+            let options = FileOptions::<()>::default();
+            zip.start_file("file1.txt", options)?;
+            zip.write_all(b"Content of file 1")?;
+
+            zip.start_file("file2.txt", options)?;
+            zip.write_all(b"Content of file 2")?;
+
+            zip.add_directory("subdir/", options)?;
+
+            zip.start_file("subdir/file3.txt", options)?;
+            zip.write_all(b"Content of file 3 in subdir")?;
+
+            zip.finish()?;
+        }
+
+        // Extract to the temp directory
+        extract_archive("test.zip".to_string(), &zip_data, temp_dir.path())?;
+
+        // Verify extracted files - all files are extracted flat (no subdirectories)
+        assert!(temp_dir.path().join("file1.txt").exists());
+        assert!(temp_dir.path().join("file2.txt").exists());
+        // subdir/file3.txt is extracted as just file3.txt
+        assert!(temp_dir.path().join("file3.txt").exists());
+
+        let content1 = fs::read_to_string(temp_dir.path().join("file1.txt"))?;
+        assert_eq!(content1, "Content of file 1");
+
+        let content2 = fs::read_to_string(temp_dir.path().join("file2.txt"))?;
+        assert_eq!(content2, "Content of file 2");
+
+        let content3 = fs::read_to_string(temp_dir.path().join("file3.txt"))?;
+        assert_eq!(content3, "Content of file 3 in subdir");
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_extract_archive_skips_unsafe_paths() -> Result<()> {
+        use std::io::Write;
+        use zip::ZipWriter;
+        use zip::write::FileOptions;
+
+        let temp_dir = TempDir::new()?;
+
+        // Create a ZIP archive with potentially unsafe paths
+        let mut zip_data = Vec::new();
+        {
+            let mut zip = ZipWriter::new(std::io::Cursor::new(&mut zip_data));
+
+            // Safe file
+            let options = FileOptions::<()>::default();
+            zip.start_file("safe.txt", options)?;
+            zip.write_all(b"Safe content")?;
+
+            // Unsafe paths that should be skipped
+            zip.start_file("../escape.txt", options)?;
+            zip.write_all(b"Should not be extracted")?;
+
+            zip.start_file("/absolute/path.txt", options)?;
+            zip.write_all(b"Should not be extracted")?;
+
+            zip.start_file("nested/../../../escape.txt", options)?;
+            zip.write_all(b"Should not be extracted")?;
+
+            zip.finish()?;
+        }
+
+        // Extract to the temp directory
+        extract_archive("unsafe.zip".to_string(), &zip_data, temp_dir.path())?;
+
+        // Verify only safe file was extracted
+        assert!(temp_dir.path().join("safe.txt").exists());
+        assert!(!temp_dir.path().join("../escape.txt").exists());
+        assert!(!temp_dir.path().join("escape.txt").exists());
+        assert!(!PathBuf::from("/absolute/path.txt").exists());
+
+        let content = fs::read_to_string(temp_dir.path().join("safe.txt"))?;
+        assert_eq!(content, "Safe content");
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_extract_only_for_zip_files() -> Result<()> {
+        let temp_dir = TempDir::new()?;
+
+        // Test that non-zip files are saved normally even with --extract
+        let payload = Payload::from_bytes(b"Not a zip file", Some("document.pdf".to_string()));
+        let client = MockClient::new().with_receive_success(payload);
+        let factory = MockFactory::new().with_client(client);
+
+        let args = GetArgs::builder("https://example.com/s/test123#key")
+            .with_extract()
+            .with_output_dir(temp_dir.path().to_string_lossy().as_ref());
+        get(factory, args).await?;
+
+        // Should save as regular file, not attempt extraction
+        assert!(temp_dir.path().join("document.pdf").exists());
+        let content = fs::read(temp_dir.path().join("document.pdf"))?;
+        assert_eq!(content, b"Not a zip file");
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_extract_with_existing_files() -> Result<()> {
+        use std::io::Write;
+        use zip::ZipWriter;
+        use zip::write::FileOptions;
+
+        let temp_dir = TempDir::new()?;
+
+        // Create existing file
+        fs::write(temp_dir.path().join("file1.txt"), "existing content")?;
+
+        // Create ZIP archive
+        let mut zip_data = Vec::new();
+        {
+            let mut zip = ZipWriter::new(std::io::Cursor::new(&mut zip_data));
+
+            let options = FileOptions::<()>::default();
+            zip.start_file("file1.txt", options)?;
+            zip.write_all(b"New content from ZIP")?;
+
+            zip.start_file("file2.txt", options)?;
+            zip.write_all(b"Another file")?;
+
+            zip.finish()?;
+        }
+
+        let payload = Payload::from_bytes(&zip_data, Some("archive.zip".to_string()));
+        let client = MockClient::new().with_receive_success(payload);
+        let factory = MockFactory::new().with_client(client);
+
+        let args = GetArgs::builder("https://example.com/s/test123#key")
+            .with_extract()
+            .with_output_dir(temp_dir.path().to_string_lossy().as_ref());
+        get(factory, args).await?;
+
+        // Original file should be unchanged
+        let content1 = fs::read_to_string(temp_dir.path().join("file1.txt"))?;
+        assert_eq!(content1, "existing content");
+
+        // Should have created timestamped version
+        let files: Vec<_> = fs::read_dir(temp_dir.path())?
+            .filter_map(|entry| entry.ok())
+            .filter(|entry| {
+                entry
+                    .file_name()
+                    .to_string_lossy()
+                    .starts_with("file1.txt.")
+            })
+            .collect();
+
+        assert_eq!(files.len(), 1);
+        let timestamped_content = fs::read_to_string(files[0].path())?;
+        assert_eq!(timestamped_content, "New content from ZIP");
+
+        // New file should be created normally
+        let content2 = fs::read_to_string(temp_dir.path().join("file2.txt"))?;
+        assert_eq!(content2, "Another file");
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_extract_empty_archive() -> Result<()> {
+        use zip::ZipWriter;
+
+        let temp_dir = TempDir::new()?;
+
+        // Create empty ZIP archive
+        let mut zip_data = Vec::new();
+        {
+            let zip = ZipWriter::new(std::io::Cursor::new(&mut zip_data));
+            zip.finish()?;
+        }
+
+        let payload = Payload::from_bytes(&zip_data, Some("empty.zip".to_string()));
+        let client = MockClient::new().with_receive_success(payload);
+        let factory = MockFactory::new().with_client(client);
+
+        let args = GetArgs::builder("https://example.com/s/test123#key")
+            .with_extract()
+            .with_output_dir(temp_dir.path().to_string_lossy().as_ref());
+        get(factory, args).await?;
+
+        // No files should be created (empty archive extracts nothing)
+        let entries: Vec<_> = fs::read_dir(temp_dir.path())?
+            .filter_map(|e| e.ok())
+            .collect();
+        assert_eq!(
+            entries.len(),
+            0,
+            "Expected no files after extracting empty archive"
+        );
+
         Ok(())
     }
 }

@@ -192,6 +192,18 @@ hakanai get https://hakanai.example.com/s/550e8400-e29b-41d4-a716-446655440000
 # Get using separate key (when --separate-key was used)
 hakanai get https://hakanai.example.com/s/550e8400-e29b-41d4-a716-446655440000 --key base64-encoded-key
 
+# Save to a specific file instead of using payload filename
+hakanai get https://hakanai.example.com/s/550e8400 --filename custom-name.txt
+
+# Save files to a custom directory instead of current directory
+hakanai get https://hakanai.example.com/s/550e8400 --output-dir /path/to/downloads/
+
+# Extract ZIP archives to specified directory
+hakanai get https://hakanai.example.com/s/550e8400 --extract --output-dir /path/to/extract/
+
+# Output to stdout (useful for piping to other commands)
+hakanai get https://hakanai.example.com/s/550e8400 --to-stdout
+
 # Secret is displayed and immediately destroyed on server
 ```
 
@@ -465,6 +477,31 @@ For production deployments:
 - `HAKANAI_TOKEN_TTL`: Default TTL for token command
 - `HAKANAI_QR_CODE`: Enable QR code output by default
 - `HAKANAI_TO_STDOUT`: Output secrets to stdout by default
+- `HAKANAI_OUTPUT_DIR`: Default output directory for retrieved secrets and extracted files
+
+### CLI Command-line Options
+
+#### Send Command Options
+- `-s, --server`: Hakanai server URL (default: http://localhost:8080)
+- `--ttl`: Time after the secret vanishes (default: 24h, supports humanized format like 30m, 1h, 7d)
+- `--token-file`: File containing authorization token (environment variable takes precedence)
+- `-f, --file`: File to read the secret from (can be specified multiple times for multiple files)
+- `-a, --as-file`: Send the secret as a file (auto-detected for binary content)
+- `--filename`: Custom filename when sending as a file
+- `--separate-key`: Print key separately for enhanced security (share via different channels)
+- `-q, --qr-code`: Display URL as QR code for easy mobile sharing
+
+#### Get Command Options  
+- `-k, --key`: Base64 encoded secret key (when not included in URL fragment)
+- `--to-stdout`: Output secret to stdout (useful for piping to other commands)
+- `-f, --filename`: Save to specific file (overrides payload filename)
+- `-e, --extract`: Extract ZIP archives to current directory
+- `-o, --output-dir`: Save files to this directory instead of current directory
+
+#### Token Command Options (Admin Only)
+- `-s, --server`: Hakanai server URL (default: http://localhost:8080) 
+- `--ttl`: Token expiration time (default: 30d, supports humanized format)
+- `-l, --limit`: Upload size limit for the token (supports humanized format like 1m, 500k)
 
 ### Server Command-line Options
 
