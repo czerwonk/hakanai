@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 use anyhow::{Result, anyhow};
@@ -246,7 +246,7 @@ impl GetArgs {
         Ok(())
     }
 
-    fn validate_output_directory(output_dir: &PathBuf) -> Result<()> {
+    fn validate_output_directory(output_dir: &Path) -> Result<()> {
         if !output_dir.exists() {
             return Err(anyhow!(
                 "Output directory '{}' does not exist",
