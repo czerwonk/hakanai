@@ -41,7 +41,7 @@ fn output_secret(payload: Payload, args: GetArgs) -> Result<()> {
     let bytes = Zeroizing::new(payload.decode_bytes()?);
     let filename = args.filename.or_else(|| payload.filename.clone());
     let output_directory = match args.output_dir {
-        Some(dir) => PathBuf::from(dir),
+        Some(dir) => dir,
         None => current_dir()?,
     };
 

@@ -239,6 +239,28 @@ impl GetArgs {
             ));
         }
 
+        if let Some(ref output_dir) = self.output_dir {
+            Self::validate_output_directory(output_dir)?;
+        }
+
+        Ok(())
+    }
+
+    fn validate_output_directory(output_dir: &PathBuf) -> Result<()> {
+        if !output_dir.exists() {
+            return Err(anyhow!(
+                "Output directory '{}' does not exist",
+                output_dir.display()
+            ));
+        }
+
+        if !output_dir.is_dir() {
+            return Err(anyhow!(
+                "Output path '{}' is not a directory",
+                output_dir.display()
+            ));
+        }
+
         Ok(())
     }
 }
@@ -920,6 +942,53 @@ mod tests {
                 .to_string()
                 .contains("--to-stdout option cannot be used with --output-dir")
         );
+    }
+
+    #[test]
+    fn test_get_args_validate_error_nonexistent_output_dir() {
+        let args = GetArgs::builder("https://example.com/s/test#key")
+            .with_output_dir("/nonexistent/directory/path");
+
+        let result = args.validate();
+        assert!(result.is_err());
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("Output directory '/nonexistent/directory/path' does not exist")
+        );
+    }
+
+    #[test]
+    fn test_get_args_validate_error_output_dir_is_file() {
+        use tempfile::NamedTempFile;
+
+        let temp_file = NamedTempFile::new().unwrap();
+        let file_path = temp_file.path();
+
+        let args = GetArgs::builder("https://example.com/s/test#key")
+            .with_output_dir(file_path.to_string_lossy().as_ref());
+
+        let result = args.validate();
+        assert!(result.is_err());
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("is not a directory")
+        );
+    }
+
+    #[test]
+    fn test_get_args_validate_success_with_valid_output_dir() {
+        use tempfile::TempDir;
+
+        let temp_dir = TempDir::new().unwrap();
+        let args = GetArgs::builder("https://example.com/s/test#key")
+            .with_output_dir(temp_dir.path().to_string_lossy().as_ref());
+
+        let result = args.validate();
+        assert!(result.is_ok());
     }
 
     #[test]
