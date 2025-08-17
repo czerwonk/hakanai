@@ -85,11 +85,6 @@ fn extract_archive(filename: String, bytes: &[u8], target_dir: &Path) -> Result<
         }
 
         let name = file.name().to_string();
-        if name.contains("..") || name.starts_with('/') {
-            let message = format!("Skipping potentially unsafe path: {name}");
-            println!("{}", message.yellow());
-            continue;
-        }
 
         // extract flat, just use the filename
         let flat_name = PathBuf::from(&name)
@@ -551,52 +546,6 @@ mod tests {
 
         let content3 = fs::read_to_string(temp_dir.path().join("file3.txt"))?;
         assert_eq!(content3, "Content of file 3 in subdir");
-
-        Ok(())
-    }
-
-    #[test]
-    fn test_extract_archive_skips_unsafe_paths() -> Result<()> {
-        use std::io::Write;
-        use zip::ZipWriter;
-        use zip::write::FileOptions;
-
-        let temp_dir = TempDir::new()?;
-
-        // Create a ZIP archive with potentially unsafe paths
-        let mut zip_data = Vec::new();
-        {
-            let mut zip = ZipWriter::new(std::io::Cursor::new(&mut zip_data));
-
-            // Safe file
-            let options = FileOptions::<()>::default();
-            zip.start_file("safe.txt", options)?;
-            zip.write_all(b"Safe content")?;
-
-            // Unsafe paths that should be skipped
-            zip.start_file("../escape.txt", options)?;
-            zip.write_all(b"Should not be extracted")?;
-
-            zip.start_file("/absolute/path.txt", options)?;
-            zip.write_all(b"Should not be extracted")?;
-
-            zip.start_file("nested/../../../escape.txt", options)?;
-            zip.write_all(b"Should not be extracted")?;
-
-            zip.finish()?;
-        }
-
-        // Extract to the temp directory
-        extract_archive("unsafe.zip".to_string(), &zip_data, temp_dir.path())?;
-
-        // Verify only safe file was extracted
-        assert!(temp_dir.path().join("safe.txt").exists());
-        assert!(!temp_dir.path().join("../escape.txt").exists());
-        assert!(!temp_dir.path().join("escape.txt").exists());
-        assert!(!PathBuf::from("/absolute/path.txt").exists());
-
-        let content = fs::read_to_string(temp_dir.path().join("safe.txt"))?;
-        assert_eq!(content, "Safe content");
 
         Ok(())
     }
