@@ -45,13 +45,6 @@ function getElements() {
   };
 }
 
-function normalizeUrl(url: string): string {
-  if (!url.match(/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//)) {
-    return window.location.protocol + "//" + url;
-  }
-  return url;
-}
-
 function hasUrlFragment(url: string): boolean {
   try {
     const urlObj = new URL(url);
@@ -137,6 +130,13 @@ async function processRetrieveRequest(): Promise<void> {
     progressBar.hide();
     hideLoadingState();
   }
+}
+
+function normalizeUrl(url: string): string {
+  if (!url.startsWith("http://") && !url.startsWith("https://")) {
+    return window.location.protocol + "//" + url;
+  }
+  return url;
 }
 
 function showError(message: string): void {
@@ -423,6 +423,8 @@ function downloadSecret(
 
 function setupUrlInput(): void {
   const urlInput = document.getElementById("secretUrl") as HTMLInputElement;
+  const keyInput = document.getElementById("secretKey") as HTMLInputElement;
+
   urlInput.placeholder = `${baseUrl}/s/uuid#key`;
 
   if (window.location.pathname.match(/^\/s\/[^\/]+$/)) {
@@ -431,8 +433,22 @@ function setupUrlInput(): void {
 
   urlInput.addEventListener("input", toggleKeyInputVisibility);
   urlInput.addEventListener("paste", () =>
-    setTimeout(toggleKeyInputVisibility, 0),
+    setTimeout(() => {
+      toggleKeyInputVisibility();
+      focusNextLogicalElement();
+    }, 0),
   );
+  urlInput.addEventListener("blur", () => {
+    urlInput.value = urlInput.value.trim();
+  });
+
+  keyInput.addEventListener("paste", () =>
+    setTimeout(focusNextLogicalElement, 0),
+  );
+  keyInput.addEventListener("blur", () => {
+    keyInput.value = keyInput.value.trim();
+  });
+
   toggleKeyInputVisibility();
 }
 
@@ -446,12 +462,46 @@ function setupForm(): void {
   }
 }
 
+function focusNextLogicalElement(): void {
+  const { urlInput, keyInput, button } = getElements();
+
+  const url = urlInput.value.trim();
+  const key = keyInput.value.trim();
+
+  if (!url) {
+    urlInput.focus();
+    return;
+  }
+
+  if (hasUrlFragment(url)) {
+    button.focus();
+  } else if (!key) {
+    keyInput.focus();
+  } else {
+    button.focus();
+  }
+}
+
+function setupSmartFocus(): void {
+  const { urlInput } = getElements();
+
+  // Small delay to ensure DOM is fully ready
+  setTimeout(() => {
+    if (urlInput.value.trim()) {
+      focusNextLogicalElement();
+    } else {
+      urlInput.focus();
+    }
+  }, 0);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   initI18n();
   initTheme();
   setupForm();
   setupUrlInput();
   initFeatures();
+  setupSmartFocus();
 });
 
 // Export functions for testing
