@@ -6,6 +6,7 @@ import {
   type PayloadData,
 } from "./hakanai-client";
 import { initI18n, I18nKeys } from "./core/i18n";
+import { KeyboardShortcuts } from "./core/keyboard-shortcuts";
 import {
   announceToScreenReader,
   createButton,
@@ -485,14 +486,28 @@ function focusNextLogicalElement(): void {
 function setupSmartFocus(): void {
   const { urlInput } = getElements();
 
-  // Small delay to ensure DOM is fully ready
+  // ensure DOM is ready before focusing
   setTimeout(() => {
     if (urlInput.value.trim()) {
       focusNextLogicalElement();
     } else {
       urlInput.focus();
     }
-  }, 0);
+  }, 100);
+}
+
+function initKeyboardShortcuts(): void {
+  const shortcuts = new KeyboardShortcuts();
+
+  // Ctrl + Enter to retrieve secret
+  shortcuts.register({
+    key: "Enter",
+    ctrl: true,
+    handler: () => {
+      retrieveSecret();
+    },
+    description: "Retrieve secret",
+  });
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -501,6 +516,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setupForm();
   setupUrlInput();
   initFeatures();
+  initKeyboardShortcuts();
   setupSmartFocus();
 });
 
