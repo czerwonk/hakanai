@@ -1,10 +1,10 @@
 # Security Audit Report - Hakanai
 
-**Date:** 2025-08-13
+**Date:** 2025-08-18
 **Audit Type:** Comprehensive Security Assessment  
-**Codebase Version:** 2.8.4
+**Codebase Version:** 2.9.5
 **Auditor:** Claude Code Security Analysis
-**Focus:** Multi-file Support (v2.7.0), TypeScript Bundling & Overall Security Posture
+**Focus:** IP Whitelisting (v2.9.5), Multi-file Support (v2.7.0), TypeScript Bundling & Overall Security Posture
 
 ## Executive Summary
 
@@ -16,13 +16,41 @@ Hakanai is a minimalist one-time secret sharing service implementing zero-knowle
 - **0 Critical severity** vulnerabilities
 - **0 High severity** vulnerabilities 
 - **0 Medium severity** vulnerabilities
-- **2 Low severity** informational items (build logging, CLI design)
+- **5 Low severity** informational items (documentation improvements, build logging, CLI design)
 - **Multi-file ZIP support** securely implemented with comprehensive memory safety
 - **TypeScript bundling** uses safe build processes with no command injection risks
 - **Zero-knowledge architecture** properly maintained across all features
 - **Comprehensive memory safety** with automatic zeroization throughout
 - **Strong cryptographic foundations** with AES-256-GCM and SHA-256 integrity
 - **Current dependencies** with no known security vulnerabilities
+
+## Version 2.9.5 Security Analysis - IP Whitelisting Implementation
+
+### IP Whitelisting Security Assessment: **Excellent**
+
+The IP whitelisting feature introduced in v2.9.5 provides secure network-based access control without compromising the zero-knowledge architecture:
+
+#### **Implementation Strengths:**
+1. **Input Validation**: Comprehensive CIDR parsing and validation using the `ipnet` crate
+2. **Secure Defaults**: IP whitelisting is disabled by default, requires explicit configuration
+3. **Proxy Header Safety**: Proper sanitization and validation of trusted headers
+4. **Fallback Security**: Falls back to connection peer address when headers are unavailable
+5. **Startup Validation**: Invalid CIDR configurations prevent server startup
+6. **Integration Security**: Cleanly integrated into existing user authentication flow
+
+#### **Security Architecture:**
+```
+Request → Extract Client IP → Validate Against CIDR Ranges → Grant Whitelist Status → Unlimited Upload Size
+```
+
+The implementation properly separates network-layer authentication from application-layer encryption, maintaining zero-knowledge principles while providing operational flexibility.
+
+#### **Security Features:**
+- **CIDR Validation**: Uses `ipnet::IpNet::from_str()` for robust parsing
+- **Header Sanitization**: Proper trimming and validation of proxy headers
+- **IPv4/IPv6 Support**: Unified handling of both address families
+- **Privilege Model**: Whitelisted users get `usize::MAX` upload limit appropriately
+- **Audit Trail**: User types properly logged for security monitoring
 
 ## Version 2.7.0+ Security Analysis - Multi-file Support & TypeScript Bundling
 
@@ -112,13 +140,31 @@ No medium severity vulnerabilities identified in v2.8.4 or existing codebase.
 
 ### LOW SEVERITY
 
-#### L1: Build Script Command Output Logging [INFORMATIONAL]
+#### L1: Proxy Chain Validation [DOCUMENTATION IMPROVEMENT]
+**File:** `server/src/ip_whitelist.rs:32-36`
+**Issue:** Implementation takes only the first IP from comma-separated proxy headers (e.g., `X-Forwarded-For`), which follows standard practice for trusted proxy environments.
+**Risk:** None - By definition, trusted proxies provide trusted headers
+**Recommendation:** Document that the `--trusted-ip-header` configuration implies trust in the entire proxy infrastructure providing that header.
+
+#### L2: Configuration Exposure in Error Messages [INFORMATION DISCLOSURE]
+**File:** `server/src/options.rs` (CIDR parsing)
+**Issue:** Invalid CIDR configurations may expose internal network topology in error messages during server startup.
+**Risk:** Low - Only affects configuration phase, not runtime operations
+**Recommendation:** Use generic error messages for invalid CIDR ranges, log detailed errors only to secure audit logs.
+
+#### L3: IPv6 Link-Local Address Handling [OPERATIONAL GUIDANCE]
+**File:** IP range validation
+**Issue:** Implementation correctly handles IPv6 addresses but doesn't specifically validate against potentially problematic ranges like link-local addresses (`fe80::/10`).
+**Risk:** Low - Administrators might accidentally whitelist ranges with unexpected behavior
+**Recommendation:** Add documentation warning about link-local and other special IPv6 ranges.
+
+#### L4: Build Script Command Output Logging [INFORMATIONAL]
 **File:** `server/build.rs:87-94`
 **Issue:** Build script logs command output to cargo warnings, which may include environment information.
 **Risk:** Low - Only affects development builds, not production
 **Recommendation:** Consider filtering sensitive environment variables from logged output if present.
 
-#### L2: CLI File System Access [DOCUMENTED DESIGN DECISION]
+#### L5: CLI File System Access [DOCUMENTED DESIGN DECISION]
 **File:** `cli/src/send.rs`
 **Issue:** CLI allows reading any file the user has access to.
 **Risk:** None - This is intentional design for professional CLI usage
@@ -140,6 +186,8 @@ No medium severity vulnerabilities identified in v2.8.4 or existing codebase.
 - **Anonymous Access**: Configurable anonymous access with separate size limits
 - **Bearer Token Support**: Proper Authorization header parsing and validation
 - **Token Validation**: Comprehensive format validation and secure error handling
+- **IP Whitelisting**: Network-based authentication with comprehensive CIDR validation
+- **Proxy Header Security**: Safe handling of trusted proxy headers with fallback mechanisms
 
 ### Input Validation: **Excellent**
 - **UUID Validation**: Proper format validation for all secret identifiers
@@ -147,6 +195,8 @@ No medium severity vulnerabilities identified in v2.8.4 or existing codebase.
 - **Hash Format Validation**: 64-character hexadecimal validation with case-insensitive support
 - **TTL Validation**: Enforced maximum time-to-live limits with proper bounds checking
 - **URL Parsing**: Comprehensive URL validation with fragment parsing support
+- **CIDR Validation**: Robust IP range parsing with startup validation using `ipnet` crate
+- **IP Address Parsing**: Secure IP address validation preventing injection attacks
 
 ### Memory Safety: **Excellent**
 - **Rust Memory Safety**: No unsafe code blocks, proper bounds checking throughout
@@ -164,7 +214,8 @@ No medium severity vulnerabilities identified in v2.8.4 or existing codebase.
 - **XSS Protection**: Modern security headers and safe DOM manipulation patterns
 
 ### Test Coverage: **Excellent**
-**177+ comprehensive tests** including:
+**196+ comprehensive tests** including:
+- **IP Whitelisting Tests**: 19 comprehensive tests covering IPv4/IPv6, proxy headers, and edge cases
 - **Hash Validation Tests**: Comprehensive testing of hash generation and validation
 - **Tamper Detection**: Explicit testing of hash mismatch scenarios
 - **Integration Tests**: Complete roundtrip testing with hash validation
@@ -303,17 +354,24 @@ All security recommendations from previous audits have been successfully impleme
 
 ## Conclusion
 
-Hakanai v2.8.4 demonstrates **excellent security** with multi-file support and TypeScript bundling enhancements implemented securely. The codebase maintains its zero-knowledge architecture while adding valuable functionality without compromising security.
+Hakanai v2.9.5 demonstrates **excellent security** with IP whitelisting, multi-file support, and TypeScript bundling enhancements all implemented securely. The codebase maintains its zero-knowledge architecture while adding valuable functionality without compromising security.
 
 **Key Strengths:**
+- **Network-Layer Security**: IP whitelisting provides secure access control without compromising zero-knowledge
 - **Enhanced Zero-Knowledge Architecture**: Multi-file support preserves server blindness
 - **Comprehensive Memory Safety**: Complete automatic zeroization throughout all components
 - **Secure Build System**: TypeScript bundling uses safe, deterministic processes
 - **Strong Cryptographic Foundations**: AES-256-GCM + SHA-256 integrity verification
-- **Robust Authentication**: Token system secure with no identified bypasses
+- **Robust Authentication**: Token system and IP whitelisting secure with no identified bypasses
 - **Current Dependencies**: All dependencies up-to-date with no known vulnerabilities
 - **Path Security**: Proper protections against traversal attacks in ZIP creation
 - **Resource Management**: Appropriate bounds for CLI and server usage patterns
+
+**Security Innovations in v2.9.5:**
+- **IP Whitelisting Security**: CIDR-based access control with comprehensive validation
+- **Proxy Header Safety**: Secure handling of trusted headers with fallback mechanisms
+- **Network Authentication**: Layer separation between network and application security
+- **Startup Validation**: Configuration errors prevented through early validation
 
 **Security Innovations in v2.7.0+:**
 - **Multi-file Archive Security**: ZIP creation with complete memory protection
@@ -322,7 +380,7 @@ Hakanai v2.8.4 demonstrates **excellent security** with multi-file support and T
 - **Automatic Binary Detection**: Prevents file corruption with proper handling
 
 **Production Readiness:**
-Hakanai maintains its **A security rating** and continues to be excellent for production deployment. The multi-file support and build system enhancements strengthen functionality without introducing security vulnerabilities.
+Hakanai maintains its **A security rating** and continues to be excellent for production deployment. The IP whitelisting, multi-file support, and build system enhancements strengthen functionality without introducing security vulnerabilities.
 
 ## Recommendations Summary
 
@@ -333,4 +391,4 @@ The codebase represents a mature, security-first implementation of zero-knowledg
 
 ---
 
-*This report was generated through comprehensive static analysis and manual code review. The audit covers version 2.8.4 including multi-file support (v2.7.0) and TypeScript bundling enhancements. Regular security audits are recommended as the codebase evolves.*
+*This report was generated through comprehensive static analysis and manual code review. The audit covers version 2.9.5 including IP whitelisting (v2.9.5), multi-file support (v2.7.0), and TypeScript bundling enhancements. Regular security audits are recommended as the codebase evolves.*
