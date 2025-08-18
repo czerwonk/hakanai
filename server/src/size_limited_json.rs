@@ -40,8 +40,7 @@ where
             let user = User::extract(&req).await?;
             // Use factor 1.5 to account for overhead in base64 encoding and encryption
             let size_limit = user
-                .upload_size_limit
-                .and_then(|limit| Some((limit as f64 * 1.5) as usize));
+                .upload_size_limit.map(|limit| (limit as f64 * 1.5) as usize);
 
             // Stream the payload and enforce size limit during upload
             let mut body = actix_web::web::BytesMut::new();
