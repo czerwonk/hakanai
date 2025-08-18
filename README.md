@@ -554,7 +554,6 @@ export HAKANAI_TRUSTED_IP_RANGES="172.16.0.0/12,2001:db8:85a3::/48"
 - CIDR notation is validated at server startup
 - IPs are extracted from configurable proxy headers (default: `x-forwarded-for`)
 - Falls back to connection peer address if header is missing
-- Whitelisted requests are logged for monitoring
 - Invalid CIDR ranges prevent server startup
 
 ### Security Features
