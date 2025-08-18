@@ -511,8 +511,8 @@ mod tests {
         ))
         .await;
 
-        // Create a payload larger than 32KB anonymous limit
-        let large_data = "x".repeat(33 * 1024); // 33KB
+        // Create a payload larger than 32KB * 1.5 = 48KB effective limit
+        let large_data = "x".repeat(50 * 1024); // 50KB (exceeds 48KB effective limit)
         let payload = PostSecretRequest {
             data: large_data,
             expires_in: Duration::from_secs(3600),
@@ -545,8 +545,8 @@ mod tests {
         ))
         .await;
 
-        // Create a payload larger than 1KB token limit
-        let large_data = "x".repeat(2048); // 2KB
+        // Create a payload larger than 1KB * 1.5 = 1.5KB effective limit
+        let large_data = "x".repeat(2048); // 2KB (exceeds 1.5KB effective limit)
         let payload = PostSecretRequest {
             data: large_data,
             expires_in: Duration::from_secs(3600),

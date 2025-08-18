@@ -33,14 +33,14 @@ impl std::fmt::Display for UserType {
 #[derive(Clone, Debug)]
 pub struct User {
     /// The effective upload size limit for this user in bytes
-    pub upload_size_limit: usize,
+    pub upload_size_limit: Option<usize>,
     /// The type of user (anonymous or authenticated)
     pub user_type: UserType,
 }
 
 impl User {
     /// Create an authenticated user with a specific upload limit
-    pub fn authenticated(upload_size_limit: usize) -> Self {
+    pub fn authenticated(upload_size_limit: Option<usize>) -> Self {
         Self {
             upload_size_limit,
             user_type: UserType::Authenticated,
@@ -50,7 +50,7 @@ impl User {
     /// Create an anonymous user with a specific upload limit
     pub fn anonymous(upload_size_limit: usize) -> Self {
         Self {
-            upload_size_limit,
+            upload_size_limit: Some(upload_size_limit),
             user_type: UserType::Anonymous,
         }
     }
@@ -58,7 +58,7 @@ impl User {
     /// Create an whitelisted user without a specific upload limit
     pub fn whitelisted() -> Self {
         Self {
-            upload_size_limit: usize::MAX, // no limit for whitelisted users
+            upload_size_limit: None,
             user_type: UserType::Whitelisted,
         }
     }
@@ -117,11 +117,8 @@ async fn handle_authenticated_request(
 }
 
 /// Extract the upload size limit from token data
-fn extract_upload_limit(token_data: crate::token::TokenData) -> usize {
-    token_data
-        .upload_size_limit
-        .map(|limit| limit as usize)
-        .unwrap_or(usize::MAX) // No limit for authenticated users without specific limit
+fn extract_upload_limit(token_data: crate::token::TokenData) -> Option<usize> {
+    token_data.upload_size_limit.map(|limit| limit as usize)
 }
 
 /// Handle a request without an authentication token

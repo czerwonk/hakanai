@@ -38,7 +38,10 @@ where
 
         Box::pin(async move {
             let user = User::extract(&req).await?;
-            let size_limit = user.upload_size_limit;
+            // Use factor 1.5 to account for overhead in base64 encoding and encryption
+            let size_limit = user
+                .upload_size_limit
+                .and_then(|limit| Some((limit as f64 * 1.5) as usize));
 
             // Stream the payload and enforce size limit during upload
             let mut body = actix_web::web::BytesMut::new();
@@ -51,9 +54,11 @@ where
 
                 total_size += chunk.len();
 
-                if total_size > size_limit {
+                if let Some(limit) = size_limit
+                    && total_size > limit
+                {
                     return Err(error::ErrorPayloadTooLarge(format!(
-                        "Upload size limit exceeded. Maximum allowed: {size_limit} bytes"
+                        "Upload size limit exceeded. Maximum allowed: {limit} bytes"
                     )));
                 }
 
