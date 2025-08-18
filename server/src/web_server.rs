@@ -16,7 +16,7 @@ use crate::observer::ObserverManager;
 use crate::options::Args;
 use crate::token::{TokenCreator, TokenValidator};
 use crate::web_api;
-use crate::web_static;
+use crate::web_routes;
 use crate::webhook_observer::WebhookObserver;
 use crate::{admin_api, observer};
 
@@ -50,6 +50,7 @@ where
             impressum_html: impressum_html.clone(),
             privacy_html: privacy_html.clone(),
             observer_manager,
+            show_token_input: args.show_token_input,
         };
         App::new()
             .app_data(web::Data::new(app_data))
@@ -63,7 +64,7 @@ where
             .route("/s/{id}", web::get().to(get_secret_short))
             .route("/healthy", web::get().to(healthy))
             .route("/ready", web::get().to(ready))
-            .configure(web_static::configure)
+            .configure(web_routes::configure)
             .service(
                 web::scope("/api/v1")
                     .wrap(DefaultHeaders::new().add((
@@ -180,7 +181,7 @@ async fn get_secret_short(
     info!("Received request for secret: {}", req);
 
     if !user_agent.starts_with("hakanai-") {
-        return web_static::serve_get_secret_html().await;
+        return web_routes::serve_get_secret_html().await;
     }
 
     match web_api::get_secret_from_request(http_req, req, app_data).await {

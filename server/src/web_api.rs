@@ -212,6 +212,7 @@ mod tests {
             impressum_html: None,
             privacy_html: None,
             observer_manager: ObserverManager::new(),
+            show_token_input: false,
         }
     }
 

@@ -144,6 +144,14 @@ pub struct Args {
         help = "Bearer token for webhook authentication"
     )]
     pub webhook_token: Option<String>,
+
+    #[arg(
+        long,
+        default_value = "false",
+        env = "HAKANAI_SHOW_TOKEN_INPUT",
+        help = "Show authentication token input field in web interface. If anonyomous access is enabled, this input is always shown."
+    )]
+    pub show_token_input: bool,
 }
 
 impl Args {
@@ -200,6 +208,7 @@ mod tests {
             privacy_file: None,
             webhook_url: None,
             webhook_token: None,
+            show_token_input: false,
         }
     }
 

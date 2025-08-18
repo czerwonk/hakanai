@@ -198,7 +198,8 @@ async fn serve_config(app_data: web::Data<crate::app_data::AppData>) -> impl Res
     let config = serde_json::json!({
         "features": {
             "impressum": app_data.impressum_html.is_some(),
-            "privacy": app_data.privacy_html.is_some()
+            "privacy": app_data.privacy_html.is_some(),
+            "showTokenInput": app_data.show_token_input || !app_data.anonymous_usage.allowed,
         }
     });
 
@@ -277,6 +278,7 @@ mod tests {
             impressum_html,
             privacy_html: None,
             observer_manager: crate::observer::ObserverManager::new(),
+            show_token_input: false,
         }
     }
 
@@ -373,5 +375,65 @@ mod tests {
         let resp = test::call_service(&app, req).await;
 
         assert_eq!(resp.status(), 404);
+    }
+
+    #[actix_web::test]
+    async fn test_serve_config_token_input_hidden_with_anonymous() {
+        // show_token_input = false, anonymous allowed
+        let mut app_data = create_test_app_data(None);
+        app_data.show_token_input = false;
+        app_data.anonymous_usage.allowed = true;
+
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(app_data))
+                .route("/config.json", web::get().to(serve_config)),
+        )
+        .await;
+
+        let req = test::TestRequest::get().uri("/config.json").to_request();
+        let resp = test::call_service(&app, req).await;
+        let body: serde_json::Value = test::read_body_json(resp).await;
+        assert_eq!(body["features"]["showTokenInput"], false);
+    }
+
+    #[actix_web::test]
+    async fn test_serve_config_token_input_explicitly_shown() {
+        // show_token_input = true, anonymous allowed
+        let mut app_data = create_test_app_data(None);
+        app_data.show_token_input = true;
+        app_data.anonymous_usage.allowed = true;
+
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(app_data))
+                .route("/config.json", web::get().to(serve_config)),
+        )
+        .await;
+
+        let req = test::TestRequest::get().uri("/config.json").to_request();
+        let resp = test::call_service(&app, req).await;
+        let body: serde_json::Value = test::read_body_json(resp).await;
+        assert_eq!(body["features"]["showTokenInput"], true);
+    }
+
+    #[actix_web::test]
+    async fn test_serve_config_token_input_forced_without_anonymous() {
+        // show_token_input = false, anonymous NOT allowed (should force show)
+        let mut app_data = create_test_app_data(None);
+        app_data.show_token_input = false;
+        app_data.anonymous_usage.allowed = false;
+
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(app_data))
+                .route("/config.json", web::get().to(serve_config)),
+        )
+        .await;
+
+        let req = test::TestRequest::get().uri("/config.json").to_request();
+        let resp = test::call_service(&app, req).await;
+        let body: serde_json::Value = test::read_body_json(resp).await;
+        assert_eq!(body["features"]["showTokenInput"], true);
     }
 }

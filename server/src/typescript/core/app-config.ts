@@ -2,17 +2,18 @@
 
 import { showElement, hideElement } from "./dom-utils";
 
-interface AppConfig {
+export interface AppConfig {
   features: {
     impressum: boolean;
     privacy: boolean;
+    showTokenInput: boolean;
   };
 }
 
 /**
  * Fetch application configuration from server
  */
-async function fetchAppConfig(): Promise<AppConfig | null> {
+export async function fetchAppConfig(): Promise<AppConfig | null> {
   try {
     const response = await fetch("/config.json");
     if (!response.ok) {
@@ -47,12 +48,17 @@ async function initializeOptionalFeature(
  */
 export async function initFeatures(): Promise<void> {
   const config = await fetchAppConfig();
+  if (!config) {
+    console.warn("No configuration found, skipping feature initialization.");
+    return;
+  }
+
   await initializeOptionalFeature(
     "impressum-link",
-    config?.features?.impressum ?? false,
+    config.features?.impressum ?? false,
   );
   await initializeOptionalFeature(
     "privacy-link",
-    config?.features?.privacy ?? false,
+    config.features?.privacy ?? false,
   );
 }

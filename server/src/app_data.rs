@@ -39,4 +39,7 @@ pub struct AppData {
 
     /// The observer manager for secret lifecycle events.
     pub observer_manager: ObserverManager,
+
+    /// Whether to show the token input field in the web interface
+    pub show_token_input: bool,
 }

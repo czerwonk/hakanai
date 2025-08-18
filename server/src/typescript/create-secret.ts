@@ -18,7 +18,7 @@ import { formatFileSize, sanitizeFileName } from "./core/formatters";
 import { displaySuccessResult } from "./components/create-result";
 import { displayErrorMessage } from "./components/error-display";
 import { ErrorHandler, handleAPIError } from "./core/error";
-import { initFeatures } from "./core/app-config";
+import { initFeatures, fetchAppConfig } from "./core/app-config";
 import { ProgressBar } from "./components/progress-bar";
 import { TTLSelector } from "./components/ttl-selector";
 import { initSeparateKeyCheckbox } from "./core/preferences";
@@ -583,7 +583,36 @@ function initKeyboardShortcuts(): void {
   });
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+async function initTokenInputVisibility(): Promise<void> {
+  const tokenInputGroup = document.querySelector(
+    ".input-group:has(#authToken)",
+  ) as HTMLElement;
+
+  if (!tokenInputGroup) {
+    return;
+  }
+
+  const showTokenInput = await shouldShowTokenInput();
+  if (showTokenInput) {
+    showElement(tokenInputGroup);
+  } else {
+    hideElement(tokenInputGroup);
+  }
+}
+
+async function shouldShowTokenInput(): Promise<boolean> {
+  const urlParams = new URLSearchParams(window.location.search);
+  const showTokenParam = urlParams.get("show_token");
+
+  if (showTokenParam === "1" || showTokenParam === "true") {
+    return true;
+  }
+
+  const config = await fetchAppConfig();
+  return config?.features?.showTokenInput ?? false;
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
   initI18n();
   initTTLSelector();
   initTheme();
@@ -592,7 +621,8 @@ document.addEventListener("DOMContentLoaded", () => {
   setupRadioHandlers();
   setupFileInputHandler();
   initializeAuthToken();
-  initFeatures();
+  await initFeatures();
+  await initTokenInputVisibility();
   initKeyboardShortcuts();
 
   const separateKeyCheckbox = document.getElementById(

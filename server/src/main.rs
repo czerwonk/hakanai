@@ -15,8 +15,8 @@ mod test_utils;
 mod token;
 mod user;
 mod web_api;
+mod web_routes;
 mod web_server;
-mod web_static;
 mod webhook_observer;
 
 use std::io::Result;
