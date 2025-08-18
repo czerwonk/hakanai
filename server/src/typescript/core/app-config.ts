@@ -10,19 +10,30 @@ export interface AppConfig {
   };
 }
 
+let cachedConfig: AppConfig | null | undefined;
+
 /**
- * Fetch application configuration from server
+ * Fetch application configuration from server (with caching)
  */
 export async function fetchAppConfig(): Promise<AppConfig | null> {
+  if (cachedConfig !== undefined) {
+    return cachedConfig;
+  }
+
   try {
     const response = await fetch("/config.json");
     if (!response.ok) {
       console.warn("Failed to fetch app config:", response.status);
+      cachedConfig = null;
       return null;
     }
-    return await response.json();
+    const config: AppConfig = await response.json();
+    cachedConfig = config;
+
+    return config;
   } catch (error) {
     console.warn("Failed to fetch app config:", error);
+    cachedConfig = null;
     return null;
   }
 }
