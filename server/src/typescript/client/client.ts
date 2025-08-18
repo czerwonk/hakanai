@@ -110,12 +110,12 @@ class HakanaiClient {
   }
 
   /**
-   * Handle HTTP response errors for sendPayload
+   * Create appropriate HakanaiError for HTTP response errors
    * @private
    */
-  private handleSendPayloadError(response: Response): never {
+  private createSendPayloadError(response: Response): HakanaiError {
     if (response.status === 401) {
-      throw new HakanaiError(
+      return new HakanaiError(
         HakanaiErrorCodes.AUTHENTICATION_REQUIRED,
         "Authentication required: Please provide a valid authentication token",
         response.status,
@@ -123,7 +123,7 @@ class HakanaiClient {
     }
 
     if (response.status === 403) {
-      throw new HakanaiError(
+      return new HakanaiError(
         HakanaiErrorCodes.INVALID_TOKEN,
         "Invalid authentication token: Please check your token and try again",
         response.status,
@@ -131,7 +131,7 @@ class HakanaiClient {
     }
 
     if (response.status === 413) {
-      throw new HakanaiError(
+      return new HakanaiError(
         HakanaiErrorCodes.PAYLOAD_TOO_LARGE,
         "The payload size exceeds the limit allowed for the user",
         response.status,
@@ -139,7 +139,7 @@ class HakanaiClient {
     }
 
     // Generic error for other status codes
-    throw new HakanaiError(
+    return new HakanaiError(
       HakanaiErrorCodes.SEND_FAILED,
       `Failed to send secret: ${response.status} ${response.statusText}`,
       response.status,
@@ -232,6 +232,22 @@ class HakanaiClient {
             progressObserver.onProgress(event.loaded, event.total);
           }
         };
+
+        // Handle upload errors (server closing connection during upload)
+        xhr.upload.onerror = () => {
+          reject(
+            new HakanaiError(
+              HakanaiErrorCodes.PAYLOAD_TOO_LARGE,
+              "Upload failed - connection closed by server (possibly due to size limit)",
+            ),
+          );
+        };
+
+        xhr.upload.onabort = () => {
+          reject(
+            new HakanaiError(HakanaiErrorCodes.SEND_FAILED, "Upload aborted"),
+          );
+        };
       }
 
       xhr.onload = () => {
@@ -241,11 +257,36 @@ class HakanaiClient {
           statusText: xhr.statusText,
           headers: new Headers(),
         });
-        resolve(response);
+
+        // Check if the request was successful
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve(response);
+        } else {
+          // Create and reject with the appropriate HakanaiError
+          reject(this.createSendPayloadError(response));
+        }
       };
 
       xhr.onerror = () => {
-        reject(new Error(`Network error: ${xhr.status} ${xhr.statusText}`));
+        // Network-level error (connection failed, etc.)
+        reject(
+          new HakanaiError(
+            HakanaiErrorCodes.SEND_FAILED,
+            "Network error during request",
+          ),
+        );
+      };
+
+      xhr.onabort = () => {
+        reject(
+          new HakanaiError(HakanaiErrorCodes.SEND_FAILED, "Request aborted"),
+        );
+      };
+
+      xhr.ontimeout = () => {
+        reject(
+          new HakanaiError(HakanaiErrorCodes.SEND_FAILED, "Request timed out"),
+        );
       };
 
       xhr.open("POST", `${this.baseUrl}/api/v1/secret`);
@@ -294,7 +335,7 @@ class HakanaiClient {
     );
 
     if (!response.ok) {
-      this.handleSendPayloadError(response);
+      throw this.createSendPayloadError(response);
     }
 
     const responseData: SecretResponse = await response.json();
