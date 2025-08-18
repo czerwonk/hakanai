@@ -30,6 +30,69 @@ interface SecretRequest {
   expires_in: number;
 }
 
+/**
+ * Manages XHR promise settlement with activity-based timeout
+ */
+class XhrPromiseManager {
+  private isCompleted = false;
+  private activityTimeout: number | null = null;
+  private readonly ACTIVITY_TIMEOUT_MS = 10000;
+
+  constructor(
+    private resolvePromise: (response: Response) => void,
+    private rejectPromise: (error: HakanaiError) => void,
+    private xhr: XMLHttpRequest,
+  ) {}
+
+  /**
+   * Reset the activity timeout - call this on progress events
+   */
+  resetActivityTimeout(): void {
+    this.clearActivityTimeout();
+    if (!this.isCompleted) {
+      this.activityTimeout = window.setTimeout(() => {
+        if (!this.isCompleted) {
+          this.xhr.abort();
+        }
+      }, this.ACTIVITY_TIMEOUT_MS);
+    }
+  }
+
+  /**
+   * Resolve the promise (only once)
+   */
+  resolve(response: Response): void {
+    if (this.isCompleted) return;
+    this.isCompleted = true;
+    this.clearActivityTimeout();
+    this.resolvePromise(response);
+  }
+
+  /**
+   * Reject the promise (only once)
+   */
+  reject(error: HakanaiError): void {
+    if (this.isCompleted) return;
+    this.isCompleted = true;
+    this.clearActivityTimeout();
+    this.rejectPromise(error);
+  }
+
+  /**
+   * Check if request is still active (for progress updates)
+   */
+  get isActive(): boolean {
+    return !this.isCompleted;
+  }
+
+  private clearActivityTimeout(): void {
+    if (this.activityTimeout !== null) {
+      clearTimeout(this.activityTimeout);
+      this.activityTimeout = null;
+    }
+  }
+}
+
 class HakanaiClient {
   private readonly baseUrl: string;
 
@@ -224,31 +287,19 @@ class HakanaiClient {
   ): Promise<Response> {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
+      const promiseManager = new XhrPromiseManager(resolve, reject, xhr);
 
-      // Track upload progress
-      if (progressObserver) {
-        xhr.upload.onprogress = (event) => {
-          if (event.lengthComputable) {
-            progressObserver.onProgress(event.loaded, event.total);
-          }
-        };
+      // start timeout, if no progfress is received within 10 seconds, abort the request
+      promiseManager.resetActivityTimeout();
 
-        // Handle upload errors (server closing connection during upload)
-        xhr.upload.onerror = () => {
-          reject(
-            new HakanaiError(
-              HakanaiErrorCodes.PAYLOAD_TOO_LARGE,
-              "Upload failed - connection closed by server (possibly due to size limit)",
-            ),
-          );
-        };
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable && promiseManager.isActive) {
+          // reset activity timeout on each progress update to prevent timeout
+          promiseManager.resetActivityTimeout();
 
-        xhr.upload.onabort = () => {
-          reject(
-            new HakanaiError(HakanaiErrorCodes.SEND_FAILED, "Upload aborted"),
-          );
-        };
-      }
+          progressObserver?.onProgress(event.loaded, event.total);
+        }
+      };
 
       xhr.onload = () => {
         // Convert XHR response to fetch Response
@@ -260,16 +311,15 @@ class HakanaiClient {
 
         // Check if the request was successful
         if (xhr.status >= 200 && xhr.status < 300) {
-          resolve(response);
+          promiseManager.resolve(response);
         } else {
-          // Create and reject with the appropriate HakanaiError
-          reject(this.createSendPayloadError(response));
+          promiseManager.reject(this.createSendPayloadError(response));
         }
       };
 
       xhr.onerror = () => {
         // Network-level error (connection failed, etc.)
-        reject(
+        promiseManager.reject(
           new HakanaiError(
             HakanaiErrorCodes.SEND_FAILED,
             "Network error during request",
@@ -278,13 +328,13 @@ class HakanaiClient {
       };
 
       xhr.onabort = () => {
-        reject(
+        promiseManager.reject(
           new HakanaiError(HakanaiErrorCodes.SEND_FAILED, "Request aborted"),
         );
       };
 
       xhr.ontimeout = () => {
-        reject(
+        promiseManager.reject(
           new HakanaiError(HakanaiErrorCodes.SEND_FAILED, "Request timed out"),
         );
       };
