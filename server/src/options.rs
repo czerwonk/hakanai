@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::time::Duration;
+use std::str::FromStr;
 
 use clap::Parser;
 use hakanai_lib::utils::size_parser::parse_size_limit;
@@ -9,6 +10,12 @@ use hakanai_lib::utils::size_parser::parse_size_limit;
 fn parse_size_limit_bytes(s: &str) -> Result<u64, String> {
     let bytes = parse_size_limit(s)?;
     Ok(bytes.max(1) as u64)
+}
+
+/// Parse an IP network in CIDR notation
+fn parse_ip_networks(s: &str) -> Result<ipnet::IpNet, String> {
+    ipnet::IpNet::from_str(s)
+        .map_err(|e| format!("Invalid CIDR notation '{}': {}", s, e))
 }
 
 /// Represents the command-line arguments for the server.
@@ -152,6 +159,23 @@ pub struct Args {
         help = "Show authentication token input field in web interface. If anonyomous access is enabled, this input is always shown."
     )]
     pub show_token_input: bool,
+
+    #[arg(
+        long,
+        value_delimiter = ',',
+        env = "HAKANAI_TRUSTED_IP_RANGES",
+        help = "IP ranges (CIDR notation) that bypass size limits. Example: 10.0.0.0/8,192.168.1.0/24",
+        value_parser = parse_ip_networks
+    )]
+    pub trusted_ip_ranges: Option<Vec<ipnet::IpNet>>,
+
+    #[arg(
+        long,
+        default_value = "x-forwarded-for",
+        env = "HAKANAI_TRUSTED_IP_HEADER",
+        help = "HTTP header to check for client IP when behind a proxy. Common values: x-forwarded-for, x-real-ip, cf-connecting-ip"
+    )]
+    pub trusted_ip_header: String,
 }
 
 impl Args {
@@ -209,6 +233,8 @@ mod tests {
             webhook_url: None,
             webhook_token: None,
             show_token_input: false,
+            trusted_ip_ranges: None,
+            trusted_ip_header: "x-forwarded-for".to_string(),
         }
     }
 

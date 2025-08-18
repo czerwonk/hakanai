@@ -42,4 +42,10 @@ pub struct AppData {
 
     /// Whether to show the token input field in the web interface
     pub show_token_input: bool,
+
+    /// IP ranges that bypass size limits
+    pub trusted_ip_ranges: Option<Vec<ipnet::IpNet>>,
+
+    /// HTTP header to check for client IP
+    pub trusted_ip_header: String,
 }

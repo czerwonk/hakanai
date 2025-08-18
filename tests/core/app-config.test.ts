@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import { initFeatures } from "../../server/src/typescript/core/app-config";
+import { initFeatures, resetCache } from "../../server/src/typescript/core/app-config";
 
 describe("app-config", () => {
   let fetchMock: jest.Mock;
   let consoleWarnSpy: jest.SpyInstance;
 
   beforeEach(() => {
+    // Reset cache before each test
+    resetCache();
+    
     // Setup DOM
     document.body.innerHTML = `
       <div id="impressum-link" class="hidden"></div>
@@ -33,6 +36,7 @@ describe("app-config", () => {
           features: {
             impressum: true,
             privacy: true,
+            showTokenInput: false,
           },
         }),
       });
@@ -53,6 +57,7 @@ describe("app-config", () => {
           features: {
             impressum: false,
             privacy: false,
+            showTokenInput: false,
           },
         }),
       });
@@ -73,6 +78,7 @@ describe("app-config", () => {
           features: {
             impressum: true,
             privacy: false,
+            showTokenInput: false,
           },
         }),
       });
@@ -149,6 +155,7 @@ describe("app-config", () => {
           features: {
             impressum: true,
             privacy: true,
+            showTokenInput: false,
           },
         }),
       });
@@ -171,6 +178,7 @@ describe("app-config", () => {
           features: {
             impressum: false,
             privacy: true,
+            showTokenInput: false,
           },
         }),
       });
@@ -191,6 +199,7 @@ describe("app-config", () => {
           features: {
             impressum: true,
             privacy: true,
+            showTokenInput: false,
           },
         }),
       });
@@ -202,4 +211,3 @@ describe("app-config", () => {
     });
   });
 });
-

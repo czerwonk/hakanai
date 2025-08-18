@@ -8,6 +8,7 @@ use actix_web::{Error, FromRequest, HttpRequest, error};
 use tracing::warn;
 
 use crate::app_data::AppData;
+use crate::ip_whitelist::is_request_from_whitelisted_ip;
 use crate::token::TokenError;
 
 /// User type for authentication and tracing
@@ -15,6 +16,7 @@ use crate::token::TokenError;
 pub enum UserType {
     Anonymous,
     Authenticated,
+    Whitelisted,
 }
 
 impl std::fmt::Display for UserType {
@@ -22,6 +24,7 @@ impl std::fmt::Display for UserType {
         match self {
             UserType::Anonymous => write!(f, "anonymous"),
             UserType::Authenticated => write!(f, "authenticated"),
+            UserType::Whitelisted => write!(f, "whitelisted"),
         }
     }
 }
@@ -51,6 +54,14 @@ impl User {
             user_type: UserType::Anonymous,
         }
     }
+
+    /// Create an whitelisted user without a specific upload limit
+    pub fn whitelisted() -> Self {
+        Self {
+            upload_size_limit: usize::MAX, // no limit for whitelisted users
+            user_type: UserType::Whitelisted,
+        }
+    }
 }
 
 impl FromRequest for User {
@@ -66,7 +77,7 @@ impl FromRequest for User {
 
             match token {
                 Some(token) => handle_authenticated_request(token, app_data).await,
-                None => handle_anonymous_request(app_data),
+                None => handle_anonymous_request(app_data, req),
             }
         })
     }
@@ -114,7 +125,14 @@ fn extract_upload_limit(token_data: crate::token::TokenData) -> usize {
 }
 
 /// Handle a request without an authentication token
-fn handle_anonymous_request(app_data: actix_web::web::Data<AppData>) -> Result<User, Error> {
+fn handle_anonymous_request(
+    app_data: actix_web::web::Data<AppData>,
+    req: HttpRequest,
+) -> Result<User, Error> {
+    if is_request_from_whitelisted_ip(&req, &app_data) {
+        return Ok(User::whitelisted());
+    }
+
     if app_data.anonymous_usage.allowed {
         Ok(User::anonymous(
             app_data.anonymous_usage.upload_size_limit as usize,

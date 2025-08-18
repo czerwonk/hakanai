@@ -1134,6 +1134,7 @@ dependencies = [
  "futures-util",
  "hakanai-lib",
  "humantime",
+ "ipnet",
  "opentelemetry",
  "opentelemetry-appender-tracing",
  "opentelemetry-instrumentation-actix-web",

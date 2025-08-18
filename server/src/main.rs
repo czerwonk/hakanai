@@ -4,6 +4,7 @@ mod admin_api;
 mod admin_user;
 mod app_data;
 mod data_store;
+mod ip_whitelist;
 mod metrics;
 mod observer;
 mod options;

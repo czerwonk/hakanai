@@ -51,6 +51,8 @@ where
             privacy_html: privacy_html.clone(),
             observer_manager,
             show_token_input: args.show_token_input,
+            trusted_ip_ranges: args.trusted_ip_ranges.clone(),
+            trusted_ip_header: args.trusted_ip_header.clone(),
         };
         App::new()
             .app_data(web::Data::new(app_data))

@@ -279,6 +279,8 @@ mod tests {
             privacy_html: None,
             observer_manager: crate::observer::ObserverManager::new(),
             show_token_input: false,
+            trusted_ip_ranges: None,
+            trusted_ip_header: "x-forwarded-for".to_string(),
         }
     }
 

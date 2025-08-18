@@ -13,6 +13,13 @@ export interface AppConfig {
 let cachedConfig: AppConfig | null | undefined;
 
 /**
+ * Reset cached configuration (for testing)
+ */
+export function resetCache(): void {
+  cachedConfig = undefined;
+}
+
+/**
  * Fetch application configuration from server (with caching)
  */
 export async function fetchAppConfig(): Promise<AppConfig | null> {
@@ -27,6 +34,7 @@ export async function fetchAppConfig(): Promise<AppConfig | null> {
       cachedConfig = null;
       return null;
     }
+
     const config: AppConfig = await response.json();
     cachedConfig = config;
 

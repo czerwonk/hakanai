@@ -16,6 +16,7 @@ clap = { version = "4.5.42", features = ["derive", "env"] }
 futures-util = "0.3"
 hakanai-lib = { path = "../lib", features = ["minimal"] }
 humantime = "2.2.0"
+ipnet = "2.11.0"
 opentelemetry = "0.30.0"
 opentelemetry-appender-tracing = "0.30.1"
 opentelemetry-instrumentation-actix-web = { version = "0.22.0", features = ["metrics"] }

@@ -467,6 +467,9 @@ For production deployments:
 - `HAKANAI_PRIVACY_FILE`: Path to privacy policy/data protection text file (displays privacy policy link in footer when provided)
 - `HAKANAI_WEBHOOK_URL`: Webhook URL for secret lifecycle notifications (optional)
 - `HAKANAI_WEBHOOK_TOKEN`: Bearer token for webhook authentication (optional)
+- `HAKANAI_SHOW_TOKEN_INPUT`: Show authentication token input field in web interface (default: false)
+- `HAKANAI_TRUSTED_IP_RANGES`: Comma-separated IP ranges (CIDR notation) that bypass size limits (optional)
+- `HAKANAI_TRUSTED_IP_HEADER`: HTTP header to check for client IP when behind a proxy (default: x-forwarded-for)
 - `OTEL_EXPORTER_OTLP_ENDPOINT`: OpenTelemetry collector endpoint (optional, enables OTEL when set)
 
 ### CLI Environment Variables
@@ -517,12 +520,49 @@ For production deployments:
 - `--privacy-file`: Path to privacy policy/data protection text file (displays privacy policy link in footer when provided)
 - `--webhook-url`: Webhook URL for secret lifecycle notifications
 - `--webhook-token`: Bearer token for webhook authentication
+- `--show-token-input`: Show authentication token input field in web interface
+- `--trusted-ip-ranges`: IP ranges (CIDR notation) that bypass size limits
+- `--trusted-ip-header`: HTTP header to check for client IP when behind a proxy (default: x-forwarded-for)
+
+### IP Whitelisting
+
+Hakanai supports IP-based whitelisting that bypasses upload size limits for trusted networks. This is useful for internal services, monitoring systems, or backup operations that need to upload larger files.
+
+**Configuration:**
+```bash
+# Single IPv4 range
+--trusted-ip-ranges 10.0.0.0/8
+
+# Multiple IPv4 and IPv6 ranges
+--trusted-ip-ranges 10.0.0.0/8,192.168.1.0/24,2001:db8::/32,::1/128
+
+# Environment variable
+export HAKANAI_TRUSTED_IP_RANGES="172.16.0.0/12,2001:db8:85a3::/48"
+
+# Custom proxy header (for Cloudflare, nginx, etc.)
+--trusted-ip-header cf-connecting-ip
+```
+
+**Common IPv6 ranges:**
+- `::1/128` - IPv6 localhost
+- `2001:db8::/32` - IPv6 documentation prefix
+- `2001::/16` - Global unicast prefix
+- `fe80::/10` - Link-local addresses
+- `::/0` - All IPv6 addresses (use with caution)
+
+**Security considerations:**
+- CIDR notation is validated at server startup
+- IPs are extracted from configurable proxy headers (default: `x-forwarded-for`)
+- Falls back to connection peer address if header is missing
+- Whitelisted requests are logged for monitoring
+- Invalid CIDR ranges prevent server startup
 
 ### Security Features
 
 - Zero-knowledge architecture with client-side AES-256-GCM encryption
 - One-time access with automatic secret deletion
 - Token-based authentication with SHA-256 hashing
+- IP-based whitelisting for trusted networks
 - Security headers (X-Frame-Options, X-Content-Type-Options, HSTS)
 - Restrictive CORS policy requiring explicit origin allowlist
 
