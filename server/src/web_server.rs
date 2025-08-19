@@ -54,10 +54,16 @@ where
             trusted_ip_ranges: args.trusted_ip_ranges.clone(),
             trusted_ip_header: args.trusted_ip_header.clone(),
         };
+        // our upload size limit is 1.5x the configured limit to allow for encryption and base64 overhead
+        let size_limit = args
+            .upload_size_limit
+            .saturating_mul(3)
+            .saturating_div(2)
+            .min(usize::MAX as u64) as usize;
         App::new()
             .app_data(web::Data::new(app_data))
-            .app_data(web::PayloadConfig::new(args.upload_size_limit as usize))
-            .app_data(web::JsonConfig::default().limit(args.upload_size_limit as usize))
+            .app_data(web::PayloadConfig::new(size_limit))
+            .app_data(web::JsonConfig::default().limit(size_limit))
             .wrap(Logger::new("%a %{X-Forwarded-For}i %t \"%r\" %s %b %Ts"))
             .wrap(RequestTracing::new())
             .wrap(RequestMetrics::default())
