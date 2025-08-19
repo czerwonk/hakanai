@@ -41,7 +41,7 @@ where
             // use factor 1.5 to account for overhead in base64 encoding and encryption
             let size_limit = user
                 .upload_size_limit
-                .map(|limit| limit.saturating_mul(3).saturating_div(2).min(usize::MAX) as usize);
+                .map(|limit| limit.saturating_mul(3).saturating_div(2).min(usize::MAX));
 
             // Stream the payload and enforce size limit during upload
             let mut body = actix_web::web::BytesMut::new();
