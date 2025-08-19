@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-use std::time::Duration;
 use std::str::FromStr;
+use std::time::Duration;
 
 use clap::Parser;
 use hakanai_lib::utils::size_parser::parse_size_limit;
@@ -14,8 +14,7 @@ fn parse_size_limit_bytes(s: &str) -> Result<u64, String> {
 
 /// Parse an IP network in CIDR notation
 fn parse_ip_networks(s: &str) -> Result<ipnet::IpNet, String> {
-    ipnet::IpNet::from_str(s)
-        .map_err(|e| format!("Invalid CIDR notation '{}': {}", s, e))
+    ipnet::IpNet::from_str(s).map_err(|e| format!("Invalid CIDR notation '{}': {}", s, e))
 }
 
 /// Represents the command-line arguments for the server.
@@ -64,7 +63,7 @@ pub struct Args {
         value_name = "UPLOAD_SIZE_LIMIT",
         env = "HAKANAI_UPLOAD_SIZE_LIMIT",
         default_value = "10m",
-        help = "Upload size limit (e.g., 10m, 1024k, 5242880). Defaults to 10 MB.",
+        help = "Upload size limit for secret data before encryption (e.g., 10m, 1024k, 5242880). Defaults to 10 MB.",
         value_parser = parse_size_limit_bytes
     )]
     pub upload_size_limit: u64,
@@ -99,7 +98,7 @@ pub struct Args {
         long,
         default_value = "32k",
         env = "HAKANAI_ANONYMOUS_UPLOAD_SIZE_LIMIT",
-        help = "Upload size limit for anonymous users (e.g., 32k, 1m, 2048). Defaults to 32KB.",
+        help = "Upload size limit for anonymous users' secret data before encryption (e.g., 32k, 1m, 2048). Defaults to 32KB.",
         value_parser = parse_size_limit_bytes
     )]
     pub anonymous_upload_size_limit: u64,

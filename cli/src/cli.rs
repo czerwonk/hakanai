@@ -289,7 +289,7 @@ pub struct TokenArgs {
     #[arg(
         short,
         long,
-        help = "Optional upload size limit for the token (e.g., 1m, 500k, 1024).",
+        help = "Optional upload size limit for secret data before encryption (e.g., 1m, 500k, 1024).",
         value_parser = parse_size_limit
     )]
     pub limit: Option<i64>,

@@ -452,14 +452,23 @@ For production deployments:
 
 ## Configuration
 
+### Size Limits
+
+**Important:** All size limits apply to the **secret data** before any encryption or encoding. The server automatically accounts for encryption and base64 encoding overhead (approximately 50% additional space), so you can configure limits based on your actual data sizes without worrying about the technical overhead.
+
+For example:
+- Setting `--upload-size-limit 10m` allows users to upload files up to 10MB in size
+- The server internally handles up to ~15MB to account for encryption/encoding overhead
+- This prevents legitimate uploads from failing due to encoding overhead
+
 ### Server Environment Variables
 
 - `HAKANAI_PORT`: Server port (default: 8080)
 - `HAKANAI_LISTEN_ADDRESS`: Bind address (default: 127.0.0.1)
 - `HAKANAI_REDIS_DSN`: Redis connection string (default: redis://127.0.0.1:6379/)
-- `HAKANAI_UPLOAD_SIZE_LIMIT`: Maximum upload size (default: 10m, supports humanized format like 1m, 500k, 1024)
+- `HAKANAI_UPLOAD_SIZE_LIMIT`: Maximum upload size for secret data before encryption (default: 10m, supports humanized format like 1m, 500k, 1024)
 - `HAKANAI_ALLOW_ANONYMOUS`: Allow anonymous access (default: false)
-- `HAKANAI_ANONYMOUS_UPLOAD_SIZE_LIMIT`: Upload size limit for anonymous users (default: 32k, supports humanized format)
+- `HAKANAI_ANONYMOUS_UPLOAD_SIZE_LIMIT`: Upload size limit for anonymous users' secret data before encryption (default: 32k, supports humanized format)
 - `HAKANAI_ENABLE_ADMIN_TOKEN`: Enable admin token system (default: false)
 - `HAKANAI_CORS_ALLOWED_ORIGINS`: Comma-separated allowed CORS origins (default: none)
 - `HAKANAI_MAX_TTL`: Maximum allowed TTL in seconds (default: 604800, 7 days)
