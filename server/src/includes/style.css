@@ -1191,6 +1191,11 @@ button.loading::after {
   font-weight: 400;
 }
 
+.result.error:focus-visible {
+  outline: 2px solid var(--color-error);
+  outline-offset: 2px;
+}
+
 .secret-container {
   margin-top: var(--spacing-sm);
 }

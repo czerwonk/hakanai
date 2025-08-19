@@ -13,6 +13,11 @@ describe("Error Display Component", () => {
   beforeEach(() => {
     container = document.createElement("div");
     container.id = "result";
+
+    // Mock DOM methods that aren't available in JSDOM
+    container.scrollIntoView = jest.fn();
+    container.focus = jest.fn();
+
     document.body.appendChild(container);
 
     // Mock window.i18n with key->key mapping
@@ -51,6 +56,11 @@ describe("Error Display Component", () => {
     test("should create error display with custom container", () => {
       const customContainer = document.createElement("div");
       customContainer.id = "custom-error";
+
+      // Mock DOM methods for custom container
+      customContainer.scrollIntoView = jest.fn();
+      customContainer.focus = jest.fn();
+
       document.body.appendChild(customContainer);
 
       const testMessage = "Custom container error";
@@ -88,7 +98,9 @@ describe("Error Display Component", () => {
       const consoleSpy = jest.spyOn(console, "error").mockImplementation();
       const nullContainer = null as any;
 
-      expect(() => displayErrorMessage("Test message", nullContainer)).toThrow();
+      expect(() =>
+        displayErrorMessage("Test message", nullContainer),
+      ).toThrow();
 
       consoleSpy.mockRestore();
     });
@@ -129,6 +141,45 @@ describe("Error Display Component", () => {
       displayErrorMessage("Test message", container);
 
       expect((window as any).i18n.t).toHaveBeenCalledWith("msg.errorTitle");
+    });
+
+    test("should make container focusable with tabindex", () => {
+      displayErrorMessage("Test message", container);
+
+      expect(container.getAttribute("tabindex")).toBe("-1");
+    });
+
+    test("should call scrollIntoView and focus on container", () => {
+      // Mock scrollIntoView and focus methods
+      const scrollIntoViewMock = jest.fn();
+      const focusMock = jest.fn();
+      container.scrollIntoView = scrollIntoViewMock;
+      container.focus = focusMock;
+
+      displayErrorMessage("Test message", container);
+
+      expect(scrollIntoViewMock).toHaveBeenCalledWith({
+        behavior: "smooth",
+        block: "center",
+      });
+      expect(focusMock).toHaveBeenCalled();
+    });
+
+    test("should set focus behavior after DOM manipulation", () => {
+      const focusMock = jest.fn();
+      const scrollIntoViewMock = jest.fn();
+      container.focus = focusMock;
+      container.scrollIntoView = scrollIntoViewMock;
+
+      displayErrorMessage("Test message", container);
+
+      // Verify container has correct properties before focus
+      expect(container.className).toBe("result error");
+      expect(container.getAttribute("tabindex")).toBe("-1");
+
+      // Verify focus methods were called
+      expect(scrollIntoViewMock).toHaveBeenCalled();
+      expect(focusMock).toHaveBeenCalled();
     });
   });
 });

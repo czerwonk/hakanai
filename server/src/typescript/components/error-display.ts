@@ -27,6 +27,13 @@ export function displayErrorMessage(
   errorDiv.textContent = message;
   container.appendChild(errorDiv);
 
+  // Make container focusable for keyboard navigation
+  container.setAttribute("tabindex", "-1");
+
+  // Scroll error into view and focus it
+  container.scrollIntoView({ behavior: "smooth", block: "center" });
+  container.focus();
+
   announceToScreenReader(
     `${(window as any).i18n.t(I18nKeys.Msg.ErrorTitle)}: ${message}`,
   );
