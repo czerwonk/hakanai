@@ -14,6 +14,7 @@ use crate::app_data::{AnonymousOptions, AppData};
 use crate::data_store::DataStore;
 use crate::observer::ObserverManager;
 use crate::options::Args;
+use crate::size_limit;
 use crate::token::{TokenCreator, TokenValidator};
 use crate::web_api;
 use crate::web_routes;
@@ -54,12 +55,7 @@ where
             trusted_ip_ranges: args.trusted_ip_ranges.clone(),
             trusted_ip_header: args.trusted_ip_header.clone(),
         };
-        // our upload size limit is 1.5x the configured limit to allow for encryption and base64 overhead
-        let size_limit = args
-            .upload_size_limit
-            .saturating_mul(3)
-            .saturating_div(2)
-            .min(usize::MAX as u64) as usize;
+        let size_limit = size_limit::calculate(args.upload_size_limit);
         App::new()
             .app_data(web::Data::new(app_data))
             .app_data(web::PayloadConfig::new(size_limit))

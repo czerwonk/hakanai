@@ -7,9 +7,9 @@ use clap::Parser;
 use hakanai_lib::utils::size_parser::parse_size_limit;
 
 /// Parse a size limit for server configuration, returns value in bytes
-fn parse_size_limit_bytes(s: &str) -> Result<u64, String> {
+fn parse_size_limit_bytes(s: &str) -> Result<usize, String> {
     let bytes = parse_size_limit(s)?;
-    Ok(bytes.max(1) as u64)
+    Ok(bytes.max(1) as usize)
 }
 
 /// Parse an IP network in CIDR notation
@@ -66,7 +66,7 @@ pub struct Args {
         help = "Upload size limit for secret data before encryption (e.g., 10m, 1024k, 5242880). Defaults to 10 MB.",
         value_parser = parse_size_limit_bytes
     )]
-    pub upload_size_limit: u64,
+    pub upload_size_limit: usize,
 
     #[arg(
         short,
@@ -101,7 +101,7 @@ pub struct Args {
         help = "Upload size limit for anonymous users' secret data before encryption (e.g., 32k, 1m, 2048). Defaults to 32KB.",
         value_parser = parse_size_limit_bytes
     )]
-    pub anonymous_upload_size_limit: u64,
+    pub anonymous_upload_size_limit: usize,
 
     #[arg(
         long,

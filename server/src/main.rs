@@ -10,6 +10,7 @@ mod observer;
 mod options;
 mod otel;
 mod redis_client;
+mod size_limit;
 mod size_limited_json;
 #[cfg(test)]
 mod test_utils;

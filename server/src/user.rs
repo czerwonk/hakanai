@@ -132,7 +132,7 @@ fn handle_anonymous_request(
 
     if app_data.anonymous_usage.allowed {
         Ok(User::anonymous(
-            app_data.anonymous_usage.upload_size_limit as usize,
+            app_data.anonymous_usage.upload_size_limit,
         ))
     } else {
         Err(error::ErrorUnauthorized("Authorization token required"))

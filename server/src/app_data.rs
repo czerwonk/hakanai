@@ -11,7 +11,7 @@ pub struct AnonymousOptions {
     pub allowed: bool,
 
     /// The maximum size of uploads allowed for anonymous users, in bytes.
-    pub upload_size_limit: u64,
+    pub upload_size_limit: usize,
 }
 
 /// AppData stores the application's shared state.

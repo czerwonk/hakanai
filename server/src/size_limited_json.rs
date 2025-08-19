@@ -8,6 +8,7 @@ use actix_web::{Error, FromRequest, HttpRequest, error};
 use futures_util::StreamExt;
 use serde::de::DeserializeOwned;
 
+use crate::size_limit;
 use crate::user::User;
 
 /// Custom JSON extractor that enforces size limits based on user's upload limit
@@ -38,10 +39,7 @@ where
 
         Box::pin(async move {
             let user = User::extract(&req).await?;
-            // use factor 1.5 to account for overhead in base64 encoding and encryption
-            let size_limit = user
-                .upload_size_limit
-                .map(|limit| limit.saturating_mul(3).saturating_div(2).min(usize::MAX));
+            let size_limit = user.upload_size_limit.map(size_limit::calculate);
 
             // Stream the payload and enforce size limit during upload
             let mut body = actix_web::web::BytesMut::new();
