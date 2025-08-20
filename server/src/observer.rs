@@ -5,12 +5,14 @@ use async_trait::async_trait;
 use tracing::instrument;
 use uuid::Uuid;
 
+use crate::user::UserType;
+
 #[derive(Clone)]
 pub struct SecretEventContext {
     /// Headers associated with the secret event.
     pub headers: HeaderMap,
     /// User type associated with the secret event, if any.
-    pub user_type: Option<String>,
+    pub user_type: Option<UserType>,
 }
 
 impl SecretEventContext {
@@ -21,7 +23,7 @@ impl SecretEventContext {
         }
     }
 
-    pub fn with_user_type(mut self, user_type: String) -> Self {
+    pub fn with_user_type(mut self, user_type: UserType) -> Self {
         self.user_type = Some(user_type);
         self
     }

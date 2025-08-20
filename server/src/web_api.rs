@@ -115,8 +115,7 @@ async fn post_secret(
         .observer_manager
         .notify_secret_created(
             id,
-            &SecretEventContext::new(http_req.headers().clone())
-                .with_user_type(user.user_type.to_string()),
+            &SecretEventContext::new(http_req.headers().clone()).with_user_type(user.user_type),
         )
         .await;
 
