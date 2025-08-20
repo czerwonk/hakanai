@@ -11,6 +11,7 @@ use hakanai_lib::models::{PostSecretRequest, PostSecretResponse};
 
 use crate::app_data::AppData;
 use crate::data_store::DataStorePopResult;
+use crate::observer::SecretEventContext;
 use crate::size_limited_json::SizeLimitedJson;
 use crate::user::User;
 
@@ -59,7 +60,10 @@ pub async fn get_secret_from_request(
             DataStorePopResult::Found(secret) => {
                 app_data
                     .observer_manager
-                    .notify_secret_retrieved(id, http_req.headers().clone())
+                    .notify_secret_retrieved(
+                        id,
+                        &SecretEventContext::new(http_req.headers().clone()),
+                    )
                     .await;
                 Ok(secret)
             }
@@ -109,7 +113,11 @@ async fn post_secret(
         .map_err(error::ErrorInternalServerError)?;
     app_data
         .observer_manager
-        .notify_secret_created(id, http_req.headers().clone())
+        .notify_secret_created(
+            id,
+            &SecretEventContext::new(http_req.headers().clone())
+                .with_user_type(user.user_type.to_string()),
+        )
         .await;
 
     Ok(web::Json(PostSecretResponse { id }))
@@ -179,18 +187,18 @@ mod tests {
 
     #[async_trait]
     impl SecretObserver for MockObserver {
-        async fn on_secret_created(&self, secret_id: Uuid, headers: HeaderMap) {
+        async fn on_secret_created(&self, secret_id: Uuid, context: &SecretEventContext) {
             self.created_events
                 .lock()
                 .unwrap()
-                .push((secret_id, headers));
+                .push((secret_id, context.headers.clone()));
         }
 
-        async fn on_secret_retrieved(&self, secret_id: Uuid, headers: HeaderMap) {
+        async fn on_secret_retrieved(&self, secret_id: Uuid, context: &SecretEventContext) {
             self.retrieved_events
                 .lock()
                 .unwrap()
-                .push((secret_id, headers));
+                .push((secret_id, context.headers.clone()));
         }
     }
 

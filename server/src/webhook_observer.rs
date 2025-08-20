@@ -8,8 +8,9 @@ use anyhow::Result;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use tracing::{instrument, warn};
+use uuid::Uuid;
 
-use crate::observer::SecretObserver;
+use crate::observer::{SecretEventContext, SecretObserver};
 
 const SAFE_HEADERS: [&str; 5] = [
     "user-agent",
@@ -33,8 +34,8 @@ pub struct WebhookPayload {
     pub secret_id: uuid::Uuid,
     /// Action that triggered the webhook.
     pub action: WebhookAction,
-    /// Filtered HTTP headers (safe subset).
-    pub headers: HashMap<String, String>,
+    /// Additional details about the request (e.g. exctracted from headers)
+    pub details: HashMap<String, String>,
 }
 
 /// Sends webhook notifications for secret events.
@@ -46,22 +47,27 @@ pub struct WebhookObserver {
 
 #[async_trait]
 impl SecretObserver for WebhookObserver {
-    #[instrument(skip(self, headers))]
-    async fn on_secret_created(&self, secret_id: uuid::Uuid, headers: HeaderMap) {
+    #[instrument(skip(self, context))]
+    async fn on_secret_created(&self, secret_id: Uuid, context: &SecretEventContext) {
+        let mut details = filter_headers(&context.headers);
+        if let Some(user_type) = &context.user_type {
+            details.insert("user_type".to_string(), user_type.to_string());
+        }
+
         let payload = WebhookPayload {
             secret_id,
             action: WebhookAction::Created,
-            headers: filter_headers(&headers),
+            details,
         };
         self.send_webhook(payload).await;
     }
 
-    #[instrument(skip(self, headers))]
-    async fn on_secret_retrieved(&self, secret_id: uuid::Uuid, headers: HeaderMap) {
+    #[instrument(skip(self, context))]
+    async fn on_secret_retrieved(&self, secret_id: Uuid, context: &SecretEventContext) {
         let payload = WebhookPayload {
             secret_id,
             action: WebhookAction::Retrieved,
-            headers: filter_headers(&headers),
+            details: filter_headers(&context.headers),
         };
         self.send_webhook(payload).await;
     }
