@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "hakanai.fullname" . }}
+  labels:
+    {{- include "hakanai.labels" . | nindent 4 }}
+data:
+  # Server configuration
+  upload-size-limit: {{ .Values.hakanai.server.uploadSizeLimit | quote }}
+  anonymous-size-limit: {{ .Values.hakanai.server.anonymousSizeLimit | quote }}
+  allow-anonymous: {{ .Values.hakanai.server.allowAnonymous | quote }}
+  enable-admin-token: {{ .Values.hakanai.server.enableAdminToken | quote }}
+
+  {{- if .Values.hakanai.server.ipWhitelist }}
+  ip-whitelist: |
+    {{- range .Values.hakanai.server.ipWhitelist }}
+    - {{ . }}
+    {{- end }}
+  {{- end }}
+
+  {{- if .Values.hakanai.server.cors.enabled }}
+  cors-origins: |
+    {{- range .Values.hakanai.server.cors.origins }}
+    - {{ . }}
+    {{- end }}
+  {{- end }}
+
+  # Observability
+  {{- if .Values.hakanai.observability.enabled }}
+  otel-endpoint: {{ .Values.hakanai.observability.endpoint | quote }}
+  {{- end }}

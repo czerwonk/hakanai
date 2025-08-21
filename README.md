@@ -44,7 +44,36 @@ Built for those who believe privacy isn't about having something to hide - it's 
 
 ## Installation
 
-### Prerequisites
+### Kubernetes Deployment (Helm)
+
+The easiest way to deploy Hakanai is using our Helm chart:
+
+```bash
+# Add the Hakanai Helm repository
+helm repo add hakanai https://czerwonk.github.io/hakanai
+helm repo update
+
+# Install with default values (secure by default)
+helm install hakanai hakanai/hakanai
+
+# Or with custom configuration
+helm install hakanai hakanai/hakanai \
+  --set ingress.hosts[0].host=secrets.example.com \
+  --set redis.replica.replicaCount=3
+```
+
+The Helm chart includes:
+- Redis with Sentinel for high availability
+- Automatic TLS with ingress-nginx
+- Rate limiting and security headers
+- Network policies and pod security
+- Horizontal pod autoscaling support
+
+See the [Helm chart documentation](helm/hakanai/README.md) for detailed configuration options.
+
+### Manual Installation
+
+#### Prerequisites
 - Rust 1.89 or later (stable toolchain)
 - Redis server (for backend storage)
 - Node.js and npm (for TypeScript bundling)

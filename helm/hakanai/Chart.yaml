@@ -1,0 +1,25 @@
+apiVersion: v2
+name: hakanai
+description: A minimalist one-time secret sharing service implementing zero-knowledge principles
+type: application
+version: 0.2.0
+appVersion: "2.9.7"
+keywords:
+  - secret-sharing
+  - zero-knowledge
+  - security
+  - encryption
+home: https://github.com/czerwonk/hakanai
+sources:
+  - https://github.com/czerwonk/hakanai
+maintainers:
+  - name: Daniel Brendgen-Czerwonk
+    email: daniel@routing.rocks
+dependencies:
+  - name: redis
+    version: "~20.5.0"
+    repository: "oci://registry-1.docker.io/bitnamicharts"
+    condition: redis.enabled
+annotations:
+  category: Security
+  licenses: MIT

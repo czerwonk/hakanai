@@ -1,0 +1,389 @@
+# Default values for hakanai.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 2
+
+image:
+  repository: ghcr.io/czerwonk/hakanai
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Automatically mount a ServiceAccount's API credentials?
+  automount: false
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  runAsGroup: 65532
+  fsGroup: 65532
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 65532
+  seccompProfile:
+    type: RuntimeDefault
+
+service:
+  type: ClusterIP
+  port: 8080
+  targetPort: 8080
+  annotations: {}
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    # Rate limiting configuration (ingress-nginx)
+    nginx.ingress.kubernetes.io/limit-rps: "10"
+    nginx.ingress.kubernetes.io/limit-rpm: "100"
+    nginx.ingress.kubernetes.io/limit-burst-multiplier: "5"
+    nginx.ingress.kubernetes.io/limit-connections: "10"
+
+    # Security headers
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "X-Frame-Options: DENY";
+      more_set_headers "X-Content-Type-Options: nosniff";
+      more_set_headers "X-XSS-Protection: 1; mode=block";
+      more_set_headers "Referrer-Policy: no-referrer";
+      more_set_headers "Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';";
+
+    # Body size limit (adjust based on your needs)
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+
+    # TLS redirect
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+
+  hosts:
+    - host: hakanai.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: hakanai-tls
+      hosts:
+        - hakanai.example.com
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+# Hakanai application configuration
+hakanai:
+  # Server configuration
+  server:
+    # Upload size limit (humanized format: 10m, 1g, etc.)
+    uploadSizeLimit: "10m"
+
+    # Enable anonymous access
+    allowAnonymous: false
+
+    # Anonymous upload size limit (humanized format)
+    anonymousSizeLimit: "32k"
+
+    # Enable admin token system
+    enableAdminToken: false
+
+    # IP whitelisting (CIDR notation)
+    ipWhitelist: []
+    # Example:
+    # - "10.0.0.0/8"
+    # - "192.168.0.0/16"
+    # - "2001:db8::/32"
+
+    # Proxy header for IP detection
+    proxyHeader: "x-forwarded-for"
+
+    # CORS configuration
+    cors:
+      enabled: false
+      origins: []
+      # Example:
+      # - "https://app.example.com"
+      # - "https://admin.example.com"
+
+  # Token configuration
+  tokens:
+    # Admin token (will be generated if not set and enableAdminToken is true)
+    # Store this securely!
+    adminToken: ""
+
+    # Default user token (will be generated if not set)
+    defaultUserToken: ""
+
+    # Reset tokens on deployment
+    resetAdminToken: false
+    resetDefaultToken: false
+
+  # OpenTelemetry configuration
+  observability:
+    enabled: false
+    endpoint: ""
+    # Example: "http://otel-collector:4317"
+
+    # Service name override (defaults to "hakanai")
+    serviceName: ""
+
+    # Additional OTEL environment variables
+    env: {}
+    # Example:
+    # OTEL_TRACES_EXPORTER: "otlp"
+    # OTEL_METRICS_EXPORTER: "otlp"
+
+# Redis configuration (using Bitnami Redis chart)
+redis:
+  enabled: true
+  
+  # Architecture: replication with sentinel for HA
+  architecture: replication
+  
+  auth:
+    enabled: true
+    # Password will be auto-generated if not set
+    password: ""
+    existingSecret: ""
+    existingSecretPasswordKey: ""
+  
+  master:
+    count: 1
+    persistence:
+      enabled: true
+      size: 2Gi
+      storageClass: ""
+    resources:
+      limits:
+        cpu: 250m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+    podSecurityContext:
+      enabled: true
+      fsGroup: 1001
+      runAsUser: 1001
+    containerSecurityContext:
+      enabled: true
+      runAsUser: 1001
+      runAsNonRoot: true
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+      seccompProfile:
+        type: RuntimeDefault
+  
+  replica:
+    replicaCount: 2
+    persistence:
+      enabled: true
+      size: 2Gi
+      storageClass: ""
+    resources:
+      limits:
+        cpu: 250m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+    podSecurityContext:
+      enabled: true
+      fsGroup: 1001
+      runAsUser: 1001
+    containerSecurityContext:
+      enabled: true
+      runAsUser: 1001
+      runAsNonRoot: true
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+      seccompProfile:
+        type: RuntimeDefault
+  
+  sentinel:
+    enabled: true
+    quorum: 2
+    downAfterMilliseconds: 5000
+    failoverTimeout: 10000
+    resources:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 50m
+        memory: 64Mi
+    containerSecurityContext:
+      enabled: true
+      runAsUser: 1001
+      runAsNonRoot: true
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+      seccompProfile:
+        type: RuntimeDefault
+  
+  # Metrics exporter for monitoring
+  metrics:
+    enabled: false
+    resources:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 50m
+        memory: 64Mi
+
+# External Redis configuration (when redis.enabled is false)
+externalRedis:
+  host: ""
+  port: 6379
+  password: ""
+  existingSecret: ""
+  existingSecretPasswordKey: "redis-password"
+
+# Network Policy configuration
+networkPolicy:
+  enabled: true
+  policyTypes:
+    - Ingress
+    - Egress
+
+  # Allow ingress from
+  ingress:
+    - from:
+        # Allow from ingress controller
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+        # Allow from same namespace
+        - podSelector: {}
+
+  # Allow egress to
+  egress:
+    # Allow DNS
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+    # Allow to Valkey
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: valkey
+    # Allow to external HTTPS (for OTEL if needed)
+    - to:
+        - podSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 4317
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+  # maxUnavailable: 1
+
+# Node selector
+nodeSelector: {}
+
+# Tolerations
+tolerations: []
+
+# Affinity rules
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - hakanai
+          topologyKey: kubernetes.io/hostname
+
+# Extra environment variables
+extraEnvVars: []
+# Example:
+# - name: MY_VAR
+#   value: "my-value"
+
+# Extra secrets
+extraSecrets: []
+# Example:
+# - name: my-secret
+#   value: "secret-value"
+
+# Liveness and readiness probes
+livenessProbe:
+  httpGet:
+    path: /healthy
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+  successThreshold: 1
+
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+  successThreshold: 1
+
+# Startup probe for slow starting containers
+startupProbe:
+  httpGet:
+    path: /ready
+    port: http
+  initialDelaySeconds: 0
+  periodSeconds: 10
+  timeoutSeconds: 3
+  failureThreshold: 30
+  successThreshold: 1
+

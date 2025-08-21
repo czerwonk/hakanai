@@ -1,0 +1,297 @@
+# Example values for different deployment scenarios
+
+# ===========================================
+# MINIMAL DEPLOYMENT (Testing/Development)
+# ===========================================
+minimal:
+  replicaCount: 1
+  ingress:
+    enabled: false
+  service:
+    type: NodePort
+  hakanai:
+    server:
+      allowAnonymous: true
+      uploadSizeLimit: "1m"
+  valkey:
+    persistence:
+      enabled: false
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+  networkPolicy:
+    enabled: false
+
+# ===========================================
+# STANDARD DEPLOYMENT (Small Team)
+# ===========================================
+standard:
+  replicaCount: 2
+  ingress:
+    enabled: true
+    className: "nginx"
+    hosts:
+      - host: secrets.internal.company.com
+        paths:
+          - path: /
+            pathType: Prefix
+  hakanai:
+    server:
+      allowAnonymous: false
+      uploadSizeLimit: "10m"
+      enableAdminToken: true
+  valkey:
+    persistence:
+      enabled: true
+      size: 2Gi
+  resources:
+    limits:
+      cpu: 250m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# ===========================================
+# ENTERPRISE DEPLOYMENT (Large Organization)
+# ===========================================
+enterprise:
+  replicaCount: 5
+  autoscaling:
+    enabled: true
+    minReplicas: 5
+    maxReplicas: 20
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  ingress:
+    enabled: true
+    className: "nginx"
+    annotations:
+      nginx.ingress.kubernetes.io/limit-rps: "50"
+      nginx.ingress.kubernetes.io/limit-rpm: "500"
+      cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    hosts:
+      - host: secrets.company.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: secrets-tls
+        hosts:
+          - secrets.company.com
+  hakanai:
+    server:
+      uploadSizeLimit: "100m"
+      allowAnonymous: false
+      enableAdminToken: true
+      ipWhitelist:
+        - "10.0.0.0/8"      # Internal network
+        - "172.16.0.0/12"   # VPN network
+      proxyHeader: "x-forwarded-for"
+      cors:
+        enabled: true
+        origins:
+          - "https://app.company.com"
+          - "https://admin.company.com"
+    observability:
+      enabled: true
+      endpoint: "http://otel-collector.monitoring:4317"
+      serviceName: "hakanai-production"
+  valkey:
+    persistence:
+      enabled: true
+      size: 20Gi
+      storageClass: "fast-ssd"
+    resources:
+      limits:
+        cpu: 500m
+        memory: 1Gi
+      requests:
+        cpu: 200m
+        memory: 512Mi
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+          - key: app.kubernetes.io/name
+            operator: In
+            values:
+            - hakanai
+        topologyKey: kubernetes.io/hostname
+
+# ===========================================
+# HIGH SECURITY DEPLOYMENT (Regulated Industry)
+# ===========================================
+highsecurity:
+  replicaCount: 3
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 65532
+    runAsGroup: 65532
+    fsGroup: 65532
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+      - ALL
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+    runAsUser: 65532
+    seccompProfile:
+      type: RuntimeDefault
+  serviceAccount:
+    create: true
+    automount: false
+  ingress:
+    enabled: true
+    className: "nginx"
+    annotations:
+      nginx.ingress.kubernetes.io/limit-rps: "5"
+      nginx.ingress.kubernetes.io/limit-rpm: "30"
+      nginx.ingress.kubernetes.io/limit-connections: "5"
+      nginx.ingress.kubernetes.io/ssl-protocols: "TLSv1.3"
+      nginx.ingress.kubernetes.io/ssl-ciphers: "TLS_AES_256_GCM_SHA384"
+      nginx.ingress.kubernetes.io/configuration-snippet: |
+        more_set_headers "X-Frame-Options: DENY";
+        more_set_headers "X-Content-Type-Options: nosniff";
+        more_set_headers "X-XSS-Protection: 1; mode=block";
+        more_set_headers "Referrer-Policy: no-referrer";
+        more_set_headers "Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self';";
+        more_set_headers "Strict-Transport-Security: max-age=31536000; includeSubDomains; preload";
+    hosts:
+      - host: secrets-secure.company.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: secrets-secure-tls
+        hosts:
+          - secrets-secure.company.com
+  hakanai:
+    server:
+      uploadSizeLimit: "5m"
+      allowAnonymous: false
+      enableAdminToken: true
+      ipWhitelist:
+        - "10.10.0.0/24"    # Secure zone only
+      proxyHeader: "x-real-ip"
+    observability:
+      enabled: true
+      endpoint: "https://otel-collector.secure:4317"
+  valkey:
+    auth:
+      enabled: true
+    persistence:
+      enabled: true
+      size: 10Gi
+      storageClass: "encrypted-ssd"
+  networkPolicy:
+    enabled: true
+    policyTypes:
+      - Ingress
+      - Egress
+    ingress:
+      - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+        - podSelector:
+            matchLabels:
+              app: monitoring
+    egress:
+      - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+        ports:
+        - protocol: UDP
+          port: 53
+      - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: valkey
+      - to:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+        ports:
+        - protocol: TCP
+          port: 4317
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+
+# ===========================================
+# CLOUD PROVIDER SPECIFIC - AWS EKS
+# ===========================================
+aws-eks:
+  ingress:
+    className: "alb"
+    annotations:
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/target-type: ip
+      alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-1:123456789012:certificate/abc-123
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+      alb.ingress.kubernetes.io/ssl-redirect: "443"
+      alb.ingress.kubernetes.io/healthcheck-path: /healthy
+  valkey:
+    persistence:
+      storageClass: "gp3"
+  serviceAccount:
+    create: true
+    annotations:
+      eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/hakanai-role
+
+# ===========================================
+# CLOUD PROVIDER SPECIFIC - GKE
+# ===========================================
+gke:
+  ingress:
+    className: "gce"
+    annotations:
+      kubernetes.io/ingress.class: "gce"
+      kubernetes.io/ingress.global-static-ip-name: "hakanai-ip"
+      networking.gke.io/managed-certificates: "hakanai-cert"
+      cloud.google.com/backend-config: '{"default": "hakanai-backend-config"}'
+  valkey:
+    persistence:
+      storageClass: "standard-rwo"
+  serviceAccount:
+    create: true
+    annotations:
+      iam.gke.io/gcp-service-account: "hakanai-sa@project.iam.gserviceaccount.com"
+
+# ===========================================
+# CLOUD PROVIDER SPECIFIC - AKS
+# ===========================================
+aks:
+  ingress:
+    className: "azure/application-gateway"
+    annotations:
+      appgw.ingress.kubernetes.io/ssl-redirect: "true"
+      appgw.ingress.kubernetes.io/backend-protocol: "http"
+      appgw.ingress.kubernetes.io/health-probe-path: "/healthy"
+  valkey:
+    persistence:
+      storageClass: "managed-premium"
+  serviceAccount:
+    create: true
+    annotations:
+      azure.workload.identity/use: "true"

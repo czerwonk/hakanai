@@ -1,0 +1,135 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "hakanai.fullname" . }}
+  labels:
+    {{- include "hakanai.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "hakanai.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "hakanai.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "hakanai.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - --upload-size-limit={{ .Values.hakanai.server.uploadSizeLimit }}
+            {{- if .Values.hakanai.server.allowAnonymous }}
+            - --allow-anonymous
+            - --anonymous-size-limit={{ .Values.hakanai.server.anonymousSizeLimit }}
+            {{- end }}
+            {{- if .Values.hakanai.server.enableAdminToken }}
+            - --enable-admin-token
+            {{- end }}
+            {{- if .Values.hakanai.tokens.resetAdminToken }}
+            - --reset-admin-token
+            {{- end }}
+            {{- if .Values.hakanai.tokens.resetDefaultToken }}
+            - --reset-default-token
+            {{- end }}
+            {{- range .Values.hakanai.server.ipWhitelist }}
+            - --ip-whitelist={{ . }}
+            {{- end }}
+            {{- if .Values.hakanai.server.proxyHeader }}
+            - --proxy-header={{ .Values.hakanai.server.proxyHeader }}
+            {{- end }}
+            {{- if .Values.hakanai.server.cors.enabled }}
+            {{- range .Values.hakanai.server.cors.origins }}
+            - --cors-origin={{ . }}
+            {{- end }}
+            {{- end }}
+          env:
+            - name: REDIS_URL
+              value: "redis://{{ include "hakanai.redisHost" . }}:{{ include "hakanai.redisPort" . }}"
+            {{- if or .Values.redis.auth.enabled .Values.externalRedis.password }}
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "hakanai.redisSecretName" . }}
+                  key: {{ include "hakanai.redisSecretPasswordKey" . }}
+            {{- end }}
+            {{- if .Values.hakanai.tokens.adminToken }}
+            - name: HAKANAI_ADMIN_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "hakanai.fullname" . }}
+                  key: admin-token
+            {{- end }}
+            {{- if .Values.hakanai.tokens.defaultUserToken }}
+            - name: HAKANAI_DEFAULT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "hakanai.fullname" . }}
+                  key: default-token
+            {{- end }}
+            {{- if .Values.hakanai.observability.enabled }}
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ .Values.hakanai.observability.endpoint }}
+            {{- if .Values.hakanai.observability.serviceName }}
+            - name: OTEL_SERVICE_NAME
+              value: {{ .Values.hakanai.observability.serviceName }}
+            {{- end }}
+            {{- range $key, $value := .Values.hakanai.observability.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- end }}
+            {{- with .Values.extraEnvVars }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          startupProbe:
+            {{- toYaml .Values.startupProbe | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
