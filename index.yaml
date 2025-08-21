@@ -6,7 +6,37 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: 2.9.7
-    created: "2025-08-21T17:57:31.61934801Z"
+    created: "2025-08-21T17:59:39.015071749Z"
+    dependencies:
+    - condition: redis.enabled
+      name: redis
+      repository: oci://registry-1.docker.io/bitnamicharts
+      version: ~20.5.0
+    description: A minimalist one-time secret sharing service implementing zero-knowledge
+      principles
+    digest: a69661775e279138a7d542830de938d6ac4ffa04de066b2437bd3f846b07508b
+    home: https://github.com/czerwonk/hakanai
+    keywords:
+    - secret-sharing
+    - zero-knowledge
+    - security
+    - encryption
+    maintainers:
+    - email: daniel@routing.rocks
+      name: Daniel Brendgen-Czerwonk
+    name: hakanai
+    sources:
+    - https://github.com/czerwonk/hakanai
+    type: application
+    urls:
+    - https://czerwonk.github.io/hakanai/hakanai-0.2.2.tgz
+    version: 0.2.2
+  - annotations:
+      category: Security
+      licenses: MIT
+    apiVersion: v2
+    appVersion: 2.9.7
+    created: "2025-08-21T17:59:39.008322057Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -31,4 +61,4 @@ entries:
     urls:
     - https://czerwonk.github.io/hakanai/hakanai-0.2.1.tgz
     version: 0.2.1
-generated: "2025-08-21T17:57:31.612407763Z"
+generated: "2025-08-21T17:59:39.001431596Z"
