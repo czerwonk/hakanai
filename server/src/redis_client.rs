@@ -11,9 +11,7 @@ use tracing::instrument;
 use uuid::Uuid;
 
 use hakanai_lib::timestamp;
-use hakanai_lib::utils::ip_restrictions::{
-    deserialize_ip_networks, is_ip_allowed, serialize_ip_networks,
-};
+use hakanai_lib::utils::ip_restrictions::{deserialize_ip_networks, serialize_ip_networks};
 
 use crate::data_store::{DataStore, DataStoreError, DataStorePopResult};
 use crate::token::{TokenData, TokenError, TokenStore};
@@ -86,68 +84,6 @@ impl RedisClient {
             .await?;
         Ok(())
     }
-
-    /// Stores IP restrictions for a secret with the same TTL as the secret itself
-    #[instrument(skip(self), err)]
-    pub async fn store_allowed_ips(
-        &self,
-        id: Uuid,
-        allowed_ips: &[ipnet::IpNet],
-        expires_in: Duration,
-    ) -> Result<(), DataStoreError> {
-        if allowed_ips.is_empty() {
-            return Ok(()); // No restrictions to store
-        }
-
-        let key = self.allowed_ips_key(id);
-        let ips_json = serialize_ip_networks(allowed_ips).map_err(|e| {
-            DataStoreError::Redis(redis::RedisError::from(std::io::Error::new(
-                std::io::ErrorKind::InvalidData,
-                e,
-            )))
-        })?;
-
-        let _: () = self
-            .con
-            .clone()
-            .set_ex(key, ips_json, expires_in.as_secs())
-            .await?;
-        Ok(())
-    }
-
-    /// Retrieves IP restrictions for a secret (if any)
-    #[instrument(skip(self), err)]
-    pub async fn get_allowed_ips(
-        &self,
-        id: Uuid,
-    ) -> Result<Option<Vec<ipnet::IpNet>>, DataStoreError> {
-        let key = self.allowed_ips_key(id);
-        let value: Option<String> = self.con.clone().get(key).await?;
-
-        match value {
-            Some(json) => {
-                let allowed_ips = deserialize_ip_networks(&json).map_err(|e| {
-                    DataStoreError::Redis(redis::RedisError::from(std::io::Error::new(
-                        std::io::ErrorKind::InvalidData,
-                        e,
-                    )))
-                })?;
-                Ok(Some(allowed_ips))
-            }
-            None => Ok(None),
-        }
-    }
-
-    /// Checks if an IP address is allowed to access a secret
-    #[instrument(skip(self), err)]
-    pub async fn is_ip_allowed(
-        &self,
-        id: Uuid,
-        client_ip: &std::net::IpAddr,
-    ) -> Result<bool, DataStoreError> {
-        let allowed_networks = self.get_allowed_ips(id).await?;
-        Ok(is_ip_allowed(client_ip, allowed_networks.as_deref()))
-    }
 }
 
 #[async_trait]
@@ -196,6 +132,52 @@ impl DataStore for RedisClient {
         let pattern = format!("{SECRET_PREFIX}*");
         let keys: Vec<String> = self.con.clone().keys(pattern).await?;
         Ok(keys.len())
+    }
+
+    #[instrument(skip(self), err)]
+    async fn store_allowed_ips(
+        &self,
+        id: Uuid,
+        allowed_ips: &[ipnet::IpNet],
+        expires_in: Duration,
+    ) -> Result<(), DataStoreError> {
+        if allowed_ips.is_empty() {
+            return Ok(()); // No restrictions to store
+        }
+
+        let key = self.allowed_ips_key(id);
+        let ips_json = serialize_ip_networks(allowed_ips).map_err(|e| {
+            DataStoreError::Redis(redis::RedisError::from(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                e,
+            )))
+        })?;
+
+        let _: () = self
+            .con
+            .clone()
+            .set_ex(key, ips_json, expires_in.as_secs())
+            .await?;
+        Ok(())
+    }
+
+    #[instrument(skip(self), err)]
+    async fn get_allowed_ips(&self, id: Uuid) -> Result<Option<Vec<ipnet::IpNet>>, DataStoreError> {
+        let key = self.allowed_ips_key(id);
+        let value: Option<String> = self.con.clone().get(key).await?;
+
+        match value {
+            Some(json) => {
+                let allowed_ips = deserialize_ip_networks(&json).map_err(|e| {
+                    DataStoreError::Redis(redis::RedisError::from(std::io::Error::new(
+                        std::io::ErrorKind::InvalidData,
+                        e,
+                    )))
+                })?;
+                Ok(Some(allowed_ips))
+            }
+            None => Ok(None),
+        }
     }
 }
 

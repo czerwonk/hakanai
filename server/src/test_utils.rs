@@ -679,4 +679,28 @@ impl DataStore for MockDataStore {
         }
         Ok(*self.secret_count.lock().unwrap())
     }
+
+    async fn store_allowed_ips(
+        &self,
+        _id: Uuid,
+        _allowed_ips: &[ipnet::IpNet],
+        _expires_in: Duration,
+    ) -> Result<(), DataStoreError> {
+        if *self.should_fail.lock().unwrap() {
+            return Err(DataStoreError::InternalError("Mock failure".to_string()));
+        }
+        // Mock implementation - just return success
+        Ok(())
+    }
+
+    async fn get_allowed_ips(
+        &self,
+        _id: Uuid,
+    ) -> Result<Option<Vec<ipnet::IpNet>>, DataStoreError> {
+        if *self.should_fail.lock().unwrap() {
+            return Err(DataStoreError::InternalError("Mock failure".to_string()));
+        }
+        // Mock implementation - return no restrictions
+        Ok(None)
+    }
 }
