@@ -163,12 +163,7 @@ impl DataStore for RedisClient {
 
         match value {
             Some(json) => {
-                let allowed_ips = deserialize_ip_networks(&json).map_err(|e| {
-                    DataStoreError::Redis(redis::RedisError::from(std::io::Error::new(
-                        std::io::ErrorKind::InvalidData,
-                        e,
-                    )))
-                })?;
+                let allowed_ips = deserialize_ip_networks(&json)?;
                 Ok(Some(allowed_ips))
             }
             None => Ok(None),
