@@ -11,6 +11,7 @@ use hakanai_lib::models::{PostSecretRequest, PostSecretResponse};
 
 use crate::app_data::AppData;
 use crate::data_store::DataStorePopResult;
+use crate::ip_filter::is_request_from_ip_range;
 use crate::observer::SecretEventContext;
 use crate::size_limited_json::SizeLimitedJson;
 use crate::user::User;
@@ -21,6 +22,15 @@ use crate::user::User;
 /// including the data store that will be shared across all handlers.
 pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg.service(get_secret).service(post_secret);
+}
+
+#[get("/secret/{id}")]
+async fn get_secret(
+    http_req: HttpRequest,
+    req: web::Path<String>,
+    app_data: web::Data<AppData>,
+) -> Result<String> {
+    get_secret_from_request(http_req, req, app_data).await
 }
 
 /// Retrieves and consumes a secret from the data store.
@@ -55,6 +65,8 @@ pub async fn get_secret_from_request(
         Span::current().record("request_id", request_id);
     }
 
+    ensure_ip_allowed_to_access_secret(id, &http_req, &app_data).await?;
+
     match app_data.data_store.pop(id).await {
         Ok(res) => match res {
             DataStorePopResult::Found(secret) => {
@@ -79,13 +91,27 @@ pub async fn get_secret_from_request(
     }
 }
 
-#[get("/secret/{id}")]
-async fn get_secret(
-    http_req: HttpRequest,
-    req: web::Path<String>,
-    app_data: web::Data<AppData>,
-) -> Result<String> {
-    get_secret_from_request(http_req, req, app_data).await
+async fn ensure_ip_allowed_to_access_secret(
+    id: Uuid,
+    http_req: &HttpRequest,
+    app_data: &AppData,
+) -> Result<()> {
+    let allowed = app_data
+        .data_store
+        .get_allowed_ips(id)
+        .await
+        .map_err(|e| {
+            error!("Failed to retrieve allowed IPs for secret {id}: {e}");
+            error::ErrorInternalServerError("Operation failed")
+        })?
+        .map(|ips| ips.is_empty() || is_request_from_ip_range(http_req, app_data, &ips))
+        .unwrap_or(true);
+
+    if allowed {
+        Ok(())
+    } else {
+        Err(error::ErrorForbidden("IP address not allowed"))
+    }
 }
 
 #[post("/secret")]
@@ -110,7 +136,22 @@ async fn post_secret(
         .data_store
         .put(id, req.data.clone(), req.expires_in)
         .await
-        .map_err(error::ErrorInternalServerError)?;
+        .map_err(|e| {
+            error!("Error while creating secret: {e}");
+            error::ErrorInternalServerError("Operation failed")
+        })?;
+
+    if let Some(ref allowed_ips) = req.allowed_ips {
+        app_data
+            .data_store
+            .set_allowed_ips(id, allowed_ips, req.expires_in)
+            .await
+            .map_err(|e| {
+                error!("Failed to set allowed IPs for secret {id}: {e}");
+                error::ErrorInternalServerError("Operation failed")
+            })?;
+    }
+
     app_data
         .observer_manager
         .notify_secret_created(
@@ -708,5 +749,327 @@ mod tests {
         let headers = &created_events[0].1;
         assert_eq!(headers.get("authorization").unwrap(), "Bearer valid_token");
         assert_eq!(headers.get("user-agent").unwrap(), "authenticated-client");
+    }
+
+    #[actix_web::test]
+    async fn test_get_secret_with_ip_restriction_allowed() {
+        // Create a secret with IP restrictions that allow the request
+        let secret_id = Uuid::new_v4();
+        let allowed_ips = vec![
+            "192.168.1.0/24".parse::<ipnet::IpNet>().unwrap(),
+            "10.0.0.0/8".parse::<ipnet::IpNet>().unwrap(),
+        ];
+
+        let mock_store = MockDataStore::new()
+            .with_pop_result(DataStorePopResult::Found("test_secret".to_string()))
+            .with_ip_restrictions(secret_id, allowed_ips);
+
+        let app_data = create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
+
+        let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
+            |cfg| {
+                configure(cfg);
+            },
+        ))
+        .await;
+
+        let req = test::TestRequest::get()
+            .uri(&format!("/secret/{}", secret_id))
+            .insert_header(("x-forwarded-for", "192.168.1.100"))
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 200);
+
+        let body = test::read_body(resp).await;
+        assert_eq!(body, "test_secret");
+    }
+
+    #[actix_web::test]
+    async fn test_get_secret_with_ip_restriction_blocked() {
+        // Create a secret with IP restrictions that block the request
+        let secret_id = Uuid::new_v4();
+        let allowed_ips = vec!["192.168.1.0/24".parse::<ipnet::IpNet>().unwrap()];
+
+        let mock_store = MockDataStore::new()
+            .with_pop_result(DataStorePopResult::Found("test_secret".to_string()))
+            .with_ip_restrictions(secret_id, allowed_ips);
+
+        let app_data = create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
+
+        let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
+            |cfg| {
+                configure(cfg);
+            },
+        ))
+        .await;
+
+        // Request from IP not in allowed range
+        let req = test::TestRequest::get()
+            .uri(&format!("/secret/{}", secret_id))
+            .insert_header(("x-forwarded-for", "10.0.0.50"))
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 403); // Forbidden
+    }
+
+    #[actix_web::test]
+    async fn test_get_secret_with_no_ip_restrictions() {
+        // Create a secret without IP restrictions - should be accessible from any IP
+        let secret_id = Uuid::new_v4();
+
+        let mock_store = MockDataStore::new()
+            .with_pop_result(DataStorePopResult::Found("test_secret".to_string()));
+        // No IP restrictions set
+
+        let app_data = create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
+
+        let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
+            |cfg| {
+                configure(cfg);
+            },
+        ))
+        .await;
+
+        let req = test::TestRequest::get()
+            .uri(&format!("/secret/{}", secret_id))
+            .insert_header(("x-forwarded-for", "123.45.67.89"))
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 200);
+
+        let body = test::read_body(resp).await;
+        assert_eq!(body, "test_secret");
+    }
+
+    #[actix_web::test]
+    async fn test_get_secret_with_ipv6_restriction() {
+        // Test IPv6 address restrictions
+        let secret_id = Uuid::new_v4();
+        let allowed_ips = vec!["2001:db8::/32".parse::<ipnet::IpNet>().unwrap()];
+
+        let mock_store = MockDataStore::new()
+            .with_pop_result(DataStorePopResult::Found("test_secret".to_string()))
+            .with_ip_restrictions(secret_id, allowed_ips);
+
+        let app_data = create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
+
+        let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
+            |cfg| {
+                configure(cfg);
+            },
+        ))
+        .await;
+
+        // Request from allowed IPv6 range
+        let req = test::TestRequest::get()
+            .uri(&format!("/secret/{}", secret_id))
+            .insert_header(("x-forwarded-for", "2001:db8::1234"))
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 200);
+    }
+
+    #[actix_web::test]
+    async fn test_get_secret_with_multiple_ip_restrictions() {
+        // Test with multiple IP ranges allowed
+        let secret_id = Uuid::new_v4();
+        let allowed_ips = vec![
+            "192.168.1.0/24".parse::<ipnet::IpNet>().unwrap(),
+            "10.0.0.0/8".parse::<ipnet::IpNet>().unwrap(),
+            "172.16.0.0/12".parse::<ipnet::IpNet>().unwrap(),
+        ];
+
+        let mock_store = MockDataStore::new()
+            .with_pop_result(DataStorePopResult::Found("test_secret".to_string()))
+            .with_ip_restrictions(secret_id, allowed_ips);
+
+        let app_data = create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
+
+        let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
+            |cfg| {
+                configure(cfg);
+            },
+        ))
+        .await;
+
+        // Test from second allowed range
+        let req = test::TestRequest::get()
+            .uri(&format!("/secret/{}", secret_id))
+            .insert_header(("x-forwarded-for", "10.1.2.3"))
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 200);
+    }
+
+    #[actix_web::test]
+    async fn test_get_secret_with_single_ip_restriction() {
+        // Test restriction to a single IP address (using /32 for IPv4)
+        let secret_id = Uuid::new_v4();
+        let allowed_ips = vec!["192.168.1.100/32".parse::<ipnet::IpNet>().unwrap()];
+
+        let mock_store = MockDataStore::new()
+            .with_pop_result(DataStorePopResult::Found("test_secret".to_string()))
+            .with_ip_restrictions(secret_id, allowed_ips);
+
+        let app_data = create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
+
+        let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
+            |cfg| {
+                configure(cfg);
+            },
+        ))
+        .await;
+
+        // Request from exact IP - should succeed
+        let req = test::TestRequest::get()
+            .uri(&format!("/secret/{}", secret_id))
+            .insert_header(("x-forwarded-for", "192.168.1.100"))
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 200);
+
+        // Request from different IP - should fail
+        let req = test::TestRequest::get()
+            .uri(&format!("/secret/{}", secret_id))
+            .insert_header(("x-forwarded-for", "192.168.1.101"))
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 403);
+    }
+
+    #[actix_web::test]
+    async fn test_post_secret_with_ip_restrictions() {
+        // Test that POST endpoint properly stores IP restrictions
+        let mock_store = MockDataStore::new();
+        let app_data =
+            create_test_app_data(Box::new(mock_store.clone()), MockTokenManager::new(), true);
+
+        let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
+            |cfg| {
+                configure(cfg);
+            },
+        ))
+        .await;
+
+        let allowed_ips = vec![
+            "192.168.1.0/24".parse::<ipnet::IpNet>().unwrap(),
+            "10.0.0.0/8".parse::<ipnet::IpNet>().unwrap(),
+        ];
+
+        let payload = PostSecretRequest::new("test_secret".to_string(), Duration::from_secs(3600))
+            .with_allowed_ips(allowed_ips.clone());
+
+        let req = test::TestRequest::post()
+            .uri("/secret")
+            .set_json(&payload)
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 200);
+
+        let body: PostSecretResponse = test::read_body_json(resp).await;
+        assert!(!body.id.is_nil());
+
+        // Verify IP restrictions were stored
+        let ip_restrictions = mock_store.get_ip_restrictions();
+        assert!(ip_restrictions.contains_key(&body.id.to_string()));
+        assert_eq!(ip_restrictions[&body.id.to_string()], allowed_ips);
+    }
+
+    #[actix_web::test]
+    async fn test_post_secret_without_ip_restrictions() {
+        // Test that POST endpoint works without IP restrictions
+        let mock_store = MockDataStore::new();
+        let app_data =
+            create_test_app_data(Box::new(mock_store.clone()), MockTokenManager::new(), true);
+
+        let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
+            |cfg| {
+                configure(cfg);
+            },
+        ))
+        .await;
+
+        let payload = PostSecretRequest::new("test_secret".to_string(), Duration::from_secs(3600));
+        // No IP restrictions
+
+        let req = test::TestRequest::post()
+            .uri("/secret")
+            .set_json(&payload)
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 200);
+
+        let body: PostSecretResponse = test::read_body_json(resp).await;
+        assert!(!body.id.is_nil());
+
+        // Verify no IP restrictions were stored
+        let ip_restrictions = mock_store.get_ip_restrictions();
+        assert!(!ip_restrictions.contains_key(&body.id.to_string()));
+    }
+
+    #[actix_web::test]
+    async fn test_get_secret_ip_restriction_with_proxy_chain() {
+        // Test IP extraction from proxy chain (multiple IPs in x-forwarded-for)
+        let secret_id = Uuid::new_v4();
+        let allowed_ips = vec!["192.168.1.0/24".parse::<ipnet::IpNet>().unwrap()];
+
+        let mock_store = MockDataStore::new()
+            .with_pop_result(DataStorePopResult::Found("test_secret".to_string()))
+            .with_ip_restrictions(secret_id, allowed_ips);
+
+        let app_data = create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
+
+        let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
+            |cfg| {
+                configure(cfg);
+            },
+        ))
+        .await;
+
+        // x-forwarded-for with multiple IPs (first one is the client)
+        let req = test::TestRequest::get()
+            .uri(&format!("/secret/{}", secret_id))
+            .insert_header(("x-forwarded-for", "192.168.1.50, 10.0.0.1, 172.16.0.1"))
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 200); // First IP is in allowed range
+    }
+
+    #[actix_web::test]
+    async fn test_get_secret_with_empty_ip_restrictions() {
+        // Test that empty IP restrictions array means no access allowed
+        let secret_id = Uuid::new_v4();
+        let allowed_ips = vec![]; // Empty restrictions
+
+        let mock_store = MockDataStore::new()
+            .with_pop_result(DataStorePopResult::Found("test_secret".to_string()))
+            .with_ip_restrictions(secret_id, allowed_ips);
+
+        let app_data = create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
+
+        let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
+            |cfg| {
+                configure(cfg);
+            },
+        ))
+        .await;
+
+        let req = test::TestRequest::get()
+            .uri(&format!("/secret/{}", secret_id))
+            .insert_header(("x-forwarded-for", "192.168.1.100"))
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 200); // Empty array is treated as no restrictions in ensure_ip_allowed_to_access_secret
     }
 }

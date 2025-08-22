@@ -27,7 +27,7 @@ pub enum DataStoreError {
     InternalError(String),
 
     #[error("error while JSON processing: {0}")]
-    Serialization(#[from] serde_json::Error)
+    Serialization(#[from] serde_json::Error),
 }
 
 /// `DataStorePopResult` is an enum that represents the possible outcomes of DataStore::pop operation.
@@ -105,7 +105,7 @@ pub trait DataStore: Send + Sync {
     /// # Returns
     ///
     /// A `Result` which is `Ok(())` on successful storage, or an `Err` if an error occurs.
-    async fn store_allowed_ips(
+    async fn set_allowed_ips(
         &self,
         id: Uuid,
         allowed_ips: &[ipnet::IpNet],

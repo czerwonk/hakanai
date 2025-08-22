@@ -134,7 +134,7 @@ impl DataStore for RedisClient {
     }
 
     #[instrument(skip(self), err)]
-    async fn store_allowed_ips(
+    async fn set_allowed_ips(
         &self,
         id: Uuid,
         allowed_ips: &[ipnet::IpNet],
@@ -145,7 +145,7 @@ impl DataStore for RedisClient {
         }
 
         let key = self.allowed_ips_key(id);
-        let json = serde_json::to_str(allowed_ips)?;
+        let json = serde_json::to_string(allowed_ips)?;
 
         let _: () = self
             .con

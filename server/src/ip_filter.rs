@@ -7,9 +7,21 @@ use crate::app_data::AppData;
 
 /// Check if the request is from a whitelisted IP range
 pub fn is_request_from_whitelisted_ip(req: &HttpRequest, app_data: &AppData) -> bool {
-    if let Some(ref trusted_ranges) = app_data.trusted_ip_ranges
-        && let Some(client_ip) = extract_client_ip(req, &app_data.trusted_ip_header)
-        && is_ip_in_ranges(&client_ip, trusted_ranges)
+    if let Some(ref trusted_ranges) = app_data.trusted_ip_ranges {
+        return is_request_from_ip_range(req, app_data, trusted_ranges);
+    };
+
+    false
+}
+
+/// Checks if the request is from one of the given IP ranges
+pub fn is_request_from_ip_range(
+    req: &HttpRequest,
+    app_data: &AppData,
+    ranges: &[ipnet::IpNet],
+) -> bool {
+    if let Some(client_ip) = extract_client_ip(req, &app_data.trusted_ip_header)
+        && is_ip_in_ranges(&client_ip, ranges)
     {
         return true;
     }
@@ -84,6 +96,22 @@ mod tests {
 
         async fn active_secret_count(&self) -> Result<usize, DataStoreError> {
             Ok(0)
+        }
+
+        async fn set_allowed_ips(
+            &self,
+            _id: Uuid,
+            _allowed_ips: &[ipnet::IpNet],
+            _expires_in: Duration,
+        ) -> Result<(), DataStoreError> {
+            Ok(())
+        }
+
+        async fn get_allowed_ips(
+            &self,
+            _id: Uuid,
+        ) -> Result<Option<Vec<ipnet::IpNet>>, DataStoreError> {
+            Ok(None)
         }
     }
 

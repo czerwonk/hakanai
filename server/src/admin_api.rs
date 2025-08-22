@@ -98,6 +98,22 @@ mod tests {
         async fn active_secret_count(&self) -> Result<usize, DataStoreError> {
             Ok(0)
         }
+
+        async fn set_allowed_ips(
+            &self,
+            _id: Uuid,
+            _allowed_ips: &[ipnet::IpNet],
+            _expires_in: Duration,
+        ) -> Result<(), DataStoreError> {
+            Ok(())
+        }
+
+        async fn get_allowed_ips(
+            &self,
+            _id: Uuid,
+        ) -> Result<Option<Vec<ipnet::IpNet>>, DataStoreError> {
+            Ok(None)
+        }
     }
 
     fn create_test_app_data(token_manager: MockTokenManager) -> AppData {

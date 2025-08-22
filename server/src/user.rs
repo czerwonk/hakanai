@@ -8,7 +8,7 @@ use actix_web::{Error, FromRequest, HttpRequest, error};
 use tracing::warn;
 
 use crate::app_data::AppData;
-use crate::ip_whitelist::is_request_from_whitelisted_ip;
+use crate::ip_filter::is_request_from_whitelisted_ip;
 use crate::token::TokenError;
 
 /// User type for authentication and tracing
@@ -131,9 +131,7 @@ fn handle_anonymous_request(
     }
 
     if app_data.anonymous_usage.allowed {
-        Ok(User::anonymous(
-            app_data.anonymous_usage.upload_size_limit,
-        ))
+        Ok(User::anonymous(app_data.anonymous_usage.upload_size_limit))
     } else {
         Err(error::ErrorUnauthorized("Authorization token required"))
     }
