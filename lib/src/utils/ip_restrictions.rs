@@ -50,35 +50,6 @@ pub fn is_ip_allowed(client_ip: &IpAddr, allowed_networks: Option<&[ipnet::IpNet
     }
 }
 
-/// Serializes IP networks to JSON string for storage.
-///
-/// # Arguments
-///
-/// * `networks` - Vector of IP networks to serialize
-///
-/// # Returns
-///
-/// * `Ok(String)` - JSON representation of the networks
-/// * `Err(String)` - Serialization error message
-pub fn serialize_ip_networks(networks: &[ipnet::IpNet]) -> Result<String, String> {
-    serde_json::to_string(networks)
-        .map_err(|e| format!("Failed to serialize IP restrictions: {}", e))
-}
-
-/// Deserializes IP networks from JSON string.
-///
-/// # Arguments
-///
-/// * `json` - JSON string containing serialized IP networks
-///
-/// # Returns
-///
-/// * `Ok(Vec<ipnet::IpNet>)` - Parsed IP networks
-/// * `Err(String)` - Deserialization error message
-pub fn deserialize_ip_networks(json: &str) -> Result<Vec<ipnet::IpNet>, String> {
-    serde_json::from_str(json).map_err(|e| format!("Failed to deserialize IP restrictions: {}", e))
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -255,54 +226,6 @@ mod tests {
             &"2001:db8::1".parse().unwrap(),
             Some(&networks)
         ));
-    }
-
-    #[test]
-    fn test_serialize_deserialize_ip_networks() {
-        let networks = test_ip_networks();
-
-        // Test serialization
-        let json = serialize_ip_networks(&networks).unwrap();
-        assert!(!json.is_empty());
-        assert!(json.contains("192.168.1.0/24"));
-        assert!(json.contains("2001:db8::/32"));
-
-        // Test deserialization
-        let deserialized = deserialize_ip_networks(&json).unwrap();
-        assert_eq!(networks.len(), deserialized.len());
-
-        for (original, parsed) in networks.iter().zip(deserialized.iter()) {
-            assert_eq!(original, parsed);
-        }
-    }
-
-    #[test]
-    fn test_serialize_empty_networks() {
-        let empty_networks: Vec<ipnet::IpNet> = vec![];
-        let json = serialize_ip_networks(&empty_networks).unwrap();
-        assert_eq!(json, "[]");
-
-        let deserialized = deserialize_ip_networks(&json).unwrap();
-        assert!(deserialized.is_empty());
-    }
-
-    #[test]
-    fn test_deserialize_invalid_json() {
-        let invalid_json = "{ invalid json }";
-        let result = deserialize_ip_networks(invalid_json);
-        assert!(result.is_err());
-        assert!(
-            result
-                .unwrap_err()
-                .contains("Failed to deserialize IP restrictions")
-        );
-    }
-
-    #[test]
-    fn test_deserialize_wrong_format() {
-        let wrong_format = r#"["not-an-ip", "192.168.1.0/24"]"#;
-        let result = deserialize_ip_networks(wrong_format);
-        assert!(result.is_err());
     }
 
     #[test]
