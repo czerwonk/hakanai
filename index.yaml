@@ -6,7 +6,7 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: v2.9.7
-    created: "2025-08-22T06:50:08.047872637Z"
+    created: "2025-08-22T07:17:45.002994971Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -14,7 +14,7 @@ entries:
       version: ~20.5.0
     description: A minimalist one-time secret sharing service implementing zero-knowledge
       principles
-    digest: 0f4c6edf660cb4ac2d14d4cadc799fa54b816b108a1a4f7779986e3314769d53
+    digest: e8ad52287c7694d5b341414248d61541faf1ed8906dc9e78123c26d50228e85c
     home: https://github.com/czerwonk/hakanai
     keywords:
     - secret-sharing
@@ -36,7 +36,7 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: 2.9.7
-    created: "2025-08-22T06:50:08.041363739Z"
+    created: "2025-08-22T07:17:44.997288821Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -66,7 +66,7 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: 2.9.7
-    created: "2025-08-22T06:50:08.034698893Z"
+    created: "2025-08-22T07:17:44.990462872Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -91,4 +91,4 @@ entries:
     urls:
     - https://czerwonk.github.io/hakanai/hakanai-0.2.1.tgz
     version: 0.2.1
-generated: "2025-08-22T06:50:08.027895035Z"
+generated: "2025-08-22T07:17:44.98367828Z"
