@@ -47,12 +47,6 @@ spec:
             {{- if .Values.hakanai.server.enableAdminToken }}
             - --enable-admin-token
             {{- end }}
-            {{- if .Values.hakanai.tokens.resetAdminToken }}
-            - --reset-admin-token
-            {{- end }}
-            {{- if .Values.hakanai.tokens.resetDefaultToken }}
-            - --reset-default-token
-            {{- end }}
             {{- range .Values.hakanai.server.ipWhitelist }}
             - --ip-whitelist={{ . }}
             {{- end }}
@@ -73,20 +67,6 @@ spec:
                 secretKeyRef:
                   name: {{ include "hakanai.redisSecretName" . }}
                   key: {{ include "hakanai.redisSecretPasswordKey" . }}
-            {{- end }}
-            {{- if .Values.hakanai.tokens.adminToken }}
-            - name: HAKANAI_ADMIN_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "hakanai.fullname" . }}
-                  key: admin-token
-            {{- end }}
-            {{- if .Values.hakanai.tokens.defaultUserToken }}
-            - name: HAKANAI_DEFAULT_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "hakanai.fullname" . }}
-                  key: default-token
             {{- end }}
             {{- if .Values.hakanai.observability.enabled }}
             - name: OTEL_EXPORTER_OTLP_ENDPOINT

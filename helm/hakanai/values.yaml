@@ -58,19 +58,11 @@ ingress:
     # Rate limiting configuration (ingress-nginx)
     nginx.ingress.kubernetes.io/limit-rps: "10"
     nginx.ingress.kubernetes.io/limit-rpm: "100"
-    nginx.ingress.kubernetes.io/limit-burst-multiplier: "5"
-    nginx.ingress.kubernetes.io/limit-connections: "10"
-
-    # Security headers
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      more_set_headers "X-Frame-Options: DENY";
-      more_set_headers "X-Content-Type-Options: nosniff";
-      more_set_headers "X-XSS-Protection: 1; mode=block";
-      more_set_headers "Referrer-Policy: no-referrer";
-      more_set_headers "Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';";
+    nginx.ingress.kubernetes.io/limit-burst-multiplier: "2"
+    nginx.ingress.kubernetes.io/limit-connections: "20"
 
     # Body size limit (adjust based on your needs)
-    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-body-size: "15m"
 
     # TLS redirect
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
@@ -135,19 +127,6 @@ hakanai:
       # - "https://app.example.com"
       # - "https://admin.example.com"
 
-  # Token configuration
-  tokens:
-    # Admin token (will be generated if not set and enableAdminToken is true)
-    # Store this securely!
-    adminToken: ""
-
-    # Default user token (will be generated if not set)
-    defaultUserToken: ""
-
-    # Reset tokens on deployment
-    resetAdminToken: false
-    resetDefaultToken: false
-
   # OpenTelemetry configuration
   observability:
     enabled: false
@@ -166,17 +145,17 @@ hakanai:
 # Redis configuration (using Bitnami Redis chart)
 redis:
   enabled: true
-  
+
   # Architecture: replication with sentinel for HA
   architecture: replication
-  
+
   auth:
     enabled: true
     # Password will be auto-generated if not set
     password: ""
     existingSecret: ""
     existingSecretPasswordKey: ""
-  
+
   master:
     count: 1
     persistence:
@@ -204,7 +183,7 @@ redis:
           - ALL
       seccompProfile:
         type: RuntimeDefault
-  
+
   replica:
     replicaCount: 2
     persistence:
@@ -232,7 +211,7 @@ redis:
           - ALL
       seccompProfile:
         type: RuntimeDefault
-  
+
   sentinel:
     enabled: true
     quorum: 2
@@ -255,7 +234,7 @@ redis:
           - ALL
       seccompProfile:
         type: RuntimeDefault
-  
+
   # Metrics exporter for monitoring
   metrics:
     enabled: false
@@ -285,10 +264,10 @@ networkPolicy:
   # Allow ingress from
   ingress:
     - from:
-        # Allow from ingress controller
-        - namespaceSelector:
-            matchLabels:
-              name: ingress-nginx
+        # Allow HTTP
+        - ports:
+            - port: 8080
+              protocol: "TCP"
         # Allow from same namespace
         - podSelector: {}
 
@@ -308,6 +287,11 @@ networkPolicy:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: valkey
+    # Allow to Redis
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: redis
     # Allow to external HTTPS (for OTEL if needed)
     - to:
         - podSelector: {}
@@ -386,4 +370,3 @@ startupProbe:
   timeoutSeconds: 3
   failureThreshold: 30
   successThreshold: 1
-

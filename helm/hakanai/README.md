@@ -40,7 +40,7 @@ helm install my-hakanai hakanai/hakanai \
 |-----------|-------------|---------|
 | `replicaCount` | Number of Hakanai replicas | `2` |
 | `image.repository` | Hakanai image repository | `ghcr.io/czerwonk/hakanai` |
-| `image.tag` | Hakanai image tag | `2.9.7` |
+| `image.tag` | Hakanai image tag | `v2.9.7` |
 | `ingress.enabled` | Enable ingress | `true` |
 | `ingress.className` | Ingress class name | `nginx` |
 | `ingress.hosts[0].host` | Hostname for ingress | `hakanai.example.com` |
