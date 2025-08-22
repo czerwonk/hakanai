@@ -31,17 +31,14 @@ export interface DataTransferObserver {
    * This method is invoked periodically during the data transfer process.
    *
    * @param bytesTransferred - The total number of bytes transferred so far
-   * @param totalBytes - The total size of the transfer in bytes (undefined when size is unknown, e.g. compressed responses)
+   * @param totalBytes - The total size of the transfer in bytes (omitted when size is unknown, e.g. compressed responses)
    *
    * @remarks
    * - This method is called asynchronously and should not block for extended periods
    * - The frequency of calls depends on the chunk size and browser implementation
-   * - When totalBytes is defined: `bytesTransferred` will always be ≤ `totalBytes`
-   * - When totalBytes is undefined: The transfer size is unknown (e.g., compressed content)
+   * - When totalBytes is provided: `bytesTransferred` will always be ≤ `totalBytes`
+   * - When totalBytes is omitted: The transfer size is unknown (e.g., compressed content)
    * - The final call will have `bytesTransferred === totalBytes` when totalBytes is known
    */
-  onProgress(
-    bytesTransferred: number,
-    totalBytes: number | undefined,
-  ): Promise<void>;
+  onProgress(bytesTransferred: number, totalBytes?: number): Promise<void>;
 }

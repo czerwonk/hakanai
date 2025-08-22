@@ -237,10 +237,9 @@ class HakanaiClient {
           chunks.push(value);
           downloadedBytes += value.length;
 
-          // Call progress observer if provided (totalBytes is undefined)
           if (progressObserver) {
             try {
-              await progressObserver.onProgress(downloadedBytes, undefined);
+              await progressObserver.onProgress(downloadedBytes);
             } catch (error) {
               console.warn("Progress observer error:", error);
             }

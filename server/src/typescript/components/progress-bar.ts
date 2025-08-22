@@ -95,7 +95,7 @@ export class ProgressBar implements DataTransferObserver {
     this.isVisible = false;
   }
 
-  updateProgress(current: number, total: number | undefined): void {
+  updateProgress(current: number, total?: number): void {
     this.currentBytes = current;
     this.totalBytes = total;
 
@@ -200,7 +200,7 @@ export class ProgressBar implements DataTransferObserver {
    */
   async onProgress(
     bytesTransferred: number,
-    totalBytes: number | undefined,
+    totalBytes?: number,
   ): Promise<void> {
     // Just update the progress values, display will be handled when/if overlay shows
     this.updateProgress(bytesTransferred, totalBytes);
