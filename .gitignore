@@ -35,4 +35,4 @@ server/src/includes/*.wasm
 server/src/includes/components/
 server/src/includes/core/
 
-helm/charts/
+helm/hakanai/charts/
