@@ -550,6 +550,13 @@ class HakanaiClient {
         410,
       );
     }
+    if (response.status === 403) {
+      throw new HakanaiError(
+        HakanaiErrorCodes.ACCESS_DENIED,
+        "Client is not authorized to access this secret",
+        403,
+      );
+    }
     throw new HakanaiError(
       HakanaiErrorCodes.RETRIEVE_FAILED,
       `Failed to retrieve secret: ${response.status} ${response.statusText}`,

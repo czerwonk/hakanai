@@ -24,6 +24,8 @@ const HakanaiErrorCodes = {
   PAYLOAD_TOO_LARGE: "PAYLOAD_TOO_LARGE",
   /** Hash validation of the received secret has failed */
   HASH_MISMATCH: "HASH_MISMATCH",
+  /** Client not allowed to access the secret */
+  ACCESS_DENIED: "ACCESS_DENIED",
 
   // Validation error codes - specific for better translations
   /** Input must be a Uint8Array but received different type */
