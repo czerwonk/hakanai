@@ -52,7 +52,7 @@ service:
   annotations: {}
 
 ingress:
-  enabled: true
+  enabled: false
   className: "nginx"
   annotations:
     # Rate limiting configuration (ingress-nginx)
@@ -263,12 +263,12 @@ networkPolicy:
 
   # Allow ingress from
   ingress:
+    # Allow from anywhere on port 8080
+    - ports:
+        - port: 8080
+          protocol: TCP
+    # Allow from same namespace (for any port)
     - from:
-        # Allow HTTP
-        - ports:
-            - port: 8080
-              protocol: "TCP"
-        # Allow from same namespace
         - podSelector: {}
 
   # Allow egress to
