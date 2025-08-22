@@ -146,17 +146,12 @@ impl DataStore for RedisClient {
         }
 
         let key = self.allowed_ips_key(id);
-        let ips_json = serialize_ip_networks(allowed_ips).map_err(|e| {
-            DataStoreError::Redis(redis::RedisError::from(std::io::Error::new(
-                std::io::ErrorKind::InvalidData,
-                e,
-            )))
-        })?;
+        let json = serialize_ip_networks(allowed_ips)?;
 
         let _: () = self
             .con
             .clone()
-            .set_ex(key, ips_json, expires_in.as_secs())
+            .set_ex(key, json, expires_in.as_secs())
             .await?;
         Ok(())
     }
