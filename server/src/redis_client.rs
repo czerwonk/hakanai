@@ -11,7 +11,6 @@ use tracing::instrument;
 use uuid::Uuid;
 
 use hakanai_lib::timestamp;
-use hakanai_lib::utils::ip_restrictions::{deserialize_ip_networks, serialize_ip_networks};
 
 use crate::data_store::{DataStore, DataStoreError, DataStorePopResult};
 use crate::token::{TokenData, TokenError, TokenStore};
@@ -146,7 +145,7 @@ impl DataStore for RedisClient {
         }
 
         let key = self.allowed_ips_key(id);
-        let json = serialize_ip_networks(allowed_ips)?;
+        let json = serde_json::to_str(allowed_ips)?;
 
         let _: () = self
             .con
@@ -163,7 +162,7 @@ impl DataStore for RedisClient {
 
         match value {
             Some(json) => {
-                let allowed_ips = deserialize_ip_networks(&json)?;
+                let allowed_ips = serde_json::from_str(&json)?;
                 Ok(Some(allowed_ips))
             }
             None => Ok(None),
