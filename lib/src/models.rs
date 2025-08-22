@@ -87,6 +87,9 @@ pub struct PostSecretRequest {
     /// The duration until the secret expires.
     #[serde_as(as = "serde_with::DurationSeconds<u64>")]
     pub expires_in: Duration,
+
+    /// Optional list of IP networks allowed to access the secret
+    pub allowed_ips: Option<Vec<ipnet::IpNet>>,
 }
 
 impl PostSecretRequest {
@@ -97,7 +100,17 @@ impl PostSecretRequest {
     /// * `data` - The secret data.
     /// * `expires_in` - The duration until expiration.
     pub fn new(data: String, expires_in: Duration) -> Self {
-        Self { data, expires_in }
+        Self {
+            data,
+            expires_in,
+            allowed_ips: None,
+        }
+    }
+
+    /// Sets IP networks allowed to access the secret
+    pub fn with_allowed_ips(mut self, allowed_ips: Vec<ipnet::IpNet>) -> Self {
+        self.allowed_ips = Some(allowed_ips);
+        self
     }
 }
 

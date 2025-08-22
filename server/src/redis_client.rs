@@ -19,6 +19,7 @@ const ADMIN_TOKEN_KEY: &str = "admin_token";
 const SECRET_PREFIX: &str = "secret:";
 const TOKEN_PREFIX: &str = "token:";
 const ACCESSED_PREFIX: &str = "accessed:";
+const ALLOWED_IPS_PREFIX: &str = "allowed_ips:";
 
 /// Connection timeout for Redis operations during startup
 const CONNECTION_TIMEOUT: Duration = Duration::from_secs(10);
@@ -57,6 +58,10 @@ impl RedisClient {
 
     fn token_key(&self, hash: &str) -> String {
         format!("{TOKEN_PREFIX}{hash}")
+    }
+
+    fn allowed_ips_key(&self, id: Uuid) -> String {
+        format!("{ALLOWED_IPS_PREFIX}{id}")
     }
 
     #[instrument(skip(self), err)]
@@ -126,6 +131,42 @@ impl DataStore for RedisClient {
         let pattern = format!("{SECRET_PREFIX}*");
         let keys: Vec<String> = self.con.clone().keys(pattern).await?;
         Ok(keys.len())
+    }
+
+    #[instrument(skip(self), err)]
+    async fn set_allowed_ips(
+        &self,
+        id: Uuid,
+        allowed_ips: &[ipnet::IpNet],
+        expires_in: Duration,
+    ) -> Result<(), DataStoreError> {
+        if allowed_ips.is_empty() {
+            return Ok(()); // No restrictions to store
+        }
+
+        let key = self.allowed_ips_key(id);
+        let json = serde_json::to_string(allowed_ips)?;
+
+        let _: () = self
+            .con
+            .clone()
+            .set_ex(key, json, expires_in.as_secs())
+            .await?;
+        Ok(())
+    }
+
+    #[instrument(skip(self), err)]
+    async fn get_allowed_ips(&self, id: Uuid) -> Result<Option<Vec<ipnet::IpNet>>, DataStoreError> {
+        let key = self.allowed_ips_key(id);
+        let value: Option<String> = self.con.clone().get(key).await?;
+
+        match value {
+            Some(json) => {
+                let allowed_ips = serde_json::from_str(&json)?;
+                Ok(Some(allowed_ips))
+            }
+            None => Ok(None),
+        }
     }
 }
 

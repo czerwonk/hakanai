@@ -25,6 +25,9 @@ pub enum DataStoreError {
     #[error("internal error: {0}")]
     #[cfg(test)]
     InternalError(String),
+
+    #[error("error while JSON processing: {0}")]
+    Serialization(#[from] serde_json::Error),
 }
 
 /// `DataStorePopResult` is an enum that represents the possible outcomes of DataStore::pop operation.
@@ -90,4 +93,34 @@ pub trait DataStore: Send + Sync {
     /// # Returns
     /// The number of secrets currently stored (not yet retrieved).
     async fn active_secret_count(&self) -> Result<usize, DataStoreError>;
+
+    /// Stores IP restrictions for a secret with the same TTL as the secret itself.
+    ///
+    /// # Arguments
+    ///
+    /// * `id` - The `Uuid` of the secret.
+    /// * `allowed_ips` - Vector of IP networks that are allowed to access this secret.
+    /// * `expires_in` - The duration after which the restrictions should expire.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` which is `Ok(())` on successful storage, or an `Err` if an error occurs.
+    async fn set_allowed_ips(
+        &self,
+        id: Uuid,
+        allowed_ips: &[ipnet::IpNet],
+        expires_in: Duration,
+    ) -> Result<(), DataStoreError>;
+
+    /// Retrieves IP restrictions for a secret (if any).
+    ///
+    /// # Arguments
+    ///
+    /// * `id` - The `Uuid` of the secret.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing `Some(Vec<ipnet::IpNet>)` if restrictions exist,
+    /// `None` if no restrictions, or an `Err` if an error occurs.
+    async fn get_allowed_ips(&self, id: Uuid) -> Result<Option<Vec<ipnet::IpNet>>, DataStoreError>;
 }

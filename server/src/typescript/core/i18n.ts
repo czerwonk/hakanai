@@ -163,6 +163,7 @@ const I18nKeys = {
   },
 
   Error: {
+    AccessDenied: "error.ACCESS_DENIED",
     AuthenticationRequired: "error.AUTHENTICATION_REQUIRED",
     Base64Error: "error.BASE64_ERROR",
     CryptoApiUnavailable: "error.CRYPTO_API_UNAVAILABLE",
@@ -392,6 +393,8 @@ const translations: Translations = {
 
     [I18nKeys.Page.PrivacyTitle]: "Privacy Policy",
 
+    [I18nKeys.Error.AccessDenied]:
+      "Access denied - you are not allowed to access the secret",
     [I18nKeys.Error.SendFailed]: "Failed to send secret",
     [I18nKeys.Error.AuthenticationRequired]:
       "Authentication required - Please enter your authentication token",
@@ -622,6 +625,8 @@ const translations: Translations = {
 
     [I18nKeys.Page.PrivacyTitle]: "Datenschutzerklärung",
 
+    [I18nKeys.Error.AccessDenied]:
+      "Zugriff verweigert - Keine Berechtigung auf das Secret zuzugreifen",
     [I18nKeys.Error.SendFailed]: "Fehler beim Senden des Secrets",
     [I18nKeys.Error.AuthenticationRequired]:
       "Authentifizierung erforderlich - Bitte Authentifizierungs-Token eingeben",

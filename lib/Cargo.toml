@@ -2,7 +2,7 @@
 
 [package]
 name = "hakanai-lib"
-version = "2.9.8"
+version = "2.10.0"
 edition = "2024"
 license = "Apache-2.0"
 description = "Client library for Hakanai, a secure secret sharing service."
@@ -19,6 +19,7 @@ async-stream = { version = "0.3.6", optional = true }
 async-trait = "0.1.88"
 base64 = "0.22.1"
 bytes = { version = "1.10.1", optional = true }
+ipnet = { version = "2.11.0", features = ["serde"] }
 rand = "0.9.1"
 reqwest = { version = "0.12.22", optional = true, features = ["json", "stream"] }
 serde = { version = "1.0.219", features = ["derive"] }

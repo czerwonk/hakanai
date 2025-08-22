@@ -47,9 +47,12 @@ impl Client<Vec<u8>> for WebClient {
         let url = base_url.join(API_SECRET_PATH)?;
 
         let secret = String::from_utf8(data)?;
-        let req = PostSecretRequest::new(secret, ttl);
+        let mut req = PostSecretRequest::new(secret, ttl);
 
         let opt = opts.unwrap_or_default();
+        if let Some(allowed_ips) = opt.allowed_ips.clone() {
+            req = req.with_allowed_ips(allowed_ips);
+        }
 
         let (body, content_length) = self.post_secret_body_from_req(req, &opt)?;
 

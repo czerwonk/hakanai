@@ -1,20 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
-use std::str::FromStr;
 use std::time::Duration;
 
 use clap::Parser;
+use hakanai_lib::utils::ip_parser::parse_ipnet;
 use hakanai_lib::utils::size_parser::parse_size_limit;
 
 /// Parse a size limit for server configuration, returns value in bytes
 fn parse_size_limit_bytes(s: &str) -> Result<usize, String> {
     let bytes = parse_size_limit(s)?;
     Ok(bytes.max(1) as usize)
-}
-
-/// Parse an IP network in CIDR notation
-fn parse_ip_networks(s: &str) -> Result<ipnet::IpNet, String> {
-    ipnet::IpNet::from_str(s).map_err(|e| format!("Invalid CIDR notation '{}': {}", s, e))
 }
 
 /// Represents the command-line arguments for the server.
@@ -164,7 +159,7 @@ pub struct Args {
         value_delimiter = ',',
         env = "HAKANAI_TRUSTED_IP_RANGES",
         help = "IP ranges (CIDR notation) that bypass size limits. Example: 10.0.0.0/8,192.168.1.0/24",
-        value_parser = parse_ip_networks
+        value_parser = parse_ipnet
     )]
     pub trusted_ip_ranges: Option<Vec<ipnet::IpNet>>,
 

@@ -303,16 +303,20 @@ fn generate_status_codes(operation: &Value) -> String {
 fn generate_request_body(operation: &Value) -> String {
     if let Some(request_body) = operation["requestBody"].as_object()
         && let Some(content) = request_body["content"]["application/json"].as_object()
-        && let Some(example) = content["example"].as_object()
-    {
-        return format!(
-            r#"<h4>Request Body</h4>
-                    <div class="code-block">
-                      <code>{}</code>
-                    </div>"#,
-            serde_json::to_string_pretty(example).unwrap_or_default()
-        );
-    }
+        && let Some(examples) = content.get("examples").and_then(|v| v.as_object()) {
+            // Use the first example from the examples object
+            if let Some(first_example) = examples.values().next()
+                && let Some(example_value) = first_example.get("value").and_then(|v| v.as_object())
+                {
+                    return format!(
+                        r#"<h4>Request Body</h4>
+                        <div class="code-block">
+                          <code>{}</code>
+                        </div>"#,
+                        serde_json::to_string_pretty(example_value).unwrap_or_default()
+                    );
+                }
+        }
 
     String::new()
 }

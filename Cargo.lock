@@ -1079,7 +1079,7 @@ dependencies = [
 
 [[package]]
 name = "hakanai"
-version = "2.9.8"
+version = "2.10.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1088,6 +1088,7 @@ dependencies = [
  "hakanai-lib",
  "humantime",
  "indicatif",
+ "ipnet",
  "qrcode",
  "reqwest",
  "rpassword",
@@ -1100,13 +1101,14 @@ dependencies = [
 
 [[package]]
 name = "hakanai-lib"
-version = "2.9.8"
+version = "2.10.0"
 dependencies = [
  "aes-gcm",
  "async-stream",
  "async-trait",
  "base64",
  "bytes",
+ "ipnet",
  "mockito",
  "rand",
  "reqwest",
@@ -1123,7 +1125,7 @@ dependencies = [
 
 [[package]]
 name = "hakanai-server"
-version = "2.9.8"
+version = "2.10.0"
 dependencies = [
  "actix-cors",
  "actix-web",
@@ -1160,7 +1162,7 @@ dependencies = [
 
 [[package]]
 name = "hakanai-wasm"
-version = "2.9.8"
+version = "2.10.0"
 dependencies = [
  "qrcode",
  "wasm-bindgen",
@@ -1570,6 +1572,9 @@ name = "ipnet"
 version = "2.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "469fb0b9cefa57e3ef31275ee7cacb78f2fdca44e4765491884a2b119d4eb130"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "iri-string"
