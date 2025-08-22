@@ -84,6 +84,7 @@ spec:
             - name: HAKANAI_PRIVACY_FILE
               value: {{ .Values.hakanai.server.privacyFile | quote }}
             {{- end }}
+            {{- if .Values.hakanai.webhook }}
             {{- if .Values.hakanai.webhook.url }}
             - name: HAKANAI_WEBHOOK_URL
               value: {{ .Values.hakanai.webhook.url | quote }}
@@ -94,6 +95,7 @@ spec:
                 secretKeyRef:
                   name: {{ include "hakanai.fullname" . }}
                   key: webhook-token
+            {{- end }}
             {{- end }}
             - name: HAKANAI_REDIS_DSN
               value: "redis://{{ include "hakanai.redisHost" . }}:{{ include "hakanai.redisPort" . }}/"
