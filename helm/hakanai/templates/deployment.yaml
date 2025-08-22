@@ -97,14 +97,17 @@ spec:
                   key: webhook-token
             {{- end }}
             {{- end }}
-            - name: HAKANAI_REDIS_DSN
-              value: "redis://{{ include "hakanai.redisHost" . }}:{{ include "hakanai.redisPort" . }}/"
             {{- if or .Values.redis.auth.enabled .Values.externalRedis.password }}
             - name: REDIS_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: {{ include "hakanai.redisSecretName" . }}
                   key: {{ include "hakanai.redisSecretPasswordKey" . }}
+            - name: HAKANAI_REDIS_DSN
+              value: "redis://:$(REDIS_PASSWORD)@{{ include "hakanai.redisHost" . }}:{{ include "hakanai.redisPort" . }}/"
+            {{- else }}
+            - name: HAKANAI_REDIS_DSN
+              value: "redis://{{ include "hakanai.redisHost" . }}:{{ include "hakanai.redisPort" . }}/"
             {{- end }}
             {{- if .Values.hakanai.observability.enabled }}
             - name: OTEL_EXPORTER_OTLP_ENDPOINT

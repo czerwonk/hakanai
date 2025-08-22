@@ -6,7 +6,6 @@ services:
     environment:
       HAKANAI_LISTEN_ADDRESS: "0.0.0.0"
       HAKANAI_REDIS_DSN: "${REDIS_DSN:-redis://valkey:6379}"
-      REDIS_PASSWORD: "${REDIS_PASSWORD}"
     volumes:
       - VALKEY_DATA:/data
     networks: [hakanai-network]
