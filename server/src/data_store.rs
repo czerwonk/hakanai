@@ -25,6 +25,9 @@ pub enum DataStoreError {
     #[error("internal error: {0}")]
     #[cfg(test)]
     InternalError(String),
+
+    #[error("error while JSON processing: {0}")]
+    Serialization(#[from] serde_json::Error)
 }
 
 /// `DataStorePopResult` is an enum that represents the possible outcomes of DataStore::pop operation.
