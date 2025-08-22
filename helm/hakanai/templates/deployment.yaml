@@ -14,7 +14,6 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
         checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
         {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
@@ -38,29 +37,41 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          args:
-            - --upload-size-limit={{ .Values.hakanai.server.uploadSizeLimit }}
+          env:
+            - name: HAKANAI_UPLOAD_SIZE_LIMIT
+              value: {{ .Values.hakanai.server.uploadSizeLimit | quote }}
             {{- if .Values.hakanai.server.allowAnonymous }}
-            - --allow-anonymous
-            - --anonymous-size-limit={{ .Values.hakanai.server.anonymousSizeLimit }}
+            - name: HAKANAI_ALLOW_ANONYMOUS
+              value: "true"
+            - name: HAKANAI_ANONYMOUS_UPLOAD_SIZE_LIMIT
+              value: {{ .Values.hakanai.server.anonymousSizeLimit | quote }}
             {{- end }}
             {{- if .Values.hakanai.server.enableAdminToken }}
-            - --enable-admin-token
+            - name: HAKANAI_ENABLE_ADMIN_TOKEN
+              value: "true"
             {{- end }}
-            {{- range .Values.hakanai.server.ipWhitelist }}
-            - --ip-whitelist={{ . }}
+            {{- if .Values.hakanai.server.ipWhitelist }}
+            - name: HAKANAI_TRUSTED_IP_RANGES
+              value: {{ .Values.hakanai.server.ipWhitelist | join "," | quote }}
             {{- end }}
             {{- if .Values.hakanai.server.proxyHeader }}
-            - --proxy-header={{ .Values.hakanai.server.proxyHeader }}
+            - name: HAKANAI_TRUSTED_IP_HEADER
+              value: {{ .Values.hakanai.server.proxyHeader | quote }}
             {{- end }}
             {{- if .Values.hakanai.server.cors.enabled }}
-            {{- range .Values.hakanai.server.cors.origins }}
-            - --cors-origin={{ . }}
+            - name: HAKANAI_CORS_ALLOWED_ORIGINS
+              value: {{ .Values.hakanai.server.cors.origins | join "," | quote }}
             {{- end }}
+            {{- if .Values.hakanai.server.maxTtl }}
+            - name: HAKANAI_MAX_TTL
+              value: {{ .Values.hakanai.server.maxTtl | quote }}
             {{- end }}
-          env:
-            - name: REDIS_URL
-              value: "redis://{{ include "hakanai.redisHost" . }}:{{ include "hakanai.redisPort" . }}"
+            {{- if .Values.hakanai.server.showTokenInput }}
+            - name: HAKANAI_SHOW_TOKEN_INPUT
+              value: {{ .Values.hakanai.server.showTokenInput | quote }}
+            {{- end }}
+            - name: HAKANAI_REDIS_DSN
+              value: "redis://{{ include "hakanai.redisHost" . }}:{{ include "hakanai.redisPort" . }}/"
             {{- if or .Values.redis.auth.enabled .Values.externalRedis.password }}
             - name: REDIS_PASSWORD
               valueFrom:
