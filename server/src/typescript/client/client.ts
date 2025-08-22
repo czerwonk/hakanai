@@ -281,7 +281,10 @@ class HakanaiClient {
 
     // If no content-length header, use dynamic buffering
     if (!contentLength) {
-      return this.processResponseStreamWithoutContentLength(response, progressObserver);
+      return this.processResponseStreamWithoutContentLength(
+        response,
+        progressObserver,
+      );
     }
 
     const totalBytes = parseInt(contentLength, 10);
