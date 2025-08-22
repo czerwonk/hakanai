@@ -217,6 +217,52 @@ class HakanaiClient {
   }
 
   /**
+   * Process response stream without known content length (e.g., compressed responses)
+   * @private
+   */
+  private async processResponseStreamWithoutContentLength(
+    response: Response,
+    progressObserver?: DataTransferObserver,
+  ): Promise<string> {
+    const chunks: Uint8Array[] = [];
+    let downloadedBytes = 0;
+
+    const reader = response.body!.getReader();
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        if (value) {
+          chunks.push(value);
+          downloadedBytes += value.length;
+
+          // Call progress observer if provided (totalBytes is undefined)
+          if (progressObserver) {
+            try {
+              await progressObserver.onProgress(downloadedBytes, undefined);
+            } catch (error) {
+              console.warn("Progress observer error:", error);
+            }
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+
+    // Combine all chunks
+    const result = new Uint8Array(downloadedBytes);
+    let offset = 0;
+    for (const chunk of chunks) {
+      result.set(chunk, offset);
+      offset += chunk.length;
+    }
+
+    return new TextDecoder().decode(result);
+  }
+
+  /**
    * Process response stream with chunking and optional progress tracking
    * @private
    */
@@ -232,13 +278,19 @@ class HakanaiClient {
     }
 
     const contentLength = response.headers.get("content-length");
-    const totalBytes = contentLength ? parseInt(contentLength, 10) : 0;
 
-    // Error if content-length is missing/zero, like Rust client
+    // If no content-length header, use dynamic buffering
+    if (!contentLength) {
+      return this.processResponseStreamWithoutContentLength(response, progressObserver);
+    }
+
+    const totalBytes = parseInt(contentLength, 10);
+
+    // Error if content-length is zero
     if (totalBytes === 0) {
       throw new HakanaiError(
         HakanaiErrorCodes.INVALID_SERVER_RESPONSE,
-        "Response body is empty or content length is not set",
+        "Response body is empty",
       );
     }
 
