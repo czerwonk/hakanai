@@ -5,8 +5,38 @@ entries:
       category: Security
       licenses: MIT
     apiVersion: v2
+    appVersion: v2.9.8
+    created: "2025-08-22T17:18:08.551964651Z"
+    dependencies:
+    - condition: redis.enabled
+      name: redis
+      repository: oci://registry-1.docker.io/bitnamicharts
+      version: ~20.5.0
+    description: A minimalist one-time secret sharing service implementing zero-knowledge
+      principles
+    digest: 4536afc9e0d94a911335ea063e12b8f26506288e8dde2a9e782b851ed8de7a2e
+    home: https://github.com/czerwonk/hakanai
+    keywords:
+    - secret-sharing
+    - zero-knowledge
+    - security
+    - encryption
+    maintainers:
+    - email: daniel@routing.rocks
+      name: Daniel Brendgen-Czerwonk
+    name: hakanai
+    sources:
+    - https://github.com/czerwonk/hakanai
+    type: application
+    urls:
+    - https://czerwonk.github.io/hakanai/hakanai-0.2.7.tgz
+    version: 0.2.7
+  - annotations:
+      category: Security
+      licenses: MIT
+    apiVersion: v2
     appVersion: v2.9.7
-    created: "2025-08-22T16:39:18.90768196Z"
+    created: "2025-08-22T17:18:08.545549091Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -36,7 +66,7 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: v2.9.7
-    created: "2025-08-22T16:39:18.900927338Z"
+    created: "2025-08-22T17:18:08.538997938Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -66,7 +96,7 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: v2.9.7
-    created: "2025-08-22T16:39:18.894237793Z"
+    created: "2025-08-22T17:18:08.532636386Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -96,7 +126,7 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: v2.9.7
-    created: "2025-08-22T16:39:18.885714345Z"
+    created: "2025-08-22T17:18:08.526336628Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -126,7 +156,7 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: 2.9.7
-    created: "2025-08-22T16:39:18.874112148Z"
+    created: "2025-08-22T17:18:08.519814015Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -156,7 +186,7 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: 2.9.7
-    created: "2025-08-22T16:39:18.861853194Z"
+    created: "2025-08-22T17:18:08.514022924Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -181,4 +211,4 @@ entries:
     urls:
     - https://czerwonk.github.io/hakanai/hakanai-0.2.1.tgz
     version: 0.2.1
-generated: "2025-08-22T16:39:18.850767152Z"
+generated: "2025-08-22T17:18:08.506340624Z"
