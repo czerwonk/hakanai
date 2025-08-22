@@ -538,6 +538,7 @@ class HakanaiClient {
     const response = await fetch(`${this.baseUrl}/api/v1/secret/${secretId}`, {
       headers: {
         "X-Request-Id": requestId,
+        "Accept-Encoding": "identity", // ensure no compression
       },
     });
 

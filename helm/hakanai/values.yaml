@@ -61,6 +61,10 @@ ingress:
     nginx.ingress.kubernetes.io/limit-burst-multiplier: "2"
     nginx.ingress.kubernetes.io/limit-connections: "20"
 
+    # Disable gzip (necessary to get size upfront)
+    nginx.ingress.kubernetes.io/server-snippet: |
+      gzip off;
+
     # Body size limit (adjust based on your needs)
     nginx.ingress.kubernetes.io/proxy-body-size: "15m"
 
