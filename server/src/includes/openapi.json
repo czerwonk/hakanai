@@ -185,9 +185,14 @@
               "schema": {
                 "$ref": "#/components/schemas/CreateTokenRequest"
               },
-              "example": {
-                "upload_size_limit": 1048576,
-                "ttl_seconds": 2592000
+              "examples": {
+                "basic": {
+                  "summary": "Basic token creation",
+                  "value": {
+                    "upload_size_limit": 1048576,
+                    "ttl_seconds": 2592000
+                  }
+                }
               }
             }
           }

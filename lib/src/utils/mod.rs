@@ -10,9 +10,11 @@
 //!
 //! - [`content_analysis`] - Functions for analyzing content types (binary vs text detection)
 //! - [`ip_parser`] - Functions for parsing IP addresses and CIDR notation
+//! - [`ip_restrictions`] - Functions for IP access control and restrictions
 //! - [`size_parser`] - Functions for parsing human-readable size strings
 //!
 
 pub mod content_analysis;
 pub mod ip_parser;
+pub mod ip_restrictions;
 pub mod size_parser;
