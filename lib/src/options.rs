@@ -48,7 +48,7 @@ pub struct SecretSendOptions {
     /// An optional user agent string to identify the sender.
     pub user_agent: Option<String>,
 
-    /// An optional list of allowed IPs allowed to access the secret.
+    /// An optional list of IP networks allowed to access the secret.
     pub allowed_ips: Option<Vec<ipnet::IpNet>>,
 }
 
