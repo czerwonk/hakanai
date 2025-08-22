@@ -47,6 +47,9 @@ pub struct SecretSendOptions {
 
     /// An optional user agent string to identify the sender.
     pub user_agent: Option<String>,
+
+    /// An optional list of allowed IPs allowed to access the secret.
+    pub allowed_ips: Option<Vec<ipnet::IpNet>>,
 }
 
 impl SecretSendOptions {
@@ -76,6 +79,12 @@ impl SecretSendOptions {
     /// Sets a custom user agent string.
     pub fn with_user_agent(mut self, user_agent: String) -> Self {
         self.user_agent = Some(user_agent);
+        self
+    }
+
+    /// Sets the allowed IPs for this secret.
+    pub fn with_allowed_ips(mut self, allowed_ips: Vec<ipnet::IpNet>) -> Self {
+        self.allowed_ips = Some(allowed_ips);
         self
     }
 }

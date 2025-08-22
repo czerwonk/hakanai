@@ -2,7 +2,7 @@
 
 [package]
 name = "hakanai-wasm"
-version = "2.9.8"
+version = "2.10.0"
 edition = "2024"
 license = "Apache-2.0"
 description = "WASM module for Hakanai QR code generation"

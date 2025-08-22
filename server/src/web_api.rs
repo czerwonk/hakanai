@@ -325,10 +325,7 @@ mod tests {
         ))
         .await;
 
-        let payload = PostSecretRequest {
-            data: "test_secret".to_string(),
-            expires_in: Duration::from_secs(3600),
-        };
+        let payload = PostSecretRequest::new("test_secret".to_string(), Duration::from_secs(3600));
 
         let req = test::TestRequest::post()
             .uri("/secret")
@@ -359,10 +356,7 @@ mod tests {
         ))
         .await;
 
-        let payload = PostSecretRequest {
-            data: "test_secret".to_string(),
-            expires_in: Duration::from_secs(3600),
-        };
+        let payload = PostSecretRequest::new("test_secret".to_string(), Duration::from_secs(3600));
 
         let req = test::TestRequest::post()
             .uri("/secret")
@@ -391,10 +385,7 @@ mod tests {
         ))
         .await;
 
-        let payload = PostSecretRequest {
-            data: "test_secret".to_string(),
-            expires_in: Duration::from_secs(3600),
-        };
+        let payload = PostSecretRequest::new("test_secret".to_string(), Duration::from_secs(3600));
 
         let req = test::TestRequest::post()
             .uri("/secret")
@@ -428,10 +419,7 @@ mod tests {
         ))
         .await;
 
-        let payload = PostSecretRequest {
-            data: "test_secret".to_string(),
-            expires_in: Duration::from_secs(3600),
-        };
+        let payload = PostSecretRequest::new("test_secret".to_string(), Duration::from_secs(3600));
 
         let req = test::TestRequest::post()
             .uri("/secret")
@@ -458,10 +446,7 @@ mod tests {
         ))
         .await;
 
-        let payload = PostSecretRequest {
-            data: "test_secret".to_string(),
-            expires_in: Duration::from_secs(3600),
-        };
+        let payload = PostSecretRequest::new("test_secret".to_string(), Duration::from_secs(3600));
 
         let req = test::TestRequest::post()
             .uri("/secret")
@@ -488,10 +473,10 @@ mod tests {
         ))
         .await;
 
-        let payload = PostSecretRequest {
-            data: "test_secret".to_string(),
-            expires_in: Duration::from_secs(max_ttl.as_secs() + 1),
-        };
+        let payload = PostSecretRequest::new(
+            "test_secret".to_string(),
+            Duration::from_secs(max_ttl.as_secs() + 1),
+        );
 
         let req = test::TestRequest::post()
             .uri("/secret")
@@ -520,10 +505,7 @@ mod tests {
 
         // Create a payload larger than 32KB * 1.5 = 48KB effective limit
         let large_data = "x".repeat(50 * 1024); // 50KB (exceeds 48KB effective limit)
-        let payload = PostSecretRequest {
-            data: large_data,
-            expires_in: Duration::from_secs(3600),
-        };
+        let payload = PostSecretRequest::new(large_data, Duration::from_secs(3600));
 
         let req = test::TestRequest::post()
             .uri("/secret")
@@ -554,10 +536,7 @@ mod tests {
 
         // Create a payload larger than 1KB * 1.5 = 1.5KB effective limit
         let large_data = "x".repeat(2048); // 2KB (exceeds 1.5KB effective limit)
-        let payload = PostSecretRequest {
-            data: large_data,
-            expires_in: Duration::from_secs(3600),
-        };
+        let payload = PostSecretRequest::new(large_data, Duration::from_secs(3600));
 
         let req = test::TestRequest::post()
             .uri("/secret")
@@ -585,10 +564,7 @@ mod tests {
         ))
         .await;
 
-        let payload = PostSecretRequest {
-            data: "test_secret".to_string(),
-            expires_in: Duration::from_secs(3600),
-        };
+        let payload = PostSecretRequest::new("test_secret".to_string(), Duration::from_secs(3600));
 
         let req = test::TestRequest::post()
             .uri("/secret")
@@ -621,10 +597,7 @@ mod tests {
         ))
         .await;
 
-        let payload = PostSecretRequest {
-            data: "test_secret".to_string(),
-            expires_in: Duration::from_secs(3600),
-        };
+        let payload = PostSecretRequest::new("test_secret".to_string(), Duration::from_secs(3600));
 
         let req = test::TestRequest::post()
             .uri("/secret")
@@ -713,10 +686,7 @@ mod tests {
         ))
         .await;
 
-        let payload = PostSecretRequest {
-            data: "test_secret".to_string(),
-            expires_in: Duration::from_secs(3600),
-        };
+        let payload = PostSecretRequest::new("test_secret".to_string(), Duration::from_secs(3600));
 
         let req = test::TestRequest::post()
             .uri("/secret")

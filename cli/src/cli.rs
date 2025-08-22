@@ -7,6 +7,7 @@ use anyhow::{Result, anyhow};
 use clap::{Parser, Subcommand};
 use url::Url;
 
+use hakanai_lib::utils::ip_parser::parse_ipnet;
 use hakanai_lib::utils::size_parser::parse_size_limit;
 
 /// Represents the command-line arguments for the application.
@@ -91,6 +92,14 @@ pub struct SendArgs {
         help = "Print URL also as QR code"
     )]
     pub print_qr_code: bool,
+
+    #[arg(
+        long = "allowed-ip",
+        env = "HAKANAI_ALLOWED_IPS",
+        help = "Comma-separated list of IP addresses (CIDR notation) that are allowed to access the secret.",
+        value_parser = parse_ipnet
+    )]
+    pub allowed_ips: Option<Vec<ipnet::IpNet>>,
 }
 
 impl SendArgs {
@@ -125,6 +134,7 @@ impl SendArgs {
             filename: None,
             separate_key: false,
             print_qr_code: false,
+            allowed_ips: None,
         }
     }
 
@@ -167,6 +177,12 @@ impl SendArgs {
     #[cfg(test)]
     pub fn with_filename(mut self, filename: &str) -> Self {
         self.filename = Some(filename.to_string());
+        self
+    }
+
+    #[cfg(test)]
+    pub fn with_allowed_ips(mut self, allowed_ips: Vec<ipnet::IpNet>) -> Self {
+        self.allowed_ips = Some(allowed_ips);
         self
     }
 }
@@ -1089,5 +1105,230 @@ mod tests {
             GetArgs::builder("https://example.com/s/test").with_key("key-with_special.chars");
         let url = args.secret_url().unwrap();
         assert_eq!(url.fragment(), Some("key-with_special.chars"));
+    }
+
+    // Tests for --allowed-ip flag
+    #[test]
+    fn test_send_command_with_single_allowed_ip() {
+        let args =
+            Args::try_parse_from(["hakanai", "send", "--allowed-ip", "192.168.1.100"]).unwrap();
+
+        match args.command {
+            Command::Send(send_args) => {
+                let allowed_ips = send_args.allowed_ips.unwrap();
+                assert_eq!(allowed_ips.len(), 1);
+                assert_eq!(allowed_ips[0].to_string(), "192.168.1.100/32");
+            }
+            _ => panic!("Expected Send command"),
+        }
+    }
+
+    #[test]
+    fn test_send_command_with_ipv6_allowed_ip() {
+        let args =
+            Args::try_parse_from(["hakanai", "send", "--allowed-ip", "2001:db8::1"]).unwrap();
+
+        match args.command {
+            Command::Send(send_args) => {
+                let allowed_ips = send_args.allowed_ips.unwrap();
+                assert_eq!(allowed_ips.len(), 1);
+                assert_eq!(allowed_ips[0].to_string(), "2001:db8::1/128");
+            }
+            _ => panic!("Expected Send command"),
+        }
+    }
+
+    #[test]
+    fn test_send_command_with_cidr_allowed_ip() {
+        let args = Args::try_parse_from(["hakanai", "send", "--allowed-ip", "10.0.0.0/8"]).unwrap();
+
+        match args.command {
+            Command::Send(send_args) => {
+                let allowed_ips = send_args.allowed_ips.unwrap();
+                assert_eq!(allowed_ips.len(), 1);
+                assert_eq!(allowed_ips[0].to_string(), "10.0.0.0/8");
+            }
+            _ => panic!("Expected Send command"),
+        }
+    }
+
+    #[test]
+    fn test_send_command_with_multiple_allowed_ips() {
+        let args = Args::try_parse_from([
+            "hakanai",
+            "send",
+            "--allowed-ip",
+            "192.168.1.0/24",
+            "--allowed-ip",
+            "10.0.0.0/8",
+            "--allowed-ip",
+            "172.16.0.100",
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Send(send_args) => {
+                let allowed_ips = send_args.allowed_ips.unwrap();
+                assert_eq!(allowed_ips.len(), 3);
+                assert_eq!(allowed_ips[0].to_string(), "192.168.1.0/24");
+                assert_eq!(allowed_ips[1].to_string(), "10.0.0.0/8");
+                assert_eq!(allowed_ips[2].to_string(), "172.16.0.100/32");
+            }
+            _ => panic!("Expected Send command"),
+        }
+    }
+
+    #[test]
+    fn test_send_command_with_ipv6_cidr_allowed_ip() {
+        let args =
+            Args::try_parse_from(["hakanai", "send", "--allowed-ip", "2001:db8::/32"]).unwrap();
+
+        match args.command {
+            Command::Send(send_args) => {
+                let allowed_ips = send_args.allowed_ips.unwrap();
+                assert_eq!(allowed_ips.len(), 1);
+                assert_eq!(allowed_ips[0].to_string(), "2001:db8::/32");
+            }
+            _ => panic!("Expected Send command"),
+        }
+    }
+
+    #[test]
+    fn test_send_command_with_mixed_ipv4_ipv6_allowed_ips() {
+        let args = Args::try_parse_from([
+            "hakanai",
+            "send",
+            "--allowed-ip",
+            "192.168.1.0/24",
+            "--allowed-ip",
+            "2001:db8::1/128",
+            "--allowed-ip",
+            "10.0.0.1",
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Send(send_args) => {
+                let allowed_ips = send_args.allowed_ips.unwrap();
+                assert_eq!(allowed_ips.len(), 3);
+                assert_eq!(allowed_ips[0].to_string(), "192.168.1.0/24");
+                assert_eq!(allowed_ips[1].to_string(), "2001:db8::1/128");
+                assert_eq!(allowed_ips[2].to_string(), "10.0.0.1/32");
+            }
+            _ => panic!("Expected Send command"),
+        }
+    }
+
+    #[test]
+    fn test_send_command_without_allowed_ips() {
+        let args = Args::try_parse_from(["hakanai", "send"]).unwrap();
+
+        match args.command {
+            Command::Send(send_args) => {
+                assert!(send_args.allowed_ips.is_none());
+            }
+            _ => panic!("Expected Send command"),
+        }
+    }
+
+    #[test]
+    fn test_send_command_invalid_ip_address() {
+        let result = Args::try_parse_from(["hakanai", "send", "--allowed-ip", "not-an-ip"]);
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_send_command_invalid_cidr_notation() {
+        let result = Args::try_parse_from([
+            "hakanai",
+            "send",
+            "--allowed-ip",
+            "192.168.1.0/33", // Invalid CIDR - /33 is not valid for IPv4
+        ]);
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_send_command_with_allowed_ip_and_other_flags() {
+        let args = Args::try_parse_from([
+            "hakanai",
+            "send",
+            "--server",
+            "https://example.com",
+            "--ttl",
+            "1h",
+            "--allowed-ip",
+            "192.168.1.0/24",
+            "--allowed-ip",
+            "10.0.0.1",
+            "--file",
+            "test.txt",
+            "--as-file",
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Send(send_args) => {
+                assert_eq!(send_args.server.as_str(), "https://example.com/");
+                assert_eq!(send_args.ttl, Duration::from_secs(60 * 60)); // 1 hour
+                assert_eq!(send_args.files, Some(vec!["test.txt".to_string()]));
+                assert!(send_args.as_file);
+
+                let allowed_ips = send_args.allowed_ips.unwrap();
+                assert_eq!(allowed_ips.len(), 2);
+                assert_eq!(allowed_ips[0].to_string(), "192.168.1.0/24");
+                assert_eq!(allowed_ips[1].to_string(), "10.0.0.1/32");
+            }
+            _ => panic!("Expected Send command"),
+        }
+    }
+
+    #[test]
+    fn test_send_args_builder_with_allowed_ips() {
+        use std::str::FromStr;
+
+        let ip1 = ipnet::IpNet::from_str("192.168.1.0/24").unwrap();
+        let ip2 = ipnet::IpNet::from_str("10.0.0.1/32").unwrap();
+
+        let send_args = SendArgs::builder()
+            .with_server("https://test.com")
+            .with_allowed_ips(vec![ip1, ip2]);
+
+        assert_eq!(send_args.server.as_str(), "https://test.com/");
+
+        let allowed_ips = send_args.allowed_ips.unwrap();
+        assert_eq!(allowed_ips.len(), 2);
+        assert_eq!(allowed_ips[0].to_string(), "192.168.1.0/24");
+        assert_eq!(allowed_ips[1].to_string(), "10.0.0.1/32");
+    }
+
+    #[test]
+    fn test_send_command_with_localhost_allowed_ip() {
+        let args = Args::try_parse_from(["hakanai", "send", "--allowed-ip", "127.0.0.1"]).unwrap();
+
+        match args.command {
+            Command::Send(send_args) => {
+                let allowed_ips = send_args.allowed_ips.unwrap();
+                assert_eq!(allowed_ips.len(), 1);
+                assert_eq!(allowed_ips[0].to_string(), "127.0.0.1/32");
+            }
+            _ => panic!("Expected Send command"),
+        }
+    }
+
+    #[test]
+    fn test_send_command_with_ipv6_localhost_allowed_ip() {
+        let args = Args::try_parse_from(["hakanai", "send", "--allowed-ip", "::1"]).unwrap();
+
+        match args.command {
+            Command::Send(send_args) => {
+                let allowed_ips = send_args.allowed_ips.unwrap();
+                assert_eq!(allowed_ips.len(), 1);
+                assert_eq!(allowed_ips[0].to_string(), "::1/128");
+            }
+            _ => panic!("Expected Send command"),
+        }
     }
 }

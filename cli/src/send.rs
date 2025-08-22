@@ -48,9 +48,13 @@ pub async fn send<T: Factory>(factory: T, args: SendArgs) -> Result<()> {
 
     let user_agent = get_user_agent_name();
     let observer = factory.new_observer("Sending secret...")?;
-    let opts = SecretSendOptions::default()
+    let mut opts = SecretSendOptions::default()
         .with_user_agent(user_agent)
         .with_observer(observer);
+
+    if let Some(allowed_ips) = args.allowed_ips.clone() {
+        opts = opts.with_allowed_ips(allowed_ips);
+    }
 
     let mut link = factory
         .new_client()
