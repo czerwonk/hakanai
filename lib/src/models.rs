@@ -88,6 +88,7 @@ pub struct PostSecretRequest {
     #[serde_as(as = "serde_with::DurationSeconds<u64>")]
     pub expires_in: Duration,
 
+    /// Optional list of IP networks allowed to access the secret
     pub allowed_ips: Option<Vec<ipnet::IpNet>>,
 }
 
@@ -106,7 +107,7 @@ impl PostSecretRequest {
         }
     }
 
-    /// Sets the allowed IPs for this secret.
+    /// Sets IP networks allowed to access the secret
     pub fn with_allowed_ips(mut self, allowed_ips: Vec<ipnet::IpNet>) -> Self {
         self.allowed_ips = Some(allowed_ips);
         self
