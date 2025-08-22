@@ -64,60 +64,15 @@ fn is_ip_in_ranges(ip: &IpAddr, ranges: &[ipnet::IpNet]) -> bool {
 mod tests {
     use super::*;
     use crate::app_data::{AnonymousOptions, AppData};
-    use crate::data_store::{DataStore, DataStoreError, DataStorePopResult};
     use crate::observer::ObserverManager;
-    use crate::test_utils::MockTokenManager;
+    use crate::test_utils::{MockDataStore, MockTokenManager};
     use actix_web::{HttpRequest, test};
     use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
     use std::time::Duration;
-    use uuid::Uuid;
-
-    // Mock data store for testing
-    struct MockDataStore;
-
-    #[async_trait::async_trait]
-    impl DataStore for MockDataStore {
-        async fn pop(&self, _id: Uuid) -> Result<DataStorePopResult, DataStoreError> {
-            Ok(DataStorePopResult::NotFound)
-        }
-
-        async fn put(
-            &self,
-            _id: Uuid,
-            _data: String,
-            _expires_in: Duration,
-        ) -> Result<(), DataStoreError> {
-            Ok(())
-        }
-
-        async fn is_healthy(&self) -> Result<(), DataStoreError> {
-            Ok(())
-        }
-
-        async fn active_secret_count(&self) -> Result<usize, DataStoreError> {
-            Ok(0)
-        }
-
-        async fn set_allowed_ips(
-            &self,
-            _id: Uuid,
-            _allowed_ips: &[ipnet::IpNet],
-            _expires_in: Duration,
-        ) -> Result<(), DataStoreError> {
-            Ok(())
-        }
-
-        async fn get_allowed_ips(
-            &self,
-            _id: Uuid,
-        ) -> Result<Option<Vec<ipnet::IpNet>>, DataStoreError> {
-            Ok(None)
-        }
-    }
 
     fn create_test_app_data(trusted_ranges: Option<Vec<ipnet::IpNet>>, header: &str) -> AppData {
         AppData {
-            data_store: Box::new(MockDataStore),
+            data_store: Box::new(MockDataStore::new()),
             token_validator: Box::new(MockTokenManager::new()),
             token_creator: Box::new(MockTokenManager::new()),
             max_ttl: Duration::from_secs(7200),
