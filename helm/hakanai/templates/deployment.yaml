@@ -38,6 +38,12 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
+            - name: HAKANAI_PORT
+              value: {{ .Values.hakanai.server.port | default "8080" | quote }}
+            {{- if .Values.hakanai.server.listenAddress }}
+            - name: HAKANAI_LISTEN_ADDRESS
+              value: {{ .Values.hakanai.server.listenAddress | quote }}
+            {{- end }}
             - name: HAKANAI_UPLOAD_SIZE_LIMIT
               value: {{ .Values.hakanai.server.uploadSizeLimit | quote }}
             {{- if .Values.hakanai.server.allowAnonymous }}
@@ -69,6 +75,25 @@ spec:
             {{- if .Values.hakanai.server.showTokenInput }}
             - name: HAKANAI_SHOW_TOKEN_INPUT
               value: {{ .Values.hakanai.server.showTokenInput | quote }}
+            {{- end }}
+            {{- if .Values.hakanai.server.impressumFile }}
+            - name: HAKANAI_IMPRESSUM_FILE
+              value: {{ .Values.hakanai.server.impressumFile | quote }}
+            {{- end }}
+            {{- if .Values.hakanai.server.privacyFile }}
+            - name: HAKANAI_PRIVACY_FILE
+              value: {{ .Values.hakanai.server.privacyFile | quote }}
+            {{- end }}
+            {{- if .Values.hakanai.webhook.url }}
+            - name: HAKANAI_WEBHOOK_URL
+              value: {{ .Values.hakanai.webhook.url | quote }}
+            {{- end }}
+            {{- if .Values.hakanai.webhook.token }}
+            - name: HAKANAI_WEBHOOK_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "hakanai.fullname" . }}
+                  key: webhook-token
             {{- end }}
             - name: HAKANAI_REDIS_DSN
               value: "redis://{{ include "hakanai.redisHost" . }}:{{ include "hakanai.redisPort" . }}/"
