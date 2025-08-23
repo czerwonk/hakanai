@@ -19,7 +19,7 @@ where
             let mut ip_nets = Vec::new();
             for s in strings {
                 let ip_net =
-                    crate::utils::ip_parser::parse_ipnet(&s).map_err(|e| Error::custom(e))?;
+                    crate::utils::ip_parser::parse_ipnet(&s).map_err(Error::custom)?;
                 ip_nets.push(ip_net);
             }
             Ok(Some(ip_nets))
