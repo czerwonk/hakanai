@@ -2,7 +2,7 @@
 
 [package]
 name = "hakanai-server"
-version = "2.10.2"
+version = "2.10.3"
 edition = "2024"
 license = "Apache-2.0"
 
