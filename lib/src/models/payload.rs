@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-use std::time::Duration;
-
 use base64::Engine;
 use serde::{Deserialize, Serialize};
-use serde_with::serde_as;
 use zeroize::Zeroize;
 
 /// Represents the data payload of a secret, which can be either a text message
@@ -72,136 +69,6 @@ impl Zeroize for Payload {
 }
 
 impl Drop for Payload {
-    fn drop(&mut self) {
-        self.zeroize();
-    }
-}
-
-/// Represents access restrictions for a secret.
-#[derive(Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
-pub struct SecretRestrictions {
-    /// IP addresses/ranges allowed to access the secret
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(default, deserialize_with = "deserialize_ip_nets")]
-    pub allowed_ips: Option<Vec<ipnet::IpNet>>,
-}
-
-fn deserialize_ip_nets<'de, D>(deserializer: D) -> Result<Option<Vec<ipnet::IpNet>>, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    use serde::de::Error;
-
-    // Handle both Vec<String> and null/missing cases
-    let strings_opt = Option::<Vec<String>>::deserialize(deserializer)?;
-
-    match strings_opt {
-        Some(strings) => {
-            let mut ip_nets = Vec::new();
-            for s in strings {
-                let ip_net =
-                    crate::utils::ip_parser::parse_ipnet(&s).map_err(|e| Error::custom(e))?;
-                ip_nets.push(ip_net);
-            }
-            Ok(Some(ip_nets))
-        }
-        None => Ok(None),
-    }
-}
-
-impl SecretRestrictions {
-    /// Creates a new SecretRestrictions with IP restrictions
-    pub fn with_allowed_ips(allowed_ips: Vec<ipnet::IpNet>) -> Self {
-        Self {
-            allowed_ips: Some(allowed_ips),
-        }
-    }
-
-    /// Checks if any restrictions are set
-    pub fn is_empty(&self) -> bool {
-        self.allowed_ips.is_none()
-    }
-}
-
-/// Represents the request to create a new secret.
-#[serde_as]
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
-pub struct PostSecretRequest {
-    /// The secret data to be stored.
-    pub data: String,
-
-    /// The duration until the secret expires.
-    #[serde_as(as = "serde_with::DurationSeconds<u64>")]
-    pub expires_in: Duration,
-
-    /// Access restrictions for the secret
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub restrictions: Option<SecretRestrictions>,
-}
-
-impl PostSecretRequest {
-    /// Creates a new `PostSecretRequest`.
-    ///
-    /// # Arguments
-    ///
-    /// * `data` - The secret data.
-    /// * `expires_in` - The duration until expiration.
-    pub fn new(data: String, expires_in: Duration) -> Self {
-        Self {
-            data,
-            expires_in,
-            restrictions: None,
-        }
-    }
-
-    /// Sets access restrictions for the secret
-    pub fn with_restrictions(mut self, restrictions: SecretRestrictions) -> Self {
-        self.restrictions = Some(restrictions);
-        self
-    }
-}
-
-/// Represents the response after creating a new secret.
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
-pub struct PostSecretResponse {
-    /// The unique identifier of the created secret.
-    pub id: uuid::Uuid,
-}
-
-impl PostSecretResponse {
-    /// Creates a new `PostSecretResponse`.
-    ///
-    /// # Arguments
-    ///
-    /// * `id` - The unique identifier of the secret.
-    pub fn new(id: uuid::Uuid) -> Self {
-        Self { id }
-    }
-}
-
-/// Request model for creating user tokens via admin API
-#[derive(Serialize, Deserialize, Debug)]
-pub struct CreateTokenRequest {
-    /// Optional upload size limit in bytes
-    pub upload_size_limit: Option<i64>,
-    /// TTL in seconds
-    pub ttl_seconds: u64,
-}
-
-/// Response model for creating user tokens via admin API
-#[derive(Serialize, Deserialize, Debug)]
-pub struct CreateTokenResponse {
-    /// The generated token
-    pub token: String,
-}
-
-impl Zeroize for CreateTokenResponse {
-    fn zeroize(&mut self) {
-        self.token.zeroize();
-    }
-}
-
-impl Drop for CreateTokenResponse {
     fn drop(&mut self) {
         self.zeroize();
     }
@@ -392,45 +259,5 @@ mod tests {
 
         assert_eq!(payload.data, "");
         assert_eq!(payload.filename, Some("".to_string()));
-    }
-
-    #[test]
-    fn test_secret_restrictions_deserialization() {
-        // Test with valid IP addresses and CIDR ranges
-        let json = r#"{"allowed_ips": ["127.0.0.1", "192.168.1.0/24", "::1", "2001:db8::/32"]}"#;
-        let restrictions: SecretRestrictions = serde_json::from_str(json).unwrap();
-
-        let ips = restrictions.allowed_ips.unwrap();
-        assert_eq!(ips.len(), 4);
-        assert_eq!(ips[0].to_string(), "127.0.0.1/32");
-        assert_eq!(ips[1].to_string(), "192.168.1.0/24");
-        assert_eq!(ips[2].to_string(), "::1/128");
-        assert_eq!(ips[3].to_string(), "2001:db8::/32");
-    }
-
-    #[test]
-    fn test_secret_restrictions_deserialization_empty() {
-        // Test with null allowed_ips
-        let json = r#"{"allowed_ips": null}"#;
-        let restrictions: SecretRestrictions = serde_json::from_str(json).unwrap();
-        assert!(restrictions.allowed_ips.is_none());
-
-        // Test with empty object
-        let json = r#"{}"#;
-        let restrictions: SecretRestrictions = serde_json::from_str(json).unwrap();
-        assert!(restrictions.allowed_ips.is_none());
-    }
-
-    #[test]
-    fn test_secret_restrictions_deserialization_invalid_ip() {
-        let json = r#"{"allowed_ips": ["invalid-ip"]}"#;
-        let result: std::result::Result<SecretRestrictions, _> = serde_json::from_str(json);
-        assert!(result.is_err());
-        assert!(
-            result
-                .unwrap_err()
-                .to_string()
-                .contains("Invalid IP address or CIDR notation")
-        );
     }
 }
