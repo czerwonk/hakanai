@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import { HakanaiClient, type PayloadData } from "./hakanai-client";
+import {
+  HakanaiClient,
+  type PayloadData,
+  type SecretRestrictions,
+} from "./hakanai-client";
 import { initI18n, I18nKeys } from "./core/i18n";
 import {
   announceToScreenReader,
@@ -36,6 +40,7 @@ interface Elements {
   textRadio: HTMLInputElement;
   fileRadio: HTMLInputElement;
   resultDiv: HTMLElement;
+  allowedIPsInput?: HTMLTextAreaElement;
 }
 
 interface FileElements {
@@ -54,6 +59,7 @@ interface FormValues {
   authToken: string;
   ttl: number;
   isFileMode: boolean;
+  restrictions?: SecretRestrictions;
 }
 
 const baseUrl = window.location.origin.includes("file://")
@@ -72,6 +78,9 @@ function getElements(): Elements | null {
   const textRadio = document.getElementById("textRadio") as HTMLInputElement;
   const fileRadio = document.getElementById("fileRadio") as HTMLInputElement;
   const resultDiv = document.getElementById("result");
+  const allowedIPsInput = document.getElementById(
+    "allowedIPs",
+  ) as HTMLTextAreaElement;
 
   if (
     !button ||
@@ -93,6 +102,7 @@ function getElements(): Elements | null {
     textRadio,
     fileRadio,
     resultDiv,
+    allowedIPsInput,
   };
 }
 
@@ -198,6 +208,7 @@ function setElementsState(elements: Elements, disabled: boolean): void {
   if (fileInputButton) fileInputButton.disabled = disabled;
   if (saveTokenCheckbox) saveTokenCheckbox.disabled = disabled;
   if (separateKeyCheckbox) separateKeyCheckbox.disabled = disabled;
+  if (elements.allowedIPsInput) elements.allowedIPsInput.disabled = disabled;
 
   ttlSelector?.setEnabled(!disabled);
   fileDropzone?.setEnabled(!disabled);
@@ -216,11 +227,34 @@ function clearInputs(
   updateFileInfo();
 }
 
+function parseIPRestrictions(ipText: string): SecretRestrictions | undefined {
+  const trimmed = ipText.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  const ips = trimmed
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+
+  if (ips.length === 0) {
+    return undefined;
+  }
+
+  return { allowed_ips: ips };
+}
+
 function getFormValues(elements: Elements): FormValues {
+  const restrictions = elements.allowedIPsInput
+    ? parseIPRestrictions(elements.allowedIPsInput.value)
+    : undefined;
+
   return {
     authToken: elements.authTokenInput.value.trim(),
     ttl: ttlSelector?.getValue() || 3600,
     isFileMode: elements.fileRadio.checked,
+    restrictions,
   };
 }
 
@@ -266,7 +300,7 @@ async function createSecret(): Promise<void> {
     return;
   }
 
-  const { authToken, ttl, isFileMode } = getFormValues(elements);
+  const { authToken, ttl, isFileMode, restrictions } = getFormValues(elements);
 
   const payload = isFileMode
     ? await validateAndProcessFileInput(elements.fileInput)
@@ -289,6 +323,7 @@ async function createSecret(): Promise<void> {
       ttl,
       authToken,
       progressBar,
+      restrictions,
     );
 
     // Handle auth token cookie saving
@@ -612,6 +647,26 @@ async function shouldShowTokenInput(): Promise<boolean> {
   return config?.features?.showTokenInput ?? false;
 }
 
+function shouldShowRestrictionsInput(): boolean {
+  const urlParams = new URLSearchParams(window.location.search);
+  const showRestrictionsParam = urlParams.get("show_restrictions");
+  return showRestrictionsParam === "1" || showRestrictionsParam === "true";
+}
+
+async function initRestrictionsInputVisibility(): Promise<void> {
+  const restrictionsInputGroup = document.getElementById("restrictionsInputGroup") as HTMLElement;
+
+  if (!restrictionsInputGroup) {
+    return;
+  }
+
+  if (shouldShowRestrictionsInput()) {
+    showElement(restrictionsInputGroup);
+  } else {
+    hideElement(restrictionsInputGroup);
+  }
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   initI18n();
   initTTLSelector();
@@ -623,6 +678,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   initializeAuthToken();
   await initFeatures();
   await initTokenInputVisibility();
+  await initRestrictionsInputVisibility();
   initKeyboardShortcuts();
 
   const separateKeyCheckbox = document.getElementById(

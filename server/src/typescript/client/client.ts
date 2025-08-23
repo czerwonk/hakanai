@@ -25,9 +25,14 @@ interface SecretResponse {
   id: string;
 }
 
+interface SecretRestrictions {
+  allowed_ips?: string[];
+}
+
 interface SecretRequest {
   data: string;
   expires_in: number;
+  restrictions?: SecretRestrictions;
 }
 
 /**
@@ -144,6 +149,7 @@ class HakanaiClient {
     payload: PayloadData,
     ttl: number,
     authToken?: string,
+    restrictions?: SecretRestrictions,
   ): void {
     if (!payload || typeof payload !== "object") {
       throw new HakanaiError(
@@ -169,6 +175,11 @@ class HakanaiClient {
     // Validate auth token format if provided
     if (authToken !== undefined) {
       InputValidation.validateAuthToken(authToken);
+    }
+
+    // Validate restrictions if provided
+    if (restrictions !== undefined) {
+      InputValidation.validateRestrictions(restrictions);
     }
   }
 
@@ -413,13 +424,19 @@ class HakanaiClient {
     ttl: number,
     authToken?: string,
     progressObserver?: DataTransferObserver,
+    restrictions?: SecretRestrictions,
   ): Promise<string> {
     const requestBody: SecretRequest = {
       data: encryptedData,
       expires_in: ttl,
     };
 
+    if (restrictions) {
+      requestBody.restrictions = restrictions;
+    }
+
     const bodyData = JSON.stringify(requestBody);
+    console.log(bodyData);
     const requestId = crypto.randomUUID();
 
     const headers: Record<string, string> = {
@@ -459,10 +476,12 @@ class HakanaiClient {
    * @param ttl - Time-to-live in seconds (default: 3600)
    * @param authToken - Optional authentication token for server access
    * @param progressObserver - Optional progress observer for upload tracking
+   * @param restrictions - Optional access restrictions (IP whitelist, etc.)
    * @returns Full URL with secret ID and decryption key in fragment
    * @throws {HakanaiError} With specific error codes:
    *   - AUTHENTICATION_REQUIRED: Server requires auth token
    *   - INVALID_TOKEN: Provided token is invalid
+   *   - INVALID_RESTRICTIONS: Provided restrictions are invalid
    *   - SEND_FAILED: General send failure
    */
   async sendPayload(
@@ -470,8 +489,9 @@ class HakanaiClient {
     ttl: number = 3600,
     authToken?: string,
     progressObserver?: DataTransferObserver,
+    restrictions?: SecretRestrictions,
   ): Promise<string> {
-    this.validateSendPayloadParams(payload, ttl, authToken);
+    this.validateSendPayloadParams(payload, ttl, authToken, restrictions);
 
     const cryptoContext = await CryptoContext.generate();
     try {
@@ -497,6 +517,7 @@ class HakanaiClient {
         ttl,
         authToken,
         progressObserver,
+        restrictions,
       );
 
       return `${this.baseUrl}/s/${secretId}#${cryptoContext.getKeyBase64()}:${hash}`;
@@ -676,4 +697,5 @@ export {
   type DataTransferObserver,
   SecretRequest,
   SecretResponse,
+  SecretRestrictions,
 };

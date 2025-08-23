@@ -60,6 +60,8 @@ const HakanaiErrorCodes = {
   INVALID_SECRET_ID: "INVALID_SECRET_ID",
   /** Payload object is invalid or malformed */
   INVALID_PAYLOAD: "INVALID_PAYLOAD",
+  /** Secret restrictions are invalid or malformed */
+  INVALID_RESTRICTIONS: "INVALID_RESTRICTIONS",
   /** Server response is invalid or empty */
   INVALID_SERVER_RESPONSE: "INVALID_SERVER_RESPONSE",
   /** CryptoContext has been disposed */

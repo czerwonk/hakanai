@@ -124,6 +124,23 @@ describe("Error Handling", () => {
     await expect(
       client.sendPayload(validPayload, 3600, 123 as any),
     ).rejects.toThrow("Auth token must be a string");
+
+    // Test restrictions validation
+    await expect(
+      client.sendPayload(validPayload, 3600, undefined, undefined, 123 as any),
+    ).rejects.toThrow("Restrictions must be an object");
+
+    await expect(
+      client.sendPayload(validPayload, 3600, undefined, undefined, {
+        allowed_ips: "not-array",
+      } as any),
+    ).rejects.toThrow("allowed_ips must be an array");
+
+    await expect(
+      client.sendPayload(validPayload, 3600, undefined, undefined, {
+        allowed_ips: ["invalid-ip"],
+      }),
+    ).rejects.toThrow("Invalid IP address or CIDR notation");
   });
 
   test("sendPayload throws HakanaiError (network error)", async () => {
@@ -234,7 +251,7 @@ describe("Error Handling", () => {
 describe("Error Code Constants", () => {
   test("Error codes are readonly constants", () => {
     const codes = Object.keys(HakanaiErrorCodes);
-    expect(codes.length).toBe(30);
+    expect(codes.length).toBe(31);
 
     expect(codes).toContain("AUTHENTICATION_REQUIRED");
     expect(codes).toContain("INVALID_TOKEN");

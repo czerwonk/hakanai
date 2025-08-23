@@ -184,6 +184,52 @@ class InputValidation {
       );
     }
   }
+
+  /**
+   * Validate secret restrictions format
+   * @param restrictions - Secret restrictions object to validate
+   * @throws {HakanaiError} If restrictions format is invalid
+   */
+  static validateRestrictions(restrictions: any): void {
+    if (
+      typeof restrictions !== "object" ||
+      restrictions === null ||
+      Array.isArray(restrictions)
+    ) {
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_RESTRICTIONS,
+        "Restrictions must be an object",
+      );
+    }
+
+    if (restrictions.allowed_ips !== undefined) {
+      if (!Array.isArray(restrictions.allowed_ips)) {
+        throw new HakanaiError(
+          HakanaiErrorCodes.INVALID_RESTRICTIONS,
+          "allowed_ips must be an array",
+        );
+      }
+
+      for (const ip of restrictions.allowed_ips) {
+        if (typeof ip !== "string" || ip.trim().length === 0) {
+          throw new HakanaiError(
+            HakanaiErrorCodes.INVALID_RESTRICTIONS,
+            "All IP addresses must be non-empty strings",
+          );
+        }
+
+        // Basic CIDR/IP format validation
+        const ipPattern =
+          /^(?:(?:\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?|(?:[0-9a-f:]+(?:\/\d{1,3})?))$/i;
+        if (!ipPattern.test(ip.trim())) {
+          throw new HakanaiError(
+            HakanaiErrorCodes.INVALID_RESTRICTIONS,
+            `Invalid IP address or CIDR notation: ${ip}`,
+          );
+        }
+      }
+    }
+  }
 }
 
 export { InputValidation };

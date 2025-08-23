@@ -255,4 +255,103 @@ describe("InputValidation", () => {
       }
     });
   });
+
+  describe("validateRestrictions", () => {
+    test("accepts valid restrictions object with allowed_ips", () => {
+      const validRestrictions = [
+        { allowed_ips: ["192.168.1.1"] },
+        { allowed_ips: ["10.0.0.0/8", "172.16.0.0/12"] },
+        { allowed_ips: ["2001:db8::/32"] },
+        { allowed_ips: ["127.0.0.1", "::1"] },
+        { allowed_ips: ["192.168.1.0/24", "2001:db8:85a3::8a2e:370:7334"] },
+        {},
+        { allowed_ips: [] },
+      ];
+
+      for (const restrictions of validRestrictions) {
+        expect(() =>
+          InputValidation.validateRestrictions(restrictions),
+        ).not.toThrow();
+      }
+    });
+
+    test("rejects invalid restrictions object types", () => {
+      const invalidInputs = [null, "string", 123, [], true, false];
+
+      for (const input of invalidInputs) {
+        try {
+          InputValidation.validateRestrictions(input);
+          fail(
+            `Expected input ${JSON.stringify(input)} to throw, but it didn't`,
+          );
+        } catch (error: any) {
+          expect(error.code).toBe(HakanaiErrorCodes.INVALID_RESTRICTIONS);
+          expect(error.message).toBe("Restrictions must be an object");
+        }
+      }
+    });
+
+    test("rejects invalid allowed_ips array types", () => {
+      const invalidRestrictions = [
+        { allowed_ips: "192.168.1.1" },
+        { allowed_ips: 123 },
+        { allowed_ips: {} },
+        { allowed_ips: true },
+      ];
+
+      for (const restrictions of invalidRestrictions) {
+        expect(() =>
+          InputValidation.validateRestrictions(restrictions),
+        ).toThrow();
+        try {
+          InputValidation.validateRestrictions(restrictions);
+        } catch (error: any) {
+          expect(error.code).toBe(HakanaiErrorCodes.INVALID_RESTRICTIONS);
+          expect(error.message).toBe("allowed_ips must be an array");
+        }
+      }
+    });
+
+    test("rejects invalid IP addresses in allowed_ips", () => {
+      const invalidRestrictions = [
+        { allowed_ips: [""] },
+        { allowed_ips: ["   "] },
+        { allowed_ips: ["not-an-ip"] },
+        { allowed_ips: ["192.168.1.1", "invalid-ip"] },
+        { allowed_ips: [123 as any] },
+        { allowed_ips: [null as any] },
+      ];
+
+      for (const restrictions of invalidRestrictions) {
+        expect(() =>
+          InputValidation.validateRestrictions(restrictions),
+        ).toThrow();
+        try {
+          InputValidation.validateRestrictions(restrictions);
+        } catch (error: any) {
+          expect(error.code).toBe(HakanaiErrorCodes.INVALID_RESTRICTIONS);
+        }
+      }
+    });
+
+    test("accepts various valid IPv4 and IPv6 formats", () => {
+      const validIps = [
+        "192.168.1.1",
+        "10.0.0.1",
+        "127.0.0.1",
+        "192.168.1.0/24",
+        "10.0.0.0/8",
+        "::1",
+        "2001:db8::1",
+        "2001:db8::/32",
+      ];
+
+      for (const ip of validIps) {
+        const restrictions = { allowed_ips: [ip] };
+        expect(() =>
+          InputValidation.validateRestrictions(restrictions),
+        ).not.toThrow();
+      }
+    });
+  });
 });
