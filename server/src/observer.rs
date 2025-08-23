@@ -5,6 +5,8 @@ use async_trait::async_trait;
 use tracing::instrument;
 use uuid::Uuid;
 
+use hakanai_lib::models::SecretRestrictions;
+
 use crate::user::UserType;
 
 #[derive(Clone)]
@@ -13,6 +15,8 @@ pub struct SecretEventContext {
     pub headers: HeaderMap,
     /// User type associated with the secret event, if any.
     pub user_type: Option<UserType>,
+    /// Restrictions associated with the secret event, if any.
+    pub restrictions: Option<SecretRestrictions>,
 }
 
 impl SecretEventContext {
@@ -20,11 +24,17 @@ impl SecretEventContext {
         SecretEventContext {
             headers,
             user_type: None,
+            restrictions: None,
         }
     }
 
     pub fn with_user_type(mut self, user_type: UserType) -> Self {
         self.user_type = Some(user_type);
+        self
+    }
+
+    pub fn with_restrictions(mut self, restrictions: SecretRestrictions) -> Self {
+        self.restrictions = Some(restrictions);
         self
     }
 }

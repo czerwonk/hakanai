@@ -135,6 +135,8 @@ async fn post_secret(
     ensure_ttl_is_valid(req.expires_in, app_data.max_ttl)?;
 
     let id = uuid::Uuid::new_v4();
+    let mut ctx =
+        SecretEventContext::new(http_req.headers().clone()).with_user_type(user.user_type);
 
     if let Some(ref restrictions) = req.restrictions {
         app_data
@@ -145,6 +147,7 @@ async fn post_secret(
                 error!("Failed to set restrictions for secret {id}: {e}");
                 error::ErrorInternalServerError("Operation failed")
             })?;
+        ctx = ctx.with_restrictions(restrictions.clone());
     }
 
     app_data
@@ -158,10 +161,7 @@ async fn post_secret(
 
     app_data
         .observer_manager
-        .notify_secret_created(
-            id,
-            &SecretEventContext::new(http_req.headers().clone()).with_user_type(user.user_type),
-        )
+        .notify_secret_created(id, &ctx)
         .await;
 
     Ok(web::Json(PostSecretResponse { id }))
