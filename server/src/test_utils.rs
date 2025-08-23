@@ -12,6 +12,8 @@ use std::time::Duration;
 use async_trait::async_trait;
 use uuid::Uuid;
 
+use hakanai_lib::models::SecretRestrictions;
+
 use crate::data_store::{DataStore, DataStoreError, DataStorePopResult};
 use crate::token::{TokenCreator, TokenData, TokenError, TokenStore, TokenValidator};
 
@@ -523,8 +525,8 @@ pub struct MockDataStore {
     custom_pop_result: Arc<Mutex<Option<DataStorePopResult>>>,
     /// Track all put operations for testing verification
     put_operations: Arc<Mutex<Vec<(Uuid, String, Duration)>>>,
-    /// IP restrictions for secrets
-    ip_restrictions: Arc<Mutex<HashMap<String, Vec<ipnet::IpNet>>>>,
+    /// Restrictions for secrets
+    restrictions: Arc<Mutex<HashMap<String, SecretRestrictions>>>,
 }
 
 impl MockDataStore {
@@ -537,7 +539,7 @@ impl MockDataStore {
             accessed_secrets: Arc::new(Mutex::new(Vec::new())),
             custom_pop_result: Arc::new(Mutex::new(None)),
             put_operations: Arc::new(Mutex::new(Vec::new())),
-            ip_restrictions: Arc::new(Mutex::new(HashMap::new())),
+            restrictions: Arc::new(Mutex::new(HashMap::new())),
         }
     }
 
@@ -605,19 +607,19 @@ impl MockDataStore {
         self.put_operations.lock().unwrap().clone()
     }
 
-    /// Set IP restrictions for a secret (for testing)
-    pub fn with_ip_restrictions(self, id: Uuid, allowed_ips: Vec<ipnet::IpNet>) -> Self {
-        self.ip_restrictions
+    /// Set restrictions for a secret (for testing)
+    pub fn with_restrictions(self, id: Uuid, restrictions: SecretRestrictions) -> Self {
+        self.restrictions
             .lock()
             .unwrap()
-            .insert(id.to_string(), allowed_ips);
+            .insert(id.to_string(), restrictions);
         self
     }
 
-    /// Get all IP restrictions for testing verification
+    /// Get all restrictions for testing verification
     #[allow(dead_code)]
-    pub fn get_ip_restrictions(&self) -> HashMap<String, Vec<ipnet::IpNet>> {
-        self.ip_restrictions.lock().unwrap().clone()
+    pub fn get_restrictions(&self) -> HashMap<String, SecretRestrictions> {
+        self.restrictions.lock().unwrap().clone()
     }
 }
 
@@ -698,38 +700,42 @@ impl DataStore for MockDataStore {
         Ok(*self.secret_count.lock().unwrap())
     }
 
-    async fn set_allowed_ips(
+    async fn set_restrictions(
         &self,
         id: Uuid,
-        allowed_ips: &[ipnet::IpNet],
+        restrictions: &SecretRestrictions,
         _expires_in: Duration,
     ) -> Result<(), DataStoreError> {
         if *self.should_fail.lock().unwrap() {
             return Err(DataStoreError::InternalError("Mock failure".to_string()));
         }
 
-        // Store the IP restrictions
-        if !allowed_ips.is_empty() {
-            self.ip_restrictions
+        // Store the restrictions
+        if !restrictions.is_empty() {
+            self.restrictions
                 .lock()
                 .unwrap()
-                .insert(id.to_string(), allowed_ips.to_vec());
+                .insert(id.to_string(), restrictions.clone());
         }
         Ok(())
     }
 
-    async fn get_allowed_ips(&self, id: Uuid) -> Result<Option<Vec<ipnet::IpNet>>, DataStoreError> {
+    async fn get_restrictions(
+        &self,
+        id: Uuid,
+    ) -> Result<Option<SecretRestrictions>, DataStoreError> {
         if *self.should_fail.lock().unwrap() {
             return Err(DataStoreError::InternalError("Mock failure".to_string()));
         }
 
-        // Retrieve the IP restrictions
+        // Retrieve the restrictions
         let restrictions = self
-            .ip_restrictions
+            .restrictions
             .lock()
             .unwrap()
             .get(&id.to_string())
             .cloned();
+
         Ok(restrictions)
     }
 }

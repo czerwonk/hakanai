@@ -7,6 +7,8 @@ use thiserror::Error;
 use tracing::error;
 use uuid::Uuid;
 
+use hakanai_lib::models::SecretRestrictions;
+
 /// `DataStoreError` is an enum that represents the possible errors that can occur when accessing
 /// the data store.
 /// It implements the `std::error::Error` trait and can be used to handle errors in a consistent way across the application.
@@ -105,14 +107,14 @@ pub trait DataStore: Send + Sync {
     /// # Returns
     ///
     /// A `Result` which is `Ok(())` on successful storage, or an `Err` if an error occurs.
-    async fn set_allowed_ips(
+    async fn set_restrictions(
         &self,
         id: Uuid,
-        allowed_ips: &[ipnet::IpNet],
+        restrictions: &SecretRestrictions,
         expires_in: Duration,
     ) -> Result<(), DataStoreError>;
 
-    /// Retrieves IP restrictions for a secret (if any).
+    /// Retrieves access restrictions for a secret (if any).
     ///
     /// # Arguments
     ///
@@ -120,7 +122,10 @@ pub trait DataStore: Send + Sync {
     ///
     /// # Returns
     ///
-    /// A `Result` containing `Some(Vec<ipnet::IpNet>)` if restrictions exist,
+    /// A `Result` containing `Some(SecretRestrictions)` if restrictions exist,
     /// `None` if no restrictions, or an `Err` if an error occurs.
-    async fn get_allowed_ips(&self, id: Uuid) -> Result<Option<Vec<ipnet::IpNet>>, DataStoreError>;
+    async fn get_restrictions(
+        &self,
+        id: Uuid,
+    ) -> Result<Option<SecretRestrictions>, DataStoreError>;
 }

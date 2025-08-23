@@ -65,7 +65,7 @@ pub async fn get_secret_from_request(
         Span::current().record("request_id", request_id);
     }
 
-    ensure_ip_allowed_to_access_secret(id, &http_req, &app_data).await?;
+    validate_restrictions_for_secret(id, &http_req, &app_data).await?;
 
     match app_data.data_store.pop(id).await {
         Ok(res) => match res {
@@ -91,27 +91,30 @@ pub async fn get_secret_from_request(
     }
 }
 
-async fn ensure_ip_allowed_to_access_secret(
+async fn validate_restrictions_for_secret(
     id: Uuid,
     http_req: &HttpRequest,
     app_data: &AppData,
 ) -> Result<()> {
-    let allowed = app_data
+    let restrictions = app_data
         .data_store
-        .get_allowed_ips(id)
+        .get_restrictions(id)
         .await
         .map_err(|e| {
-            error!("Failed to retrieve allowed IPs for secret {id}: {e}");
+            error!("Failed to retrieve restrictions for secret {id}: {e}");
             error::ErrorInternalServerError("Operation failed")
-        })?
-        .map(|ips| ips.is_empty() || is_request_from_ip_range(http_req, app_data, &ips))
-        .unwrap_or(true);
+        })?;
 
-    if allowed {
-        Ok(())
-    } else {
-        Err(error::ErrorForbidden("IP address not allowed"))
+    // Check IP restrictions if they exist
+    if let Some(restrictions) = restrictions
+        && let Some(allowed_ips) = restrictions.allowed_ips
+        && !allowed_ips.is_empty()
+        && !is_request_from_ip_range(http_req, app_data, &allowed_ips)
+    {
+        return Err(error::ErrorForbidden("IP address not allowed"));
     }
+
+    Ok(())
 }
 
 #[post("/secret")]
@@ -132,6 +135,17 @@ async fn post_secret(
 
     let id = uuid::Uuid::new_v4();
 
+    if let Some(ref restrictions) = req.restrictions {
+        app_data
+            .data_store
+            .set_restrictions(id, restrictions, req.expires_in)
+            .await
+            .map_err(|e| {
+                error!("Failed to set restrictions for secret {id}: {e}");
+                error::ErrorInternalServerError("Operation failed")
+            })?;
+    }
+
     app_data
         .data_store
         .put(id, req.data.clone(), req.expires_in)
@@ -140,17 +154,6 @@ async fn post_secret(
             error!("Error while creating secret: {e}");
             error::ErrorInternalServerError("Operation failed")
         })?;
-
-    if let Some(ref allowed_ips) = req.allowed_ips {
-        app_data
-            .data_store
-            .set_allowed_ips(id, allowed_ips, req.expires_in)
-            .await
-            .map_err(|e| {
-                error!("Failed to set allowed IPs for secret {id}: {e}");
-                error::ErrorInternalServerError("Operation failed")
-            })?;
-    }
 
     app_data
         .observer_manager
@@ -189,17 +192,20 @@ fn ensure_ttl_is_valid(expires_in: Duration, max_ttl: Duration) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use actix_web::{App, test};
+    use std::sync::{Arc, Mutex};
     use std::time::Duration;
+
+    use actix_web::http::header::HeaderMap;
+    use actix_web::{App, test};
+    use async_trait::async_trait;
 
     use crate::app_data::AnonymousOptions;
     use crate::data_store::DataStore;
     use crate::observer::{ObserverManager, SecretObserver};
     use crate::test_utils::{MockDataStore, MockTokenManager};
     use crate::token::TokenData;
-    use actix_web::http::header::HeaderMap;
-    use async_trait::async_trait;
-    use std::sync::{Arc, Mutex};
+
+    use hakanai_lib::models::SecretRestrictions;
 
     // Mock observer for testing
     #[derive(Clone)]
@@ -762,7 +768,7 @@ mod tests {
 
         let mock_store = MockDataStore::new()
             .with_pop_result(DataStorePopResult::Found("test_secret".to_string()))
-            .with_ip_restrictions(secret_id, allowed_ips);
+            .with_restrictions(secret_id, SecretRestrictions::with_allowed_ips(allowed_ips));
 
         let app_data = create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
 
@@ -793,7 +799,7 @@ mod tests {
 
         let mock_store = MockDataStore::new()
             .with_pop_result(DataStorePopResult::Found("test_secret".to_string()))
-            .with_ip_restrictions(secret_id, allowed_ips);
+            .with_restrictions(secret_id, SecretRestrictions::with_allowed_ips(allowed_ips));
 
         let app_data = create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
 
@@ -852,7 +858,7 @@ mod tests {
 
         let mock_store = MockDataStore::new()
             .with_pop_result(DataStorePopResult::Found("test_secret".to_string()))
-            .with_ip_restrictions(secret_id, allowed_ips);
+            .with_restrictions(secret_id, SecretRestrictions::with_allowed_ips(allowed_ips));
 
         let app_data = create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
 
@@ -885,7 +891,7 @@ mod tests {
 
         let mock_store = MockDataStore::new()
             .with_pop_result(DataStorePopResult::Found("test_secret".to_string()))
-            .with_ip_restrictions(secret_id, allowed_ips);
+            .with_restrictions(secret_id, SecretRestrictions::with_allowed_ips(allowed_ips));
 
         let app_data = create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
 
@@ -914,7 +920,7 @@ mod tests {
 
         let mock_store = MockDataStore::new()
             .with_pop_result(DataStorePopResult::Found("test_secret".to_string()))
-            .with_ip_restrictions(secret_id, allowed_ips);
+            .with_restrictions(secret_id, SecretRestrictions::with_allowed_ips(allowed_ips));
 
         let app_data = create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
 
@@ -964,7 +970,7 @@ mod tests {
         ];
 
         let payload = PostSecretRequest::new("test_secret".to_string(), Duration::from_secs(3600))
-            .with_allowed_ips(allowed_ips.clone());
+            .with_restrictions(SecretRestrictions::with_allowed_ips(allowed_ips.clone()));
 
         let req = test::TestRequest::post()
             .uri("/secret")
@@ -977,10 +983,13 @@ mod tests {
         let body: PostSecretResponse = test::read_body_json(resp).await;
         assert!(!body.id.is_nil());
 
-        // Verify IP restrictions were stored
-        let ip_restrictions = mock_store.get_ip_restrictions();
-        assert!(ip_restrictions.contains_key(&body.id.to_string()));
-        assert_eq!(ip_restrictions[&body.id.to_string()], allowed_ips);
+        // Verify restrictions were stored
+        let restrictions = mock_store.get_restrictions();
+        assert!(restrictions.contains_key(&body.id.to_string()));
+        assert_eq!(
+            restrictions[&body.id.to_string()].allowed_ips,
+            Some(allowed_ips)
+        );
     }
 
     #[actix_web::test]
@@ -1012,8 +1021,8 @@ mod tests {
         assert!(!body.id.is_nil());
 
         // Verify no IP restrictions were stored
-        let ip_restrictions = mock_store.get_ip_restrictions();
-        assert!(!ip_restrictions.contains_key(&body.id.to_string()));
+        let restrictions = mock_store.get_restrictions();
+        assert!(!restrictions.contains_key(&body.id.to_string()));
     }
 
     #[actix_web::test]
@@ -1024,7 +1033,7 @@ mod tests {
 
         let mock_store = MockDataStore::new()
             .with_pop_result(DataStorePopResult::Found("test_secret".to_string()))
-            .with_ip_restrictions(secret_id, allowed_ips);
+            .with_restrictions(secret_id, SecretRestrictions::with_allowed_ips(allowed_ips));
 
         let app_data = create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
 
@@ -1053,7 +1062,7 @@ mod tests {
 
         let mock_store = MockDataStore::new()
             .with_pop_result(DataStorePopResult::Found("test_secret".to_string()))
-            .with_ip_restrictions(secret_id, allowed_ips);
+            .with_restrictions(secret_id, SecretRestrictions::with_allowed_ips(allowed_ips));
 
         let app_data = create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
 

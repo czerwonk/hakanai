@@ -77,6 +77,28 @@ impl Drop for Payload {
     }
 }
 
+/// Represents access restrictions for a secret.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
+pub struct SecretRestrictions {
+    /// IP addresses/ranges allowed to access the secret
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub allowed_ips: Option<Vec<ipnet::IpNet>>,
+}
+
+impl SecretRestrictions {
+    /// Creates a new SecretRestrictions with IP restrictions
+    pub fn with_allowed_ips(allowed_ips: Vec<ipnet::IpNet>) -> Self {
+        Self {
+            allowed_ips: Some(allowed_ips),
+        }
+    }
+
+    /// Checks if any restrictions are set
+    pub fn is_empty(&self) -> bool {
+        self.allowed_ips.is_none()
+    }
+}
+
 /// Represents the request to create a new secret.
 #[serde_as]
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
@@ -88,8 +110,9 @@ pub struct PostSecretRequest {
     #[serde_as(as = "serde_with::DurationSeconds<u64>")]
     pub expires_in: Duration,
 
-    /// Optional list of IP networks allowed to access the secret
-    pub allowed_ips: Option<Vec<ipnet::IpNet>>,
+    /// Access restrictions for the secret
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub restrictions: Option<SecretRestrictions>,
 }
 
 impl PostSecretRequest {
@@ -103,13 +126,13 @@ impl PostSecretRequest {
         Self {
             data,
             expires_in,
-            allowed_ips: None,
+            restrictions: None,
         }
     }
 
-    /// Sets IP networks allowed to access the secret
-    pub fn with_allowed_ips(mut self, allowed_ips: Vec<ipnet::IpNet>) -> Self {
-        self.allowed_ips = Some(allowed_ips);
+    /// Sets access restrictions for the secret
+    pub fn with_restrictions(mut self, restrictions: SecretRestrictions) -> Self {
+        self.restrictions = Some(restrictions);
         self
     }
 }

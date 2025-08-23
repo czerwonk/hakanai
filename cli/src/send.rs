@@ -13,7 +13,7 @@ use zeroize::{Zeroize, Zeroizing};
 use zip::{ZipWriter, write::ExtendedFileOptions, write::FileOptions};
 
 use hakanai_lib::client::Client;
-use hakanai_lib::models::Payload;
+use hakanai_lib::models::{Payload, SecretRestrictions};
 use hakanai_lib::options::SecretSendOptions;
 use hakanai_lib::timestamp;
 
@@ -53,7 +53,8 @@ pub async fn send<T: Factory>(factory: T, args: SendArgs) -> Result<()> {
         .with_observer(observer);
 
     if let Some(allowed_ips) = args.allowed_ips.clone() {
-        opts = opts.with_allowed_ips(allowed_ips);
+        let restrictions = SecretRestrictions::with_allowed_ips(allowed_ips);
+        opts = opts.with_restrictions(restrictions);
     }
 
     let mut link = factory

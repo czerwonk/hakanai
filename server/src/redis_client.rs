@@ -10,6 +10,7 @@ use tokio::time::timeout;
 use tracing::instrument;
 use uuid::Uuid;
 
+use hakanai_lib::models::SecretRestrictions;
 use hakanai_lib::timestamp;
 
 use crate::data_store::{DataStore, DataStoreError, DataStorePopResult};
@@ -19,7 +20,7 @@ const ADMIN_TOKEN_KEY: &str = "admin_token";
 const SECRET_PREFIX: &str = "secret:";
 const TOKEN_PREFIX: &str = "token:";
 const ACCESSED_PREFIX: &str = "accessed:";
-const ALLOWED_IPS_PREFIX: &str = "allowed_ips:";
+const RESTRICTIONS_PREFIX: &str = "restrictions:";
 
 /// Connection timeout for Redis operations during startup
 const CONNECTION_TIMEOUT: Duration = Duration::from_secs(10);
@@ -60,8 +61,8 @@ impl RedisClient {
         format!("{TOKEN_PREFIX}{hash}")
     }
 
-    fn allowed_ips_key(&self, id: Uuid) -> String {
-        format!("{ALLOWED_IPS_PREFIX}{id}")
+    fn restrictions_key(&self, id: Uuid) -> String {
+        format!("{RESTRICTIONS_PREFIX}{id}")
     }
 
     #[instrument(skip(self), err)]
@@ -134,18 +135,14 @@ impl DataStore for RedisClient {
     }
 
     #[instrument(skip(self), err)]
-    async fn set_allowed_ips(
+    async fn set_restrictions(
         &self,
         id: Uuid,
-        allowed_ips: &[ipnet::IpNet],
+        restrictions: &SecretRestrictions,
         expires_in: Duration,
     ) -> Result<(), DataStoreError> {
-        if allowed_ips.is_empty() {
-            return Ok(()); // No restrictions to store
-        }
-
-        let key = self.allowed_ips_key(id);
-        let json = serde_json::to_string(allowed_ips)?;
+        let key = self.restrictions_key(id);
+        let json = serde_json::to_string(restrictions)?;
 
         let _: () = self
             .con
@@ -156,14 +153,17 @@ impl DataStore for RedisClient {
     }
 
     #[instrument(skip(self), err)]
-    async fn get_allowed_ips(&self, id: Uuid) -> Result<Option<Vec<ipnet::IpNet>>, DataStoreError> {
-        let key = self.allowed_ips_key(id);
+    async fn get_restrictions(
+        &self,
+        id: Uuid,
+    ) -> Result<Option<SecretRestrictions>, DataStoreError> {
+        let key = self.restrictions_key(id);
         let value: Option<String> = self.con.clone().get(key).await?;
 
         match value {
             Some(json) => {
-                let allowed_ips = serde_json::from_str(&json)?;
-                Ok(Some(allowed_ips))
+                let restrictions = serde_json::from_str(&json)?;
+                Ok(Some(restrictions))
             }
             None => Ok(None),
         }

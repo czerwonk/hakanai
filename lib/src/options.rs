@@ -3,6 +3,7 @@
 use std::sync::Arc;
 use std::time::Duration;
 
+use crate::models::SecretRestrictions;
 use crate::observer::DataTransferObserver;
 
 /// Options for sending a secret.
@@ -48,8 +49,8 @@ pub struct SecretSendOptions {
     /// An optional user agent string to identify the sender.
     pub user_agent: Option<String>,
 
-    /// An optional list of IP networks allowed to access the secret.
-    pub allowed_ips: Option<Vec<ipnet::IpNet>>,
+    /// Optional access restrictions for the secret.
+    pub restrictions: Option<SecretRestrictions>,
 }
 
 impl SecretSendOptions {
@@ -82,9 +83,9 @@ impl SecretSendOptions {
         self
     }
 
-    /// Sets the allowed IPs for this secret.
-    pub fn with_allowed_ips(mut self, allowed_ips: Vec<ipnet::IpNet>) -> Self {
-        self.allowed_ips = Some(allowed_ips);
+    /// Sets the access restrictions for the secret.
+    pub fn with_restrictions(mut self, restrictions: SecretRestrictions) -> Self {
+        self.restrictions = Some(restrictions);
         self
     }
 }

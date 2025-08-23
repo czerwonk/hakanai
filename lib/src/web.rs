@@ -50,8 +50,8 @@ impl Client<Vec<u8>> for WebClient {
         let mut req = PostSecretRequest::new(secret, ttl);
 
         let opt = opts.unwrap_or_default();
-        if let Some(allowed_ips) = opt.allowed_ips.clone() {
-            req = req.with_allowed_ips(allowed_ips);
+        if let Some(restrictions) = opt.restrictions.clone() {
+            req = req.with_restrictions(restrictions);
         }
 
         let (body, content_length) = self.post_secret_body_from_req(req, &opt)?;

@@ -31,7 +31,7 @@
     "/api/v1/secret": {
       "post": {
         "summary": "Create a new secret",
-        "description": "Creates a new one-time secret with optional expiration and IP restrictions. All encryption happens client-side. IP restrictions, if specified, limit which IP addresses can retrieve the secret.",
+        "description": "Creates a new one-time secret with optional expiration and access restrictions. All encryption happens client-side. Access restrictions, if specified, limit which IP addresses can retrieve the secret.",
         "operationId": "createSecret",
         "security": [
           {},
@@ -59,7 +59,9 @@
                   "value": {
                     "data": "bXkgc2VjcmV0IG1lc3NhZ2U=",
                     "expires_in": 3600,
-                    "allowed_ips": ["192.168.1.0/24", "10.0.0.100"]
+                    "restrictions": {
+                      "allowed_ips": ["192.168.1.0/24", "10.0.0.100"]
+                    }
                   }
                 }
               }
@@ -106,7 +108,7 @@
     "/api/v1/secret/{id}": {
       "get": {
         "summary": "Retrieve a secret",
-        "description": "Retrieves a one-time secret by ID. The secret is deleted after retrieval. If the secret has IP restrictions, the request must come from an allowed IP address.",
+        "description": "Retrieves a one-time secret by ID. The secret is deleted after retrieval. If the secret has access restrictions, the request must come from an allowed IP address.",
         "operationId": "getSecret",
         "parameters": [
           {
@@ -281,14 +283,8 @@
             "description": "TTL in seconds (max 7 days)",
             "example": 3600
           },
-          "allowed_ips": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "pattern": "^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?:\\/([0-9]|[1-2][0-9]|3[0-2]))?|(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}(?:\\/([0-9]|[1-9][0-9]|1[01][0-9]|12[0-8]))?|::1(?:\\/128)?$"
-            },
-            "description": "Optional list of IP addresses or CIDR ranges that are allowed to retrieve this secret. Supports both IPv4 and IPv6. Single IPs are automatically converted to /32 (IPv4) or /128 (IPv6).",
-            "example": ["192.168.1.0/24", "10.0.0.100", "2001:db8::/32", "::1"]
+          "restrictions": {
+            "$ref": "#/components/schemas/SecretRestrictions"
           }
         }
       },
@@ -330,6 +326,21 @@
             "type": "string",
             "description": "The generated authentication token",
             "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+          }
+        }
+      },
+      "SecretRestrictions": {
+        "type": "object",
+        "description": "Access restrictions for a secret",
+        "properties": {
+          "allowed_ips": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?:\\/([0-9]|[1-2][0-9]|3[0-2]))?|(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}(?:\\/([0-9]|[1-9][0-9]|1[01][0-9]|12[0-8]))?|::1(?:\\/128)?$"
+            },
+            "description": "Optional list of IP addresses or CIDR ranges that are allowed to retrieve this secret. Supports both IPv4 and IPv6. Single IPs are automatically converted to /32 (IPv4) or /128 (IPv6).",
+            "example": ["192.168.1.0/24", "10.0.0.100", "2001:db8::/32", "::1"]
           }
         }
       }
