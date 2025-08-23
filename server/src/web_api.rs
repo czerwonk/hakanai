@@ -91,6 +91,7 @@ pub async fn get_secret_from_request(
     }
 }
 
+#[instrument(skip(app_data, http_req), err)]
 async fn validate_restrictions_for_secret(
     id: Uuid,
     http_req: &HttpRequest,
