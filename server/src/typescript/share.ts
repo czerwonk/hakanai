@@ -224,6 +224,7 @@ async function createSecret(): Promise<void> {
       ttl,
       sharePayload.token,
       progressBar,
+      sharePayload.restrictions,
     );
 
     try {
