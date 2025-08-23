@@ -1051,7 +1051,7 @@ dependencies = [
  "futures-sink",
  "futures-util",
  "http 0.2.12",
- "indexmap 2.10.0",
+ "indexmap 2.11.0",
  "slab",
  "tokio",
  "tokio-util",
@@ -1070,7 +1070,7 @@ dependencies = [
  "futures-core",
  "futures-sink",
  "http 1.3.1",
- "indexmap 2.10.0",
+ "indexmap 2.11.0",
  "slab",
  "tokio",
  "tokio-util",
@@ -1079,7 +1079,7 @@ dependencies = [
 
 [[package]]
 name = "hakanai"
-version = "2.10.0"
+version = "2.10.1"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1101,7 +1101,7 @@ dependencies = [
 
 [[package]]
 name = "hakanai-lib"
-version = "2.10.0"
+version = "2.10.1"
 dependencies = [
  "aes-gcm",
  "async-stream",
@@ -1125,7 +1125,7 @@ dependencies = [
 
 [[package]]
 name = "hakanai-server"
-version = "2.10.0"
+version = "2.10.1"
 dependencies = [
  "actix-cors",
  "actix-web",
@@ -1162,7 +1162,7 @@ dependencies = [
 
 [[package]]
 name = "hakanai-wasm"
-version = "2.10.0"
+version = "2.10.1"
 dependencies = [
  "qrcode",
  "wasm-bindgen",
@@ -1525,9 +1525,9 @@ dependencies = [
 
 [[package]]
 name = "indexmap"
-version = "2.10.0"
+version = "2.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fe4cd85333e22411419a0bcae1297d25e58c9443848b11dc6a86fefe8c78a661"
+checksum = "f2481980430f9f78649238835720ddccc57e52df14ffce1c6f37391d61b563e9"
 dependencies = [
  "equivalent",
  "hashbrown 0.15.5",
@@ -2636,7 +2636,7 @@ dependencies = [
  "chrono",
  "hex",
  "indexmap 1.9.3",
- "indexmap 2.10.0",
+ "indexmap 2.11.0",
  "schemars 0.9.0",
  "schemars 1.0.4",
  "serde",
@@ -3026,7 +3026,7 @@ checksum = "d039ad9159c98b70ecfd540b2573b97f7f52c3e8d9f8ad57a24b916a536975f9"
 dependencies = [
  "futures-core",
  "futures-util",
- "indexmap 2.10.0",
+ "indexmap 2.11.0",
  "pin-project-lite",
  "slab",
  "sync_wrapper",
@@ -3789,7 +3789,7 @@ dependencies = [
  "flate2",
  "getrandom 0.3.3",
  "hmac",
- "indexmap 2.10.0",
+ "indexmap 2.11.0",
  "liblzma",
  "memchr",
  "pbkdf2",
