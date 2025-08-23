@@ -26,6 +26,20 @@ impl SecretRestrictions {
     pub fn is_empty(&self) -> bool {
         self.allowed_ips.is_none()
     }
+
+    /// Pretty format restrictions for display in logs, webhooks, etc.
+    pub fn format_display(&self) -> Option<String> {
+        if let Some(ips) = &self.allowed_ips {
+            if ips.is_empty() {
+                return None;
+            }
+
+            let ip_strings: Vec<String> = ips.iter().map(|ip| ip.to_string()).collect();
+            Some(format!("IP Restrictions: {}", ip_strings.join(", ")))
+        } else {
+            None
+        }
+    }
 }
 
 #[cfg(test)]
@@ -70,5 +84,45 @@ mod tests {
                 .to_string()
                 .contains("Invalid IP address or CIDR notation")
         );
+    }
+
+    #[test]
+    fn test_format_display() {
+        use ipnet::IpNet;
+
+        // Test with multiple IPs and CIDR ranges
+        let restrictions = SecretRestrictions::with_allowed_ips(vec![
+            "127.0.0.1/32".parse::<IpNet>().unwrap(),
+            "192.168.1.0/24".parse::<IpNet>().unwrap(),
+            "::1/128".parse::<IpNet>().unwrap(),
+        ]);
+        let formatted = restrictions.format_display().unwrap();
+        assert_eq!(
+            formatted,
+            "IP Restrictions: 127.0.0.1/32, 192.168.1.0/24, ::1/128"
+        );
+    }
+
+    #[test]
+    fn test_format_display_empty() {
+        // Test with no restrictions
+        let restrictions = SecretRestrictions::default();
+        assert!(restrictions.format_display().is_none());
+
+        // Test with empty IP list
+        let restrictions = SecretRestrictions {
+            allowed_ips: Some(vec![]),
+        };
+        assert!(restrictions.format_display().is_none());
+    }
+
+    #[test]
+    fn test_format_display_single_ip() {
+        use ipnet::IpNet;
+
+        let restrictions =
+            SecretRestrictions::with_allowed_ips(vec!["10.0.0.1/32".parse::<IpNet>().unwrap()]);
+        let formatted = restrictions.format_display().unwrap();
+        assert_eq!(formatted, "IP Restrictions: 10.0.0.1/32");
     }
 }
