@@ -196,6 +196,10 @@ echo "secret" | hakanai send --token-file /path/to/token.txt
 
 # Generate separate key for enhanced security (key and URL shared via different channels)
 echo "sensitive data" | hakanai send --separate-key
+
+# Restrict access to specific IP addresses or CIDR ranges
+echo "restricted secret" | hakanai send --allowed-ips 192.168.1.0/24,10.0.0.1
+echo "office only" | hakanai send --allowed-ips 203.0.113.0/24,2001:db8:85a3::/48
 # Output:
 # Secret sent successfully!
 # 
@@ -318,7 +322,10 @@ Create a new secret.
 ```json
 {
   "data": "base64-encoded-secret",
-  "expires_in": 3600  // seconds
+  "expires_in": 3600,  // seconds
+  "restrictions": {    // optional
+    "allowed_ips": ["192.168.1.0/24", "10.0.0.1"]
+  }
 }
 ```
 
@@ -530,6 +537,7 @@ For example:
 - `-a, --as-file`: Send the secret as a file (auto-detected for binary content)
 - `--filename`: Custom filename when sending as a file
 - `--separate-key`: Print key separately for enhanced security (share via different channels)
+- `--allowed-ips`: Comma-separated IP addresses/CIDR ranges allowed to access the secret (e.g., `192.168.1.0/24,10.0.0.1`)
 - `-q, --qr-code`: Display URL as QR code for easy mobile sharing
 
 #### Get Command Options  
@@ -562,9 +570,44 @@ For example:
 - `--trusted-ip-ranges`: IP ranges (CIDR notation) that bypass size limits
 - `--trusted-ip-header`: HTTP header to check for client IP when behind a proxy (default: x-forwarded-for)
 
-### IP Whitelisting
+### IP-based Access Control
 
-Hakanai supports IP-based whitelisting that bypasses upload size limits for trusted networks. This is useful for internal services, monitoring systems, or backup operations that need to upload larger files.
+#### Secret-Level IP Restrictions
+
+Hakanai supports restricting individual secrets to specific IP addresses or CIDR ranges. This provides an additional security layer by ensuring only authorized networks can access the secret.
+
+**CLI Usage:**
+```bash
+# Restrict to specific IPs and networks
+hakanai send --allowed-ips 192.168.1.0/24,10.0.0.1,2001:db8::/32
+
+# Office network and VPN endpoint
+echo "sensitive data" | hakanai send --allowed-ips 203.0.113.0/24,198.51.100.1
+```
+
+**Web Interface:**
+The web interface includes an optional "IP Address Restrictions" field where you can enter IP addresses or CIDR ranges (one per line) to restrict access to the secret.
+
+**API Usage:**
+```json
+{
+  "data": "encrypted_secret_data", 
+  "expires_in": 3600,
+  "restrictions": {
+    "allowed_ips": ["192.168.1.0/24", "10.0.0.1", "2001:db8::/32"]
+  }
+}
+```
+
+**Supported Formats:**
+- IPv4 addresses: `192.168.1.100`
+- IPv4 CIDR: `192.168.1.0/24`
+- IPv6 addresses: `2001:db8::1`
+- IPv6 CIDR: `2001:db8::/32`
+
+#### Server-Level IP Whitelisting
+
+Hakanai also supports server-level IP whitelisting that bypasses upload size limits for trusted networks. This is useful for internal services, monitoring systems, or backup operations that need to upload larger files.
 
 **Configuration:**
 ```bash
