@@ -38,7 +38,7 @@ impl Display for SecretRestrictions {
             }
 
             let ip_strings: Vec<String> = ips.iter().map(|ip| ip.to_string()).collect();
-            write!(f, "IP Restrictions: {}", ip_strings.join(", "))
+            write!(f, "Allowed IPs: {}", ip_strings.join(", "))
         } else {
             write!(f, "No restrictions")
         }
@@ -101,7 +101,7 @@ mod tests {
         ]);
         assert_eq!(
             restrictions.to_string(),
-            "IP Restrictions: 127.0.0.1/32, 192.168.1.0/24, ::1/128"
+            "Allowed IPs: 127.0.0.1/32, 192.168.1.0/24, ::1/128"
         );
     }
 
@@ -124,6 +124,6 @@ mod tests {
 
         let restrictions =
             SecretRestrictions::with_allowed_ips(vec!["10.0.0.1/32".parse::<IpNet>().unwrap()]);
-        assert_eq!(restrictions.to_string(), "IP Restrictions: 10.0.0.1/32");
+        assert_eq!(restrictions.to_string(), "Allowed IPs: 10.0.0.1/32");
     }
 }
