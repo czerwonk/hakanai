@@ -54,7 +54,7 @@ pub async fn send<T: Factory>(factory: T, args: SendArgs) -> Result<()> {
 
     let restrictions = match args.allowed_ips.clone() {
         Some(allowed_ips) => {
-            let restrictions = SecretRestrictions::with_allowed_ips(allowed_ips);
+            let restrictions = SecretRestrictions::default().with_allowed_ips(allowed_ips);
             opts = opts.with_restrictions(restrictions.clone());
             Some(restrictions)
         }

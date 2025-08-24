@@ -86,6 +86,7 @@ mod tests {
             show_token_input: false,
             trusted_ip_ranges: trusted_ranges,
             trusted_ip_header: header.to_string(),
+            country_header: None,
         }
     }
 

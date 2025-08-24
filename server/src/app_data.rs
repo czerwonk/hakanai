@@ -48,4 +48,7 @@ pub struct AppData {
 
     /// HTTP header to check for client IP
     pub trusted_ip_header: String,
+
+    /// HTTP header to check for client country (for geo-restrictions)
+    pub country_header: Option<String>,
 }

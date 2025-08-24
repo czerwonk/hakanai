@@ -4,6 +4,8 @@ use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
 
+use super::CountryCode;
+
 /// Represents access restrictions for a secret.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
 pub struct SecretRestrictions {
@@ -14,34 +16,49 @@ pub struct SecretRestrictions {
         deserialize_with = "crate::utils::serde_utils::deserialize_ip_nets"
     )]
     pub allowed_ips: Option<Vec<ipnet::IpNet>>,
+
+    pub allowed_countries: Option<Vec<CountryCode>>,
 }
 
 impl SecretRestrictions {
-    /// Creates a new SecretRestrictions with IP restrictions
-    pub fn with_allowed_ips(allowed_ips: Vec<ipnet::IpNet>) -> Self {
-        Self {
-            allowed_ips: Some(allowed_ips),
-        }
+    /// Sets the IPs allowed to access the secret
+    pub fn with_allowed_ips(mut self, allowed_ips: Vec<ipnet::IpNet>) -> Self {
+        self.allowed_ips = Some(allowed_ips);
+        self
+    }
+
+    /// Sets the countries allowed to access the secret
+    pub fn with_allowed_countries(mut self, allowed_countries: Vec<CountryCode>) -> Self {
+        self.allowed_countries = Some(allowed_countries);
+        self
     }
 
     /// Checks if any restrictions are set
     pub fn is_empty(&self) -> bool {
-        self.allowed_ips.is_none()
+        self.allowed_ips.is_none() && self.allowed_countries.is_none()
     }
 }
 
 impl Display for SecretRestrictions {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if let Some(ips) = &self.allowed_ips {
-            if ips.is_empty() {
-                return write!(f, "No restrictions");
-            }
-
-            let ip_strings: Vec<String> = ips.iter().map(|ip| ip.to_string()).collect();
-            write!(f, "Allowed IPs: {}", ip_strings.join(", "))
-        } else {
-            write!(f, "No restrictions")
+        if self.is_empty() {
+            return write!(f, "No restrictions");
         }
+
+        if let Some(ips) = &self.allowed_ips {
+            let ip_strings: Vec<String> = ips.iter().map(|ip| ip.to_string()).collect();
+            write!(f, "Allowed IPs: {}", ip_strings.join(", "))?;
+        }
+
+        if let Some(countries) = &self.allowed_countries {
+            let country_strings: Vec<String> = countries
+                .iter()
+                .map(|country| country.to_string())
+                .collect();
+            write!(f, "Allowed Countries: {}", country_strings.join(", "))?;
+        }
+
+        Ok(())
     }
 }
 
@@ -61,6 +78,37 @@ mod tests {
         assert_eq!(ips[1].to_string(), "192.168.1.0/24");
         assert_eq!(ips[2].to_string(), "::1/128");
         assert_eq!(ips[3].to_string(), "2001:db8::/32");
+        assert!(restrictions.allowed_countries.is_none());
+    }
+
+    #[test]
+    fn test_secret_restrictions_deserialization_with_countries() {
+        // Test with valid country codes
+        let json = r#"{"allowed_countries": ["US", "DE", "CA"]}"#;
+        let restrictions: SecretRestrictions = serde_json::from_str(json).unwrap();
+
+        let countries = restrictions.allowed_countries.unwrap();
+        assert_eq!(countries.len(), 3);
+        assert_eq!(countries[0].as_str(), "US");
+        assert_eq!(countries[1].as_str(), "DE");
+        assert_eq!(countries[2].as_str(), "CA");
+        assert!(restrictions.allowed_ips.is_none());
+    }
+
+    #[test]
+    fn test_secret_restrictions_deserialization_both() {
+        // Test with both IPs and countries
+        let json = r#"{"allowed_ips": ["192.168.1.0/24"], "allowed_countries": ["US", "DE"]}"#;
+        let restrictions: SecretRestrictions = serde_json::from_str(json).unwrap();
+
+        let ips = restrictions.allowed_ips.unwrap();
+        assert_eq!(ips.len(), 1);
+        assert_eq!(ips[0].to_string(), "192.168.1.0/24");
+
+        let countries = restrictions.allowed_countries.unwrap();
+        assert_eq!(countries.len(), 2);
+        assert_eq!(countries[0].as_str(), "US");
+        assert_eq!(countries[1].as_str(), "DE");
     }
 
     #[test]
@@ -69,11 +117,19 @@ mod tests {
         let json = r#"{"allowed_ips": null}"#;
         let restrictions: SecretRestrictions = serde_json::from_str(json).unwrap();
         assert!(restrictions.allowed_ips.is_none());
+        assert!(restrictions.allowed_countries.is_none());
+
+        // Test with null allowed_countries
+        let json = r#"{"allowed_countries": null}"#;
+        let restrictions: SecretRestrictions = serde_json::from_str(json).unwrap();
+        assert!(restrictions.allowed_ips.is_none());
+        assert!(restrictions.allowed_countries.is_none());
 
         // Test with empty object
         let json = r#"{}"#;
         let restrictions: SecretRestrictions = serde_json::from_str(json).unwrap();
         assert!(restrictions.allowed_ips.is_none());
+        assert!(restrictions.allowed_countries.is_none());
     }
 
     #[test]
@@ -90,11 +146,24 @@ mod tests {
     }
 
     #[test]
-    fn test_format_display() {
+    fn test_secret_restrictions_deserialization_invalid_country() {
+        let json = r#"{"allowed_countries": ["invalid"]}"#;
+        let result: std::result::Result<SecretRestrictions, _> = serde_json::from_str(json);
+        assert!(result.is_err());
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("CountryCode must be a 2-letter uppercase ISO 3166-1 alpha-2 code")
+        );
+    }
+
+    #[test]
+    fn test_format_display_ips() {
         use ipnet::IpNet;
 
         // Test with multiple IPs and CIDR ranges
-        let restrictions = SecretRestrictions::with_allowed_ips(vec![
+        let restrictions = SecretRestrictions::default().with_allowed_ips(vec![
             "127.0.0.1/32".parse::<IpNet>().unwrap(),
             "192.168.1.0/24".parse::<IpNet>().unwrap(),
             "::1/128".parse::<IpNet>().unwrap(),
@@ -106,6 +175,29 @@ mod tests {
     }
 
     #[test]
+    fn test_format_display_countries() {
+        let restrictions = SecretRestrictions::default().with_allowed_countries(vec![
+            CountryCode::new("US").unwrap(),
+            CountryCode::new("DE").unwrap(),
+            CountryCode::new("CA").unwrap(),
+        ]);
+        assert_eq!(restrictions.to_string(), "Allowed Countries: US, DE, CA");
+    }
+
+    #[test]
+    fn test_format_display_both() {
+        use ipnet::IpNet;
+
+        let restrictions = SecretRestrictions::default()
+            .with_allowed_ips(vec!["192.168.1.0/24".parse::<IpNet>().unwrap()])
+            .with_allowed_countries(vec![CountryCode::new("US").unwrap()]);
+
+        let display = restrictions.to_string();
+        assert!(display.contains("Allowed IPs: 192.168.1.0/24"));
+        assert!(display.contains("Allowed Countries: US"));
+    }
+
+    #[test]
     fn test_format_display_empty() {
         // Test with no restrictions
         let restrictions = SecretRestrictions::default();
@@ -114,6 +206,7 @@ mod tests {
         // Test with empty IP list
         let restrictions = SecretRestrictions {
             allowed_ips: Some(vec![]),
+            allowed_countries: None,
         };
         assert_eq!(restrictions.to_string(), "No restrictions");
     }
@@ -122,8 +215,31 @@ mod tests {
     fn test_format_display_single_ip() {
         use ipnet::IpNet;
 
-        let restrictions =
-            SecretRestrictions::with_allowed_ips(vec!["10.0.0.1/32".parse::<IpNet>().unwrap()]);
+        let restrictions = SecretRestrictions::default()
+            .with_allowed_ips(vec!["10.0.0.1/32".parse::<IpNet>().unwrap()]);
         assert_eq!(restrictions.to_string(), "Allowed IPs: 10.0.0.1/32");
+    }
+
+    #[test]
+    fn test_with_allowed_countries() {
+        let restrictions = SecretRestrictions::default().with_allowed_countries(vec![
+            CountryCode::new("US").unwrap(),
+            CountryCode::new("DE").unwrap(),
+        ]);
+
+        assert!(restrictions.allowed_ips.is_none());
+        assert_eq!(restrictions.allowed_countries.unwrap().len(), 2);
+    }
+
+    #[test]
+    fn test_is_empty_with_countries() {
+        let mut restrictions = SecretRestrictions::default();
+        assert!(restrictions.is_empty());
+
+        restrictions.allowed_countries = Some(vec![CountryCode::new("US").unwrap()]);
+        assert!(!restrictions.is_empty());
+
+        restrictions.allowed_countries = Some(vec![]);
+        assert!(restrictions.is_empty());
     }
 }

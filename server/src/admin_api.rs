@@ -87,6 +87,7 @@ mod tests {
             show_token_input: false,
             trusted_ip_ranges: None,
             trusted_ip_header: "x-forwarded-for".to_string(),
+            country_header: None,
         }
     }
 

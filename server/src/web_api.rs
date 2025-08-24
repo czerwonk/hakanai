@@ -270,6 +270,7 @@ mod tests {
             show_token_input: false,
             trusted_ip_ranges: None,
             trusted_ip_header: "x-forwarded-for".to_string(),
+            country_header: None,
         }
     }
 
@@ -769,7 +770,10 @@ mod tests {
 
         let mock_store = MockDataStore::new()
             .with_pop_result(DataStorePopResult::Found("test_secret".to_string()))
-            .with_restrictions(secret_id, SecretRestrictions::with_allowed_ips(allowed_ips));
+            .with_restrictions(
+                secret_id,
+                SecretRestrictions::default().with_allowed_ips(allowed_ips),
+            );
 
         let app_data = create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
 
@@ -800,7 +804,10 @@ mod tests {
 
         let mock_store = MockDataStore::new()
             .with_pop_result(DataStorePopResult::Found("test_secret".to_string()))
-            .with_restrictions(secret_id, SecretRestrictions::with_allowed_ips(allowed_ips));
+            .with_restrictions(
+                secret_id,
+                SecretRestrictions::default().with_allowed_ips(allowed_ips),
+            );
 
         let app_data = create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
 
@@ -859,7 +866,10 @@ mod tests {
 
         let mock_store = MockDataStore::new()
             .with_pop_result(DataStorePopResult::Found("test_secret".to_string()))
-            .with_restrictions(secret_id, SecretRestrictions::with_allowed_ips(allowed_ips));
+            .with_restrictions(
+                secret_id,
+                SecretRestrictions::default().with_allowed_ips(allowed_ips),
+            );
 
         let app_data = create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
 
@@ -892,7 +902,10 @@ mod tests {
 
         let mock_store = MockDataStore::new()
             .with_pop_result(DataStorePopResult::Found("test_secret".to_string()))
-            .with_restrictions(secret_id, SecretRestrictions::with_allowed_ips(allowed_ips));
+            .with_restrictions(
+                secret_id,
+                SecretRestrictions::default().with_allowed_ips(allowed_ips),
+            );
 
         let app_data = create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
 
@@ -921,7 +934,10 @@ mod tests {
 
         let mock_store = MockDataStore::new()
             .with_pop_result(DataStorePopResult::Found("test_secret".to_string()))
-            .with_restrictions(secret_id, SecretRestrictions::with_allowed_ips(allowed_ips));
+            .with_restrictions(
+                secret_id,
+                SecretRestrictions::default().with_allowed_ips(allowed_ips),
+            );
 
         let app_data = create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
 
@@ -971,7 +987,7 @@ mod tests {
         ];
 
         let payload = PostSecretRequest::new("test_secret".to_string(), Duration::from_secs(3600))
-            .with_restrictions(SecretRestrictions::with_allowed_ips(allowed_ips.clone()));
+            .with_restrictions(SecretRestrictions::default().with_allowed_ips(allowed_ips.clone()));
 
         let req = test::TestRequest::post()
             .uri("/secret")
@@ -1034,7 +1050,10 @@ mod tests {
 
         let mock_store = MockDataStore::new()
             .with_pop_result(DataStorePopResult::Found("test_secret".to_string()))
-            .with_restrictions(secret_id, SecretRestrictions::with_allowed_ips(allowed_ips));
+            .with_restrictions(
+                secret_id,
+                SecretRestrictions::default().with_allowed_ips(allowed_ips),
+            );
 
         let app_data = create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
 
@@ -1063,7 +1082,10 @@ mod tests {
 
         let mock_store = MockDataStore::new()
             .with_pop_result(DataStorePopResult::Found("test_secret".to_string()))
-            .with_restrictions(secret_id, SecretRestrictions::with_allowed_ips(allowed_ips));
+            .with_restrictions(
+                secret_id,
+                SecretRestrictions::default().with_allowed_ips(allowed_ips),
+            );
 
         let app_data = create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
 
