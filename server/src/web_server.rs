@@ -54,6 +54,7 @@ where
             show_token_input: args.show_token_input,
             trusted_ip_ranges: args.trusted_ip_ranges.clone(),
             trusted_ip_header: args.trusted_ip_header.clone(),
+            country_header: args.country_header.clone(),
         };
         let size_limit = size_limit::calculate(args.upload_size_limit);
         App::new()

@@ -8,17 +8,23 @@
 //!
 //! # Submodules
 //!
+//! - [`country_code`] - ISO 3166-1 alpha-2 country code validation and representation
+//! - [`errors`] - Common validation error types for model data structures
 //! - [`payload`] - Core payload structure for secrets (text/binary data with optional filename)
-//! - [`restrictions`] - Access restriction models (IP-based filtering)
+//! - [`restrictions`] - Access restriction models (IP-based and geo-location filtering)
 //! - [`secret`] - API request/response models for secret creation and retrieval
 //! - [`token`] - Token management structures for admin API
 
+pub mod country_code;
+pub mod errors;
 pub mod payload;
 pub mod restrictions;
 pub mod secret;
 pub mod token;
 
 // Re-export all public types for convenience
+pub use country_code::CountryCode;
+pub use errors::ValidationError;
 pub use payload::Payload;
 pub use restrictions::SecretRestrictions;
 pub use secret::{PostSecretRequest, PostSecretResponse};

@@ -170,6 +170,13 @@ pub struct Args {
         help = "HTTP header to check for client IP when behind a proxy. Common values: x-forwarded-for, x-real-ip, cf-connecting-ip"
     )]
     pub trusted_ip_header: String,
+
+    #[arg(
+        long,
+        env = "HAKANAI_COUNTRY_HEADER",
+        help = "HTTP header to check for client country code. This value is required to support Geo-IP based restrcttions"
+    )]
+    pub country_header: Option<String>,
 }
 
 impl Args {
@@ -229,6 +236,7 @@ mod tests {
             show_token_input: false,
             trusted_ip_ranges: None,
             trusted_ip_header: "x-forwarded-for".to_string(),
+            country_header: None,
         }
     }
 

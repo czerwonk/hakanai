@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import { initFeatures, resetCache } from "../../server/src/typescript/core/app-config";
+import { initFeatures, resetCache, fetchAppConfig } from "../../server/src/typescript/core/app-config";
 
 describe("app-config", () => {
   let fetchMock: jest.Mock;
@@ -208,6 +208,61 @@ describe("app-config", () => {
 
       expect(fetchMock).toHaveBeenCalledWith("/config.json");
       expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("should handle supportsCountryRestrictions config option", async () => {
+      // Test with country restrictions enabled
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          features: {
+            impressum: true,
+            privacy: true,
+            showTokenInput: false,
+            supportsCountryRestrictions: true,
+          },
+        }),
+      });
+
+      const config = await fetchAppConfig();
+      expect(config?.features?.supportsCountryRestrictions).toBe(true);
+
+      // Reset cache for next test
+      resetCache();
+
+      // Test with country restrictions disabled
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          features: {
+            impressum: true,
+            privacy: true,
+            showTokenInput: false,
+            supportsCountryRestrictions: false,
+          },
+        }),
+      });
+
+      const config2 = await fetchAppConfig();
+      expect(config2?.features?.supportsCountryRestrictions).toBe(false);
+
+      // Reset cache for next test
+      resetCache();
+
+      // Test with missing supportsCountryRestrictions (should default to undefined)
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          features: {
+            impressum: true,
+            privacy: true,
+            showTokenInput: false,
+          },
+        }),
+      });
+
+      const config3 = await fetchAppConfig();
+      expect(config3?.features?.supportsCountryRestrictions).toBe(undefined);
     });
   });
 });

@@ -52,14 +52,10 @@ pub async fn send<T: Factory>(factory: T, args: SendArgs) -> Result<()> {
         .with_user_agent(user_agent)
         .with_observer(observer);
 
-    let restrictions = match args.allowed_ips.clone() {
-        Some(allowed_ips) => {
-            let restrictions = SecretRestrictions::with_allowed_ips(allowed_ips);
-            opts = opts.with_restrictions(restrictions.clone());
-            Some(restrictions)
-        }
-        None => None,
-    };
+    let restrictions = get_restrictions(&args);
+    if let Some(restrictions) = &restrictions {
+        opts = opts.with_restrictions(restrictions.clone());
+    }
 
     let mut link = factory
         .new_client()
@@ -74,6 +70,24 @@ pub async fn send<T: Factory>(factory: T, args: SendArgs) -> Result<()> {
     }
 
     Ok(())
+}
+
+fn get_restrictions(args: &SendArgs) -> Option<SecretRestrictions> {
+    let mut restrictions = SecretRestrictions::default();
+
+    if let Some(allowed_ips) = &args.allowed_ips {
+        restrictions = restrictions.with_allowed_ips(allowed_ips.clone());
+    }
+
+    if let Some(allowed_countries) = &args.allowed_countries {
+        restrictions = restrictions.with_allowed_countries(allowed_countries.clone());
+    }
+
+    if restrictions.is_empty() {
+        None
+    } else {
+        Some(restrictions)
+    }
 }
 
 fn read_secret(args: SendArgs) -> Result<Secret> {

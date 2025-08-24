@@ -68,26 +68,17 @@ mod tests {
     use std::time::Duration;
 
     use crate::app_data::{AnonymousOptions, AppData};
-    use crate::observer::ObserverManager;
-    use crate::test_utils::{MockDataStore, MockTokenManager};
+    use crate::test_utils::MockTokenManager;
 
     fn create_test_app_data(token_manager: MockTokenManager) -> AppData {
-        AppData {
-            data_store: Box::new(MockDataStore::new()),
-            token_validator: Box::new(token_manager.clone()),
-            token_creator: Box::new(token_manager),
-            max_ttl: Duration::from_secs(7200),
-            anonymous_usage: AnonymousOptions {
+        AppData::default()
+            .with_token_validator(Box::new(token_manager.clone()))
+            .with_token_creator(Box::new(token_manager))
+            .with_max_ttl(Duration::from_secs(7200))
+            .with_anonymous_usage(AnonymousOptions {
                 allowed: true,
                 upload_size_limit: 32 * 1024,
-            },
-            impressum_html: None,
-            privacy_html: None,
-            observer_manager: ObserverManager::new(),
-            show_token_input: false,
-            trusted_ip_ranges: None,
-            trusted_ip_header: "x-forwarded-for".to_string(),
-        }
+            })
     }
 
     #[actix_web::test]

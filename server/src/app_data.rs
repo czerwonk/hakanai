@@ -48,4 +48,83 @@ pub struct AppData {
 
     /// HTTP header to check for client IP
     pub trusted_ip_header: String,
+
+    /// HTTP header to check for client country (for geo-restrictions)
+    pub country_header: Option<String>,
+}
+
+#[cfg(test)]
+impl Default for AppData {
+    fn default() -> Self {
+        use crate::test_utils::{MockDataStore, MockTokenManager};
+
+        Self {
+            data_store: Box::new(MockDataStore::new()),
+            token_validator: Box::new(MockTokenManager::new()),
+            token_creator: Box::new(MockTokenManager::new()),
+            max_ttl: time::Duration::from_secs(86400), // 24 hours
+            anonymous_usage: AnonymousOptions {
+                allowed: false,
+                upload_size_limit: 32 * 1024, // 32KB
+            },
+            impressum_html: None,
+            privacy_html: None,
+            observer_manager: ObserverManager::new(),
+            show_token_input: false,
+            trusted_ip_ranges: None,
+            trusted_ip_header: "x-forwarded-for".to_string(),
+            country_header: None,
+        }
+    }
+}
+
+impl AppData {
+    /// Builder pattern functions for testing
+    #[cfg(test)]
+    pub fn with_data_store(mut self, data_store: Box<dyn DataStore>) -> Self {
+        self.data_store = data_store;
+        self
+    }
+
+    #[cfg(test)]
+    pub fn with_token_validator(mut self, token_validator: Box<dyn TokenValidator>) -> Self {
+        self.token_validator = token_validator;
+        self
+    }
+
+    #[cfg(test)]
+    pub fn with_token_creator(mut self, token_creator: Box<dyn TokenCreator>) -> Self {
+        self.token_creator = token_creator;
+        self
+    }
+
+    #[cfg(test)]
+    pub fn with_max_ttl(mut self, max_ttl: time::Duration) -> Self {
+        self.max_ttl = max_ttl;
+        self
+    }
+
+    #[cfg(test)]
+    pub fn with_anonymous_usage(mut self, anonymous_usage: AnonymousOptions) -> Self {
+        self.anonymous_usage = anonymous_usage;
+        self
+    }
+
+    #[cfg(test)]
+    pub fn with_impressum_html(mut self, impressum_html: Option<String>) -> Self {
+        self.impressum_html = impressum_html;
+        self
+    }
+
+    #[cfg(test)]
+    pub fn with_trusted_ip_ranges(mut self, trusted_ip_ranges: Option<Vec<ipnet::IpNet>>) -> Self {
+        self.trusted_ip_ranges = trusted_ip_ranges;
+        self
+    }
+
+    #[cfg(test)]
+    pub fn with_trusted_ip_header(mut self, trusted_ip_header: String) -> Self {
+        self.trusted_ip_header = trusted_ip_header;
+        self
+    }
 }

@@ -201,6 +201,30 @@ describe("Error Handling", () => {
     }
   });
 
+  test("sendPayload throws HakanaiError (501)", async () => {
+    mockXHRInstance = createMockXHR({
+      status: 501,
+      statusText: "Not Implemented",
+    });
+    client = new HakanaiClient("http://localhost:8080");
+
+    const testBytes = encodeText("test secret");
+    const payload = client.createPayload();
+    payload.setFromBytes!(testBytes);
+
+    try {
+      await client.sendPayload(payload, 3600);
+      fail("Expected error to be thrown");
+    } catch (error: any) {
+      expect(error.name).toBe("HakanaiError");
+      expect(error.code).toBe(HakanaiErrorCodes.NOT_SUPPORTED);
+      expect(error.statusCode).toBe(501);
+      expect(error.message).toBe(
+        "This feature or operation is not supported by the server",
+      );
+    }
+  });
+
   test("receivePayload validates URL", async () => {
     await expect(client.receivePayload("")).rejects.toThrow(
       "URL cannot be empty",
@@ -251,7 +275,7 @@ describe("Error Handling", () => {
 describe("Error Code Constants", () => {
   test("Error codes are readonly constants", () => {
     const codes = Object.keys(HakanaiErrorCodes);
-    expect(codes.length).toBe(31);
+    expect(codes.length).toBe(32);
 
     expect(codes).toContain("AUTHENTICATION_REQUIRED");
     expect(codes).toContain("INVALID_TOKEN");
@@ -261,6 +285,7 @@ describe("Error Code Constants", () => {
     expect(codes).toContain("RETRIEVE_FAILED");
     expect(codes).toContain("MISSING_DECRYPTION_KEY");
     expect(codes).toContain("PAYLOAD_TOO_LARGE");
+    expect(codes).toContain("NOT_SUPPORTED");
     expect(codes).toContain("EXPECTED_UINT8_ARRAY");
     expect(codes).toContain("EXPECTED_STRING");
     expect(codes).toContain("INVALID_INPUT_FORMAT");

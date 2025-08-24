@@ -27,6 +27,7 @@ interface SecretResponse {
 
 interface SecretRestrictions {
   allowed_ips?: string[];
+  allowed_countries?: string[];
 }
 
 interface SecretRequest {
@@ -208,6 +209,14 @@ class HakanaiClient {
       return new HakanaiError(
         HakanaiErrorCodes.PAYLOAD_TOO_LARGE,
         "The payload size exceeds the limit allowed for the user",
+        response.status,
+      );
+    }
+
+    if (response.status === 501) {
+      return new HakanaiError(
+        HakanaiErrorCodes.NOT_SUPPORTED,
+        "This feature or operation is not supported by the server",
         response.status,
       );
     }

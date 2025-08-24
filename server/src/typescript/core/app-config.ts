@@ -7,6 +7,7 @@ export interface AppConfig {
     impressum: boolean;
     privacy: boolean;
     showTokenInput: boolean;
+    supportsCountryRestrictions: boolean;
   };
 }
 

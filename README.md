@@ -198,8 +198,15 @@ echo "secret" | hakanai send --token-file /path/to/token.txt
 echo "sensitive data" | hakanai send --separate-key
 
 # Restrict access to specific IP addresses or CIDR ranges
-echo "restricted secret" | hakanai send --allowed-ips 192.168.1.0/24,10.0.0.1
-echo "office only" | hakanai send --allowed-ips 203.0.113.0/24,2001:db8:85a3::/48
+echo "restricted secret" | hakanai send --allow-ip 192.168.1.0/24 --allow-ip 10.0.0.1
+echo "office only" | hakanai send --allow-ip 203.0.113.0/24 --allow-ip 2001:db8:85a3::/48
+
+# Restrict access to specific countries (ISO 3166-1 alpha-2 codes)
+echo "US/Canada only" | hakanai send --allow-country US --allow-country CA
+echo "EU restricted" | hakanai send --allow-country DE --allow-country FR --allow-country NL
+
+# Combine IP and country restrictions
+echo "geo-restricted" | hakanai send --allow-ip 192.168.1.0/24 --allow-country US --allow-country DE
 # Output:
 # Secret sent successfully!
 # 
@@ -324,7 +331,8 @@ Create a new secret.
   "data": "base64-encoded-secret",
   "expires_in": 3600,  // seconds
   "restrictions": {    // optional
-    "allowed_ips": ["192.168.1.0/24", "10.0.0.1"]
+    "allowed_ips": ["192.168.1.0/24", "10.0.0.1"],
+    "allowed_countries": ["US", "DE", "CA"]
   }
 }
 ```
@@ -515,6 +523,7 @@ For example:
 - `HAKANAI_SHOW_TOKEN_INPUT`: Show authentication token input field in web interface (default: false)
 - `HAKANAI_TRUSTED_IP_RANGES`: Comma-separated IP ranges (CIDR notation) that bypass size limits (optional)
 - `HAKANAI_TRUSTED_IP_HEADER`: HTTP header to check for client IP when behind a proxy (default: x-forwarded-for)
+- `HAKANAI_COUNTRY_HEADER`: HTTP header to check for client country code (optional, enables geo-restrictions when set)
 - `OTEL_EXPORTER_OTLP_ENDPOINT`: OpenTelemetry collector endpoint (optional, enables OTEL when set)
 
 ### CLI Environment Variables
@@ -537,7 +546,8 @@ For example:
 - `-a, --as-file`: Send the secret as a file (auto-detected for binary content)
 - `--filename`: Custom filename when sending as a file
 - `--separate-key`: Print key separately for enhanced security (share via different channels)
-- `--allowed-ips`: Comma-separated IP addresses/CIDR ranges allowed to access the secret (e.g., `192.168.1.0/24,10.0.0.1`)
+- `--allow-ip`: IP addresses/CIDR ranges allowed to access the secret (can be specified multiple times)
+- `--allow-country`: Country codes (ISO 3166-1 alpha-2) allowed to access the secret (can be specified multiple times)
 - `-q, --qr-code`: Display URL as QR code for easy mobile sharing
 
 #### Get Command Options  
@@ -569,24 +579,51 @@ For example:
 - `--show-token-input`: Show authentication token input field in web interface
 - `--trusted-ip-ranges`: IP ranges (CIDR notation) that bypass size limits
 - `--trusted-ip-header`: HTTP header to check for client IP when behind a proxy (default: x-forwarded-for)
+- `--country-header`: HTTP header to check for client country code (enables geo-restrictions)
 
-### IP-based Access Control
+### Access Control & Geo-Restrictions
 
-#### Secret-Level IP Restrictions
+#### Secret-Level Access Restrictions
 
-Hakanai supports restricting individual secrets to specific IP addresses or CIDR ranges. This provides an additional security layer by ensuring only authorized networks can access the secret.
+Hakanai supports restricting individual secrets to specific IP addresses/CIDR ranges and/or countries. This provides additional security layers by ensuring only authorized networks and geographic locations can access the secret.
+
+**Geographic Restrictions:**
+Country-based restrictions use the `CF-IPCountry` header (commonly provided by Cloudflare and other CDNs) or a configurable country header to determine the client's location. This requires proper reverse proxy configuration.
+
+**Country Header Configuration:**
+```bash
+# Cloudflare (most common)
+hakanai-server --country-header cf-ipcountry
+
+# Custom CDN or proxy setup
+hakanai-server --country-header x-country-code
+
+# Environment variable
+export HAKANAI_COUNTRY_HEADER="cf-ipcountry"
+```
+
+**Note:** Geographic restrictions require server-side country detection via HTTP headers. For deployments behind Cloudflare or similar CDNs that provide country information, configure the appropriate header. Without country header configuration, geo-restrictions will return HTTP 501 Not Implemented.
 
 **CLI Usage:**
 ```bash
 # Restrict to specific IPs and networks
-hakanai send --allowed-ips 192.168.1.0/24,10.0.0.1,2001:db8::/32
+hakanai send --allow-ip 192.168.1.0/24 --allow-ip 10.0.0.1 --allow-ip 2001:db8::/32
 
 # Office network and VPN endpoint
-echo "sensitive data" | hakanai send --allowed-ips 203.0.113.0/24,198.51.100.1
+echo "sensitive data" | hakanai send --allow-ip 203.0.113.0/24 --allow-ip 198.51.100.1
+
+# Restrict by country (ISO 3166-1 alpha-2 codes)
+echo "US only" | hakanai send --allow-country US
+echo "EU access" | hakanai send --allow-country DE --allow-country FR --allow-country NL
+
+# Combine IP and country restrictions
+echo "mixed restrictions" | hakanai send --allow-ip 10.0.0.0/8 --allow-country US --allow-country CA
 ```
 
 **Web Interface:**
-The web interface includes an optional "IP Address Restrictions" field where you can enter IP addresses or CIDR ranges (one per line) to restrict access to the secret.
+The web interface includes optional restriction fields:
+- "IP Address Restrictions": Enter IP addresses or CIDR ranges (one per line)
+- "Country Restrictions": Enter ISO 3166-1 alpha-2 country codes (one per line, e.g., US, DE, CA)
 
 **API Usage:**
 ```json
@@ -594,16 +631,22 @@ The web interface includes an optional "IP Address Restrictions" field where you
   "data": "encrypted_secret_data", 
   "expires_in": 3600,
   "restrictions": {
-    "allowed_ips": ["192.168.1.0/24", "10.0.0.1", "2001:db8::/32"]
+    "allowed_ips": ["192.168.1.0/24", "10.0.0.1", "2001:db8::/32"],
+    "allowed_countries": ["US", "DE", "CA"]
   }
 }
 ```
 
-**Supported Formats:**
+**Supported IP Formats:**
 - IPv4 addresses: `192.168.1.100`
 - IPv4 CIDR: `192.168.1.0/24`
 - IPv6 addresses: `2001:db8::1`
 - IPv6 CIDR: `2001:db8::/32`
+
+**Supported Country Formats:**
+- ISO 3166-1 alpha-2 codes: `US`, `DE`, `CA`, `GB`, `FR`, `JP`, `AU`, etc.
+- Must be exactly 2 uppercase letters
+- Examples: `US` (United States), `DE` (Germany), `CA` (Canada), `GB` (United Kingdom)
 
 #### Server-Level IP Whitelisting
 
