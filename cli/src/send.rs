@@ -52,10 +52,14 @@ pub async fn send<T: Factory>(factory: T, args: SendArgs) -> Result<()> {
         .with_user_agent(user_agent)
         .with_observer(observer);
 
-    if let Some(allowed_ips) = args.allowed_ips.clone() {
-        let restrictions = SecretRestrictions::with_allowed_ips(allowed_ips);
-        opts = opts.with_restrictions(restrictions);
-    }
+    let restrictions = match args.allowed_ips.clone() {
+        Some(allowed_ips) => {
+            let restrictions = SecretRestrictions::with_allowed_ips(allowed_ips);
+            opts = opts.with_restrictions(restrictions.clone());
+            Some(restrictions)
+        }
+        None => None,
+    };
 
     let mut link = factory
         .new_client()
@@ -64,6 +68,10 @@ pub async fn send<T: Factory>(factory: T, args: SendArgs) -> Result<()> {
         .clone();
 
     print_link(&mut link, args)?;
+
+    if let Some(restrictions) = restrictions {
+        print_restrictions(&restrictions);
+    }
 
     Ok(())
 }
@@ -184,6 +192,12 @@ fn print_link_separate_key(link: &mut Url) {
     println!("Key:         {}", fragment.cyan());
 
     fragment.zeroize();
+}
+
+fn print_restrictions(restrictions: &SecretRestrictions) {
+    eprintln!("");
+    eprintln!("{}", "Access to secret is restricted: ".yellow());
+    eprintln!("  {restrictions}");
 }
 
 #[cfg(test)]
