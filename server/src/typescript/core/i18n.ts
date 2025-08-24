@@ -18,6 +18,7 @@ const I18nKeys = {
 
   Label: {
     AllowedIPs: "label.allowedIPs",
+    AllowedCountries: "label.allowedCountries",
     ContentPreview: "label.contentPreview",
     Expires: "label.expires",
     ExpiresIn: "label.expiresIn",
@@ -38,13 +39,13 @@ const I18nKeys = {
   },
 
   Placeholder: {
-    AllowedIPs: "placeholder.allowedIPs",
     Secret: "placeholder.secret",
     Token: "placeholder.token",
   },
 
   Helper: {
     AllowedIPs: "helper.allowedIPs",
+    AllowedCountries: "helper.allowedCountries",
     Expires: "helper.expires",
     FileSelect: "helper.fileSelect",
     GenerateQrCode: "helper.generateQrCode",
@@ -126,6 +127,7 @@ const I18nKeys = {
 
   Aria: {
     AllowedIPs: "aria.allowedIPs",
+    AllowedCountries: "aria.allowedCountries",
     CopySecret: "aria.copySecret",
     DownloadSecret: "aria.downloadSecret",
     ExpiresSelect: "aria.expiresSelect",
@@ -182,6 +184,7 @@ const I18nKeys = {
     InvalidAuthToken: "error.INVALID_AUTH_TOKEN",
     InvalidEncryptedData: "error.INVALID_ENCRYPTED_DATA",
     InvalidHash: "error.INVALID_HASH",
+    NotSupported: "error.NOT_SUPPORTED",
     InvalidInputFormat: "error.INVALID_INPUT_FORMAT",
     InvalidKey: "error.INVALID_KEY",
     InvalidPayload: "error.INVALID_PAYLOAD",
@@ -241,6 +244,7 @@ const translations: Translations = {
     [I18nKeys.Header.Share]: "Share Data",
 
     [I18nKeys.Label.AllowedIPs]: "IP Address Restrictions (Optional):",
+    [I18nKeys.Label.AllowedCountries]: "Country Restrictions (Optional):",
     [I18nKeys.Label.ContentPreview]: "Content Preview",
     [I18nKeys.Label.ExpiresIn]: "Expires in:",
     [I18nKeys.Label.Expires]: "Expires after:",
@@ -259,12 +263,13 @@ const translations: Translations = {
     [I18nKeys.Label.Token]: "Token:",
     [I18nKeys.Label.Url]: "Secret URL:",
 
-    [I18nKeys.Placeholder.AllowedIPs]: "192.168.1.1\n10.0.0.0/8\n2001:db8::/32",
     [I18nKeys.Placeholder.Secret]: "Enter your secret message here...",
     [I18nKeys.Placeholder.Token]: "Enter authentication token here...",
 
     [I18nKeys.Helper.AllowedIPs]:
       "Enter IP addresses or CIDR ranges (one per line) that can access this secret. Leave empty to allow access from any IP address.",
+    [I18nKeys.Helper.AllowedCountries]:
+      "Enter ISO 3166-1 alpha-2 country codes (one per line) that can access this secret. Leave empty to allow access from any country.",
     [I18nKeys.Helper.Url]:
       "The decryption key after # is never sent to the server",
     [I18nKeys.Helper.Secret]:
@@ -359,6 +364,8 @@ const translations: Translations = {
     [I18nKeys.Aria.DownloadSecret]: "Download secret as file",
     [I18nKeys.Aria.AllowedIPs]:
       "Enter IP addresses or CIDR ranges, one per line, to restrict access to this secret",
+    [I18nKeys.Aria.AllowedCountries]:
+      "Enter 2-letter country codes, one per line, to restrict access to this secret by geographic location",
     [I18nKeys.Aria.SecretInput]:
       "Enter the secret message you want to share securely",
     [I18nKeys.Aria.FileInput]:
@@ -428,6 +435,8 @@ const translations: Translations = {
     [I18nKeys.Error.PayloadTooLarge]: "Secret size exceeds the limit",
     [I18nKeys.Error.HashValidationFailed]:
       "Hash validation failed - data may be tempered or corrupted",
+    [I18nKeys.Error.NotSupported]:
+      "Feature not supported - the server does not support this operation",
 
     [I18nKeys.Validation.MissingData]: "Missing or invalid data field",
     [I18nKeys.Validation.InvalidFilename]:
@@ -481,6 +490,7 @@ const translations: Translations = {
     [I18nKeys.Header.Share]: "Daten teilen",
 
     [I18nKeys.Label.AllowedIPs]: "IP-Adress-Beschränkungen (Optional):",
+    [I18nKeys.Label.AllowedCountries]: "Länder-Beschränkungen (Optional):",
     [I18nKeys.Label.Secret]: "Text:",
     [I18nKeys.Label.SecretType]: "Secret-Typ:",
     [I18nKeys.Label.Text]: "📝 Text-Nachricht",
@@ -500,12 +510,13 @@ const translations: Translations = {
     [I18nKeys.Label.ContentPreview]: "Inhaltsvorschau",
     [I18nKeys.Label.QrCode]: "QR-Code:",
 
-    [I18nKeys.Placeholder.AllowedIPs]: "192.168.1.1\n10.0.0.0/8\n2001:db8::/32",
     [I18nKeys.Placeholder.Secret]: "Hier wird gen geheime Text eingegeben...",
     [I18nKeys.Placeholder.Token]: "Authentifizierungs-Token eingeben",
 
     [I18nKeys.Helper.AllowedIPs]:
       "Geben Sie IP-Adressen oder CIDR-Bereiche (eine pro Zeile) ein, die auf dieses Secret zugreifen können. Leer lassen, um Zugriff von jeder IP-Adresse zu ermöglichen.",
+    [I18nKeys.Helper.AllowedCountries]:
+      "Geben Sie ISO 3166-1 alpha-2 Ländercodes (eine pro Zeile) ein, die auf dieses Secret zugreifen können. Leer lassen, um Zugriff aus jedem Land zu ermöglichen.",
     [I18nKeys.Helper.Url]:
       "Der geheime Schlüssel nach dem # wird niemals an den Server gesendet",
     [I18nKeys.Helper.Secret]:
@@ -602,6 +613,8 @@ const translations: Translations = {
 
     [I18nKeys.Aria.AllowedIPs]:
       "IP-Adressen oder CIDR-Bereiche eingeben, eine pro Zeile, um den Zugriff auf dieses Secret zu beschränken",
+    [I18nKeys.Aria.AllowedCountries]:
+      "2-Buchstaben-Ländercodes eingeben, eine pro Zeile, um den Zugriff auf dieses Secret nach geografischer Lage zu beschränken",
     [I18nKeys.Aria.CopySecret]: "Secret in die Zwischenablage kopieren",
     [I18nKeys.Aria.DownloadSecret]: "Secret als Datei herunterladen",
     [I18nKeys.Aria.SecretInput]:
@@ -717,6 +730,8 @@ const translations: Translations = {
       "Crypto-Kontext wurde entsorgt und kann nicht wiederverwendet werden",
     [I18nKeys.Error.HashValidationFailed]:
       "Validierung fehlgeschlagen - Daten könnten beschädigt oder verändert worden sein",
+    [I18nKeys.Error.NotSupported]:
+      "Funktion nicht unterstützt - der Server unterstützt diese Operation nicht",
   },
 };
 

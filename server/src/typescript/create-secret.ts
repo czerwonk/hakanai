@@ -44,6 +44,7 @@ interface Elements {
   fileRadio: HTMLInputElement;
   resultDiv: HTMLElement;
   allowedIPsInput?: HTMLTextAreaElement;
+  allowedCountriesInput?: HTMLTextAreaElement;
 }
 
 interface FileElements {
@@ -84,6 +85,9 @@ function getElements(): Elements | null {
   const allowedIPsInput = document.getElementById(
     "allowedIPs",
   ) as HTMLTextAreaElement;
+  const allowedCountriesInput = document.getElementById(
+    "allowedCountries",
+  ) as HTMLTextAreaElement;
 
   if (
     !button ||
@@ -106,6 +110,7 @@ function getElements(): Elements | null {
     fileRadio,
     resultDiv,
     allowedIPsInput,
+    allowedCountriesInput,
   };
 }
 
@@ -212,6 +217,8 @@ function setElementsState(elements: Elements, disabled: boolean): void {
   if (saveTokenCheckbox) saveTokenCheckbox.disabled = disabled;
   if (separateKeyCheckbox) separateKeyCheckbox.disabled = disabled;
   if (elements.allowedIPsInput) elements.allowedIPsInput.disabled = disabled;
+  if (elements.allowedCountriesInput)
+    elements.allowedCountriesInput.disabled = disabled;
 
   ttlSelector?.setEnabled(!disabled);
   fileDropzone?.setEnabled(!disabled);
@@ -230,7 +237,7 @@ function clearInputs(
   updateFileInfo();
 }
 
-function parseIPRestrictions(ipText: string): SecretRestrictions | undefined {
+function parseIPList(ipText: string): string[] | undefined {
   const trimmed = ipText.trim();
   if (!trimmed) {
     return undefined;
@@ -241,17 +248,45 @@ function parseIPRestrictions(ipText: string): SecretRestrictions | undefined {
     .map((line) => line.trim())
     .filter((line) => line.length > 0);
 
-  if (ips.length === 0) {
+  return ips.length > 0 ? ips : undefined;
+}
+
+function parseCountryList(countryText: string): string[] | undefined {
+  const trimmed = countryText.trim();
+  if (!trimmed) {
     return undefined;
   }
 
-  return { allowed_ips: ips };
+  const countries = trimmed
+    .split("\n")
+    .map((line) => line.trim().toUpperCase())
+    .filter((line) => line.length > 0);
+
+  return countries.length > 0 ? countries : undefined;
+}
+
+function parseRestrictions(elements: Elements): SecretRestrictions | undefined {
+  const allowed_ips = elements.allowedIPsInput
+    ? parseIPList(elements.allowedIPsInput.value)
+    : undefined;
+
+  const allowed_countries = elements.allowedCountriesInput
+    ? parseCountryList(elements.allowedCountriesInput.value)
+    : undefined;
+
+  if (!allowed_ips && !allowed_countries) {
+    return undefined;
+  }
+
+  const restrictions: SecretRestrictions = {};
+  if (allowed_ips) restrictions.allowed_ips = allowed_ips;
+  if (allowed_countries) restrictions.allowed_countries = allowed_countries;
+
+  return restrictions;
 }
 
 function getFormValues(elements: Elements): FormValues {
-  const restrictions = elements.allowedIPsInput
-    ? parseIPRestrictions(elements.allowedIPsInput.value)
-    : undefined;
+  const restrictions = parseRestrictions(elements);
 
   return {
     authToken: elements.authTokenInput.value.trim(),
@@ -664,19 +699,34 @@ function shouldShowRestrictionsInput(): boolean {
   return showRestrictionsParam === "1" || showRestrictionsParam === "true";
 }
 
+async function shouldShowCountryRestrictions(): Promise<boolean> {
+  const config = await fetchAppConfig();
+  return (
+    shouldShowRestrictionsInput() &&
+    (config?.features?.supportsCountryRestrictions ?? false)
+  );
+}
+
 async function initRestrictionsInputVisibility(): Promise<void> {
   const restrictionsInputGroup = document.getElementById(
     "restrictionsInputGroup",
   ) as HTMLElement;
-
-  if (!restrictionsInputGroup) {
-    return;
-  }
+  const countryRestrictionsInputGroup = document.getElementById(
+    "countryRestrictionsInputGroup",
+  ) as HTMLElement;
 
   if (shouldShowRestrictionsInput()) {
-    showElement(restrictionsInputGroup);
+    if (restrictionsInputGroup) showElement(restrictionsInputGroup);
   } else {
-    hideElement(restrictionsInputGroup);
+    if (restrictionsInputGroup) hideElement(restrictionsInputGroup);
+  }
+
+  if (await shouldShowCountryRestrictions()) {
+    if (countryRestrictionsInputGroup)
+      showElement(countryRestrictionsInputGroup);
+  } else {
+    if (countryRestrictionsInputGroup)
+      hideElement(countryRestrictionsInputGroup);
   }
 }
 

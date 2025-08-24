@@ -200,6 +200,7 @@ async fn serve_config(app_data: web::Data<crate::app_data::AppData>) -> impl Res
             "impressum": app_data.impressum_html.is_some(),
             "privacy": app_data.privacy_html.is_some(),
             "showTokenInput": app_data.show_token_input || !app_data.anonymous_usage.allowed,
+            "supportsCountryRestrictions": app_data.country_header.is_some(),
         }
     });
 

@@ -222,7 +222,7 @@ describe("Success Display Component", () => {
         'button[aria-label="button.showQrCode"]',
       );
       expect(qrButton).toBeTruthy();
-      expect(qrButton?.textContent).toBe("▦ QR-Code");
+      expect(qrButton?.textContent).toBe("▦ QR");
     });
   });
 });

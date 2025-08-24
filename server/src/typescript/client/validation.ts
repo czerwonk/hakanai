@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { HakanaiError, HakanaiErrorCodes } from "./errors";
+import { SecretRestrictions } from "./client";
 
 /**
  * Type-safe validation functions for all input data
@@ -186,14 +187,60 @@ class InputValidation {
   }
 
   /**
+   * Validate IP address or CIDR notation format
+   * @param ip - IP address string to validate
+   * @throws {HakanaiError} If IP address format is invalid
+   */
+  static validateIPAddress(ip: string): void {
+    if (typeof ip !== "string" || ip.trim().length === 0) {
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_RESTRICTIONS,
+        "IP address must be a non-empty string",
+      );
+    }
+
+    // Basic CIDR/IP format validation
+    const ipPattern =
+      /^(?:(?:\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?|(?:[0-9a-f:]+(?:\/\d{1,3})?))$/i;
+    if (!ipPattern.test(ip.trim())) {
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_RESTRICTIONS,
+        `Invalid IP address or CIDR notation: ${ip}`,
+      );
+    }
+  }
+
+  /**
+   * Validate country code format (ISO 3166-1 alpha-2)
+   * @param country - Country code string to validate
+   * @throws {HakanaiError} If country code format is invalid
+   */
+  static validateCountryCode(country: string): void {
+    if (typeof country !== "string" || country.trim().length === 0) {
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_RESTRICTIONS,
+        "Country code must be a non-empty string",
+      );
+    }
+
+    // Validate ISO 3166-1 alpha-2 format (exactly 2 uppercase letters)
+    if (!/^[A-Z]{2}$/.test(country.trim())) {
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_RESTRICTIONS,
+        `Invalid country code: ${country}. Must be a 2-letter uppercase ISO 3166-1 alpha-2 code (e.g., US, DE, CA)`,
+      );
+    }
+  }
+
+  /**
    * Validate secret restrictions format
    * @param restrictions - Secret restrictions object to validate
    * @throws {HakanaiError} If restrictions format is invalid
    */
-  static validateRestrictions(restrictions: any): void {
+  static validateRestrictions(restrictions: SecretRestrictions): void {
     if (
-      typeof restrictions !== "object" ||
       restrictions === null ||
+      typeof restrictions !== "object" ||
       Array.isArray(restrictions)
     ) {
       throw new HakanaiError(
@@ -209,24 +256,20 @@ class InputValidation {
           "allowed_ips must be an array",
         );
       }
-
       for (const ip of restrictions.allowed_ips) {
-        if (typeof ip !== "string" || ip.trim().length === 0) {
-          throw new HakanaiError(
-            HakanaiErrorCodes.INVALID_RESTRICTIONS,
-            "All IP addresses must be non-empty strings",
-          );
-        }
+        this.validateIPAddress(ip);
+      }
+    }
 
-        // Basic CIDR/IP format validation
-        const ipPattern =
-          /^(?:(?:\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?|(?:[0-9a-f:]+(?:\/\d{1,3})?))$/i;
-        if (!ipPattern.test(ip.trim())) {
-          throw new HakanaiError(
-            HakanaiErrorCodes.INVALID_RESTRICTIONS,
-            `Invalid IP address or CIDR notation: ${ip}`,
-          );
-        }
+    if (restrictions.allowed_countries !== undefined) {
+      if (!Array.isArray(restrictions.allowed_countries)) {
+        throw new HakanaiError(
+          HakanaiErrorCodes.INVALID_RESTRICTIONS,
+          "allowed_countries must be an array",
+        );
+      }
+      for (const country of restrictions.allowed_countries) {
+        this.validateCountryCode(country);
       }
     }
   }

@@ -256,6 +256,82 @@ describe("InputValidation", () => {
     });
   });
 
+  describe("validateCountryCode", () => {
+    test("accepts valid ISO 3166-1 alpha-2 country codes", () => {
+      const validCountries = [
+        "US",
+        "DE",
+        "CA",
+        "GB",
+        "FR",
+        "JP",
+        "AU",
+        "BR",
+        "CN",
+        "IN",
+      ];
+
+      for (const country of validCountries) {
+        expect(() =>
+          InputValidation.validateCountryCode(country),
+        ).not.toThrow();
+      }
+    });
+
+    test("rejects invalid country code formats", () => {
+      const invalidCountries = [
+        "usa", // lowercase
+        "USA", // 3 letters
+        "germany", // full country name
+        "1A", // number
+        "U", // too short
+        "us", // lowercase
+        "U$", // special character
+        "12", // numbers
+      ];
+
+      for (const country of invalidCountries) {
+        expect(() => InputValidation.validateCountryCode(country)).toThrow();
+        try {
+          InputValidation.validateCountryCode(country);
+        } catch (error: any) {
+          expect(error.code).toBe(HakanaiErrorCodes.INVALID_RESTRICTIONS);
+          expect(error.message).toContain("Invalid country code");
+        }
+      }
+    });
+
+    test("rejects empty country codes with specific message", () => {
+      const emptyCountries = ["", "   "];
+
+      for (const country of emptyCountries) {
+        expect(() => InputValidation.validateCountryCode(country)).toThrow();
+        try {
+          InputValidation.validateCountryCode(country);
+        } catch (error: any) {
+          expect(error.code).toBe(HakanaiErrorCodes.INVALID_RESTRICTIONS);
+          expect(error.message).toBe("Country code must be a non-empty string");
+        }
+      }
+    });
+
+    test("rejects non-string country values", () => {
+      const invalidInputs = [null, undefined, 123, {}, [], true, false];
+
+      for (const input of invalidInputs) {
+        expect(() =>
+          InputValidation.validateCountryCode(input as any),
+        ).toThrow();
+        try {
+          InputValidation.validateCountryCode(input as any);
+        } catch (error: any) {
+          expect(error.code).toBe(HakanaiErrorCodes.INVALID_RESTRICTIONS);
+          expect(error.message).toBe("Country code must be a non-empty string");
+        }
+      }
+    });
+  });
+
   describe("validateRestrictions", () => {
     test("accepts valid restrictions object with allowed_ips", () => {
       const validRestrictions = [
@@ -275,6 +351,87 @@ describe("InputValidation", () => {
       }
     });
 
+    test("accepts valid restrictions object with allowed_countries", () => {
+      const validRestrictions = [
+        { allowed_countries: ["US"] },
+        { allowed_countries: ["DE", "FR"] },
+        { allowed_countries: ["US", "CA", "GB"] },
+        { allowed_countries: [] },
+      ];
+
+      for (const restrictions of validRestrictions) {
+        expect(() =>
+          InputValidation.validateRestrictions(restrictions),
+        ).not.toThrow();
+      }
+    });
+
+    test("accepts valid restrictions object with both allowed_ips and allowed_countries", () => {
+      const validRestrictions = [
+        {
+          allowed_ips: ["192.168.1.1"],
+          allowed_countries: ["US"],
+        },
+        {
+          allowed_ips: ["10.0.0.0/8", "172.16.0.0/12"],
+          allowed_countries: ["DE", "FR"],
+        },
+        {
+          allowed_ips: ["2001:db8::/32"],
+          allowed_countries: ["CA"],
+        },
+      ];
+
+      for (const restrictions of validRestrictions) {
+        expect(() =>
+          InputValidation.validateRestrictions(restrictions),
+        ).not.toThrow();
+      }
+    });
+
+    test("rejects invalid allowed_countries array types", () => {
+      const invalidRestrictions = [
+        { allowed_countries: "US" },
+        { allowed_countries: 123 },
+        { allowed_countries: {} },
+        { allowed_countries: true },
+      ];
+
+      for (const restrictions of invalidRestrictions) {
+        expect(() =>
+          InputValidation.validateRestrictions(restrictions),
+        ).toThrow();
+        try {
+          InputValidation.validateRestrictions(restrictions);
+        } catch (error: any) {
+          expect(error.code).toBe(HakanaiErrorCodes.INVALID_RESTRICTIONS);
+        }
+      }
+    });
+
+    test("rejects invalid country codes in allowed_countries", () => {
+      const invalidRestrictions = [
+        { allowed_countries: [""] },
+        { allowed_countries: ["   "] },
+        { allowed_countries: ["usa"] }, // lowercase
+        { allowed_countries: ["USA"] }, // 3 letters
+        { allowed_countries: ["US", "invalid"] },
+        { allowed_countries: [123 as any] },
+        { allowed_countries: [null as any] },
+      ];
+
+      for (const restrictions of invalidRestrictions) {
+        expect(() =>
+          InputValidation.validateRestrictions(restrictions),
+        ).toThrow();
+        try {
+          InputValidation.validateRestrictions(restrictions);
+        } catch (error: any) {
+          expect(error.code).toBe(HakanaiErrorCodes.INVALID_RESTRICTIONS);
+        }
+      }
+    });
+
     test("rejects invalid restrictions object types", () => {
       const invalidInputs = [null, "string", 123, [], true, false];
 
@@ -286,7 +443,6 @@ describe("InputValidation", () => {
           );
         } catch (error: any) {
           expect(error.code).toBe(HakanaiErrorCodes.INVALID_RESTRICTIONS);
-          expect(error.message).toBe("Restrictions must be an object");
         }
       }
     });

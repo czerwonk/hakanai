@@ -26,6 +26,8 @@ const HakanaiErrorCodes = {
   HASH_MISMATCH: "HASH_MISMATCH",
   /** Client not allowed to access the secret */
   ACCESS_DENIED: "ACCESS_DENIED",
+  /** Server does not support this feature or operation */
+  NOT_SUPPORTED: "NOT_SUPPORTED",
 
   // Validation error codes - specific for better translations
   /** Input must be a Uint8Array but received different type */
