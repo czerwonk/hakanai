@@ -127,10 +127,4 @@ impl AppData {
         self.trusted_ip_header = trusted_ip_header;
         self
     }
-
-    #[cfg(test)]
-    pub fn with_country_header(mut self, country_header: Option<String>) -> Self {
-        self.country_header = country_header;
-        self
-    }
 }
