@@ -123,6 +123,11 @@ hakanai:
     # Proxy header for IP detection
     proxyHeader: "x-forwarded-for"
 
+    # Country header for geo-IP based restrictions (optional)
+    # Required to support country-based access control
+    countryHeader: ""
+    # Example: "cf-ipcountry" for Cloudflare, "x-country-code" for custom setups
+
     # CORS configuration
     cors:
       enabled: false
