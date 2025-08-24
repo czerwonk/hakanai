@@ -33,7 +33,13 @@ export function displaySuccessResult(
 
   createSuccessHeader(container);
 
-  createUrlSection(container, url, options.separateKeyMode);
+  // Pass whether to show QR button (when QR auto-generation is disabled)
+  createUrlSection(
+    container,
+    url,
+    options.separateKeyMode,
+    options.generateQrCode !== true,
+  );
 
   if (options.generateQrCode === true) {
     createQRCodeSection(container, url);
@@ -76,14 +82,15 @@ function createUrlSection(
   container: HTMLElement,
   url: string,
   separateKeyMode?: boolean,
+  showQrButton?: boolean,
 ): void {
   const urlContainer = document.createElement("div");
   urlContainer.className = "url-container";
 
   if (separateKeyMode) {
-    createSeparateUrlDisplay(urlContainer, url);
+    createSeparateUrlDisplay(urlContainer, url, showQrButton);
   } else {
-    createCombinedUrlDisplay(urlContainer, url);
+    createCombinedUrlDisplay(urlContainer, url, showQrButton);
   }
 
   container.appendChild(urlContainer);
@@ -98,6 +105,8 @@ function createLabeledInputWithCopy(
   inputId: string,
   value: string,
   ariaLabel: string,
+  showQrButton?: boolean,
+  fullUrl?: string,
 ): void {
   const label = document.createElement("label");
   label.textContent = window.i18n.t(labelKey);
@@ -123,13 +132,45 @@ function createLabeledInputWithCopy(
   );
   inputContainer.appendChild(copyButton);
 
+  // Add QR button if requested
+  if (showQrButton && fullUrl) {
+    const qrButton = createQrButton(fullUrl);
+    inputContainer.appendChild(qrButton);
+  }
+
   container.appendChild(inputContainer);
+}
+
+/**
+ * Create a QR code button
+ */
+function createQrButton(url: string): HTMLButtonElement {
+  return createButton(
+    "secondary-button",
+    "▦ QR-Code",
+    window.i18n.t(I18nKeys.Button.ShowQrCode),
+    async () => {
+      try {
+        await QRCodeGenerator.ensureWasmLoaded();
+        const qrSvg = QRCodeGenerator.generateQRCode(url);
+        if (qrSvg) {
+          showQRFullscreen(qrSvg);
+        }
+      } catch (error) {
+        console.error("Failed to generate QR code:", error);
+      }
+    },
+  );
 }
 
 /**
  * Create combined URL display (traditional mode)
  */
-function createCombinedUrlDisplay(container: HTMLElement, url: string): void {
+function createCombinedUrlDisplay(
+  container: HTMLElement,
+  url: string,
+  showQrButton?: boolean,
+): void {
   const urlId = generateRandomId();
   createLabeledInputWithCopy(
     container,
@@ -137,6 +178,8 @@ function createCombinedUrlDisplay(container: HTMLElement, url: string): void {
     urlId,
     url,
     "Copy secret URL to clipboard",
+    showQrButton,
+    url,
   );
 }
 
@@ -146,17 +189,20 @@ function createCombinedUrlDisplay(container: HTMLElement, url: string): void {
 function createSeparateUrlDisplay(
   container: HTMLElement,
   fullUrl: string,
+  showQrButton?: boolean,
 ): void {
   const [url, key] = fullUrl.split("#");
   const baseId = generateRandomId();
 
-  // URL section
+  // URL section (with QR button for the full URL)
   createLabeledInputWithCopy(
     container,
     I18nKeys.Label.Url,
     baseId,
     url,
     "Copy secret URL to clipboard",
+    showQrButton,
+    fullUrl, // Pass full URL for QR generation
   );
 
   // Key section

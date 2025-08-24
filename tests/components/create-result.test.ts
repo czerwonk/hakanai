@@ -38,6 +38,7 @@ describe("Success Display Component", () => {
       displaySuccessResult(testUrl, {
         container,
         separateKeyMode: false,
+        generateQrCode: true, // Explicitly enable QR code generation for this test
       });
 
       // Wait for async QR code generation
@@ -186,6 +187,7 @@ describe("Success Display Component", () => {
       displaySuccessResult(testUrl, {
         container,
         separateKeyMode: false,
+        generateQrCode: true, // Explicitly enable QR code generation for this test
       });
 
       // Wait for async QR code generation
@@ -200,6 +202,27 @@ describe("Success Display Component", () => {
 
       const qrLabel = qrSection?.querySelector("label");
       expect(qrLabel?.textContent).toBe("label.qrCode");
+    });
+
+    test("should show QR button when QR generation is disabled", () => {
+      const testUrl = "https://example.com/s/123#abcdef";
+
+      displaySuccessResult(testUrl, {
+        container,
+        separateKeyMode: false,
+        generateQrCode: false, // QR generation disabled
+      });
+
+      // QR code section should NOT be present
+      const qrSection = container.querySelector(".qr-code-section");
+      expect(qrSection).toBeFalsy();
+
+      // QR button should be present
+      const qrButton = container.querySelector(
+        'button[aria-label="button.showQrCode"]',
+      );
+      expect(qrButton).toBeTruthy();
+      expect(qrButton?.textContent).toBe("▦ QR-Code");
     });
   });
 });

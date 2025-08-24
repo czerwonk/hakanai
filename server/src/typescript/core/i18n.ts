@@ -79,6 +79,7 @@ const I18nKeys = {
     Download: "button.download",
     ReadClipboard: "button.readClipboard",
     Retrieve: "button.retrieve",
+    ShowQrCode: "button.showQrCode",
   },
 
   Dropzone: {
@@ -298,6 +299,7 @@ const translations: Translations = {
     [I18nKeys.Button.Retrieve]: "📖 Retrieve Secret",
     [I18nKeys.Button.Copy]: "📋 Copy",
     [I18nKeys.Button.Copied]: "Copied!",
+    [I18nKeys.Button.ShowQrCode]: "Show QR Code",
     [I18nKeys.Button.Download]: "💾 Download",
     [I18nKeys.Button.ChooseFile]: "📁 Choose File",
     [I18nKeys.Button.ReadClipboard]: "📄 Read Clipboard",
@@ -540,6 +542,7 @@ const translations: Translations = {
     [I18nKeys.Button.Retrieve]: "📖 Secret abrufen",
     [I18nKeys.Button.Copy]: "📋 Kopieren",
     [I18nKeys.Button.Copied]: "Kopiert!",
+    [I18nKeys.Button.ShowQrCode]: "QR-Code anzeigen",
     [I18nKeys.Button.Download]: "💾 Speichern",
     [I18nKeys.Button.ChooseFile]: "📁 Datei auswählen",
     [I18nKeys.Button.ReadClipboard]: "📄 Zwischenablage lesen",
