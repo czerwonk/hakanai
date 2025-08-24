@@ -8,7 +8,7 @@ use actix_web::{Error, FromRequest, HttpRequest, error};
 use tracing::warn;
 
 use crate::app_data::AppData;
-use crate::ip_filter::is_request_from_whitelisted_ip;
+use crate::filters::is_request_from_whitelisted_ip;
 use crate::token::TokenError;
 
 /// User type for authentication and tracing

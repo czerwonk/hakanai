@@ -7,7 +7,9 @@ use anyhow::{Result, anyhow};
 use clap::{Parser, Subcommand};
 use url::Url;
 
+use hakanai_lib::models::CountryCode;
 use hakanai_lib::utils::ip_parser::parse_ipnet;
+use std::str::FromStr;
 use hakanai_lib::utils::size_parser::parse_size_limit;
 
 /// Represents the command-line arguments for the application.
@@ -94,12 +96,20 @@ pub struct SendArgs {
     pub print_qr_code: bool,
 
     #[arg(
-        long = "allowed-ip",
+        long = "allow-ip",
         env = "HAKANAI_ALLOWED_IPS",
         help = "Comma-separated list of IP addresses (CIDR notation) that are allowed to access the secret.",
         value_parser = parse_ipnet
     )]
     pub allowed_ips: Option<Vec<ipnet::IpNet>>,
+
+    #[arg(
+        long = "allow-country",
+        env = "HAKANAI_ALLOWED_COUNTRIES",
+        help = "Comma-separated list of country codes (ISO 3166-1 alpha-2) that are allowed to access the secret.",
+        value_parser = CountryCode::from_str
+    )]
+    pub allowed_countries: Option<Vec<CountryCode>>,
 }
 
 impl SendArgs {
@@ -135,6 +145,7 @@ impl SendArgs {
             separate_key: false,
             print_qr_code: false,
             allowed_ips: None,
+            allowed_countries: None,
         }
     }
 
@@ -183,6 +194,12 @@ impl SendArgs {
     #[cfg(test)]
     pub fn with_allowed_ips(mut self, allowed_ips: Vec<ipnet::IpNet>) -> Self {
         self.allowed_ips = Some(allowed_ips);
+        self
+    }
+
+    #[cfg(test)]
+    pub fn with_allowed_countries(mut self, allowed_countries: Vec<CountryCode>) -> Self {
+        self.allowed_countries = Some(allowed_countries);
         self
     }
 }
@@ -1107,11 +1124,11 @@ mod tests {
         assert_eq!(url.fragment(), Some("key-with_special.chars"));
     }
 
-    // Tests for --allowed-ip flag
+    // Tests for --allow-ip flag
     #[test]
     fn test_send_command_with_single_allowed_ip() {
         let args =
-            Args::try_parse_from(["hakanai", "send", "--allowed-ip", "192.168.1.100"]).unwrap();
+            Args::try_parse_from(["hakanai", "send", "--allow-ip", "192.168.1.100"]).unwrap();
 
         match args.command {
             Command::Send(send_args) => {
@@ -1126,7 +1143,7 @@ mod tests {
     #[test]
     fn test_send_command_with_ipv6_allowed_ip() {
         let args =
-            Args::try_parse_from(["hakanai", "send", "--allowed-ip", "2001:db8::1"]).unwrap();
+            Args::try_parse_from(["hakanai", "send", "--allow-ip", "2001:db8::1"]).unwrap();
 
         match args.command {
             Command::Send(send_args) => {
@@ -1140,7 +1157,7 @@ mod tests {
 
     #[test]
     fn test_send_command_with_cidr_allowed_ip() {
-        let args = Args::try_parse_from(["hakanai", "send", "--allowed-ip", "10.0.0.0/8"]).unwrap();
+        let args = Args::try_parse_from(["hakanai", "send", "--allow-ip", "10.0.0.0/8"]).unwrap();
 
         match args.command {
             Command::Send(send_args) => {
@@ -1157,11 +1174,11 @@ mod tests {
         let args = Args::try_parse_from([
             "hakanai",
             "send",
-            "--allowed-ip",
+            "--allow-ip",
             "192.168.1.0/24",
-            "--allowed-ip",
+            "--allow-ip",
             "10.0.0.0/8",
-            "--allowed-ip",
+            "--allow-ip",
             "172.16.0.100",
         ])
         .unwrap();
@@ -1181,7 +1198,7 @@ mod tests {
     #[test]
     fn test_send_command_with_ipv6_cidr_allowed_ip() {
         let args =
-            Args::try_parse_from(["hakanai", "send", "--allowed-ip", "2001:db8::/32"]).unwrap();
+            Args::try_parse_from(["hakanai", "send", "--allow-ip", "2001:db8::/32"]).unwrap();
 
         match args.command {
             Command::Send(send_args) => {
@@ -1198,11 +1215,11 @@ mod tests {
         let args = Args::try_parse_from([
             "hakanai",
             "send",
-            "--allowed-ip",
+            "--allow-ip",
             "192.168.1.0/24",
-            "--allowed-ip",
+            "--allow-ip",
             "2001:db8::1/128",
-            "--allowed-ip",
+            "--allow-ip",
             "10.0.0.1",
         ])
         .unwrap();
@@ -1233,7 +1250,7 @@ mod tests {
 
     #[test]
     fn test_send_command_invalid_ip_address() {
-        let result = Args::try_parse_from(["hakanai", "send", "--allowed-ip", "not-an-ip"]);
+        let result = Args::try_parse_from(["hakanai", "send", "--allow-ip", "not-an-ip"]);
 
         assert!(result.is_err());
     }
@@ -1243,7 +1260,7 @@ mod tests {
         let result = Args::try_parse_from([
             "hakanai",
             "send",
-            "--allowed-ip",
+            "--allow-ip",
             "192.168.1.0/33", // Invalid CIDR - /33 is not valid for IPv4
         ]);
 
@@ -1259,9 +1276,9 @@ mod tests {
             "https://example.com",
             "--ttl",
             "1h",
-            "--allowed-ip",
+            "--allow-ip",
             "192.168.1.0/24",
-            "--allowed-ip",
+            "--allow-ip",
             "10.0.0.1",
             "--file",
             "test.txt",
@@ -1306,7 +1323,7 @@ mod tests {
 
     #[test]
     fn test_send_command_with_localhost_allowed_ip() {
-        let args = Args::try_parse_from(["hakanai", "send", "--allowed-ip", "127.0.0.1"]).unwrap();
+        let args = Args::try_parse_from(["hakanai", "send", "--allow-ip", "127.0.0.1"]).unwrap();
 
         match args.command {
             Command::Send(send_args) => {
@@ -1320,7 +1337,7 @@ mod tests {
 
     #[test]
     fn test_send_command_with_ipv6_localhost_allowed_ip() {
-        let args = Args::try_parse_from(["hakanai", "send", "--allowed-ip", "::1"]).unwrap();
+        let args = Args::try_parse_from(["hakanai", "send", "--allow-ip", "::1"]).unwrap();
 
         match args.command {
             Command::Send(send_args) => {
@@ -1329,6 +1346,184 @@ mod tests {
                 assert_eq!(allowed_ips[0].to_string(), "::1/128");
             }
             _ => panic!("Expected Send command"),
+        }
+    }
+
+    // Tests for --allow-country flag
+    #[test]
+    fn test_send_command_with_single_allowed_country() {
+        let args = Args::try_parse_from(["hakanai", "send", "--allow-country", "US"]).unwrap();
+
+        match args.command {
+            Command::Send(send_args) => {
+                let allowed_countries = send_args.allowed_countries.unwrap();
+                assert_eq!(allowed_countries.len(), 1);
+                assert_eq!(allowed_countries[0].as_str(), "US");
+            }
+            _ => panic!("Expected Send command"),
+        }
+    }
+
+    #[test]
+    fn test_send_command_with_multiple_allowed_countries() {
+        let args = Args::try_parse_from([
+            "hakanai",
+            "send",
+            "--allow-country",
+            "US",
+            "--allow-country",
+            "DE",
+            "--allow-country",
+            "CA",
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Send(send_args) => {
+                let allowed_countries = send_args.allowed_countries.unwrap();
+                assert_eq!(allowed_countries.len(), 3);
+                assert_eq!(allowed_countries[0].as_str(), "US");
+                assert_eq!(allowed_countries[1].as_str(), "DE");
+                assert_eq!(allowed_countries[2].as_str(), "CA");
+            }
+            _ => panic!("Expected Send command"),
+        }
+    }
+
+    #[test]
+    fn test_send_command_without_allowed_countries() {
+        let args = Args::try_parse_from(["hakanai", "send"]).unwrap();
+
+        match args.command {
+            Command::Send(send_args) => {
+                assert!(send_args.allowed_countries.is_none());
+            }
+            _ => panic!("Expected Send command"),
+        }
+    }
+
+    #[test]
+    fn test_send_command_invalid_country_code() {
+        let result = Args::try_parse_from(["hakanai", "send", "--allow-country", "invalid"]);
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_send_command_lowercase_country_code() {
+        let result = Args::try_parse_from(["hakanai", "send", "--allow-country", "us"]);
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_send_command_three_letter_country_code() {
+        let result = Args::try_parse_from(["hakanai", "send", "--allow-country", "USA"]);
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_send_command_with_allowed_countries_and_other_flags() {
+        let args = Args::try_parse_from([
+            "hakanai",
+            "send",
+            "--server",
+            "https://example.com",
+            "--ttl",
+            "2h",
+            "--allow-country",
+            "US",
+            "--allow-country",
+            "DE",
+            "--file",
+            "document.txt",
+            "--as-file",
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Send(send_args) => {
+                assert_eq!(send_args.server.as_str(), "https://example.com/");
+                assert_eq!(send_args.ttl, Duration::from_secs(2 * 60 * 60)); // 2 hours
+                assert_eq!(send_args.files, Some(vec!["document.txt".to_string()]));
+                assert!(send_args.as_file);
+
+                let allowed_countries = send_args.allowed_countries.unwrap();
+                assert_eq!(allowed_countries.len(), 2);
+                assert_eq!(allowed_countries[0].as_str(), "US");
+                assert_eq!(allowed_countries[1].as_str(), "DE");
+            }
+            _ => panic!("Expected Send command"),
+        }
+    }
+
+    #[test]
+    fn test_send_args_builder_with_allowed_countries() {
+        use hakanai_lib::models::CountryCode;
+
+        let country1 = CountryCode::new("US").unwrap();
+        let country2 = CountryCode::new("DE").unwrap();
+
+        let send_args = SendArgs::builder()
+            .with_server("https://test.com")
+            .with_allowed_countries(vec![country1, country2]);
+
+        assert_eq!(send_args.server.as_str(), "https://test.com/");
+
+        let allowed_countries = send_args.allowed_countries.unwrap();
+        assert_eq!(allowed_countries.len(), 2);
+        assert_eq!(allowed_countries[0].as_str(), "US");
+        assert_eq!(allowed_countries[1].as_str(), "DE");
+    }
+
+    #[test]
+    fn test_send_command_with_both_ip_and_country_restrictions() {
+        let args = Args::try_parse_from([
+            "hakanai",
+            "send",
+            "--allow-ip",
+            "192.168.1.0/24",
+            "--allow-ip",
+            "10.0.0.1",
+            "--allow-country",
+            "US",
+            "--allow-country",
+            "DE",
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Send(send_args) => {
+                let allowed_ips = send_args.allowed_ips.unwrap();
+                assert_eq!(allowed_ips.len(), 2);
+                assert_eq!(allowed_ips[0].to_string(), "192.168.1.0/24");
+                assert_eq!(allowed_ips[1].to_string(), "10.0.0.1/32");
+
+                let allowed_countries = send_args.allowed_countries.unwrap();
+                assert_eq!(allowed_countries.len(), 2);
+                assert_eq!(allowed_countries[0].as_str(), "US");
+                assert_eq!(allowed_countries[1].as_str(), "DE");
+            }
+            _ => panic!("Expected Send command"),
+        }
+    }
+
+    #[test]
+    fn test_send_command_with_common_country_codes() {
+        let valid_codes = ["US", "DE", "CA", "GB", "FR", "JP", "AU"];
+
+        for code in valid_codes {
+            let args = Args::try_parse_from(["hakanai", "send", "--allow-country", code]).unwrap();
+
+            match args.command {
+                Command::Send(send_args) => {
+                    let allowed_countries = send_args.allowed_countries.unwrap();
+                    assert_eq!(allowed_countries.len(), 1);
+                    assert_eq!(allowed_countries[0].as_str(), code);
+                }
+                _ => panic!("Expected Send command"),
+            }
         }
     }
 }

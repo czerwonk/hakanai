@@ -3,7 +3,7 @@
   "info": {
     "title": "Hakanai API",
     "description": "Zero-knowledge one-time secret sharing service",
-    "version": "2.10.0",
+    "version": "2.10.5",
     "contact": {
       "url": "https://github.com/czerwonk/hakanai"
     },
@@ -31,7 +31,7 @@
     "/api/v1/secret": {
       "post": {
         "summary": "Create a new secret",
-        "description": "Creates a new one-time secret with optional expiration and access restrictions. All encryption happens client-side. Access restrictions, if specified, limit which IP addresses can retrieve the secret.",
+        "description": "Creates a new one-time secret with optional expiration and access restrictions. All encryption happens client-side. Access restrictions can limit which IP addresses and/or countries can retrieve the secret.",
         "operationId": "createSecret",
         "security": [
           {},
@@ -61,6 +61,27 @@
                     "expires_in": 3600,
                     "restrictions": {
                       "allowed_ips": ["192.168.1.0/24", "10.0.0.100"]
+                    }
+                  }
+                },
+                "geo_restricted": {
+                  "summary": "Geo-restricted secret",
+                  "value": {
+                    "data": "bXkgc2VjcmV0IG1lc3NhZ2U=",
+                    "expires_in": 3600,
+                    "restrictions": {
+                      "allowed_countries": ["US", "DE", "CA"]
+                    }
+                  }
+                },
+                "fully_restricted": {
+                  "summary": "IP and geo-restricted secret",
+                  "value": {
+                    "data": "bXkgc2VjcmV0IG1lc3NhZ2U=",
+                    "expires_in": 3600,
+                    "restrictions": {
+                      "allowed_ips": ["192.168.1.0/24", "10.0.0.100"],
+                      "allowed_countries": ["US", "DE"]
                     }
                   }
                 }
@@ -108,7 +129,7 @@
     "/api/v1/secret/{id}": {
       "get": {
         "summary": "Retrieve a secret",
-        "description": "Retrieves a one-time secret by ID. The secret is deleted after retrieval. If the secret has access restrictions, the request must come from an allowed IP address.",
+        "description": "Retrieves a one-time secret by ID. The secret is deleted after retrieval. If the secret has access restrictions, the request must come from an allowed IP address and/or country.",
         "operationId": "getSecret",
         "parameters": [
           {
@@ -137,13 +158,33 @@
             }
           },
           "403": {
-            "description": "Forbidden - IP address not allowed to access this secret",
+            "description": "Forbidden - access denied due to IP address or country restrictions",
             "content": {
               "text/plain": {
                 "schema": {
                   "type": "string"
                 },
-                "example": "IP address not allowed to access this secret"
+                "examples": {
+                  "ip_denied": {
+                    "summary": "IP address restriction",
+                    "value": "IP address not allowed to access this secret"
+                  },
+                  "country_denied": {
+                    "summary": "Country restriction", 
+                    "value": "Country not allowed to access this secret"
+                  }
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Not Implemented - geo-restrictions requested but country detection not configured",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "Geographic restrictions are not supported by this server"
               }
             }
           },
@@ -341,6 +382,17 @@
             },
             "description": "Optional list of IP addresses or CIDR ranges that are allowed to retrieve this secret. Supports both IPv4 and IPv6. Single IPs are automatically converted to /32 (IPv4) or /128 (IPv6).",
             "example": ["192.168.1.0/24", "10.0.0.100", "2001:db8::/32", "::1"]
+          },
+          "allowed_countries": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[A-Z]{2}$",
+              "minLength": 2,
+              "maxLength": 2
+            },
+            "description": "Optional list of ISO 3166-1 alpha-2 country codes that are allowed to retrieve this secret. Must be exactly 2 uppercase letters. Requires server-side country detection configuration.",
+            "example": ["US", "DE", "CA", "GB", "FR", "JP"]
           }
         }
       }

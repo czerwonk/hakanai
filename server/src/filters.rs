@@ -3,6 +3,8 @@ use std::str::FromStr;
 
 use actix_web::HttpRequest;
 
+use hakanai_lib::models::CountryCode;
+
 use crate::app_data::AppData;
 
 /// Check if the request is from a whitelisted IP range
@@ -29,17 +31,29 @@ pub fn is_request_from_ip_range(
     false
 }
 
-/// Extract a trusted header value from the request
-fn extract_trusted_header(req: &HttpRequest, header_name: &str) -> Option<String> {
-    req.headers()
-        .get(header_name)
-        .and_then(|h| h.to_str().ok().map(|s| s.trim().to_string()))
+/// Checks if the request is from one of the given countries
+pub fn is_request_from_country(
+    req: &HttpRequest,
+    app_data: &AppData,
+    countries: &[CountryCode],
+) -> bool {
+    let header_name = &app_data.country_header;
+
+    if let Some(name) = header_name
+        && let Some(header_value) = extract_header_value(req, name)
+    {
+        return countries
+            .iter()
+            .any(|c| c.as_str() == header_value.to_uppercase());
+    }
+
+    false
 }
 
 /// Extract client IP from request headers or connection info
 fn extract_client_ip(req: &HttpRequest, trusted_header: &str) -> Option<IpAddr> {
     // First check the configured trusted header (e.g., x-forwarded-for)
-    if let Some(header_value) = extract_trusted_header(req, trusted_header) {
+    if let Some(header_value) = extract_header_value(req, trusted_header) {
         // Handle comma-separated IPs (take the first one)
         if let Some(first_ip) = header_value.split(',').next()
             && let Ok(ip) = IpAddr::from_str(first_ip.trim())
@@ -53,6 +67,13 @@ fn extract_client_ip(req: &HttpRequest, trusted_header: &str) -> Option<IpAddr> 
         .peer_addr()
         .and_then(|addr| addr.split(':').next()) // Remove port
         .and_then(|ip_str| IpAddr::from_str(ip_str).ok())
+}
+
+/// Extract and trim header value value from the request
+fn extract_header_value(req: &HttpRequest, header_name: &str) -> Option<String> {
+    req.headers()
+        .get(header_name)
+        .and_then(|h| h.to_str().ok().map(|s| s.trim().to_string()))
 }
 
 /// Check if an IP address is in any of the provided ranges
@@ -165,19 +186,19 @@ mod tests {
     }
 
     #[actix_web::test]
-    async fn test_extract_trusted_header() {
+    async fn test_extract_header_value() {
         let req = create_request_with_headers(&[("x-forwarded-for", "192.168.1.1")]);
-        let header = extract_trusted_header(&req, "x-forwarded-for");
+        let header = extract_header_value(&req, "x-forwarded-for");
         assert_eq!(header, Some("192.168.1.1".to_string()));
 
-        let header = extract_trusted_header(&req, "nonexistent-header");
+        let header = extract_header_value(&req, "nonexistent-header");
         assert_eq!(header, None);
     }
 
     #[actix_web::test]
-    async fn test_extract_trusted_header_with_whitespace() {
+    async fn test_extract_header_value_with_whitespace() {
         let req = create_request_with_headers(&[("x-forwarded-for", "  192.168.1.1  ")]);
-        let header = extract_trusted_header(&req, "x-forwarded-for");
+        let header = extract_header_value(&req, "x-forwarded-for");
         assert_eq!(header, Some("192.168.1.1".to_string()));
     }
 

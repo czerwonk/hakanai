@@ -1,5 +1,6 @@
 use std::convert::TryFrom;
 use std::fmt::Display;
+use std::str::FromStr;
 
 use serde::{Deserialize, Serialize};
 
@@ -43,6 +44,14 @@ impl TryFrom<String> for CountryCode {
 impl Display for CountryCode {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
+    }
+}
+
+impl FromStr for CountryCode {
+    type Err = ValidationError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        CountryCode::new(s)
     }
 }
 
@@ -170,5 +179,17 @@ mod tests {
                 .message
                 .contains("CountryCode must be a 2-letter uppercase ISO 3166-1 alpha-2 code")
         );
+    }
+
+    #[test]
+    fn test_from_str_valid() {
+        let country_code: CountryCode = "US".parse().unwrap();
+        assert_eq!(country_code.as_str(), "US");
+    }
+
+    #[test]
+    fn test_from_str_invalid() {
+        let result: Result<CountryCode, _> = "invalid".parse();
+        assert!(result.is_err());
     }
 }

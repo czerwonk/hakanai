@@ -7,11 +7,11 @@ use actix_web::{HttpRequest, Result, error, get, post, web};
 use tracing::{Span, error, instrument};
 use uuid::Uuid;
 
-use hakanai_lib::models::{PostSecretRequest, PostSecretResponse};
+use hakanai_lib::models::{PostSecretRequest, PostSecretResponse, SecretRestrictions};
 
 use crate::app_data::AppData;
 use crate::data_store::DataStorePopResult;
-use crate::ip_filter::is_request_from_ip_range;
+use crate::filters::{is_request_from_country, is_request_from_ip_range};
 use crate::observer::SecretEventContext;
 use crate::size_limited_json::SizeLimitedJson;
 use crate::user::User;
@@ -65,7 +65,7 @@ pub async fn get_secret_from_request(
         Span::current().record("request_id", request_id);
     }
 
-    validate_restrictions_for_secret(id, &http_req, &app_data).await?;
+    verify_restrictions_for_secret(id, &http_req, &app_data).await?;
 
     match app_data.data_store.pop(id).await {
         Ok(res) => match res {
@@ -92,7 +92,7 @@ pub async fn get_secret_from_request(
 }
 
 #[instrument(skip(app_data, http_req), err)]
-async fn validate_restrictions_for_secret(
+async fn verify_restrictions_for_secret(
     id: Uuid,
     http_req: &HttpRequest,
     app_data: &AppData,
@@ -107,12 +107,20 @@ async fn validate_restrictions_for_secret(
         })?;
 
     // Check IP restrictions if they exist
-    if let Some(restrictions) = restrictions
-        && let Some(allowed_ips) = restrictions.allowed_ips
-        && !allowed_ips.is_empty()
-        && !is_request_from_ip_range(http_req, app_data, &allowed_ips)
-    {
-        return Err(error::ErrorForbidden("IP address not allowed"));
+    if let Some(restrictions) = restrictions {
+        if let Some(allowed_ips) = restrictions.allowed_ips
+            && !allowed_ips.is_empty()
+            && !is_request_from_ip_range(http_req, app_data, &allowed_ips)
+        {
+            return Err(error::ErrorForbidden("Not allowed to access the secret"));
+        }
+
+        if let Some(allowed_countries) = restrictions.allowed_countries
+            && !allowed_countries.is_empty()
+            && !is_request_from_country(http_req, app_data, &allowed_countries)
+        {
+            return Err(error::ErrorForbidden("Not allowed to access the secret"));
+        }
     }
 
     Ok(())
@@ -133,6 +141,10 @@ async fn post_secret(
 
     let req = req.into_inner();
     ensure_ttl_is_valid(req.expires_in, app_data.max_ttl)?;
+
+    if let Some(ref restrictions) = req.restrictions {
+        ensure_restrictions_are_supported(restrictions, &app_data)?;
+    }
 
     let id = uuid::Uuid::new_v4();
     let mut ctx =
@@ -165,6 +177,19 @@ async fn post_secret(
         .await;
 
     Ok(web::Json(PostSecretResponse { id }))
+}
+
+fn ensure_restrictions_are_supported(
+    restrictions: &SecretRestrictions,
+    app_data: &AppData,
+) -> Result<()> {
+    if restrictions.allowed_countries.is_some() && app_data.country_header.is_none() {
+        return Err(error::ErrorNotImplemented(
+            "Country restrictions are not supported by the server",
+        ));
+    }
+
+    Ok(())
 }
 
 /// Extracts and validates the X-Request-Id header from the request.
@@ -1095,5 +1120,309 @@ mod tests {
 
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), 200); // Empty array is treated as no restrictions in ensure_ip_allowed_to_access_secret
+    }
+
+    // Tests for support verification functionality
+    #[actix_web::test]
+    async fn test_post_secret_with_country_restriction_support_enabled() {
+        // Test that country restrictions work when country header is configured
+        let mock_store = MockDataStore::new();
+        let token_manager = MockTokenManager::new().with_unlimited_user_tokens(&["valid-token"]);
+
+        // Create app data with country header configured (support enabled)
+        let mut app_data = create_test_app_data(Box::new(mock_store), token_manager, false);
+        app_data.country_header = Some("cf-ipcountry".to_string());
+
+        let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
+            |cfg| {
+                configure(cfg);
+            },
+        ))
+        .await;
+
+        let req = test::TestRequest::post()
+            .uri("/secret")
+            .insert_header(("content-type", "application/json"))
+            .insert_header(("authorization", "Bearer valid-token"))
+            .set_json(&serde_json::json!({
+                "data": "dGVzdF9zZWNyZXQ=",
+                "expires_in": 3600,
+                "restrictions": {
+                    "allowed_countries": ["US", "DE", "CA"]
+                }
+            }))
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 200); // Should succeed when country support is enabled
+    }
+
+    #[actix_web::test]
+    async fn test_post_secret_with_country_restriction_support_disabled() {
+        // Test that country restrictions return 501 when country header is not configured
+        let mock_store = MockDataStore::new();
+        let token_manager = MockTokenManager::new().with_unlimited_user_tokens(&["valid-token"]);
+
+        // Create app data WITHOUT country header configured (support disabled)
+        let app_data = create_test_app_data(Box::new(mock_store), token_manager, false);
+        // Ensure country_header is None (default)
+        assert!(app_data.country_header.is_none());
+
+        let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
+            |cfg| {
+                configure(cfg);
+            },
+        ))
+        .await;
+
+        let req = test::TestRequest::post()
+            .uri("/secret")
+            .insert_header(("content-type", "application/json"))
+            .insert_header(("authorization", "Bearer valid-token"))
+            .set_json(&serde_json::json!({
+                "data": "dGVzdF9zZWNyZXQ=",
+                "expires_in": 3600,
+                "restrictions": {
+                    "allowed_countries": ["US"]
+                }
+            }))
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 501); // Should return Not Implemented
+
+        let body = test::read_body(resp).await;
+        let body_str = String::from_utf8(body.to_vec()).unwrap();
+        assert!(body_str.contains("Country restrictions are not supported by the server"));
+    }
+
+    #[actix_web::test]
+    async fn test_post_secret_with_combined_restrictions_support_disabled() {
+        // Test that combined IP + country restrictions fail when country support is disabled
+        let mock_store = MockDataStore::new();
+        let token_manager = MockTokenManager::new().with_unlimited_user_tokens(&["valid-token"]);
+
+        let app_data = create_test_app_data(Box::new(mock_store), token_manager, false);
+        assert!(app_data.country_header.is_none());
+
+        let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
+            |cfg| {
+                configure(cfg);
+            },
+        ))
+        .await;
+
+        let req = test::TestRequest::post()
+            .uri("/secret")
+            .insert_header(("content-type", "application/json"))
+            .insert_header(("authorization", "Bearer valid-token"))
+            .set_json(&serde_json::json!({
+                "data": "dGVzdF9zZWNyZXQ=",
+                "expires_in": 3600,
+                "restrictions": {
+                    "allowed_ips": ["192.168.1.0/24"],
+                    "allowed_countries": ["US", "DE"]
+                }
+            }))
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 501); // Should fail because country restrictions are not supported
+    }
+
+    #[actix_web::test]
+    async fn test_post_secret_with_combined_restrictions_support_enabled() {
+        // Test that combined IP + country restrictions work when country support is enabled
+        let mock_store = MockDataStore::new();
+        let token_manager = MockTokenManager::new().with_unlimited_user_tokens(&["valid-token"]);
+
+        let mut app_data = create_test_app_data(Box::new(mock_store), token_manager, false);
+        app_data.country_header = Some("cf-ipcountry".to_string());
+
+        let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
+            |cfg| {
+                configure(cfg);
+            },
+        ))
+        .await;
+
+        let req = test::TestRequest::post()
+            .uri("/secret")
+            .insert_header(("content-type", "application/json"))
+            .insert_header(("authorization", "Bearer valid-token"))
+            .set_json(&serde_json::json!({
+                "data": "dGVzdF9zZWNyZXQ=",
+                "expires_in": 3600,
+                "restrictions": {
+                    "allowed_ips": ["192.168.1.0/24", "10.0.0.1"],
+                    "allowed_countries": ["US", "DE", "CA"]
+                }
+            }))
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 200); // Should succeed when both IP and country support are enabled
+    }
+
+    #[actix_web::test]
+    async fn test_post_secret_with_only_ip_restrictions_no_country_support() {
+        // Test that IP-only restrictions work even when country support is disabled
+        let mock_store = MockDataStore::new();
+        let token_manager = MockTokenManager::new().with_unlimited_user_tokens(&["valid-token"]);
+
+        let app_data = create_test_app_data(Box::new(mock_store), token_manager, false);
+        assert!(app_data.country_header.is_none());
+
+        let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
+            |cfg| {
+                configure(cfg);
+            },
+        ))
+        .await;
+
+        let req = test::TestRequest::post()
+            .uri("/secret")
+            .insert_header(("content-type", "application/json"))
+            .insert_header(("authorization", "Bearer valid-token"))
+            .set_json(&serde_json::json!({
+                "data": "dGVzdF9zZWNyZXQ=",
+                "expires_in": 3600,
+                "restrictions": {
+                    "allowed_ips": ["192.168.1.0/24", "10.0.0.1"]
+                }
+            }))
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 200); // Should succeed - IP restrictions work without country support
+    }
+
+    #[actix_web::test]
+    async fn test_post_secret_without_restrictions() {
+        // Test that secrets without restrictions work regardless of country support configuration
+        let mock_store = MockDataStore::new();
+        let token_manager = MockTokenManager::new().with_unlimited_user_tokens(&["valid-token"]);
+
+        let app_data = create_test_app_data(Box::new(mock_store), token_manager, false);
+        assert!(app_data.country_header.is_none());
+
+        let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
+            |cfg| {
+                configure(cfg);
+            },
+        ))
+        .await;
+
+        let req = test::TestRequest::post()
+            .uri("/secret")
+            .insert_header(("content-type", "application/json"))
+            .insert_header(("authorization", "Bearer valid-token"))
+            .set_json(&serde_json::json!({
+                "data": "dGVzdF9zZWNyZXQ=",
+                "expires_in": 3600
+            }))
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 200); // Should always succeed without restrictions
+    }
+
+    #[actix_web::test]
+    async fn test_post_secret_with_empty_country_restrictions() {
+        // Test that empty country restrictions array doesn't trigger support check
+        let mock_store = MockDataStore::new();
+        let token_manager = MockTokenManager::new().with_unlimited_user_tokens(&["valid-token"]);
+
+        let app_data = create_test_app_data(Box::new(mock_store), token_manager, false);
+        assert!(app_data.country_header.is_none());
+
+        let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
+            |cfg| {
+                configure(cfg);
+            },
+        ))
+        .await;
+
+        let req = test::TestRequest::post()
+            .uri("/secret")
+            .insert_header(("content-type", "application/json"))
+            .insert_header(("authorization", "Bearer valid-token"))
+            .set_json(&serde_json::json!({
+                "data": "dGVzdF9zZWNyZXQ=",
+                "expires_in": 3600,
+                "restrictions": {
+                    "allowed_countries": []
+                }
+            }))
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 501); // Empty array still triggers support check since field is present
+    }
+
+    #[actix_web::test]
+    async fn test_post_secret_country_support_with_custom_header() {
+        // Test that country restrictions work with custom country header configuration
+        let mock_store = MockDataStore::new();
+        let token_manager = MockTokenManager::new().with_unlimited_user_tokens(&["valid-token"]);
+
+        let mut app_data = create_test_app_data(Box::new(mock_store), token_manager, false);
+        app_data.country_header = Some("x-country-code".to_string()); // Custom header
+
+        let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
+            |cfg| {
+                configure(cfg);
+            },
+        ))
+        .await;
+
+        let req = test::TestRequest::post()
+            .uri("/secret")
+            .insert_header(("content-type", "application/json"))
+            .insert_header(("authorization", "Bearer valid-token"))
+            .set_json(&serde_json::json!({
+                "data": "dGVzdF9zZWNyZXQ=",
+                "expires_in": 3600,
+                "restrictions": {
+                    "allowed_countries": ["GB", "FR"]
+                }
+            }))
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 200); // Should succeed with custom country header configured
+    }
+
+    #[actix_web::test]
+    async fn test_post_secret_multiple_country_restrictions_support_enabled() {
+        // Test that multiple country restrictions work when support is enabled
+        let mock_store = MockDataStore::new();
+        let token_manager = MockTokenManager::new().with_unlimited_user_tokens(&["valid-token"]);
+
+        let mut app_data = create_test_app_data(Box::new(mock_store), token_manager, false);
+        app_data.country_header = Some("cf-ipcountry".to_string());
+
+        let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
+            |cfg| {
+                configure(cfg);
+            },
+        ))
+        .await;
+
+        let req = test::TestRequest::post()
+            .uri("/secret")
+            .insert_header(("content-type", "application/json"))
+            .insert_header(("authorization", "Bearer valid-token"))
+            .set_json(&serde_json::json!({
+                "data": "dGVzdF9zZWNyZXQ=",
+                "expires_in": 3600,
+                "restrictions": {
+                    "allowed_countries": ["US", "DE", "CA", "GB", "FR", "JP", "AU"]
+                }
+            }))
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 200); // Should succeed with multiple countries
     }
 }
