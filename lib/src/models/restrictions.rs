@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
+use std::fmt::Display;
+
 use serde::{Deserialize, Serialize};
 
 /// Represents access restrictions for a secret.
@@ -26,18 +28,19 @@ impl SecretRestrictions {
     pub fn is_empty(&self) -> bool {
         self.allowed_ips.is_none()
     }
+}
 
-    /// Pretty format restrictions for display in logs, webhooks, etc.
-    pub fn format_display(&self) -> Option<String> {
+impl Display for SecretRestrictions {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if let Some(ips) = &self.allowed_ips {
             if ips.is_empty() {
-                return None;
+                return write!(f, "No restrictions");
             }
 
             let ip_strings: Vec<String> = ips.iter().map(|ip| ip.to_string()).collect();
-            Some(format!("IP Restrictions: {}", ip_strings.join(", ")))
+            write!(f, "IP Restrictions: {}", ip_strings.join(", "))
         } else {
-            None
+            write!(f, "No restrictions")
         }
     }
 }
@@ -96,9 +99,8 @@ mod tests {
             "192.168.1.0/24".parse::<IpNet>().unwrap(),
             "::1/128".parse::<IpNet>().unwrap(),
         ]);
-        let formatted = restrictions.format_display().unwrap();
         assert_eq!(
-            formatted,
+            restrictions.to_string(),
             "IP Restrictions: 127.0.0.1/32, 192.168.1.0/24, ::1/128"
         );
     }
@@ -107,13 +109,13 @@ mod tests {
     fn test_format_display_empty() {
         // Test with no restrictions
         let restrictions = SecretRestrictions::default();
-        assert!(restrictions.format_display().is_none());
+        assert_eq!(restrictions.to_string(), "No restrictions");
 
         // Test with empty IP list
         let restrictions = SecretRestrictions {
             allowed_ips: Some(vec![]),
         };
-        assert!(restrictions.format_display().is_none());
+        assert_eq!(restrictions.to_string(), "No restrictions");
     }
 
     #[test]
@@ -122,7 +124,6 @@ mod tests {
 
         let restrictions =
             SecretRestrictions::with_allowed_ips(vec!["10.0.0.1/32".parse::<IpNet>().unwrap()]);
-        let formatted = restrictions.format_display().unwrap();
-        assert_eq!(formatted, "IP Restrictions: 10.0.0.1/32");
+        assert_eq!(restrictions.to_string(), "IP Restrictions: 10.0.0.1/32");
     }
 }

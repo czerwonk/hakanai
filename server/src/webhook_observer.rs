@@ -54,10 +54,8 @@ impl SecretObserver for WebhookObserver {
             details.insert("user_type".to_string(), user_type.to_string());
         }
 
-        if let Some(restrictions) = &context.restrictions
-            && let Some(formatted_restrictions) = restrictions.format_display()
-        {
-            details.insert("restrictions".to_string(), formatted_restrictions);
+        if let Some(restrictions) = &context.restrictions {
+            details.insert("restrictions".to_string(), restrictions.to_string());
         }
 
         let payload = WebhookPayload {
