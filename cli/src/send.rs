@@ -195,8 +195,7 @@ fn print_link_separate_key(link: &mut Url) {
 }
 
 fn print_restrictions(restrictions: &SecretRestrictions) {
-    eprintln!("");
-    eprintln!("{}", "Access to secret is restricted: ".yellow());
+    eprintln!("\n{}", "Access to secret is restricted: ".yellow());
     eprintln!("  {restrictions}");
 }
 
