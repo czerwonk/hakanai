@@ -64,30 +64,19 @@ fn is_ip_in_ranges(ip: &IpAddr, ranges: &[ipnet::IpNet]) -> bool {
 mod tests {
     use super::*;
     use crate::app_data::{AnonymousOptions, AppData};
-    use crate::observer::ObserverManager;
-    use crate::test_utils::{MockDataStore, MockTokenManager};
     use actix_web::{HttpRequest, test};
     use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
     use std::time::Duration;
 
     fn create_test_app_data(trusted_ranges: Option<Vec<ipnet::IpNet>>, header: &str) -> AppData {
-        AppData {
-            data_store: Box::new(MockDataStore::new()),
-            token_validator: Box::new(MockTokenManager::new()),
-            token_creator: Box::new(MockTokenManager::new()),
-            max_ttl: Duration::from_secs(7200),
-            anonymous_usage: AnonymousOptions {
+        AppData::default()
+            .with_max_ttl(Duration::from_secs(7200))
+            .with_anonymous_usage(AnonymousOptions {
                 allowed: true,
                 upload_size_limit: 32 * 1024,
-            },
-            impressum_html: None,
-            privacy_html: None,
-            observer_manager: ObserverManager::new(),
-            show_token_input: false,
-            trusted_ip_ranges: trusted_ranges,
-            trusted_ip_header: header.to_string(),
-            country_header: None,
-        }
+            })
+            .with_trusted_ip_ranges(trusted_ranges)
+            .with_trusted_ip_header(header.to_string())
     }
 
     fn create_request_with_headers(headers: &[(&str, &str)]) -> HttpRequest {

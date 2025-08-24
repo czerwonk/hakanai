@@ -202,7 +202,7 @@ mod tests {
 
     use crate::app_data::AnonymousOptions;
     use crate::data_store::DataStore;
-    use crate::observer::{ObserverManager, SecretObserver};
+    use crate::observer::SecretObserver;
     use crate::test_utils::{MockDataStore, MockTokenManager};
     use crate::token::TokenData;
 
@@ -255,23 +255,15 @@ mod tests {
         token_manager: MockTokenManager,
         allow_anonymous: bool,
     ) -> AppData {
-        AppData {
-            data_store,
-            token_validator: Box::new(token_manager.clone()),
-            token_creator: Box::new(token_manager),
-            max_ttl: Duration::from_secs(7200),
-            anonymous_usage: AnonymousOptions {
+        AppData::default()
+            .with_data_store(data_store)
+            .with_token_validator(Box::new(token_manager.clone()))
+            .with_token_creator(Box::new(token_manager))
+            .with_max_ttl(Duration::from_secs(7200))
+            .with_anonymous_usage(AnonymousOptions {
                 allowed: allow_anonymous,
                 upload_size_limit: 32 * 1024, // 32KB in bytes
-            },
-            impressum_html: None,
-            privacy_html: None,
-            observer_manager: ObserverManager::new(),
-            show_token_input: false,
-            trusted_ip_ranges: None,
-            trusted_ip_header: "x-forwarded-for".to_string(),
-            country_header: None,
-        }
+            })
     }
 
     #[actix_web::test]

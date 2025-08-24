@@ -35,7 +35,14 @@ impl SecretRestrictions {
 
     /// Checks if any restrictions are set
     pub fn is_empty(&self) -> bool {
-        self.allowed_ips.is_none() && self.allowed_countries.is_none()
+        let ips_empty = self.allowed_ips.as_ref().is_none_or(|v| v.is_empty());
+
+        let countries_empty = self
+            .allowed_countries
+            .as_ref()
+            .is_none_or(|v| v.is_empty());
+
+        ips_empty && countries_empty
     }
 }
 

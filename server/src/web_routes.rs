@@ -262,27 +262,16 @@ async fn serve_wasm_binary() -> impl Responder {
 mod tests {
     use super::*;
     use crate::app_data::{AnonymousOptions, AppData};
-    use crate::test_utils::MockDataStore;
     use actix_web::{App, test, web};
 
     fn create_test_app_data(impressum_html: Option<String>) -> AppData {
-        AppData {
-            data_store: Box::new(MockDataStore::new()),
-            token_validator: Box::new(crate::test_utils::MockTokenManager::new()),
-            token_creator: Box::new(crate::test_utils::MockTokenManager::new()),
-            max_ttl: std::time::Duration::from_secs(7200),
-            anonymous_usage: AnonymousOptions {
+        AppData::default()
+            .with_max_ttl(std::time::Duration::from_secs(7200))
+            .with_anonymous_usage(AnonymousOptions {
                 allowed: true,
                 upload_size_limit: 32 * 1024,
-            },
-            impressum_html,
-            privacy_html: None,
-            observer_manager: crate::observer::ObserverManager::new(),
-            show_token_input: false,
-            trusted_ip_ranges: None,
-            trusted_ip_header: "x-forwarded-for".to_string(),
-            country_header: None,
-        }
+            })
+            .with_impressum_html(impressum_html)
     }
 
     #[actix_web::test]
