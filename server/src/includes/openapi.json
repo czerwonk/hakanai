@@ -122,6 +122,17 @@
                 }
               }
             }
+          },
+          "501": {
+            "description": "Not Implemented - country restrictions requested but server has no country detection configured",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "Geographic restrictions are not supported by this server"
+              }
+            }
           }
         }
       }
@@ -170,21 +181,10 @@
                     "value": "IP address not allowed to access this secret"
                   },
                   "country_denied": {
-                    "summary": "Country restriction", 
+                    "summary": "Country restriction",
                     "value": "Country not allowed to access this secret"
                   }
                 }
-              }
-            }
-          },
-          "501": {
-            "description": "Not Implemented - geo-restrictions requested but country detection not configured",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                },
-                "example": "Geographic restrictions are not supported by this server"
               }
             }
           },

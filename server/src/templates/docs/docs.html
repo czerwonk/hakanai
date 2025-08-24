@@ -60,33 +60,7 @@
         {endpoints | unescaped}
       </section>
 
-      <section>
-        <h2>Important Notes</h2>
-        <ul>
-          <li>
-            <strong>Zero-Knowledge:</strong> All encryption/decryption happens
-            client-side
-          </li>
-          <li>
-            <strong>One-Time Access:</strong> Secrets are deleted after first
-            retrieval
-          </li>
-          <li>
-            <strong>Self-Destructing:</strong> Secrets expire after configured
-            TTL
-          </li>
-          <li>
-            <strong>Base64 Encoding:</strong> All secret data must be base64
-            encoded
-          </li>
-          <li>
-            <strong>Maximum Size:</strong> Check server configuration for upload
-            limits
-          </li>
-        </ul>
-      </section>
-
-      [[FOOTER]]
+      {schemas | unescaped} [[FOOTER]]
     </div>
 
     <script type="module" src="/common.js?v={cache_buster}"></script>
