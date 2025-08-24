@@ -131,7 +131,7 @@ function showSuccess(url: string): void {
   const generateQrCheckbox = document.getElementById(
     "generateQrCode",
   ) as HTMLInputElement;
-  const generateQrCode = generateQrCheckbox?.checked ?? true;
+  const generateQrCode = generateQrCheckbox?.checked ?? false;
 
   displaySuccessResult(url, {
     container: resultContainer,

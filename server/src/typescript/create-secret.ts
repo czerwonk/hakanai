@@ -372,7 +372,7 @@ function shouldGenerateQrCode(): boolean {
   const generateQrCheckbox = document.getElementById(
     "generateQrCode",
   ) as HTMLInputElement;
-  return generateQrCheckbox?.checked ?? true;
+  return generateQrCheckbox?.checked ?? false;
 }
 
 function showSuccess(secretUrl: string): void {

@@ -35,7 +35,7 @@ export function displaySuccessResult(
 
   createUrlSection(container, url, options.separateKeyMode);
 
-  if (options.generateQrCode !== false) {
+  if (options.generateQrCode === true) {
     createQRCodeSection(container, url);
   }
 
