@@ -25,7 +25,10 @@ import { ErrorHandler, handleAPIError } from "./core/error";
 import { initFeatures, fetchAppConfig } from "./core/app-config";
 import { ProgressBar } from "./components/progress-bar";
 import { TTLSelector } from "./components/ttl-selector";
-import { initSeparateKeyCheckbox } from "./core/preferences";
+import {
+  initSeparateKeyCheckbox,
+  initGenerateQrCodeCheckbox,
+} from "./core/preferences";
 import { KeyboardShortcuts } from "./core/keyboard-shortcuts";
 import { FileDropzone } from "./components/file-dropzone";
 
@@ -365,6 +368,13 @@ function isSeparateKeyMode(): boolean {
   return separateKeyCheckbox?.checked ?? false;
 }
 
+function shouldGenerateQrCode(): boolean {
+  const generateQrCheckbox = document.getElementById(
+    "generateQrCode",
+  ) as HTMLInputElement;
+  return generateQrCheckbox?.checked ?? true;
+}
+
 function showSuccess(secretUrl: string): void {
   const resultContainer = document.getElementById("result");
   if (!resultContainer) {
@@ -376,6 +386,7 @@ function showSuccess(secretUrl: string): void {
   displaySuccessResult(secretUrl, {
     container: resultContainer,
     separateKeyMode: isSeparateKeyMode(),
+    generateQrCode: shouldGenerateQrCode(),
   });
   announceToScreenReader(window.i18n.t(I18nKeys.Msg.SuccessTitle));
 }
@@ -654,7 +665,9 @@ function shouldShowRestrictionsInput(): boolean {
 }
 
 async function initRestrictionsInputVisibility(): Promise<void> {
-  const restrictionsInputGroup = document.getElementById("restrictionsInputGroup") as HTMLElement;
+  const restrictionsInputGroup = document.getElementById(
+    "restrictionsInputGroup",
+  ) as HTMLElement;
 
   if (!restrictionsInputGroup) {
     return;
@@ -685,4 +698,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     "separateKey",
   ) as HTMLInputElement;
   initSeparateKeyCheckbox(separateKeyCheckbox);
+
+  const generateQrCheckbox = document.getElementById(
+    "generateQrCode",
+  ) as HTMLInputElement;
+  initGenerateQrCodeCheckbox(generateQrCheckbox);
 });

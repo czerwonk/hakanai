@@ -10,6 +10,7 @@ import { I18nKeys } from "../core/i18n";
  */
 interface SuccessDisplayOptions {
   separateKeyMode?: boolean;
+  generateQrCode?: boolean;
   container: HTMLElement;
 }
 
@@ -34,7 +35,9 @@ export function displaySuccessResult(
 
   createUrlSection(container, url, options.separateKeyMode);
 
-  createQRCodeSection(container, url);
+  if (options.generateQrCode !== false) {
+    createQRCodeSection(container, url);
+  }
 
   createNoteSection(container);
 

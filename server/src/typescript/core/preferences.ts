@@ -7,6 +7,7 @@
 const STORAGE_KEYS = {
   LAST_TTL: "hakanai:lastTTL",
   SEPARATE_KEY_MODE: "hakanai:separateKeyMode",
+  GENERATE_QR_CODE: "hakanai:generateQrCode",
 } as const;
 
 export class PreferenceStorage {
@@ -66,6 +67,35 @@ export class PreferenceStorage {
 
     return undefined;
   }
+
+  /**
+   * Save the generate QR code preference
+   */
+  static saveGenerateQrCode(enabled: boolean): void {
+    try {
+      localStorage.setItem(
+        STORAGE_KEYS.GENERATE_QR_CODE,
+        enabled ? "true" : "false",
+      );
+    } catch (error) {
+      console.warn("Failed to save generate QR code preference:", error);
+    }
+  }
+
+  /**
+   * Get the generate QR code preference or undefined if not set
+   */
+  static getGenerateQrCode(): boolean | undefined {
+    try {
+      const value = localStorage.getItem(STORAGE_KEYS.GENERATE_QR_CODE);
+      if (value === "true") return true;
+      if (value === "false") return false;
+    } catch (error) {
+      console.warn("Failed to get generate QR code preference:", error);
+    }
+
+    return undefined;
+  }
 }
 
 /**
@@ -86,5 +116,26 @@ export function initSeparateKeyCheckbox(checkbox: HTMLInputElement): void {
   // Save preference when checkbox changes
   checkbox.addEventListener("change", () => {
     PreferenceStorage.saveSeparateKeyMode(checkbox.checked);
+  });
+}
+
+/**
+ * Initialize generate QR code checkbox on any page
+ * @param checkbox - The checkbox element
+ */
+export function initGenerateQrCodeCheckbox(checkbox: HTMLInputElement): void {
+  if (!checkbox) {
+    return;
+  }
+
+  // Restore saved preference (default to true if not set)
+  const savedPreference = PreferenceStorage.getGenerateQrCode();
+  if (savedPreference !== undefined) {
+    checkbox.checked = savedPreference;
+  }
+
+  // Save preference when checkbox changes
+  checkbox.addEventListener("change", () => {
+    PreferenceStorage.saveGenerateQrCode(checkbox.checked);
   });
 }

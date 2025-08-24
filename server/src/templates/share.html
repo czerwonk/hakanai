@@ -45,6 +45,20 @@
           </div>
 
           <div class="input-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="generateQrCode" checked />
+              <span data-i18n="label.generateQrCode"
+                >Generate QR code for easy sharing</span
+              >
+            </label>
+            <span data-i18n="helper.generateQrCode" class="input-helper">
+              When enabled, a QR code will be generated for the secret URL.
+              Disable this if you're concerned about shoulder surfing or visual
+              exposure.
+            </span>
+          </div>
+
+          <div class="input-group">
             <button id="share-button" class="button primary">
               <span data-i18n="button.create">Create Secret</span>
             </button>
