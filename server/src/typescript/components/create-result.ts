@@ -147,7 +147,7 @@ function createLabeledInputWithCopy(
 function createQrButton(url: string): HTMLButtonElement {
   return createButton(
     "secondary-button",
-    "▦ QR-Code",
+    "▦ QR",
     window.i18n.t(I18nKeys.Button.ShowQrCode),
     async () => {
       try {
