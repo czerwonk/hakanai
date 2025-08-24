@@ -303,8 +303,8 @@ fn generate_request_examples(request_body: &Value, tt: &TinyTemplate) -> String 
 
 /// Generate the schemas section
 fn generate_schemas_section(openapi: &Value, tt: &TinyTemplate) -> String {
-    if let Some(components) = openapi["components"].as_object() {
-        if let Some(schemas) = components["schemas"].as_object() {
+    if let Some(components) = openapi["components"].as_object()
+        && let Some(schemas) = components["schemas"].as_object() {
             let mut schemas_html = String::new();
 
             for (schema_name, schema) in schemas {
@@ -316,7 +316,6 @@ fn generate_schemas_section(openapi: &Value, tt: &TinyTemplate) -> String {
 
             return tt.render("schema_section", &context).unwrap_or_default();
         }
-    }
 
     String::new()
 }
