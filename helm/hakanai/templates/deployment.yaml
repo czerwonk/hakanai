@@ -102,7 +102,7 @@ spec:
             {{- end }}
             {{- if .Values.hakanai.webhook.headers }}
             - name: HAKANAI_WEBHOOK_HEADERS
-              value: {{ .Values.hakanai.webhook.headers | quote }}
+              value: {{ .Values.hakanai.webhook.headers | join "," | quote }}
             {{- end }}
             {{- end }}
             {{- if or .Values.redis.auth.enabled .Values.externalRedis.password }}
