@@ -520,6 +520,7 @@ For example:
 - `HAKANAI_PRIVACY_FILE`: Path to privacy policy/data protection text file (displays privacy policy link in footer when provided)
 - `HAKANAI_WEBHOOK_URL`: Webhook URL for secret lifecycle notifications (optional)
 - `HAKANAI_WEBHOOK_TOKEN`: Bearer token for webhook authentication (optional)
+- `HAKANAI_WEBHOOK_HEADERS`: Comma-separated list of HTTP headers to include in webhook requests (default: user-agent,x-forwarded-for,x-forwarded-proto,x-real-ip,x-request-id)
 - `HAKANAI_SHOW_TOKEN_INPUT`: Show authentication token input field in web interface (default: false)
 - `HAKANAI_TRUSTED_IP_RANGES`: Comma-separated IP ranges (CIDR notation) that bypass size limits (optional)
 - `HAKANAI_TRUSTED_IP_HEADER`: HTTP header to check for client IP when behind a proxy (default: x-forwarded-for)

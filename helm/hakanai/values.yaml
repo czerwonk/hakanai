@@ -136,6 +136,19 @@ hakanai:
       # - "https://app.example.com"
       # - "https://admin.example.com"
 
+  # Webhook configuration for secret lifecycle notifications
+  webhook:
+    enabled: false
+    url: ""
+    # Example: "https://example.com/webhook"
+    
+    # Bearer token for webhook authentication (optional)
+    token: ""
+    
+    # HTTP headers to include in webhook requests
+    # Default: user-agent,x-forwarded-for,x-forwarded-proto,x-real-ip,x-request-id
+    headers: "user-agent,x-forwarded-for,x-forwarded-proto,x-real-ip,x-request-id"
+
   # OpenTelemetry configuration
   observability:
     enabled: false

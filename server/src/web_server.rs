@@ -39,9 +39,14 @@ where
 
     let webhook_url = args.webhook_url;
     let webhook_token = args.webhook_token;
+    let webhook_headers = args.webhook_headers;
 
     HttpServer::new(move || {
-        let observer_manager = init_observers(webhook_url.clone(), webhook_token.clone());
+        let observer_manager = init_observers(
+            webhook_url.clone(),
+            webhook_token.clone(),
+            webhook_headers.clone(),
+        );
         let app_data = AppData {
             data_store: Box::new(data_store.clone()),
             token_validator: Box::new(token_manager.clone()),
@@ -89,11 +94,15 @@ where
     .await
 }
 
-fn init_observers(webhook_url: Option<String>, webhook_token: Option<String>) -> ObserverManager {
+fn init_observers(
+    webhook_url: Option<String>,
+    webhook_token: Option<String>,
+    webhook_headers: Vec<String>,
+) -> ObserverManager {
     let mut observer_manager = observer::ObserverManager::new();
 
     if let Some(ref url) = webhook_url {
-        match WebhookObserver::new(url.clone(), webhook_token.clone()) {
+        match WebhookObserver::new(url.clone(), webhook_token.clone(), webhook_headers.clone()) {
             Ok(obs) => {
                 observer_manager.register_observer(Box::new(obs));
             }

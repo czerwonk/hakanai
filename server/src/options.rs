@@ -147,6 +147,13 @@ pub struct Args {
     pub webhook_token: Option<String>,
 
     #[arg(
+        env = "HAKANAI_WEBHOOK_HEADERS",
+        default_value = "user-agent,x-forwarded-for,x-forwarded-proto,x-real-ip,x-request-id",
+        help = "Comma-separated list of HTTP headers to include in webhook requests"
+    )]
+    pub webhook_headers: Vec<String>,
+
+    #[arg(
         long,
         default_value = "false",
         env = "HAKANAI_SHOW_TOKEN_INPUT",

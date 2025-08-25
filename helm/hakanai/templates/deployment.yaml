@@ -100,6 +100,10 @@ spec:
                   name: {{ include "hakanai.fullname" . }}
                   key: webhook-token
             {{- end }}
+            {{- if .Values.hakanai.webhook.headers }}
+            - name: HAKANAI_WEBHOOK_HEADERS
+              value: {{ .Values.hakanai.webhook.headers | quote }}
+            {{- end }}
             {{- end }}
             {{- if or .Values.redis.auth.enabled .Values.externalRedis.password }}
             - name: REDIS_PASSWORD

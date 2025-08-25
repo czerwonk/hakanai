@@ -12,14 +12,6 @@ use uuid::Uuid;
 
 use crate::observer::{SecretEventContext, SecretObserver};
 
-const SAFE_HEADERS: [&str; 5] = [
-    "user-agent",
-    "x-forwarded-for",
-    "x-forwarded-proto",
-    "x-real-ip",
-    "x-request-id",
-];
-
 /// Webhook action types.
 #[derive(Serialize, Deserialize, Debug)]
 pub enum WebhookAction {
@@ -43,13 +35,14 @@ pub struct WebhookObserver {
     url: String,
     auth_token: Option<String>,
     client: reqwest::Client,
+    header_names: Vec<String>,
 }
 
 #[async_trait]
 impl SecretObserver for WebhookObserver {
     #[instrument(skip(self, context))]
     async fn on_secret_created(&self, secret_id: Uuid, context: &SecretEventContext) {
-        let mut details = filter_headers(&context.headers);
+        let mut details = self.filter_headers(&context.headers);
         if let Some(user_type) = &context.user_type {
             details.insert("user_type".to_string(), user_type.to_string());
         }
@@ -71,7 +64,7 @@ impl SecretObserver for WebhookObserver {
         let payload = WebhookPayload {
             secret_id,
             action: WebhookAction::Retrieved,
-            details: filter_headers(&context.headers),
+            details: self.filter_headers(&context.headers),
         };
         self.send_webhook(payload).await;
     }
@@ -79,7 +72,7 @@ impl SecretObserver for WebhookObserver {
 
 impl WebhookObserver {
     /// Creates a new webhook observer.
-    pub fn new(url: String, auth_token: Option<String>) -> Result<Self> {
+    pub fn new(url: String, auth_token: Option<String>, header_names: Vec<String>) -> Result<Self> {
         let client = reqwest::Client::builder()
             .timeout(Duration::from_secs(5))
             .build()?;
@@ -88,6 +81,7 @@ impl WebhookObserver {
             url,
             auth_token,
             client,
+            header_names: header_names.iter().map(|h| h.to_lowercase()).collect(),
         })
     }
 
@@ -105,21 +99,21 @@ impl WebhookObserver {
             }
         });
     }
-}
 
-fn filter_headers(headers: &HeaderMap) -> HashMap<String, String> {
-    let mut filtered = HashMap::new();
+    fn filter_headers(&self, headers: &HeaderMap) -> HashMap<String, String> {
+        let mut filtered = HashMap::new();
 
-    for (key, value) in headers.iter() {
-        let key_str = key.as_str().to_lowercase();
-        if SAFE_HEADERS.contains(&key_str.as_str()) {
-            if let Ok(value_str) = value.to_str() {
-                filtered.insert(key_str, value_str.to_string());
-            } else {
-                warn!("Failed to convert header value to string for key: {}", key);
+        for (key, value) in headers.iter() {
+            let key_str = key.as_str().to_lowercase();
+            if self.header_names.contains(&key_str) {
+                if let Ok(value_str) = value.to_str() {
+                    filtered.insert(key_str, value_str.to_string());
+                } else {
+                    warn!("Failed to convert header value to string for key: {}", key);
+                }
             }
         }
-    }
 
-    filtered
+        filtered
+    }
 }
