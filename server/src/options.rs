@@ -148,6 +148,7 @@ pub struct Args {
 
     #[arg(
         env = "HAKANAI_WEBHOOK_HEADERS",
+        value_delimiter = ',',
         default_value = "user-agent,x-forwarded-for,x-forwarded-proto,x-real-ip,x-request-id",
         help = "Comma-separated list of HTTP headers to include in webhook requests"
     )]
