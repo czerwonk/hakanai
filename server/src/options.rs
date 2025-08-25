@@ -189,10 +189,6 @@ pub struct Args {
 impl Args {
     /// Validates configuration parameters for compatibility and logical consistency.
     pub fn validate(&self) -> Result<(), String> {
-        if self.reset_admin_token && !self.enable_admin_token {
-            return Err("--reset-admin-token requires --enable-admin-token".to_string());
-        }
-
         if self.anonymous_upload_size_limit > self.upload_size_limit {
             return Err(
                 "--anonymous-size-limit cannot be larger than --upload-size-limit".to_string(),
@@ -240,28 +236,12 @@ mod tests {
             privacy_file: None,
             webhook_url: None,
             webhook_token: None,
+            webhook_headers: vec![],
             show_token_input: false,
             trusted_ip_ranges: None,
             trusted_ip_header: "x-forwarded-for".to_string(),
             country_header: None,
         }
-    }
-
-    #[test]
-    fn test_validate_reset_admin_token_without_enable() {
-        let args = Args {
-            reset_admin_token: true,
-            enable_admin_token: false,
-            ..create_test_args()
-        };
-
-        let result = args.validate();
-        assert!(result.is_err());
-        assert!(
-            result
-                .unwrap_err()
-                .contains("--reset-admin-token requires --enable-admin-token")
-        );
     }
 
     #[test]
