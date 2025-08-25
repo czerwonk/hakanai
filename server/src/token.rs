@@ -15,7 +15,7 @@ use thiserror::Error;
 
 use hakanai_lib::hash::sha256_hex_from_string;
 
-const DEFAULT_TOKEN_TTL: u64 = 60 * 60 * 24 * 30; // 30 days in seconds
+const DEFAULT_TOKEN_TTL: u64 = 60 * 60 * 24 * 365; // 1 year in seconds
 
 /// Token operation errors.
 #[derive(Debug, Error)]
