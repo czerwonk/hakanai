@@ -109,14 +109,14 @@ pub struct Args {
     #[arg(
         long,
         default_value = "false",
-        help = "Force regenerate admin token (overwrites existing). Requires --enable-admin-token."
+        help = "Force regenerate admin token (overwrites existing) without starting the server."
     )]
     pub reset_admin_token: bool,
 
     #[arg(
         long,
         default_value = "false",
-        help = "Clear all user tokens and regenerate a new default token."
+        help = "Only clears all user tokens and regenerate a new default token, does not start the server"
     )]
     pub reset_user_tokens: bool,
 

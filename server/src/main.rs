@@ -61,6 +61,21 @@ async fn main() -> Result<()> {
     };
 
     let token_manager = token::TokenManager::new(redis_client.clone());
+    if args.reset_admin_token
+        && let Err(e) = reset_admin_token(&token_manager).await {
+            eprintln!("Failed to reset admin token: {e}");
+            return Err(std::io::Error::other(e));
+        }
+
+    if args.reset_user_tokens
+        && let Err(e) = reset_user_tokens(&token_manager).await {
+            eprintln!("Failed to reset user tokens: {e}");
+            return Err(std::io::Error::other(e));
+        }
+
+    if args.reset_user_tokens || args.reset_admin_token {
+        return Ok(()); // do not start server on reset
+    }
 
     if let Err(e) = initialize_tokens(&token_manager, &args).await {
         eprintln!("Failed to initialize tokens: {e}");
@@ -80,24 +95,30 @@ async fn main() -> Result<()> {
     res
 }
 
+async fn reset_user_tokens(token_manager: &TokenManager<RedisClient>) -> anyhow::Result<()> {
+    let default_token = token_manager.reset_user_tokens().await?;
+    info!("Default user token: {default_token}");
+    Ok(())
+}
+
+async fn reset_admin_token(token_manager: &TokenManager<RedisClient>) -> anyhow::Result<()> {
+    let admin_token = token_manager.create_admin_token().await?;
+    info!("Admin token: {admin_token}");
+    Ok(())
+}
+
 async fn initialize_tokens(
     token_manager: &TokenManager<RedisClient>,
     args: &Args,
 ) -> anyhow::Result<()> {
-    initialize_admin_token(token_manager, args).await?;
-    initialize_user_tokens(token_manager, args).await
-}
-
-async fn initialize_user_tokens(
-    token_manager: &TokenManager<RedisClient>,
-    args: &Args,
-) -> anyhow::Result<()> {
-    if args.reset_user_tokens {
-        info!("Resetting user tokens");
-        let default_token = token_manager.reset_user_tokens().await?;
-        info!("Default user token: {default_token}");
+    if args.enable_admin_token {
+        initialize_admin_token(token_manager).await?;
     }
 
+    initialize_user_tokens(token_manager).await
+}
+
+async fn initialize_user_tokens(token_manager: &TokenManager<RedisClient>) -> anyhow::Result<()> {
     if let Some(default_token) = token_manager.create_default_token_if_none().await? {
         info!("Default user token: {default_token}");
     }
@@ -105,21 +126,8 @@ async fn initialize_user_tokens(
     Ok(())
 }
 
-async fn initialize_admin_token(
-    token_manager: &TokenManager<RedisClient>,
-    args: &Args,
-) -> anyhow::Result<()> {
-    if !args.enable_admin_token {
-        return Ok(());
-    }
-
-    let new_admin_token: Option<String> = if args.reset_admin_token {
-        Some(token_manager.create_admin_token().await?)
-    } else {
-        token_manager.create_admin_token_if_none().await?
-    };
-
-    if let Some(admin_token) = new_admin_token {
+async fn initialize_admin_token(token_manager: &TokenManager<RedisClient>) -> anyhow::Result<()> {
+    if let Some(admin_token) = token_manager.create_admin_token_if_none().await? {
         info!("Admin token: {admin_token}");
     };
 

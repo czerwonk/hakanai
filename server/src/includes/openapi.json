@@ -3,7 +3,7 @@
   "info": {
     "title": "Hakanai API",
     "description": "Zero-knowledge one-time secret sharing service",
-    "version": "2.10.5",
+    "version": "2.10.6",
     "contact": {
       "url": "https://github.com/czerwonk/hakanai"
     },

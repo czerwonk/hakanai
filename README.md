@@ -570,8 +570,8 @@ For example:
 - `--allow-anonymous`: Allow anonymous access without authentication
 - `--anonymous-size-limit`: Set upload size limit for anonymous users (supports humanized format like 32k, 1m)
 - `--enable-admin-token`: Enable admin token system for token management
-- `--reset-admin-token`: Force regenerate admin token (requires --enable-admin-token)
-- `--reset-user-tokens`: Clear all user tokens and create new default token
+- `--reset-admin-token`: Force regenerate admin token (requires --enable-admin-token) without starting the server
+- `--reset-user-tokens`: Clear all user tokens and create new default token without starting the server
 - `--impressum-file`: Path to impressum/legal information text file (displays impressum link in footer when provided)
 - `--privacy-file`: Path to privacy policy/data protection text file (displays privacy policy link in footer when provided)
 - `--webhook-url`: Webhook URL for secret lifecycle notifications
