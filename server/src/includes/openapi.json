@@ -124,13 +124,12 @@
             }
           },
           "501": {
-            "description": "Not Implemented - country restrictions requested but server has no country detection configured",
+            "description": "Feature not supported - e.g. country restrictions requested but server has no country detection configured",
             "content": {
               "text/plain": {
                 "schema": {
                   "type": "string"
-                },
-                "example": "Geographic restrictions are not supported by this server"
+                }
               }
             }
           }
@@ -169,21 +168,11 @@
             }
           },
           "403": {
-            "description": "Forbidden - access denied due to IP address or country restrictions",
+            "description": "Forbidden - access denied due to unmet restrictions (e.g. IP or country)",
             "content": {
               "text/plain": {
                 "schema": {
                   "type": "string"
-                },
-                "examples": {
-                  "ip_denied": {
-                    "summary": "IP address restriction",
-                    "value": "IP address not allowed to access this secret"
-                  },
-                  "country_denied": {
-                    "summary": "Country restriction",
-                    "value": "Country not allowed to access this secret"
-                  }
                 }
               }
             }
