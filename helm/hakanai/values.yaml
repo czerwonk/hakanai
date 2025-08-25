@@ -348,6 +348,26 @@ extraSecrets: []
 # - name: my-secret
 #   value: "secret-value"
 
+# Extra volume mounts for the hakanai container
+extraVolumeMounts: []
+# Example for mounting static legal pages:
+# - name: legal-pages
+#   mountPath: /static/legal
+#   readOnly: true
+# Then set hakanai.server.impressumFile: /static/legal/impressum.html
+# and hakanai.server.privacyFile: /static/legal/privacy.html
+
+# Extra volumes for the pod
+extraVolumes: []
+# Example for static legal pages from ConfigMap:
+# - name: legal-pages
+#   configMap:
+#     name: hakanai-legal-pages
+# Example for static sites from PersistentVolumeClaim:
+# - name: legal-pages
+#   persistentVolumeClaim:
+#     claimName: hakanai-static-content
+
 # Liveness and readiness probes
 livenessProbe:
   httpGet:
