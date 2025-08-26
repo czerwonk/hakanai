@@ -205,8 +205,12 @@ echo "office only" | hakanai send --allow-ip 203.0.113.0/24 --allow-ip 2001:db8:
 echo "US/Canada only" | hakanai send --allow-country US --allow-country CA
 echo "EU restricted" | hakanai send --allow-country DE --allow-country FR --allow-country NL
 
-# Combine IP and country restrictions
-echo "geo-restricted" | hakanai send --allow-ip 192.168.1.0/24 --allow-country US --allow-country DE
+# Restrict access to specific ASNs (Autonomous System Numbers)
+echo "Cloudflare only" | hakanai send --allow-asn 13335
+echo "Multiple ISPs" | hakanai send --allow-asn 13335 --allow-asn 15169 --allow-asn 32934
+
+# Combine IP, country, and ASN restrictions
+echo "comprehensive restrictions" | hakanai send --allow-ip 192.168.1.0/24 --allow-country DE --allow-asn 202739
 # Output:
 # Secret sent successfully!
 # 
@@ -332,7 +336,8 @@ Create a new secret.
   "expires_in": 3600,  // seconds
   "restrictions": {    // optional
     "allowed_ips": ["192.168.1.0/24", "10.0.0.1"],
-    "allowed_countries": ["US", "DE", "CA"]
+    "allowed_countries": ["US", "DE", "CA"],
+    "allowed_asns": [13335, 15169, 202739]
   }
 }
 ```
@@ -526,6 +531,7 @@ For example:
 - `HAKANAI_TRUSTED_IP_RANGES`: Comma-separated IP ranges (CIDR notation) that bypass size limits (optional)
 - `HAKANAI_TRUSTED_IP_HEADER`: HTTP header to check for client IP when behind a proxy (default: x-forwarded-for)
 - `HAKANAI_COUNTRY_HEADER`: HTTP header to check for client country code (optional, enables geo-restrictions when set)
+- `HAKANAI_ASN_HEADER`: HTTP header to check for client ASN (optional, enables ASN-based restrictions when set)
 - `OTEL_EXPORTER_OTLP_ENDPOINT`: OpenTelemetry collector endpoint (optional, enables OTEL when set)
 
 ### CLI Environment Variables
@@ -550,6 +556,7 @@ For example:
 - `--separate-key`: Print key separately for enhanced security (share via different channels)
 - `--allow-ip`: IP addresses/CIDR ranges allowed to access the secret (can be specified multiple times)
 - `--allow-country`: Country codes (ISO 3166-1 alpha-2) allowed to access the secret (can be specified multiple times)
+- `--allow-asn`: Autonomous System Numbers (ASNs) allowed to access the secret (can be specified multiple times)
 - `-q, --qr-code`: Display URL as QR code for easy mobile sharing
 
 #### Get Command Options  
@@ -582,12 +589,13 @@ For example:
 - `--trusted-ip-ranges`: IP ranges (CIDR notation) that bypass size limits
 - `--trusted-ip-header`: HTTP header to check for client IP when behind a proxy (default: x-forwarded-for)
 - `--country-header`: HTTP header to check for client country code (enables geo-restrictions)
+- `--asn-header`: HTTP header to check for client ASN (enables ASN-based restrictions)
 
 ### Access Control & Geo-Restrictions
 
 #### Secret-Level Access Restrictions
 
-Hakanai supports restricting individual secrets to specific IP addresses/CIDR ranges and/or countries. This provides additional security layers by ensuring only authorized networks and geographic locations can access the secret.
+Hakanai supports restricting individual secrets to specific IP addresses/CIDR ranges, countries, and/or Autonomous System Numbers (ASNs). This provides additional security layers by ensuring only authorized networks, geographic locations, and network providers can access the secret.
 
 **Geographic Restrictions:**
 Country-based restrictions use the `CF-IPCountry` header (commonly provided by Cloudflare and other CDNs) or a configurable country header to determine the client's location. This requires proper reverse proxy configuration.
@@ -604,7 +612,19 @@ hakanai-server --country-header x-country-code
 export HAKANAI_COUNTRY_HEADER="cf-ipcountry"
 ```
 
-**Note:** Geographic restrictions require server-side country detection via HTTP headers. For deployments behind Cloudflare or similar CDNs that provide country information, configure the appropriate header. Without country header configuration, geo-restrictions will return HTTP 501 Not Implemented.
+**ASN-based Restrictions:**
+ASN restrictions use HTTP headers to determine the client's Autonomous System Number, allowing filtering based on network provider (ISP, cloud provider, CDN, etc.). This is useful for restricting access to specific hosting providers or ISPs.
+
+**Header Configuration:**
+```bash
+# For ASN detection (requires custom proxy/CDN setup)
+hakanai-server --asn-header x-asn-number
+
+# Environment variable
+export HAKANAI_ASN_HEADER="x-asn-number"
+```
+
+**Note:** Geographic and ASN restrictions require server-side detection via HTTP headers. For deployments behind Cloudflare or similar CDNs that provide geo/ASN information, configure the appropriate headers. Without proper header configuration, these restrictions will return HTTP 501 Not Implemented.
 
 **CLI Usage:**
 ```bash
@@ -618,14 +638,19 @@ echo "sensitive data" | hakanai send --allow-ip 203.0.113.0/24 --allow-ip 198.51
 echo "US only" | hakanai send --allow-country US
 echo "EU access" | hakanai send --allow-country DE --allow-country FR --allow-country NL
 
-# Combine IP and country restrictions
-echo "mixed restrictions" | hakanai send --allow-ip 10.0.0.0/8 --allow-country US --allow-country CA
+# Restrict by ASN (network provider)
+echo "Cloudflare only" | hakanai send --allow-asn 13335
+echo "Major CDNs" | hakanai send --allow-asn 13335 --allow-asn 15169 --allow-asn 16509
+
+# Combine all restriction types
+echo "comprehensive restrictions" | hakanai send --allow-ip 10.0.0.0/8 --allow-country DE --allow-asn 202739
 ```
 
 **Web Interface:**
 The web interface includes optional restriction fields:
 - "IP Address Restrictions": Enter IP addresses or CIDR ranges (one per line)
 - "Country Restrictions": Enter ISO 3166-1 alpha-2 country codes (one per line, e.g., US, DE, CA)
+- "ASN Restrictions": Enter Autonomous System Numbers (one per line, e.g., 13335, 15169, 202739)
 
 **API Usage:**
 ```json
@@ -634,7 +659,8 @@ The web interface includes optional restriction fields:
   "expires_in": 3600,
   "restrictions": {
     "allowed_ips": ["192.168.1.0/24", "10.0.0.1", "2001:db8::/32"],
-    "allowed_countries": ["US", "DE", "CA"]
+    "allowed_countries": ["US", "DE", "CA"],
+    "allowed_asns": [13335, 15169, 202739]
   }
 }
 ```
@@ -649,6 +675,10 @@ The web interface includes optional restriction fields:
 - ISO 3166-1 alpha-2 codes: `US`, `DE`, `CA`, `GB`, `FR`, `JP`, `AU`, etc.
 - Must be exactly 2 uppercase letters
 - Examples: `US` (United States), `DE` (Germany), `CA` (Canada), `GB` (United Kingdom)
+
+**Supported ASN Formats:**
+- 32-bit unsigned integers: `0` to `4294967295`
+- Examples: `13335` (Cloudflare), `15169` (Google), `16509` (Amazon), `32934` (Facebook), `202739` (example German ASN)
 
 #### Server-Level IP Whitelisting
 
