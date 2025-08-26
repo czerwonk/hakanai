@@ -233,6 +233,44 @@ class InputValidation {
   }
 
   /**
+   * Validate ASN (Autonomous System Number) format
+   * @param asn - ASN number to validate
+   * @throws {HakanaiError} If ASN format is invalid
+   */
+  static validateASN(asn: number): void {
+    if (typeof asn !== "number") {
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_RESTRICTIONS,
+        "ASN must be a number",
+      );
+    }
+
+    if (!Number.isInteger(asn)) {
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_RESTRICTIONS,
+        "ASN must be an integer",
+      );
+    }
+
+    // Warn about special/reserved ASN ranges
+    if (asn === 0) {
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_RESTRICTIONS,
+        "ASN 0 is reserved and cannot be used",
+      );
+    }
+
+    // ASN range: 1 to 4294967295 (2^32 - 1)
+    // ASN 0 is already handled above
+    if (asn < 1 || asn > 4294967295) {
+      throw new HakanaiError(
+        HakanaiErrorCodes.INVALID_RESTRICTIONS,
+        `Invalid ASN: ${asn}. Must be between 1 and 4294967295`,
+      );
+    }
+  }
+
+  /**
    * Validate secret restrictions format
    * @param restrictions - Secret restrictions object to validate
    * @throws {HakanaiError} If restrictions format is invalid
@@ -270,6 +308,18 @@ class InputValidation {
       }
       for (const country of restrictions.allowed_countries) {
         this.validateCountryCode(country);
+      }
+    }
+
+    if (restrictions.allowed_asns !== undefined) {
+      if (!Array.isArray(restrictions.allowed_asns)) {
+        throw new HakanaiError(
+          HakanaiErrorCodes.INVALID_RESTRICTIONS,
+          "allowed_asns must be an array",
+        );
+      }
+      for (const asn of restrictions.allowed_asns) {
+        this.validateASN(asn);
       }
     }
   }

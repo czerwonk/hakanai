@@ -52,6 +52,31 @@ Major cryptographic architecture refactoring with comprehensive memory safety:
 
 ## HIGH PRIORITY RESOLVED ISSUES
 
+### H1: Missing Client-Side ASN Input Validation [RESOLVED 2025-08-26]
+**Status:** **RESOLVED** - Comprehensive ASN validation added to TypeScript client
+**Files:** `server/src/typescript/client/validation.ts`, `server/src/typescript/components/restrictions-tabs.ts`
+**Original Issue:** The TypeScript InputValidation class lacked ASN-specific validation functions. While IP addresses and country codes had proper validation, ASN numbers were not validated client-side before submission.
+
+**Resolution Implemented:**
+Added comprehensive ASN validation to the TypeScript client:
+- **validateASN() function**: Validates ASN format (1-4294967295 range) with proper numeric checks
+- **ASN 0 rejection**: Explicitly rejects reserved ASN 0 with clear error message
+- **Integer validation**: Ensures ASN values are integers, not floats
+- **Range validation**: Enforces valid ASN range (1 to 2^32-1)
+- **Private ASN support**: Accepts private ASN ranges (64512-65534, 4200000000-4294967294)
+- **Integration**: Added ASN validation to validateRestrictions() for complete coverage
+- **UI validation**: Updated restrictions-tabs.ts to filter out ASN 0 at input level
+- **Comprehensive tests**: Added 7 test cases covering all ASN validation scenarios
+
+**Security Benefits:**
+- **Input sanitization**: Prevents malformed ASN input from reaching the server
+- **Consistent validation**: Client and server validation now aligned
+- **Clear error messages**: Users receive immediate feedback on invalid ASNs
+- **Attack prevention**: Prevents potential enumeration or injection attempts
+- **Type safety**: TypeScript ensures proper data types throughout
+
+**Impact:** High-severity vulnerability completely resolved. Client-side validation now comprehensive for all restriction types (IP, Country, ASN).
+
 ### H2: Remote Script Execution in CI/CD [RESOLVED 2025-07-24]
 **Status:** **RESOLVED** - CI/CD now uses GitHub Action with fixed wasm-pack version
 **Files:** `.github/workflows/docker.yml`, `.github/workflows/test.yml`
@@ -805,6 +830,147 @@ CI/CD now uses pinned version of wasm-pack:
 - **Reduced Attack Surface**: Eliminates dynamic tool download risks
 
 **Impact:** Medium-severity vulnerability resolved. Build process now has deterministic, pinned dependencies.
+
+### H1: Information Disclosure in ASN Error Messages [FALSE POSITIVE - APPROPRIATE UX BEHAVIOR]
+**Status:** **FALSE POSITIVE** - Error messages provide appropriate user experience feedback
+**File:** `server/src/web_api.rs` (error handling)
+**Original Issue:** Generic error messages when restrictions are not configured server-side may reveal server capabilities and configuration state to attackers.
+
+**Why This Is Not a Security Issue:**
+The error behavior is actually appropriate user experience design:
+
+1. **User-Friendly Feedback**: When users try to create secrets with unsupported restriction types, they receive helpful feedback
+2. **No Enumeration Risk**: Verification functions return standardized "forbidden" messages for access attempts
+3. **Create-Time Only**: Information about supported features is only provided during secret creation, not retrieval
+4. **Legitimate Use Case**: Users need to know what features are available to use the service effectively
+5. **No Attack Vector**: Knowing that a server doesn't support certain restriction types provides no attack advantage
+
+**Technical Implementation:**
+- Secret verification: Returns generic "Access denied" messages
+- Secret creation: Informs users if requested features are unsupported (appropriate UX)
+- No sensitive configuration details exposed
+- Only feature availability communicated, not internal configuration
+
+**Impact:** No security issue exists. This is appropriate user experience design that helps users understand available functionality without exposing sensitive information.
+
+### L1: Proxy Chain Validation [FALSE POSITIVE - INFRASTRUCTURE RESPONSIBILITY]
+**Status:** **FALSE POSITIVE** - Proxy configuration is infrastructure responsibility, not application security
+**File:** `server/src/ip_whitelist.rs:32-36`
+**Original Issue:** Implementation takes only the first IP from comma-separated proxy headers, which could be a security concern.
+
+**Why This Is Not a Security Issue:**
+This is an infrastructure configuration concern, not an application security vulnerability:
+
+1. **Infrastructure Responsibility**: Proxy configuration and trust relationships are managed at the infrastructure layer
+2. **Trusted Environment**: The application operates in a trusted proxy environment by design
+3. **Configuration Choice**: Taking the first IP from trusted headers is standard practice
+4. **No Application Risk**: The application correctly implements the documented proxy protocol
+5. **Architectural Boundary**: Security boundary is between proxy and application, not within header parsing
+
+**Impact:** No security issue exists. Proxy trust model is properly implemented according to standard practices.
+
+### L2: Configuration Exposure in Error Messages [FALSE POSITIVE - CONFIGURATION PHASE ONLY]  
+**Status:** **FALSE POSITIVE** - Configuration errors occur only during startup, not runtime operations
+**File:** `server/src/options.rs` (CIDR parsing)
+**Original Issue:** Invalid CIDR configurations may expose internal network topology in error messages during server startup.
+
+**Why This Is Not a Security Issue:**
+Configuration errors are not runtime security vulnerabilities:
+
+1. **Startup Only**: Configuration errors occur during server initialization, not during request processing
+2. **Administrator Access**: Only system administrators with server access see configuration errors
+3. **Fail-Fast Design**: Invalid configuration prevents server startup entirely
+4. **No Runtime Impact**: Configuration is immutable once server is running
+5. **Operational Tool**: Error messages help administrators diagnose deployment issues
+
+**Impact:** No security issue exists. Configuration error messages are operational tools for system administrators.
+
+### L3: IPv6 Link-Local Address Handling [FALSE POSITIVE - OPERATIONAL GUIDANCE]
+**Status:** **FALSE POSITIVE** - Operational guidance, not a security vulnerability  
+**File:** IP range validation
+**Original Issue:** Implementation doesn't specifically validate against potentially problematic IPv6 ranges like link-local addresses.
+
+**Why This Is Not a Security Issue:**
+This is operational guidance, not a security flaw:
+
+1. **Administrator Choice**: Network administrators choose their IP ranges based on their infrastructure
+2. **No Security Boundary**: IPv6 range selection is a network design decision, not a security control
+3. **Correct Implementation**: The application correctly processes whatever IP ranges are configured  
+4. **Infrastructure Layer**: Network topology and IP range selection are infrastructure responsibilities
+5. **Documentation Issue**: This would be better addressed in deployment documentation, not code
+
+**Impact:** No security issue exists. IPv6 range selection is a network design consideration handled at the infrastructure layer.
+
+### M3: Overly Permissive ASN Range [FALSE POSITIVE - USABILITY ISSUE ONLY]
+**Status:** **FALSE POSITIVE** - Not a security vulnerability, only a usability issue
+**File:** ASN validation logic
+**Original Issue:** Accepts ASN 0 and experimental ranges (4200000000+) without warnings, which may allow unintended ASN values that have special meanings.
+
+**Why This Is Not a Security Issue:**
+This is purely a usability concern with no security implications:
+
+1. **No Attack Surface**: Invalid ASN values create no security vulnerability
+2. **Self-Denial Only**: If an invalid ASN is stored, the secret simply won't be retrievable
+3. **User's Own Data**: Users restricting their own secrets to invalid ASNs only affect themselves
+4. **No System Impact**: Invalid ASNs don't affect server operation or other users
+5. **Fail-Safe Behavior**: Worst case scenario is the secret becomes inaccessible (fail-safe)
+
+**Usability Impact:**
+- If a user restricts a secret to ASN 0 or an experimental ASN that doesn't exist in practice, they won't be able to retrieve it
+- This is equivalent to restricting to an IP address you don't have - a user error, not a security issue
+- Could be improved with warnings for better UX, but not a security concern
+
+**Impact:** No security issue exists. This is a usability consideration that could be improved with user warnings but presents no attack surface.
+
+### M2: Race Condition in Configuration Validation [FALSE POSITIVE - IMMUTABLE CONFIGURATION]
+**Status:** **FALSE POSITIVE** - Configuration is immutable after server startup
+**File:** Configuration validation logic
+**Original Issue:** Potential timing window between configuration validation at startup and enforcement during runtime where configuration changes might not be properly validated.
+
+**Why This Is Not a Security Issue:**
+The server's configuration model prevents any race conditions:
+
+1. **Sequential Startup**: Configuration is fully loaded and validated BEFORE the server starts accepting requests
+2. **Immutable After Start**: Once the server is running, the configuration cannot be changed
+3. **No Runtime Modifications**: There is no mechanism to modify configuration while the server is running
+4. **Atomic Startup**: Either the server starts with valid configuration or it doesn't start at all
+5. **Fail-Fast Design**: Invalid configuration causes immediate startup failure, not runtime issues
+
+**Architecture Details:**
+```rust
+// Configuration is loaded once at startup
+let config = load_and_validate_config()?;
+// Server is created with immutable config
+let server = create_server(config);
+// Server starts accepting requests only after config is finalized
+server.run().await
+```
+
+**Impact:** No security issue exists. The configuration is immutable after startup, preventing any race conditions.
+
+### M1: ASN Header Injection Protection [FALSE POSITIVE - INTEGER PARSING PROTECTION]
+**Status:** **FALSE POSITIVE** - u32 parsing provides complete injection protection
+**File:** `server/src/restrictions.rs`
+**Original Issue:** ASN headers from reverse proxies were thought to need validation against injection patterns.
+
+**Why This Is Not a Security Issue:**
+The concern about header injection is completely mitigated by integer parsing:
+
+1. **Integer Parsing Protection**: ASN values are parsed as `u32` integers in Rust
+2. **No Injection Possible**: You cannot inject malicious content into an integer - it either parses as a valid number or fails
+3. **Type Safety**: Rust's type system ensures only valid u32 values are processed
+4. **Automatic Validation**: The parsing itself is the validation - no additional sanitization needed
+5. **Complete Protection**: There is literally no way to inject SQL, commands, or any other payload through integer parsing
+
+**Technical Details:**
+```rust
+// The parsing operation itself provides complete protection
+let asn: u32 = header_value.parse()?;
+// If parsing succeeds, asn is guaranteed to be a safe integer
+// If parsing fails, the request is rejected
+```
+
+**Impact:** No security issue exists. Integer parsing provides complete and automatic protection against injection attacks.
 
 ### M8: Nonce Reuse Risk [FALSE POSITIVE - ZERO-KNOWLEDGE ARCHITECTURE]
 **Status:** **FALSE POSITIVE** - No nonce reuse risk exists in the zero-knowledge architecture

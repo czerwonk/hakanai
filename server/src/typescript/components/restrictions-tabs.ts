@@ -150,7 +150,8 @@ export class RestrictionsTabs {
         return isNaN(parsed) ? null : parsed;
       })
       .filter(
-        (asn): asn is number => asn !== null && asn >= 0 && asn <= 4294967295,
+        // ASN range: 1 to 4294967295 (ASN 0 is reserved and not allowed)
+        (asn): asn is number => asn !== null && asn >= 1 && asn <= 4294967295,
       );
 
     if (asns.length > 0) {
