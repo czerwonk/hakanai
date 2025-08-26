@@ -263,7 +263,11 @@ mod tests {
             )
             .await;
 
-        assert!(result.is_err());
+        assert!(
+            result.is_err(),
+            "Expected error for server error, got: {:?}",
+            result
+        );
         Ok(())
     }
 
@@ -307,7 +311,7 @@ mod tests {
         let base_url = Url::parse(&server.url())?;
         let url = base_url.join(&format!("/s/{secret_id}"))?;
         let result = client.receive_secret(url, None).await;
-        assert!(result.is_err());
+        assert!(result.is_err(), "Expected error for 404, got: {:?}", result);
         Ok(())
     }
 
@@ -335,7 +339,11 @@ mod tests {
             )
             .await;
 
-        assert!(result.is_err());
+        assert!(
+            result.is_err(),
+            "Expected error for invalid JSON, got: {:?}",
+            result
+        );
         Ok(())
     }
 }

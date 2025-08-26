@@ -132,20 +132,60 @@ mod tests {
 
     #[test]
     fn test_parse_invalid_format() {
-        assert!(parse_size_limit("invalid").is_err());
-        assert!(parse_size_limit("1g").is_err());
-        assert!(parse_size_limit("1kb").is_err());
-        assert!(parse_size_limit("k").is_err());
-        assert!(parse_size_limit("m").is_err());
-        assert!(parse_size_limit("").is_err());
+        assert!(
+            parse_size_limit("invalid").is_err(),
+            "Expected error for 'invalid', got: {:?}",
+            parse_size_limit("invalid")
+        );
+        assert!(
+            parse_size_limit("1g").is_err(),
+            "Expected error for '1g', got: {:?}",
+            parse_size_limit("1g")
+        );
+        assert!(
+            parse_size_limit("1kb").is_err(),
+            "Expected error for '1kb', got: {:?}",
+            parse_size_limit("1kb")
+        );
+        assert!(
+            parse_size_limit("k").is_err(),
+            "Expected error for 'k', got: {:?}",
+            parse_size_limit("k")
+        );
+        assert!(
+            parse_size_limit("m").is_err(),
+            "Expected error for 'm', got: {:?}",
+            parse_size_limit("m")
+        );
+        assert!(
+            parse_size_limit("").is_err(),
+            "Expected error for empty string, got: {:?}",
+            parse_size_limit("")
+        );
     }
 
     #[test]
     fn test_parse_invalid_numbers() {
-        assert!(parse_size_limit("abc").is_err());
-        assert!(parse_size_limit("1.2.3k").is_err());
-        assert!(parse_size_limit("--1k").is_err());
-        assert!(parse_size_limit("1..5m").is_err());
+        assert!(
+            parse_size_limit("abc").is_err(),
+            "Expected error for 'abc', got: {:?}",
+            parse_size_limit("abc")
+        );
+        assert!(
+            parse_size_limit("1.2.3k").is_err(),
+            "Expected error for '1.2.3k', got: {:?}",
+            parse_size_limit("1.2.3k")
+        );
+        assert!(
+            parse_size_limit("--1k").is_err(),
+            "Expected error for '--1k', got: {:?}",
+            parse_size_limit("--1k")
+        );
+        assert!(
+            parse_size_limit("1..5m").is_err(),
+            "Expected error for '1..5m', got: {:?}",
+            parse_size_limit("1..5m")
+        );
     }
 
     #[test]

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 use std::net::IpAddr;
 use std::str::FromStr;
 

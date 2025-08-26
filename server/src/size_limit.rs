@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 // Calculates the size limit accounting for the overhead of a secret
 //
 // The 1.5x factor accounts for:

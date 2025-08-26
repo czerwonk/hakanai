@@ -247,7 +247,7 @@ mod tests {
             )
             .await;
 
-        assert!(result.is_err());
+        assert!(result.is_err(), "Expected send error, got: {:?}", result);
         match result.unwrap_err() {
             ClientError::Custom(msg) => assert_eq!(msg, "Network error"),
             _ => panic!("Expected Custom error"),
@@ -278,7 +278,7 @@ mod tests {
             .receive_secret(Url::parse("https://example.com/secret/123").unwrap(), None)
             .await;
 
-        assert!(result.is_err());
+        assert!(result.is_err(), "Expected receive error, got: {:?}", result);
         match result.unwrap_err() {
             ClientError::Custom(msg) => assert_eq!(msg, "Not found"),
             _ => panic!("Expected Custom error"),
@@ -347,14 +347,22 @@ mod tests {
             )
             .await;
 
-        assert!(send_result.is_err());
+        assert!(
+            send_result.is_err(),
+            "Expected send failure, got: {:?}",
+            send_result
+        );
 
         // Test receive failure
         let receive_result = mock
             .receive_secret(Url::parse("https://example.com/secret/123").unwrap(), None)
             .await;
 
-        assert!(receive_result.is_err());
+        assert!(
+            receive_result.is_err(),
+            "Expected receive failure, got: {:?}",
+            receive_result
+        );
         Ok(())
     }
 

@@ -114,16 +114,20 @@ mod tests {
     }
 
     #[test]
-    fn test_try_from_string_valid() {
+    fn test_try_from_string_valid() -> Result<(), Box<dyn std::error::Error>> {
         let result = CountryCode::try_from("CA".to_string());
-        assert!(result.is_ok());
-        assert_eq!(result.unwrap().as_str(), "CA");
+        assert_eq!(result?.as_str(), "CA");
+        Ok(())
     }
 
     #[test]
     fn test_try_from_string_invalid() {
         let result = CountryCode::try_from("invalid".to_string());
-        assert!(result.is_err());
+        assert!(
+            result.is_err(),
+            "Expected error for invalid country code, got: {:?}",
+            result
+        );
     }
 
     #[test]
@@ -172,7 +176,11 @@ mod tests {
     #[test]
     fn test_error_message() {
         let result = CountryCode::new("invalid");
-        assert!(result.is_err());
+        assert!(
+            result.is_err(),
+            "Expected error for invalid country code, got: {:?}",
+            result
+        );
         let error = result.unwrap_err();
         assert!(
             error
@@ -190,6 +198,10 @@ mod tests {
     #[test]
     fn test_from_str_invalid() {
         let result: Result<CountryCode, _> = "invalid".parse();
-        assert!(result.is_err());
+        assert!(
+            result.is_err(),
+            "Expected error for invalid country code parse, got: {:?}",
+            result
+        );
     }
 }

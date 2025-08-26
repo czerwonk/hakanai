@@ -123,7 +123,11 @@ mod tests {
     #[test]
     fn test_parse_invalid_ip() {
         let result = parse_ipnet("not-an-ip");
-        assert!(result.is_err());
+        assert!(
+            result.is_err(),
+            "Expected error for invalid IP, got: {:?}",
+            result
+        );
         assert!(
             result
                 .unwrap_err()
@@ -135,13 +139,21 @@ mod tests {
     fn test_parse_invalid_cidr() {
         // Invalid CIDR range for IPv4
         let result = parse_ipnet("192.168.1.0/33");
-        assert!(result.is_err());
+        assert!(
+            result.is_err(),
+            "Expected error for invalid CIDR, got: {:?}",
+            result
+        );
     }
 
     #[test]
     fn test_parse_empty_string() {
         let result = parse_ipnet("");
-        assert!(result.is_err());
+        assert!(
+            result.is_err(),
+            "Expected error for empty string, got: {:?}",
+            result
+        );
     }
 
     #[test]

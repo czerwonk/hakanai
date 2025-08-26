@@ -205,7 +205,11 @@ mod tests {
     fn test_payload_deserialize_invalid_json() {
         let invalid_json = b"{ invalid json }";
         let result = Payload::deserialize(invalid_json);
-        assert!(result.is_err());
+        assert!(
+            result.is_err(),
+            "Expected error for invalid JSON, got: {:?}",
+            result
+        );
     }
 
     #[test]
@@ -213,7 +217,11 @@ mod tests {
         // JSON with missing required field
         let incomplete_json = br#"{"filename": "test.txt"}"#;
         let result = Payload::deserialize(incomplete_json);
-        assert!(result.is_err());
+        assert!(
+            result.is_err(),
+            "Expected error for missing fields, got: {:?}",
+            result
+        );
     }
 
     #[test]
@@ -221,7 +229,11 @@ mod tests {
         // JSON with wrong type for data field
         let wrong_type_json = br#"{"data": 123, "filename": "test.txt"}"#;
         let result = Payload::deserialize(wrong_type_json);
-        assert!(result.is_err());
+        assert!(
+            result.is_err(),
+            "Expected error for wrong type, got: {:?}",
+            result
+        );
     }
 
     #[test]

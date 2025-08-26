@@ -37,10 +37,7 @@ impl SecretRestrictions {
     pub fn is_empty(&self) -> bool {
         let ips_empty = self.allowed_ips.as_ref().is_none_or(|v| v.is_empty());
 
-        let countries_empty = self
-            .allowed_countries
-            .as_ref()
-            .is_none_or(|v| v.is_empty());
+        let countries_empty = self.allowed_countries.as_ref().is_none_or(|v| v.is_empty());
 
         ips_empty && countries_empty
     }
@@ -143,7 +140,11 @@ mod tests {
     fn test_secret_restrictions_deserialization_invalid_ip() {
         let json = r#"{"allowed_ips": ["invalid-ip"]}"#;
         let result: std::result::Result<SecretRestrictions, _> = serde_json::from_str(json);
-        assert!(result.is_err());
+        assert!(
+            result.is_err(),
+            "Expected error for invalid IP, got: {:?}",
+            result
+        );
         assert!(
             result
                 .unwrap_err()
@@ -156,7 +157,11 @@ mod tests {
     fn test_secret_restrictions_deserialization_invalid_country() {
         let json = r#"{"allowed_countries": ["invalid"]}"#;
         let result: std::result::Result<SecretRestrictions, _> = serde_json::from_str(json);
-        assert!(result.is_err());
+        assert!(
+            result.is_err(),
+            "Expected error for invalid country, got: {:?}",
+            result
+        );
         assert!(
             result
                 .unwrap_err()
