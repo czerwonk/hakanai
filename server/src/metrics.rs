@@ -187,7 +187,11 @@ mod tests {
 
         // This should return an error when the token store fails
         let result = collector.update_token_count(&mock_store).await;
-        assert!(result.is_err());
+        assert!(
+            result.is_err(),
+            "Expected error for token store failure, got: {:?}",
+            result
+        );
     }
 
     #[tokio::test]
@@ -207,7 +211,11 @@ mod tests {
 
         // This should return an error when the data store fails
         let result = collector.update_secret_count(&mock_store).await;
-        assert!(result.is_err());
+        assert!(
+            result.is_err(),
+            "Expected error for data store failure, got: {:?}",
+            result
+        );
     }
 
     #[tokio::test]

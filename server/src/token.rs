@@ -403,7 +403,11 @@ mod tests {
 
         let result = manager.validate_user_token("nonexistent_token").await;
 
-        assert!(result.is_err());
+        assert!(
+            result.is_err(),
+            "Expected error for nonexistent token, got: {:?}",
+            result
+        );
         assert!(matches!(result.err().unwrap(), TokenError::InvalidToken));
     }
 
@@ -436,7 +440,11 @@ mod tests {
 
         let result = manager.create_default_token_if_none().await;
 
-        assert!(result.is_err());
+        assert!(
+            result.is_err(),
+            "Expected error for store failure, got: {:?}",
+            result
+        );
         assert!(matches!(result.err().unwrap(), TokenError::Custom(_)));
     }
 
@@ -448,7 +456,11 @@ mod tests {
 
         let result = manager.validate_user_token("any_token").await;
 
-        assert!(result.is_err());
+        assert!(
+            result.is_err(),
+            "Expected error for store failure, got: {:?}",
+            result
+        );
         assert!(matches!(result.err().unwrap(), TokenError::Custom(_)));
     }
 
@@ -501,7 +513,11 @@ mod tests {
         let result = manager
             .validate_admin_token("nonexistent_admin_token")
             .await;
-        assert!(result.is_err());
+        assert!(
+            result.is_err(),
+            "Expected error for nonexistent admin token, got: {:?}",
+            result
+        );
         assert!(matches!(result.err().unwrap(), TokenError::InvalidToken));
     }
 
@@ -516,7 +532,11 @@ mod tests {
         mock_store.set_admin_token(&correct_hash).await;
 
         let result = manager.validate_admin_token(wrong_token).await;
-        assert!(result.is_err());
+        assert!(
+            result.is_err(),
+            "Expected error for wrong admin token, got: {:?}",
+            result
+        );
         assert!(matches!(result.err().unwrap(), TokenError::InvalidToken));
         Ok(())
     }

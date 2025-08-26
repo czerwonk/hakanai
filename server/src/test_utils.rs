@@ -339,14 +339,22 @@ mod tests {
 
         // Test invalid user token
         let result = mock.validate_user_token("invalid_token").await;
-        assert!(result.is_err());
+        assert!(
+            result.is_err(),
+            "Expected error for invalid user token, got: {:?}",
+            result
+        );
 
         // Test admin token validation
         mock.validate_admin_token("admin_token").await?;
 
         // Test invalid admin token
         let result = mock.validate_admin_token("invalid_admin").await;
-        assert!(result.is_err());
+        assert!(
+            result.is_err(),
+            "Expected error for invalid admin token, got: {:?}",
+            result
+        );
 
         // Test token creation
         let result = mock
@@ -374,7 +382,11 @@ mod tests {
                 Duration::from_secs(3600),
             )
             .await;
-        assert!(result.is_err());
+        assert!(
+            result.is_err(),
+            "Expected error for token creation with failures, got: {:?}",
+            result
+        );
     }
 
     #[tokio::test]
@@ -441,20 +453,38 @@ mod tests {
         let mock = MockTokenStore::new().with_failures();
 
         // All operations should fail
-        assert!(mock.user_token_count().await.is_err());
-        assert!(mock.get_token("any").await.is_err());
+        let count_result = mock.user_token_count().await;
         assert!(
-            mock.store_token(
+            count_result.is_err(),
+            "Expected error for user_token_count, got: {:?}",
+            count_result
+        );
+        let get_result = mock.get_token("any").await;
+        assert!(
+            get_result.is_err(),
+            "Expected error for get_token, got: {:?}",
+            get_result
+        );
+        let store_result = mock
+            .store_token(
                 "any",
                 Duration::from_secs(3600),
                 TokenData {
-                    upload_size_limit: None
-                }
+                    upload_size_limit: None,
+                },
             )
-            .await
-            .is_err()
+            .await;
+        assert!(
+            store_result.is_err(),
+            "Expected error for store_token, got: {:?}",
+            store_result
         );
-        assert!(mock.admin_token_exists().await.is_err());
+        let admin_result = mock.admin_token_exists().await;
+        assert!(
+            admin_result.is_err(),
+            "Expected error for admin_token_exists, got: {:?}",
+            admin_result
+        );
     }
 
     #[tokio::test]
@@ -501,7 +531,12 @@ mod tests {
         assert_eq!(mock.user_token_count().await.unwrap(), 15);
 
         mock.set_should_fail(true);
-        assert!(mock.user_token_count().await.is_err());
+        let fail_result = mock.user_token_count().await;
+        assert!(
+            fail_result.is_err(),
+            "Expected error when should_fail is true, got: {:?}",
+            fail_result
+        );
 
         mock.set_should_fail(false);
         assert_eq!(mock.user_token_count().await.unwrap(), 15);

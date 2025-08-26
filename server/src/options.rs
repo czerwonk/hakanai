@@ -271,7 +271,11 @@ mod tests {
         };
 
         let result = args.validate();
-        assert!(result.is_err());
+        assert!(
+            result.is_err(),
+            "Expected validation error, got: {:?}",
+            result
+        );
         assert!(
             result
                 .unwrap_err()
@@ -338,7 +342,11 @@ mod tests {
         };
 
         let result = args.load_impressum_content();
-        assert!(result.is_err());
+        assert!(
+            result.is_err(),
+            "Expected error for nonexistent file, got: {:?}",
+            result
+        );
     }
 
     #[test]
@@ -380,7 +388,11 @@ mod tests {
         };
 
         let result = args.load_privacy_content();
-        assert!(result.is_err());
+        assert!(
+            result.is_err(),
+            "Expected error for nonexistent file, got: {:?}",
+            result
+        );
     }
 
     #[test]
