@@ -337,7 +337,7 @@ function createRestrictionsSection(
   restrictionsDiv.className = "restrictions-info";
 
   const title = document.createElement("h4");
-  title.textContent = "Access Restrictions Applied:";
+  title.textContent = window.i18n.t(I18nKeys.Restrictions.Applied);
   restrictionsDiv.appendChild(title);
 
   const restrictionsList = document.createElement("ul");
@@ -345,7 +345,12 @@ function createRestrictionsSection(
 
   if (restrictions.allowed_ips && restrictions.allowed_ips.length > 0) {
     const ipItem = document.createElement("li");
-    ipItem.innerHTML = `<strong>IP Addresses:</strong> ${restrictions.allowed_ips.join(", ")}`;
+    const strong = document.createElement("strong");
+    strong.textContent = "IP Addresses: ";
+    ipItem.appendChild(strong);
+    ipItem.appendChild(
+      document.createTextNode(restrictions.allowed_ips.join(", ")),
+    );
     restrictionsList.appendChild(ipItem);
   }
 
@@ -354,13 +359,23 @@ function createRestrictionsSection(
     restrictions.allowed_countries.length > 0
   ) {
     const countryItem = document.createElement("li");
-    countryItem.innerHTML = `<strong>Countries:</strong> ${restrictions.allowed_countries.join(", ")}`;
+    const strong = document.createElement("strong");
+    strong.textContent = "Countries: ";
+    countryItem.appendChild(strong);
+    countryItem.appendChild(
+      document.createTextNode(restrictions.allowed_countries.join(", ")),
+    );
     restrictionsList.appendChild(countryItem);
   }
 
   if (restrictions.allowed_asns && restrictions.allowed_asns.length > 0) {
     const asnItem = document.createElement("li");
-    asnItem.innerHTML = `<strong>Networks (ASN):</strong> ${restrictions.allowed_asns.join(", ")}`;
+    const strong = document.createElement("strong");
+    strong.textContent = "Networks (ASN): ";
+    asnItem.appendChild(strong);
+    asnItem.appendChild(
+      document.createTextNode(restrictions.allowed_asns.join(", ")),
+    );
     restrictionsList.appendChild(asnItem);
   }
 

@@ -134,6 +134,7 @@ const I18nKeys = {
     TabIP: "restrictions.tab.ip",
     TabCountry: "restrictions.tab.country",
     TabASN: "restrictions.tab.asn",
+    Applied: "restrictions.applied",
   },
 
   Aria: {
@@ -284,6 +285,7 @@ const translations: Translations = {
     [I18nKeys.Restrictions.TabIP]: "IP Addresses",
     [I18nKeys.Restrictions.TabCountry]: "Countries",
     [I18nKeys.Restrictions.TabASN]: "Networks (ASN)",
+    [I18nKeys.Restrictions.Applied]: "Access Restrictions Applied:",
 
     [I18nKeys.Helper.AllowedIPs]:
       "Enter IP addresses or CIDR ranges (one per line) that can access this secret. Leave empty to allow access from any IP address.",
@@ -544,6 +546,7 @@ const translations: Translations = {
     [I18nKeys.Restrictions.TabIP]: "IP-Adressen",
     [I18nKeys.Restrictions.TabCountry]: "Länder",
     [I18nKeys.Restrictions.TabASN]: "Netzwerke (ASN)",
+    [I18nKeys.Restrictions.Applied]: "Zugriffsbeschränkungen:",
 
     [I18nKeys.Helper.AllowedIPs]:
       "IP-Adressen oder CIDR-Bereiche (eine pro Zeile), die auf dieses Secret zugreifen können. Leer lassen, um Zugriff von jeder IP-Adresse zu ermöglichen.",
