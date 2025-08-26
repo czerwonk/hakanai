@@ -319,7 +319,7 @@ async function createSecret(): Promise<void> {
       handleAuthTokenSave(authToken, saveTokenCookie.checked);
     }
 
-    showSuccess(secretUrl);
+    showSuccess(secretUrl, restrictions);
     clearInputs(elements.secretInput, elements.fileInput);
   } catch (error: unknown) {
     handleCreateError(error);
@@ -357,7 +357,7 @@ function shouldGenerateQrCode(): boolean {
   return generateQrCheckbox?.checked ?? false;
 }
 
-function showSuccess(secretUrl: string): void {
+function showSuccess(secretUrl: string, restrictions?: SecretRestrictions): void {
   const resultContainer = document.getElementById("result");
   if (!resultContainer) {
     console.error("Result container not found");
@@ -369,6 +369,7 @@ function showSuccess(secretUrl: string): void {
     container: resultContainer,
     separateKeyMode: isSeparateKeyMode(),
     generateQrCode: shouldGenerateQrCode(),
+    restrictions,
   });
   announceToScreenReader(window.i18n.t(I18nKeys.Msg.SuccessTitle));
 }
