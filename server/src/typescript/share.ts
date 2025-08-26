@@ -5,7 +5,7 @@
  * Reads JSON data from clipboard and creates secrets
  */
 
-import { HakanaiClient, SecretRestrictions } from "./hakanai-client";
+import { HakanaiClient } from "./hakanai-client";
 import { initI18n, I18nKeys } from "./core/i18n";
 import { formatFileSize, sanitizeFileName } from "./core/formatters";
 import { hideElement, showElement } from "./core/dom-utils";
@@ -21,7 +21,7 @@ import { ErrorHandler, handleAPIError } from "./core/error";
 import { initFeatures } from "./core/app-config";
 import { TTLSelector } from "./components/ttl-selector";
 import { ProgressBar } from "./components/progress-bar";
-import { RestrictionData } from "./core/restriction-data";
+import { RestrictionData, toSecretRestrictions } from "./core/restriction-data";
 
 const DEFAULT_TTL = 3600; // Default TTL in seconds (1 hour)
 
@@ -117,7 +117,7 @@ function showError(message: string): void {
 /**
  * Show success result
  */
-function showSuccess(url: string, restrictions?: RestrictionData?): void {
+function showSuccess(url: string, restrictions?: RestrictionData): void {
   const resultContainer = document.getElementById("result-success");
   if (!resultContainer) {
     console.error("Result container not found");
@@ -233,7 +233,7 @@ async function createSecret(): Promise<void> {
 
     // Convert RestrictionData to SecretRestrictions if present
     const restrictions = sharePayload.restrictions
-      ? await sharePayload.restrictions.toSecretRestrictions()
+      ? await toSecretRestrictions(sharePayload.restrictions)
       : undefined;
 
     const url = await client.sendPayload(

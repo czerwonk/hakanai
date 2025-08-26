@@ -3,53 +3,43 @@
 import { HashUtils, type SecretRestrictions } from "../hakanai-client.js";
 
 /**
- * Plain restriction data class
- * Handles all restriction types including passphrase hashing
+ * Plain restriction data interface
+ * Holds plaintext restriction data including plaintext passphrases
  */
-export class RestrictionData {
-  public allowed_ips: string[] = [];
-  public allowed_countries: string[] = [];
-  public allowed_asns: number[] = [];
-  public passphrase: string = "";
-
-  /**
-   * Check if any restrictions are set
-   */
-  isEmpty(): boolean {
-    return (
-      this.allowed_ips.length === 0 &&
-      this.allowed_countries.length === 0 &&
-      this.allowed_asns.length === 0 &&
-      this.passphrase.trim() === ""
-    );
-  }
-
-  /**
-   * Convert to API SecretRestrictions format
-   */
-  async toSecretRestrictions(): Promise<SecretRestrictions> {
-    const restrictions: SecretRestrictions = {};
-
-    if (this.allowed_ips.length > 0) {
-      restrictions.allowed_ips = this.allowed_ips;
-    }
-
-    if (this.allowed_countries.length > 0) {
-      restrictions.allowed_countries = this.allowed_countries;
-    }
-
-    if (this.allowed_asns.length > 0) {
-      restrictions.allowed_asns = this.allowed_asns;
-    }
-
-    if (this.passphrase.trim()) {
-      const passphraseHash = await HashUtils.hashPassphrase(
-        this.passphrase.trim(),
-      );
-      restrictions.passphrase_hash = passphraseHash;
-    }
-
-    return restrictions;
-  }
+export interface RestrictionData {
+  allowed_ips: string[];
+  allowed_countries: string[];
+  allowed_asns: number[];
+  passphrase: string;
 }
 
+/**
+ * Convert RestrictionData to API SecretRestrictions format
+ * Handles passphrase hashing and property filtering
+ */
+export async function toSecretRestrictions(
+  restrictions: RestrictionData,
+): Promise<SecretRestrictions> {
+  const apiRestrictions: SecretRestrictions = {};
+
+  if (restrictions.allowed_ips.length > 0) {
+    apiRestrictions.allowed_ips = restrictions.allowed_ips;
+  }
+
+  if (restrictions.allowed_countries.length > 0) {
+    apiRestrictions.allowed_countries = restrictions.allowed_countries;
+  }
+
+  if (restrictions.allowed_asns.length > 0) {
+    apiRestrictions.allowed_asns = restrictions.allowed_asns;
+  }
+
+  if (restrictions.passphrase.trim()) {
+    const passphraseHash = await HashUtils.hashPassphrase(
+      restrictions.passphrase.trim(),
+    );
+    apiRestrictions.passphrase_hash = passphraseHash;
+  }
+
+  return apiRestrictions;
+}

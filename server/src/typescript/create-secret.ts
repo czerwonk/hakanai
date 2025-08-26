@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import {
-  HakanaiClient,
-  type PayloadData,
-  type SecretRestrictions,
-} from "./hakanai-client";
+import { HakanaiClient, type PayloadData } from "./hakanai-client";
 import { initI18n, I18nKeys } from "./core/i18n";
 import {
   announceToScreenReader,
@@ -31,10 +27,8 @@ import {
 } from "./core/preferences";
 import { KeyboardShortcuts } from "./core/keyboard-shortcuts";
 import { FileDropzone } from "./components/file-dropzone";
-import {
-  RestrictionsTabs,
-  RestrictionData,
-} from "./components/restrictions-tabs";
+import { RestrictionsTabs } from "./components/restrictions-tabs";
+import { RestrictionData, toSecretRestrictions } from "./core/restriction-data";
 
 let ttlSelector: TTLSelector | null = null;
 let fileDropzone: FileDropzone | null = null;
@@ -308,7 +302,7 @@ async function createSecret(): Promise<void> {
   try {
     // Convert restrictionData to API format
     const restrictions = restrictionData
-      ? await restrictionData.toSecretRestrictions()
+      ? await toSecretRestrictions(restrictionData)
       : undefined;
 
     // Pass the ProgressBar directly as it implements DataTransferObserver

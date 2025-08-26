@@ -2,7 +2,6 @@
 
 import { showElement, hideElement } from "../core/dom-utils";
 import { fetchAppConfig } from "../core/app-config";
-import { type SecretRestrictions } from "../hakanai-client";
 import { RestrictionData } from "../core/restriction-data.js";
 
 export interface RestrictionsTabsConfig {
@@ -75,7 +74,12 @@ export class RestrictionsTabs {
    * Get all restriction data from the tabs
    */
   getRestrictions(): RestrictionData | undefined {
-    const data = new RestrictionData();
+    const data: RestrictionData = {
+      allowed_ips: [],
+      allowed_countries: [],
+      allowed_asns: [],
+      passphrase: "",
+    };
     let hasRestrictions = false;
 
     hasRestrictions = this.addIPRestrictions(data) || hasRestrictions;
