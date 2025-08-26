@@ -99,6 +99,7 @@ pub struct SendArgs {
         long = "allow-ip",
         env = "HAKANAI_ALLOWED_IPS",
         help = "Comma-separated list of IP addresses (CIDR notation) that are allowed to access the secret.",
+        value_delimiter = ',',
         value_parser = parse_ipnet
     )]
     pub allowed_ips: Option<Vec<ipnet::IpNet>>,
@@ -107,9 +108,18 @@ pub struct SendArgs {
         long = "allow-country",
         env = "HAKANAI_ALLOWED_COUNTRIES",
         help = "Comma-separated list of country codes (ISO 3166-1 alpha-2) that are allowed to access the secret.",
+        value_delimiter = ',',
         value_parser = CountryCode::from_str
     )]
     pub allowed_countries: Option<Vec<CountryCode>>,
+
+    #[arg(
+        long = "allow-asn",
+        env = "HAKANAI_ALLOWED_ASNS",
+        help = "Comma-separated list of automomous systems that are allowed to access the secret.",
+        value_delimiter = ','
+    )]
+    pub allowed_asns: Option<Vec<u32>>,
 }
 
 impl SendArgs {
@@ -146,6 +156,7 @@ impl SendArgs {
             print_qr_code: false,
             allowed_ips: None,
             allowed_countries: None,
+            allowed_asns: None,
         }
     }
 
@@ -200,6 +211,12 @@ impl SendArgs {
     #[cfg(test)]
     pub fn with_allowed_countries(mut self, allowed_countries: Vec<CountryCode>) -> Self {
         self.allowed_countries = Some(allowed_countries);
+        self
+    }
+
+    #[cfg(test)]
+    pub fn with_allowed_asns(mut self, allowed_asns: Vec<u32>) -> Self {
+        self.allowed_asns = Some(allowed_asns);
         self
     }
 }
@@ -1553,6 +1570,255 @@ mod tests {
                     let allowed_countries = send_args.allowed_countries.unwrap();
                     assert_eq!(allowed_countries.len(), 1);
                     assert_eq!(allowed_countries[0].as_str(), code);
+                }
+                _ => panic!("Expected Send command"),
+            }
+        }
+    }
+
+    // Tests for --allow-asn flag
+    #[test]
+    fn test_send_command_with_single_allowed_asn() {
+        let args = Args::try_parse_from(["hakanai", "send", "--allow-asn", "13335"]).unwrap();
+
+        match args.command {
+            Command::Send(send_args) => {
+                assert!(
+                    send_args.allowed_asns.is_some(),
+                    "ASNs should be parsed and set"
+                );
+                let allowed_asns = send_args.allowed_asns.unwrap();
+                assert_eq!(allowed_asns.len(), 1, "Should have exactly 1 ASN");
+                assert_eq!(allowed_asns[0], 13335, "ASN should match expected value");
+            }
+            _ => panic!("Expected Send command, got different command type"),
+        }
+    }
+
+    #[test]
+    fn test_send_command_with_multiple_allowed_asns() {
+        let args = Args::try_parse_from([
+            "hakanai",
+            "send",
+            "--allow-asn",
+            "13335",
+            "--allow-asn",
+            "15169",
+            "--allow-asn",
+            "32934",
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Send(send_args) => {
+                assert!(
+                    send_args.allowed_asns.is_some(),
+                    "ASNs should be parsed from multiple flags"
+                );
+                let allowed_asns = send_args.allowed_asns.unwrap();
+                assert_eq!(
+                    allowed_asns.len(),
+                    3,
+                    "Should have exactly 3 ASNs from multiple flags"
+                );
+                assert_eq!(
+                    allowed_asns[0], 13335,
+                    "First ASN should match expected value"
+                );
+                assert_eq!(
+                    allowed_asns[1], 15169,
+                    "Second ASN should match expected value"
+                );
+                assert_eq!(
+                    allowed_asns[2], 32934,
+                    "Third ASN should match expected value"
+                );
+            }
+            _ => panic!("Expected Send command, got different command type"),
+        }
+    }
+
+    #[test]
+    fn test_send_command_with_comma_separated_asns() {
+        let args =
+            Args::try_parse_from(["hakanai", "send", "--allow-asn", "13335,15169,32934"]).unwrap();
+
+        match args.command {
+            Command::Send(send_args) => {
+                let allowed_asns = send_args.allowed_asns.unwrap();
+                assert_eq!(allowed_asns.len(), 3);
+                assert_eq!(allowed_asns[0], 13335);
+                assert_eq!(allowed_asns[1], 15169);
+                assert_eq!(allowed_asns[2], 32934);
+            }
+            _ => panic!("Expected Send command"),
+        }
+    }
+
+    #[test]
+    fn test_send_command_without_allowed_asns() {
+        let args = Args::try_parse_from(["hakanai", "send"]).unwrap();
+
+        match args.command {
+            Command::Send(send_args) => {
+                assert!(send_args.allowed_asns.is_none());
+            }
+            _ => panic!("Expected Send command"),
+        }
+    }
+
+    #[test]
+    fn test_send_command_invalid_asn_negative() {
+        let result = Args::try_parse_from(["hakanai", "send", "--allow-asn", "-1"]);
+
+        assert!(result.is_err(), "Expected error, got: {:?}", result);
+    }
+
+    #[test]
+    fn test_send_command_invalid_asn_non_numeric() {
+        let result = Args::try_parse_from(["hakanai", "send", "--allow-asn", "invalid"]);
+
+        assert!(result.is_err(), "Expected error, got: {:?}", result);
+    }
+
+    #[test]
+    fn test_send_command_invalid_asn_too_large() {
+        let result = Args::try_parse_from(["hakanai", "send", "--allow-asn", "4294967296"]); // u32::MAX + 1
+
+        assert!(result.is_err(), "Expected error, got: {:?}", result);
+    }
+
+    #[test]
+    fn test_send_command_with_max_asn() {
+        let args = Args::try_parse_from(["hakanai", "send", "--allow-asn", "4294967295"]).unwrap(); // u32::MAX
+
+        match args.command {
+            Command::Send(send_args) => {
+                let allowed_asns = send_args.allowed_asns.unwrap();
+                assert_eq!(allowed_asns.len(), 1);
+                assert_eq!(allowed_asns[0], 4294967295);
+            }
+            _ => panic!("Expected Send command"),
+        }
+    }
+
+    #[test]
+    fn test_send_command_with_zero_asn() {
+        let args = Args::try_parse_from(["hakanai", "send", "--allow-asn", "0"]).unwrap();
+
+        match args.command {
+            Command::Send(send_args) => {
+                let allowed_asns = send_args.allowed_asns.unwrap();
+                assert_eq!(allowed_asns.len(), 1);
+                assert_eq!(allowed_asns[0], 0);
+            }
+            _ => panic!("Expected Send command"),
+        }
+    }
+
+    #[test]
+    fn test_send_command_with_asns_and_other_flags() {
+        let args = Args::try_parse_from([
+            "hakanai",
+            "send",
+            "--server",
+            "https://example.com",
+            "--ttl",
+            "2h",
+            "--allow-asn",
+            "13335",
+            "--allow-asn",
+            "15169",
+            "--file",
+            "document.txt",
+            "--as-file",
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Send(send_args) => {
+                assert_eq!(send_args.server.as_str(), "https://example.com/");
+                assert_eq!(send_args.ttl, Duration::from_secs(2 * 60 * 60)); // 2 hours
+                assert_eq!(send_args.files, Some(vec!["document.txt".to_string()]));
+                assert!(send_args.as_file);
+
+                let allowed_asns = send_args.allowed_asns.unwrap();
+                assert_eq!(allowed_asns.len(), 2);
+                assert_eq!(allowed_asns[0], 13335);
+                assert_eq!(allowed_asns[1], 15169);
+            }
+            _ => panic!("Expected Send command"),
+        }
+    }
+
+    #[test]
+    fn test_send_args_builder_with_allowed_asns() {
+        let send_args = SendArgs::builder()
+            .with_server("https://test.com")
+            .with_allowed_asns(vec![13335, 15169]);
+
+        assert_eq!(send_args.server.as_str(), "https://test.com/");
+
+        let allowed_asns = send_args.allowed_asns.unwrap();
+        assert_eq!(allowed_asns.len(), 2);
+        assert_eq!(allowed_asns[0], 13335);
+        assert_eq!(allowed_asns[1], 15169);
+    }
+
+    #[test]
+    fn test_send_command_with_all_restrictions_ip_country_asn() {
+        let args = Args::try_parse_from([
+            "hakanai",
+            "send",
+            "--allow-ip",
+            "192.168.1.0/24",
+            "--allow-ip",
+            "10.0.0.1",
+            "--allow-country",
+            "US",
+            "--allow-country",
+            "DE",
+            "--allow-asn",
+            "13335",
+            "--allow-asn",
+            "15169",
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Send(send_args) => {
+                let allowed_ips = send_args.allowed_ips.unwrap();
+                assert_eq!(allowed_ips.len(), 2);
+                assert_eq!(allowed_ips[0].to_string(), "192.168.1.0/24");
+                assert_eq!(allowed_ips[1].to_string(), "10.0.0.1/32");
+
+                let allowed_countries = send_args.allowed_countries.unwrap();
+                assert_eq!(allowed_countries.len(), 2);
+                assert_eq!(allowed_countries[0].as_str(), "US");
+                assert_eq!(allowed_countries[1].as_str(), "DE");
+
+                let allowed_asns = send_args.allowed_asns.unwrap();
+                assert_eq!(allowed_asns.len(), 2);
+                assert_eq!(allowed_asns[0], 13335);
+                assert_eq!(allowed_asns[1], 15169);
+            }
+            _ => panic!("Expected Send command"),
+        }
+    }
+
+    #[test]
+    fn test_send_command_with_common_asns() {
+        let common_asns = [13335, 15169, 32934, 16509, 8075]; // Cloudflare, Google, Facebook, Amazon, Microsoft
+
+        for asn in common_asns {
+            let args =
+                Args::try_parse_from(["hakanai", "send", "--allow-asn", &asn.to_string()]).unwrap();
+
+            match args.command {
+                Command::Send(send_args) => {
+                    let allowed_asns = send_args.allowed_asns.unwrap();
+                    assert_eq!(allowed_asns.len(), 1);
+                    assert_eq!(allowed_asns[0], asn);
                 }
                 _ => panic!("Expected Send command"),
             }
