@@ -2,57 +2,8 @@
 
 import { showElement, hideElement } from "../core/dom-utils";
 import { fetchAppConfig } from "../core/app-config";
-import { HashUtils, type SecretRestrictions } from "../hakanai-client";
-
-/**
- * Plain restriction data from the tabs control
- */
-export class RestrictionData {
-  public allowedIps: string[] = [];
-  public allowedCountries: string[] = [];
-  public allowedAsns: number[] = [];
-  public passphrase: string = "";
-
-  /**
-   * Check if any restrictions are set
-   */
-  isEmpty(): boolean {
-    return (
-      this.allowedIps.length === 0 &&
-      this.allowedCountries.length === 0 &&
-      this.allowedAsns.length === 0 &&
-      this.passphrase.trim() === ""
-    );
-  }
-
-  /**
-   * Convert to API SecretRestrictions format
-   */
-  async toSecretRestrictions(): Promise<SecretRestrictions> {
-    const restrictions: SecretRestrictions = {};
-
-    if (this.allowedIps.length > 0) {
-      restrictions.allowed_ips = this.allowedIps;
-    }
-
-    if (this.allowedCountries.length > 0) {
-      restrictions.allowed_countries = this.allowedCountries;
-    }
-
-    if (this.allowedAsns.length > 0) {
-      restrictions.allowed_asns = this.allowedAsns;
-    }
-
-    if (this.passphrase.trim()) {
-      const passphraseHash = await HashUtils.hashPassphrase(
-        this.passphrase.trim(),
-      );
-      restrictions.passphrase_hash = passphraseHash;
-    }
-
-    return restrictions;
-  }
-}
+import { type SecretRestrictions } from "../hakanai-client";
+import { RestrictionData } from "../core/restriction-data.js";
 
 export interface RestrictionsTabsConfig {
   container: HTMLElement;
@@ -152,7 +103,7 @@ export class RestrictionsTabs {
       .filter((line) => line.length > 0);
 
     if (ips.length > 0) {
-      data.allowedIps = ips;
+      data.allowed_ips = ips;
       return true;
     }
 
@@ -176,7 +127,7 @@ export class RestrictionsTabs {
       .filter((line) => line.length > 0);
 
     if (countries.length > 0) {
-      data.allowedCountries = countries;
+      data.allowed_countries = countries;
       return true;
     }
 
@@ -207,7 +158,7 @@ export class RestrictionsTabs {
       );
 
     if (asns.length > 0) {
-      data.allowedAsns = asns;
+      data.allowed_asns = asns;
       return true;
     }
 

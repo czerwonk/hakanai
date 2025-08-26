@@ -21,6 +21,7 @@ import { ErrorHandler, handleAPIError } from "./core/error";
 import { initFeatures } from "./core/app-config";
 import { TTLSelector } from "./components/ttl-selector";
 import { ProgressBar } from "./components/progress-bar";
+import { RestrictionData } from "./core/restriction-data";
 
 const DEFAULT_TTL = 3600; // Default TTL in seconds (1 hour)
 
@@ -116,7 +117,7 @@ function showError(message: string): void {
 /**
  * Show success result
  */
-function showSuccess(url: string, restrictions?: SecretRestrictions): void {
+function showSuccess(url: string, restrictions?: RestrictionData?): void {
   const resultContainer = document.getElementById("result-success");
   if (!resultContainer) {
     console.error("Result container not found");
@@ -137,7 +138,7 @@ function showSuccess(url: string, restrictions?: SecretRestrictions): void {
     container: resultContainer,
     separateKeyMode: separateKeyMode,
     generateQrCode: generateQrCode,
-    restrictions: restrictions,
+    restrictionData: restrictions,
   });
   hideOtherSections("result-success");
 }
@@ -229,12 +230,18 @@ async function createSecret(): Promise<void> {
       throw new Error("TTL selector not initialized");
     }
     const ttl = ttlSelector.getValue();
+
+    // Convert RestrictionData to SecretRestrictions if present
+    const restrictions = sharePayload.restrictions
+      ? await sharePayload.restrictions.toSecretRestrictions()
+      : undefined;
+
     const url = await client.sendPayload(
       hakanaiPayload,
       ttl,
       sharePayload.token,
       progressBar,
-      sharePayload.restrictions,
+      restrictions,
     );
 
     try {

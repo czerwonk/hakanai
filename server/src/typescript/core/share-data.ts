@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import { SecretRestrictions } from "../hakanai-client.js";
+import { RestrictionData } from "./restriction-data.js";
 
 /**
  * Validation error codes for ShareData
@@ -36,7 +36,7 @@ export class ShareData {
     public readonly filename?: string,
     public readonly token?: string,
     public readonly ttl?: number,
-    public readonly restrictions?: SecretRestrictions,
+    public readonly restrictions?: RestrictionData,
   ) {
     this.validate();
   }
