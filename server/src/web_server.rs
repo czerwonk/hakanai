@@ -60,6 +60,7 @@ where
             trusted_ip_ranges: args.trusted_ip_ranges.clone(),
             trusted_ip_header: args.trusted_ip_header.clone(),
             country_header: args.country_header.clone(),
+            asn_header: args.asn_header.clone(),
         };
         let size_limit = size_limit::calculate(args.upload_size_limit);
         App::new()

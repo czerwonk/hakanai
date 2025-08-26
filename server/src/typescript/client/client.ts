@@ -28,6 +28,7 @@ interface SecretResponse {
 interface SecretRestrictions {
   allowed_ips?: string[];
   allowed_countries?: string[];
+  allowed_asns?: number[];
 }
 
 interface SecretRequest {

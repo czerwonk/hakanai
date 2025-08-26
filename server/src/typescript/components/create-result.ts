@@ -4,6 +4,7 @@ import { createButton, generateRandomId, hideElement } from "../core/dom-utils";
 import { copyToClipboardByElementId } from "../core/clipboard";
 import { QRCodeGenerator } from "../core/qr-generator";
 import { I18nKeys } from "../core/i18n";
+import type { SecretRestrictions } from "../hakanai-client";
 
 /**
  * Options for success result display
@@ -12,6 +13,7 @@ interface SuccessDisplayOptions {
   separateKeyMode?: boolean;
   generateQrCode?: boolean;
   container: HTMLElement;
+  restrictions?: SecretRestrictions;
 }
 
 /**
@@ -46,6 +48,10 @@ export function displaySuccessResult(
   }
 
   createNoteSection(container);
+
+  if (options.restrictions) {
+    createRestrictionsSection(container, options.restrictions);
+  }
 
   ensureQRCodeGeneratorCleanup();
 }
@@ -318,4 +324,61 @@ function createNoteSection(container: HTMLElement): void {
   }
 
   container.appendChild(note);
+}
+
+/**
+ * Create access restrictions section
+ */
+function createRestrictionsSection(
+  container: HTMLElement,
+  restrictions: SecretRestrictions,
+): void {
+  const restrictionsDiv = document.createElement("div");
+  restrictionsDiv.className = "restrictions-info";
+
+  const title = document.createElement("h4");
+  title.textContent = window.i18n.t(I18nKeys.Restrictions.Applied);
+  restrictionsDiv.appendChild(title);
+
+  const restrictionsList = document.createElement("ul");
+  restrictionsList.className = "restrictions-list";
+
+  if (restrictions.allowed_ips && restrictions.allowed_ips.length > 0) {
+    const ipItem = document.createElement("li");
+    const strong = document.createElement("strong");
+    strong.textContent = "IP Addresses: ";
+    ipItem.appendChild(strong);
+    ipItem.appendChild(
+      document.createTextNode(restrictions.allowed_ips.join(", ")),
+    );
+    restrictionsList.appendChild(ipItem);
+  }
+
+  if (
+    restrictions.allowed_countries &&
+    restrictions.allowed_countries.length > 0
+  ) {
+    const countryItem = document.createElement("li");
+    const strong = document.createElement("strong");
+    strong.textContent = "Countries: ";
+    countryItem.appendChild(strong);
+    countryItem.appendChild(
+      document.createTextNode(restrictions.allowed_countries.join(", ")),
+    );
+    restrictionsList.appendChild(countryItem);
+  }
+
+  if (restrictions.allowed_asns && restrictions.allowed_asns.length > 0) {
+    const asnItem = document.createElement("li");
+    const strong = document.createElement("strong");
+    strong.textContent = "Networks (ASN): ";
+    asnItem.appendChild(strong);
+    asnItem.appendChild(
+      document.createTextNode(restrictions.allowed_asns.join(", ")),
+    );
+    restrictionsList.appendChild(asnItem);
+  }
+
+  restrictionsDiv.appendChild(restrictionsList);
+  container.appendChild(restrictionsDiv);
 }

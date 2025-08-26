@@ -31,9 +31,11 @@ import {
 } from "./core/preferences";
 import { KeyboardShortcuts } from "./core/keyboard-shortcuts";
 import { FileDropzone } from "./components/file-dropzone";
+import { RestrictionsTabs } from "./components/restrictions-tabs";
 
 let ttlSelector: TTLSelector | null = null;
 let fileDropzone: FileDropzone | null = null;
+let restrictionsTabs: RestrictionsTabs | null = null;
 
 interface Elements {
   button: HTMLButtonElement;
@@ -43,8 +45,6 @@ interface Elements {
   textRadio: HTMLInputElement;
   fileRadio: HTMLInputElement;
   resultDiv: HTMLElement;
-  allowedIPsInput?: HTMLTextAreaElement;
-  allowedCountriesInput?: HTMLTextAreaElement;
 }
 
 interface FileElements {
@@ -82,12 +82,6 @@ function getElements(): Elements | null {
   const textRadio = document.getElementById("textRadio") as HTMLInputElement;
   const fileRadio = document.getElementById("fileRadio") as HTMLInputElement;
   const resultDiv = document.getElementById("result");
-  const allowedIPsInput = document.getElementById(
-    "allowedIPs",
-  ) as HTMLTextAreaElement;
-  const allowedCountriesInput = document.getElementById(
-    "allowedCountries",
-  ) as HTMLTextAreaElement;
 
   if (
     !button ||
@@ -109,8 +103,6 @@ function getElements(): Elements | null {
     textRadio,
     fileRadio,
     resultDiv,
-    allowedIPsInput,
-    allowedCountriesInput,
   };
 }
 
@@ -216,12 +208,10 @@ function setElementsState(elements: Elements, disabled: boolean): void {
   if (fileInputButton) fileInputButton.disabled = disabled;
   if (saveTokenCheckbox) saveTokenCheckbox.disabled = disabled;
   if (separateKeyCheckbox) separateKeyCheckbox.disabled = disabled;
-  if (elements.allowedIPsInput) elements.allowedIPsInput.disabled = disabled;
-  if (elements.allowedCountriesInput)
-    elements.allowedCountriesInput.disabled = disabled;
 
   ttlSelector?.setEnabled(!disabled);
   fileDropzone?.setEnabled(!disabled);
+  restrictionsTabs?.setEnabled(!disabled);
 
   if (disabled) {
     resultDiv.innerHTML = "";
@@ -237,56 +227,13 @@ function clearInputs(
   updateFileInfo();
 }
 
-function parseIPList(ipText: string): string[] | undefined {
-  const trimmed = ipText.trim();
-  if (!trimmed) {
-    return undefined;
-  }
-
-  const ips = trimmed
-    .split("\n")
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0);
-
-  return ips.length > 0 ? ips : undefined;
-}
-
-function parseCountryList(countryText: string): string[] | undefined {
-  const trimmed = countryText.trim();
-  if (!trimmed) {
-    return undefined;
-  }
-
-  const countries = trimmed
-    .split("\n")
-    .map((line) => line.trim().toUpperCase())
-    .filter((line) => line.length > 0);
-
-  return countries.length > 0 ? countries : undefined;
-}
-
-function parseRestrictions(elements: Elements): SecretRestrictions | undefined {
-  const allowed_ips = elements.allowedIPsInput
-    ? parseIPList(elements.allowedIPsInput.value)
-    : undefined;
-
-  const allowed_countries = elements.allowedCountriesInput
-    ? parseCountryList(elements.allowedCountriesInput.value)
-    : undefined;
-
-  if (!allowed_ips && !allowed_countries) {
-    return undefined;
-  }
-
-  const restrictions: SecretRestrictions = {};
-  if (allowed_ips) restrictions.allowed_ips = allowed_ips;
-  if (allowed_countries) restrictions.allowed_countries = allowed_countries;
-
-  return restrictions;
-}
-
 function getFormValues(elements: Elements): FormValues {
-  const restrictions = parseRestrictions(elements);
+  const restrictAccessCheckbox = document.getElementById(
+    "restrictAccess",
+  ) as HTMLInputElement;
+  const restrictions = restrictAccessCheckbox?.checked
+    ? restrictionsTabs?.getRestrictions()
+    : undefined;
 
   return {
     authToken: elements.authTokenInput.value.trim(),
@@ -372,7 +319,7 @@ async function createSecret(): Promise<void> {
       handleAuthTokenSave(authToken, saveTokenCookie.checked);
     }
 
-    showSuccess(secretUrl);
+    showSuccess(secretUrl, restrictions);
     clearInputs(elements.secretInput, elements.fileInput);
   } catch (error: unknown) {
     handleCreateError(error);
@@ -410,7 +357,10 @@ function shouldGenerateQrCode(): boolean {
   return generateQrCheckbox?.checked ?? false;
 }
 
-function showSuccess(secretUrl: string): void {
+function showSuccess(
+  secretUrl: string,
+  restrictions?: SecretRestrictions,
+): void {
   const resultContainer = document.getElementById("result");
   if (!resultContainer) {
     console.error("Result container not found");
@@ -422,6 +372,7 @@ function showSuccess(secretUrl: string): void {
     container: resultContainer,
     separateKeyMode: isSeparateKeyMode(),
     generateQrCode: shouldGenerateQrCode(),
+    restrictions,
   });
   announceToScreenReader(window.i18n.t(I18nKeys.Msg.SuccessTitle));
 }
@@ -690,44 +641,45 @@ async function shouldShowTokenInput(): Promise<boolean> {
   }
 
   const config = await fetchAppConfig();
-  return config?.features?.showTokenInput ?? false;
+  return config?.showTokenInput ?? false;
 }
 
-function shouldShowRestrictionsInput(): boolean {
-  const urlParams = new URLSearchParams(window.location.search);
-  const showRestrictionsParam = urlParams.get("show_restrictions");
-  return showRestrictionsParam === "1" || showRestrictionsParam === "true";
+function initRestrictionsComponent(): void {
+  const restrictionsTabsContainer = document.getElementById("restrictionsTabs");
+  if (restrictionsTabsContainer) {
+    restrictionsTabs = new RestrictionsTabs({
+      container: restrictionsTabsContainer,
+    });
+  }
 }
 
-async function shouldShowCountryRestrictions(): Promise<boolean> {
-  const config = await fetchAppConfig();
-  return (
-    shouldShowRestrictionsInput() &&
-    (config?.features?.supportsCountryRestrictions ?? false)
-  );
-}
-
-async function initRestrictionsInputVisibility(): Promise<void> {
+function initRestrictionsCheckbox(): void {
+  const restrictAccessCheckbox = document.getElementById(
+    "restrictAccess",
+  ) as HTMLInputElement;
   const restrictionsInputGroup = document.getElementById(
     "restrictionsInputGroup",
   ) as HTMLElement;
-  const countryRestrictionsInputGroup = document.getElementById(
-    "countryRestrictionsInputGroup",
-  ) as HTMLElement;
 
-  if (shouldShowRestrictionsInput()) {
-    if (restrictionsInputGroup) showElement(restrictionsInputGroup);
-  } else {
-    if (restrictionsInputGroup) hideElement(restrictionsInputGroup);
+  if (!restrictAccessCheckbox || !restrictionsInputGroup) {
+    return;
   }
 
-  if (await shouldShowCountryRestrictions()) {
-    if (countryRestrictionsInputGroup)
-      showElement(countryRestrictionsInputGroup);
-  } else {
-    if (countryRestrictionsInputGroup)
-      hideElement(countryRestrictionsInputGroup);
-  }
+  // Initially hide restrictions (checkbox is unchecked by default)
+  hideElement(restrictionsInputGroup);
+
+  // Set up event handler for checkbox
+  restrictAccessCheckbox.addEventListener("change", () => {
+    if (restrictAccessCheckbox.checked) {
+      showElement(restrictionsInputGroup);
+      if (!restrictionsTabs) {
+        initRestrictionsComponent();
+      }
+      restrictionsTabs?.focusActiveTab();
+    } else {
+      hideElement(restrictionsInputGroup);
+    }
+  });
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -741,7 +693,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   initializeAuthToken();
   await initFeatures();
   await initTokenInputVisibility();
-  await initRestrictionsInputVisibility();
+  initRestrictionsCheckbox();
   initKeyboardShortcuts();
 
   const separateKeyCheckbox = document.getElementById(

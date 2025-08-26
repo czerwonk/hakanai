@@ -51,6 +51,9 @@ pub struct AppData {
 
     /// HTTP header to check for client country (for geo-restrictions)
     pub country_header: Option<String>,
+
+    /// HTTP header to check for client ASN (for geo-restrictions)
+    pub asn_header: Option<String>,
 }
 
 #[cfg(test)]
@@ -74,6 +77,7 @@ impl Default for AppData {
             trusted_ip_ranges: None,
             trusted_ip_header: "x-forwarded-for".to_string(),
             country_header: None,
+            asn_header: None,
         }
     }
 }
@@ -125,6 +129,18 @@ impl AppData {
     #[cfg(test)]
     pub fn with_trusted_ip_header(mut self, trusted_ip_header: String) -> Self {
         self.trusted_ip_header = trusted_ip_header;
+        self
+    }
+
+    #[cfg(test)]
+    pub fn with_country_header(mut self, country_header: Option<String>) -> Self {
+        self.country_header = country_header;
+        self
+    }
+
+    #[cfg(test)]
+    pub fn with_asn_header(mut self, asn_header: Option<String>) -> Self {
+        self.asn_header = asn_header;
         self
     }
 }

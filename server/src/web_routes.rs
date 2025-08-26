@@ -196,11 +196,14 @@ async fn serve_privacy(app_data: web::Data<crate::app_data::AppData>) -> impl Re
 
 async fn serve_config(app_data: web::Data<crate::app_data::AppData>) -> impl Responder {
     let config = serde_json::json!({
+        "showTokenInput": app_data.show_token_input || !app_data.anonymous_usage.allowed,
         "features": {
             "impressum": app_data.impressum_html.is_some(),
             "privacy": app_data.privacy_html.is_some(),
-            "showTokenInput": app_data.show_token_input || !app_data.anonymous_usage.allowed,
-            "supportsCountryRestrictions": app_data.country_header.is_some(),
+            "restrictions": {
+              "country": app_data.country_header.is_some(),
+              "asn": app_data.asn_header.is_some(),
+            }
         }
     });
 
@@ -387,7 +390,7 @@ mod tests {
         let req = test::TestRequest::get().uri("/config.json").to_request();
         let resp = test::call_service(&app, req).await;
         let body: serde_json::Value = test::read_body_json(resp).await;
-        assert_eq!(body["features"]["showTokenInput"], false);
+        assert_eq!(body["showTokenInput"], false);
     }
 
     #[actix_web::test]
@@ -407,7 +410,7 @@ mod tests {
         let req = test::TestRequest::get().uri("/config.json").to_request();
         let resp = test::call_service(&app, req).await;
         let body: serde_json::Value = test::read_body_json(resp).await;
-        assert_eq!(body["features"]["showTokenInput"], true);
+        assert_eq!(body["showTokenInput"], true);
     }
 
     #[actix_web::test]
@@ -427,6 +430,6 @@ mod tests {
         let req = test::TestRequest::get().uri("/config.json").to_request();
         let resp = test::call_service(&app, req).await;
         let body: serde_json::Value = test::read_body_json(resp).await;
-        assert_eq!(body["features"]["showTokenInput"], true);
+        assert_eq!(body["showTokenInput"], true);
     }
 }

@@ -332,6 +332,110 @@ describe("InputValidation", () => {
     });
   });
 
+  describe("validateASN", () => {
+    test("accepts valid ASN numbers", () => {
+      const validASNs = [
+        1,           // Minimum valid ASN
+        13335,       // Cloudflare
+        15169,       // Google
+        16509,       // Amazon
+        32934,       // Facebook
+        64512,       // Start of private 16-bit range
+        65534,       // End of private 16-bit range  
+        100000,      // Valid ASN
+        4200000000,  // Start of private 32-bit range
+        4294967294,  // End of private 32-bit range
+        4294967295,  // Maximum valid ASN (2^32 - 1)
+      ];
+
+      for (const asn of validASNs) {
+        expect(() => InputValidation.validateASN(asn)).not.toThrow();
+      }
+    });
+
+    test("rejects ASN 0 as reserved", () => {
+      expect(() => InputValidation.validateASN(0)).toThrow();
+      try {
+        InputValidation.validateASN(0);
+      } catch (error: any) {
+        expect(error.code).toBe(HakanaiErrorCodes.INVALID_RESTRICTIONS);
+        expect(error.message).toBe("ASN 0 is reserved and cannot be used");
+      }
+    });
+
+    test("rejects negative ASN numbers", () => {
+      const negativeASNs = [-1, -100, -65535, -4294967295];
+      
+      for (const asn of negativeASNs) {
+        expect(() => InputValidation.validateASN(asn)).toThrow();
+        try {
+          InputValidation.validateASN(asn);
+        } catch (error: any) {
+          expect(error.code).toBe(HakanaiErrorCodes.INVALID_RESTRICTIONS);
+          expect(error.message).toContain("Must be between 1 and 4294967295");
+        }
+      }
+    });
+
+    test("rejects ASN numbers above maximum (2^32)", () => {
+      const oversizedASNs = [4294967296, 4294967297, 5000000000, Number.MAX_SAFE_INTEGER];
+      
+      for (const asn of oversizedASNs) {
+        expect(() => InputValidation.validateASN(asn)).toThrow();
+        try {
+          InputValidation.validateASN(asn);
+        } catch (error: any) {
+          expect(error.code).toBe(HakanaiErrorCodes.INVALID_RESTRICTIONS);
+          expect(error.message).toContain("Must be between 1 and 4294967295");
+        }
+      }
+    });
+
+    test("rejects non-integer ASN values", () => {
+      const nonIntegerASNs = [1.5, 100.1, 65535.999, Math.PI];
+      
+      for (const asn of nonIntegerASNs) {
+        expect(() => InputValidation.validateASN(asn)).toThrow();
+        try {
+          InputValidation.validateASN(asn);
+        } catch (error: any) {
+          expect(error.code).toBe(HakanaiErrorCodes.INVALID_RESTRICTIONS);
+          expect(error.message).toBe("ASN must be an integer");
+        }
+      }
+    });
+
+    test("rejects non-number ASN values", () => {
+      const invalidInputs = ["13335", null, undefined, {}, [], true, false];
+      
+      for (const input of invalidInputs) {
+        expect(() => InputValidation.validateASN(input as any)).toThrow();
+        try {
+          InputValidation.validateASN(input as any);
+        } catch (error: any) {
+          expect(error.code).toBe(HakanaiErrorCodes.INVALID_RESTRICTIONS);
+          expect(error.message).toBe("ASN must be a number");
+        }
+      }
+    });
+
+    test("accepts private ASN ranges without error", () => {
+      // Private ASN ranges should be accepted (logging can happen server-side)
+      const privateASNs = [
+        64512,       // Start of 16-bit private range
+        65000,       // Middle of 16-bit private range
+        65534,       // End of 16-bit private range
+        4200000000,  // Start of 32-bit private range
+        4250000000,  // Middle of 32-bit private range
+        4294967294,  // End of 32-bit private range
+      ];
+
+      for (const asn of privateASNs) {
+        expect(() => InputValidation.validateASN(asn)).not.toThrow();
+      }
+    });
+  });
+
   describe("validateRestrictions", () => {
     test("accepts valid restrictions object with allowed_ips", () => {
       const validRestrictions = [
@@ -366,19 +470,37 @@ describe("InputValidation", () => {
       }
     });
 
-    test("accepts valid restrictions object with both allowed_ips and allowed_countries", () => {
+    test("accepts valid restrictions object with allowed_asns", () => {
+      const validRestrictions = [
+        { allowed_asns: [13335] },  // Cloudflare
+        { allowed_asns: [15169, 16509] },  // Google and Amazon
+        { allowed_asns: [1, 65535, 4294967295] },  // Min, mid, max
+        { allowed_asns: [] },
+      ];
+
+      for (const restrictions of validRestrictions) {
+        expect(() =>
+          InputValidation.validateRestrictions(restrictions),
+        ).not.toThrow();
+      }
+    });
+
+    test("accepts valid restrictions object with all restriction types", () => {
       const validRestrictions = [
         {
           allowed_ips: ["192.168.1.1"],
           allowed_countries: ["US"],
+          allowed_asns: [13335],
         },
         {
           allowed_ips: ["10.0.0.0/8", "172.16.0.0/12"],
           allowed_countries: ["DE", "FR"],
+          allowed_asns: [15169, 16509],
         },
         {
           allowed_ips: ["2001:db8::/32"],
           allowed_countries: ["CA"],
+          allowed_asns: [32934],
         },
       ];
 
@@ -395,6 +517,51 @@ describe("InputValidation", () => {
         { allowed_countries: 123 },
         { allowed_countries: {} },
         { allowed_countries: true },
+      ];
+
+      for (const restrictions of invalidRestrictions) {
+        expect(() =>
+          InputValidation.validateRestrictions(restrictions),
+        ).toThrow();
+        try {
+          InputValidation.validateRestrictions(restrictions);
+        } catch (error: any) {
+          expect(error.code).toBe(HakanaiErrorCodes.INVALID_RESTRICTIONS);
+        }
+      }
+    });
+
+    test("rejects invalid allowed_asns array types", () => {
+      const invalidRestrictions = [
+        { allowed_asns: 13335 },  // Not an array
+        { allowed_asns: "13335" },  // String instead of array
+        { allowed_asns: {} },
+        { allowed_asns: true },
+      ];
+
+      for (const restrictions of invalidRestrictions) {
+        expect(() =>
+          InputValidation.validateRestrictions(restrictions),
+        ).toThrow();
+        try {
+          InputValidation.validateRestrictions(restrictions);
+        } catch (error: any) {
+          expect(error.code).toBe(HakanaiErrorCodes.INVALID_RESTRICTIONS);
+          expect(error.message).toBe("allowed_asns must be an array");
+        }
+      }
+    });
+
+    test("rejects invalid ASN values in allowed_asns", () => {
+      const invalidRestrictions = [
+        { allowed_asns: [0] },  // ASN 0 is reserved
+        { allowed_asns: [-1] },  // Negative ASN
+        { allowed_asns: [4294967296] },  // Above max (2^32)
+        { allowed_asns: [1.5] },  // Non-integer
+        { allowed_asns: ["13335" as any] },  // String instead of number
+        { allowed_asns: [13335, 0] },  // Mix of valid and invalid
+        { allowed_asns: [null as any] },
+        { allowed_asns: [undefined as any] },
       ];
 
       for (const restrictions of invalidRestrictions) {

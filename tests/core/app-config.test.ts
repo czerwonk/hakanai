@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import { initFeatures, resetCache, fetchAppConfig } from "../../server/src/typescript/core/app-config";
+import {
+  initFeatures,
+  resetCache,
+  fetchAppConfig,
+} from "../../server/src/typescript/core/app-config";
 
 describe("app-config", () => {
   let fetchMock: jest.Mock;
@@ -9,7 +13,7 @@ describe("app-config", () => {
   beforeEach(() => {
     // Reset cache before each test
     resetCache();
-    
+
     // Setup DOM
     document.body.innerHTML = `
       <div id="impressum-link" class="hidden"></div>
@@ -36,7 +40,6 @@ describe("app-config", () => {
           features: {
             impressum: true,
             privacy: true,
-            showTokenInput: false,
           },
         }),
       });
@@ -57,7 +60,6 @@ describe("app-config", () => {
           features: {
             impressum: false,
             privacy: false,
-            showTokenInput: false,
           },
         }),
       });
@@ -78,7 +80,6 @@ describe("app-config", () => {
           features: {
             impressum: true,
             privacy: false,
-            showTokenInput: false,
           },
         }),
       });
@@ -155,7 +156,6 @@ describe("app-config", () => {
           features: {
             impressum: true,
             privacy: true,
-            showTokenInput: false,
           },
         }),
       });
@@ -178,7 +178,6 @@ describe("app-config", () => {
           features: {
             impressum: false,
             privacy: true,
-            showTokenInput: false,
           },
         }),
       });
@@ -199,7 +198,6 @@ describe("app-config", () => {
           features: {
             impressum: true,
             privacy: true,
-            showTokenInput: false,
           },
         }),
       });
@@ -210,59 +208,70 @@ describe("app-config", () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
     });
 
-    it("should handle supportsCountryRestrictions config option", async () => {
-      // Test with country restrictions enabled
+    it("should handle restrictions config options", async () => {
+      // Test with restrictions enabled
       fetchMock.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
+          showTokenInput: false,
           features: {
             impressum: true,
             privacy: true,
-            showTokenInput: false,
-            supportsCountryRestrictions: true,
+            restrictions: {
+              country: true,
+              asn: true,
+            },
           },
         }),
       });
 
       const config = await fetchAppConfig();
-      expect(config?.features?.supportsCountryRestrictions).toBe(true);
+      expect(config?.features?.restrictions?.country).toBe(true);
+      expect(config?.features?.restrictions?.asn).toBe(true);
+      expect(config?.showTokenInput).toBe(false);
 
       // Reset cache for next test
       resetCache();
 
-      // Test with country restrictions disabled
+      // Test with restrictions disabled
       fetchMock.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
+          showTokenInput: true,
           features: {
             impressum: true,
             privacy: true,
-            showTokenInput: false,
-            supportsCountryRestrictions: false,
+            restrictions: {
+              country: false,
+              asn: false,
+            },
           },
         }),
       });
 
       const config2 = await fetchAppConfig();
-      expect(config2?.features?.supportsCountryRestrictions).toBe(false);
+      expect(config2?.features?.restrictions?.country).toBe(false);
+      expect(config2?.features?.restrictions?.asn).toBe(false);
+      expect(config2?.showTokenInput).toBe(true);
 
       // Reset cache for next test
       resetCache();
 
-      // Test with missing supportsCountryRestrictions (should default to undefined)
+      // Test with missing restrictions (should default to undefined)
       fetchMock.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
+          showTokenInput: false,
           features: {
             impressum: true,
             privacy: true,
-            showTokenInput: false,
           },
         }),
       });
 
       const config3 = await fetchAppConfig();
-      expect(config3?.features?.supportsCountryRestrictions).toBe(undefined);
+      expect(config3?.features?.restrictions).toBe(undefined);
+      expect(config3?.showTokenInput).toBe(false);
     });
   });
 });

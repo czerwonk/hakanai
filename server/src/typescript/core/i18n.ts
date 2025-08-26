@@ -19,6 +19,7 @@ const I18nKeys = {
   Label: {
     AllowedIPs: "label.allowedIPs",
     AllowedCountries: "label.allowedCountries",
+    AllowedASNs: "label.allowedASNs",
     ContentPreview: "label.contentPreview",
     Expires: "label.expires",
     ExpiresIn: "label.expiresIn",
@@ -28,6 +29,7 @@ const I18nKeys = {
     GenerateQrCode: "label.generateQrCode",
     Key: "label.key",
     QrCode: "label.qrCode",
+    RestrictAccess: "label.restrictAccess",
     SaveToken: "label.saveToken",
     Secret: "label.secret",
     SecretType: "label.secretType",
@@ -46,10 +48,12 @@ const I18nKeys = {
   Helper: {
     AllowedIPs: "helper.allowedIPs",
     AllowedCountries: "helper.allowedCountries",
+    AllowedASNs: "helper.allowedASNs",
     Expires: "helper.expires",
     FileSelect: "helper.fileSelect",
     GenerateQrCode: "helper.generateQrCode",
     Key: "helper.key",
+    RestrictAccess: "helper.restrictAccess",
     SaveToken: "helper.saveToken",
     Secret: "helper.secret",
     SeparateKey: "helper.separateKey",
@@ -125,9 +129,18 @@ const I18nKeys = {
     SuccessTitle: "msg.successTitle",
   },
 
+  Restrictions: {
+    Legend: "restrictions.legend",
+    TabIP: "restrictions.tab.ip",
+    TabCountry: "restrictions.tab.country",
+    TabASN: "restrictions.tab.asn",
+    Applied: "restrictions.applied",
+  },
+
   Aria: {
     AllowedIPs: "aria.allowedIPs",
     AllowedCountries: "aria.allowedCountries",
+    AllowedASNs: "aria.allowedASNs",
     CopySecret: "aria.copySecret",
     DownloadSecret: "aria.downloadSecret",
     ExpiresSelect: "aria.expiresSelect",
@@ -245,6 +258,7 @@ const translations: Translations = {
 
     [I18nKeys.Label.AllowedIPs]: "IP Address Restrictions (Optional):",
     [I18nKeys.Label.AllowedCountries]: "Country Restrictions (Optional):",
+    [I18nKeys.Label.AllowedASNs]: "Network (ASN) Restrictions (Optional):",
     [I18nKeys.Label.ContentPreview]: "Content Preview",
     [I18nKeys.Label.ExpiresIn]: "Expires in:",
     [I18nKeys.Label.Expires]: "Expires after:",
@@ -254,6 +268,7 @@ const translations: Translations = {
     [I18nKeys.Label.Key]: "Decryption Key:",
     [I18nKeys.Label.QrCode]: "QR Code:",
     [I18nKeys.Label.GenerateQrCode]: "Generate QR code for easy sharing",
+    [I18nKeys.Label.RestrictAccess]: "Restrict access to this secret",
     [I18nKeys.Label.SaveToken]: "Remember authentication token",
     [I18nKeys.Label.SecretType]: "Secret Type:",
     [I18nKeys.Label.Secret]: "Secret message:",
@@ -266,10 +281,18 @@ const translations: Translations = {
     [I18nKeys.Placeholder.Secret]: "Enter your secret message here...",
     [I18nKeys.Placeholder.Token]: "Enter authentication token here...",
 
+    [I18nKeys.Restrictions.Legend]: "Access Restrictions (Optional):",
+    [I18nKeys.Restrictions.TabIP]: "IP Addresses",
+    [I18nKeys.Restrictions.TabCountry]: "Countries",
+    [I18nKeys.Restrictions.TabASN]: "Networks (ASN)",
+    [I18nKeys.Restrictions.Applied]: "Access Restrictions Applied:",
+
     [I18nKeys.Helper.AllowedIPs]:
       "Enter IP addresses or CIDR ranges (one per line) that can access this secret. Leave empty to allow access from any IP address.",
     [I18nKeys.Helper.AllowedCountries]:
       "Enter ISO 3166-1 alpha-2 country codes (one per line) that can access this secret. Leave empty to allow access from any country.",
+    [I18nKeys.Helper.AllowedASNs]:
+      "Enter Autonomous System Numbers (ASNs) (one per line) that can access this secret. Common examples: Cloudflare (13335), Google (15169), Amazon (16509).",
     [I18nKeys.Helper.Url]:
       "The decryption key after # is never sent to the server",
     [I18nKeys.Helper.Secret]:
@@ -282,6 +305,8 @@ const translations: Translations = {
       "When enabled, the URL and decryption key are displayed separately, allowing you to share them through different channels for enhanced security.",
     [I18nKeys.Helper.GenerateQrCode]:
       "When enabled, a QR code will be generated for the secret URL. Disable this if you're concerned about shoulder surfing or visual exposure.",
+    [I18nKeys.Helper.RestrictAccess]:
+      "Limit who can access this secret by IP address, country, or network provider.",
     [I18nKeys.Helper.SaveToken]:
       "Token will be stored securely in your browser for the current session only. You will need to re-enter it when you start a new browser session.",
     [I18nKeys.Helper.Expires]:
@@ -366,6 +391,8 @@ const translations: Translations = {
       "Enter IP addresses or CIDR ranges, one per line, to restrict access to this secret",
     [I18nKeys.Aria.AllowedCountries]:
       "Enter 2-letter country codes, one per line, to restrict access to this secret by geographic location",
+    [I18nKeys.Aria.AllowedASNs]:
+      "Enter ASN numbers, one per line, to restrict access to this secret by network provider",
     [I18nKeys.Aria.SecretInput]:
       "Enter the secret message you want to share securely",
     [I18nKeys.Aria.FileInput]:
@@ -491,6 +518,7 @@ const translations: Translations = {
 
     [I18nKeys.Label.AllowedIPs]: "IP-Adress-Beschränkungen (Optional):",
     [I18nKeys.Label.AllowedCountries]: "Länder-Beschränkungen (Optional):",
+    [I18nKeys.Label.AllowedASNs]: "Netzwerk-(ASN-)Beschränkungen (Optional):",
     [I18nKeys.Label.Secret]: "Text:",
     [I18nKeys.Label.SecretType]: "Secret-Typ:",
     [I18nKeys.Label.Text]: "📝 Text-Nachricht",
@@ -502,6 +530,7 @@ const translations: Translations = {
     [I18nKeys.Label.Key]: "Geheimer Schlüssel:",
     [I18nKeys.Label.GenerateQrCode]:
       "QR-Code für vereinfachtes Teilen erstellen",
+    [I18nKeys.Label.RestrictAccess]: "Zugriff auf dieses Secret beschränken",
     [I18nKeys.Label.SeparateKey]: "Schlüssel separat anzeigen",
     [I18nKeys.Label.SaveToken]: "Token merken",
     [I18nKeys.Label.Filename]: "Dateiname:",
@@ -513,10 +542,18 @@ const translations: Translations = {
     [I18nKeys.Placeholder.Secret]: "Hier wird gen geheime Text eingegeben...",
     [I18nKeys.Placeholder.Token]: "Authentifizierungs-Token eingeben",
 
+    [I18nKeys.Restrictions.Legend]: "Zugriffsbeschränkungen (Optional):",
+    [I18nKeys.Restrictions.TabIP]: "IP-Adressen",
+    [I18nKeys.Restrictions.TabCountry]: "Länder",
+    [I18nKeys.Restrictions.TabASN]: "Netzwerke (ASN)",
+    [I18nKeys.Restrictions.Applied]: "Zugriffsbeschränkungen:",
+
     [I18nKeys.Helper.AllowedIPs]:
-      "Geben Sie IP-Adressen oder CIDR-Bereiche (eine pro Zeile) ein, die auf dieses Secret zugreifen können. Leer lassen, um Zugriff von jeder IP-Adresse zu ermöglichen.",
+      "IP-Adressen oder CIDR-Bereiche (eine pro Zeile), die auf dieses Secret zugreifen können. Leer lassen, um Zugriff von jeder IP-Adresse zu ermöglichen.",
     [I18nKeys.Helper.AllowedCountries]:
-      "Geben Sie ISO 3166-1 alpha-2 Ländercodes (eine pro Zeile) ein, die auf dieses Secret zugreifen können. Leer lassen, um Zugriff aus jedem Land zu ermöglichen.",
+      "ISO 3166-1 alpha-2 Ländercodes (eine pro Zeile), die auf dieses Secret zugreifen können. Leer lassen, um Zugriff aus jedem Land zu ermöglichen.",
+    [I18nKeys.Helper.AllowedASNs]:
+      "Autonome Systemnummern (ASNs) (eine pro Zeile), die auf dieses Secret zugreifen können. Beispiele: Cloudflare (13335), Google (15169), Amazon (16509).",
     [I18nKeys.Helper.Url]:
       "Der geheime Schlüssel nach dem # wird niemals an den Server gesendet",
     [I18nKeys.Helper.Secret]:
@@ -531,6 +568,8 @@ const translations: Translations = {
       "Wenn aktiviert, werden URL und geheimer Schlüssel separat angezeigt, so dass sie über verschiedene Kanäle für erweiterte Sicherheit geteilt werden können.",
     [I18nKeys.Helper.GenerateQrCode]:
       "Wenn aktiviert, wird ein QR-Code für die Secret-URL erstellt. Bei Verwendung in ungeschützten Räumen wie der Öffentlichkeit sollte diese Option deaktiviert werden, um Scannen durch Dritte zu verhindern.",
+    [I18nKeys.Helper.RestrictAccess]:
+      "Zugriff auf dieses Secret auf IP-Adresse, Land oder Netzwerkanbieter beschränken.",
     [I18nKeys.Helper.SaveToken]:
       "Token wird sicher für die Session im Browser gespeichert. Nach dem Schließen des Tabs muss dieses neu eigegeben werden.",
     [I18nKeys.Helper.Expires]:
@@ -615,6 +654,8 @@ const translations: Translations = {
       "IP-Adressen oder CIDR-Bereiche eingeben, eine pro Zeile, um den Zugriff auf dieses Secret zu beschränken",
     [I18nKeys.Aria.AllowedCountries]:
       "2-Buchstaben-Ländercodes eingeben, eine pro Zeile, um den Zugriff auf dieses Secret nach geografischer Lage zu beschränken",
+    [I18nKeys.Aria.AllowedASNs]:
+      "ASN-Nummern eingeben, eine pro Zeile, um den Zugriff auf dieses Secret nach Netzwerkanbieter zu beschränken",
     [I18nKeys.Aria.CopySecret]: "Secret in die Zwischenablage kopieren",
     [I18nKeys.Aria.DownloadSecret]: "Secret als Datei herunterladen",
     [I18nKeys.Aria.SecretInput]:

@@ -84,6 +84,10 @@ fn get_restrictions(args: &SendArgs) -> Option<SecretRestrictions> {
         restrictions = restrictions.with_allowed_countries(allowed_countries.clone());
     }
 
+    if let Some(allowed_asns) = &args.allowed_asns {
+        restrictions = restrictions.with_allowed_asns(allowed_asns.clone());
+    }
+
     if restrictions.is_empty() {
         None
     } else {
@@ -539,5 +543,308 @@ mod tests {
         );
         assert!(result.unwrap_err().to_string().contains("Network error"));
         Ok(())
+    }
+
+    // Tests for get_restrictions function
+    #[test]
+    fn test_get_restrictions_none_when_no_restrictions() {
+        let args = SendArgs::builder();
+        let result = get_restrictions(&args);
+        assert!(
+            result.is_none(),
+            "Expected None when no restrictions are set"
+        );
+    }
+
+    #[test]
+    fn test_get_restrictions_with_single_ip() {
+        use std::str::FromStr;
+
+        let ip = ipnet::IpNet::from_str("192.168.1.0/24").unwrap();
+        let args = SendArgs::builder().with_allowed_ips(vec![ip]);
+        let result = get_restrictions(&args);
+
+        assert!(result.is_some(), "Expected Some(restrictions) with IP set");
+        let restrictions = result.unwrap();
+        assert!(restrictions.allowed_ips.is_some(), "IPs should be set");
+        assert_eq!(
+            restrictions.allowed_ips.as_ref().unwrap().len(),
+            1,
+            "Should have exactly 1 IP"
+        );
+        assert_eq!(
+            restrictions.allowed_ips.as_ref().unwrap()[0].to_string(),
+            "192.168.1.0/24",
+            "IP should match expected CIDR"
+        );
+        assert!(
+            restrictions.allowed_countries.is_none(),
+            "Countries should not be set"
+        );
+        assert!(
+            restrictions.allowed_asns.is_none(),
+            "ASNs should not be set"
+        );
+    }
+
+    #[test]
+    fn test_get_restrictions_with_multiple_ips() {
+        use std::str::FromStr;
+
+        let ip1 = ipnet::IpNet::from_str("192.168.1.0/24").unwrap();
+        let ip2 = ipnet::IpNet::from_str("10.0.0.1/32").unwrap();
+        let args = SendArgs::builder().with_allowed_ips(vec![ip1, ip2]);
+        let result = get_restrictions(&args);
+
+        assert!(
+            result.is_some(),
+            "Expected Some(restrictions) with multiple IPs"
+        );
+        let restrictions = result.unwrap();
+        assert!(restrictions.allowed_ips.is_some(), "IPs should be set");
+        let allowed_ips = restrictions.allowed_ips.as_ref().unwrap();
+        assert_eq!(allowed_ips.len(), 2, "Should have exactly 2 IPs");
+        assert_eq!(
+            allowed_ips[0].to_string(),
+            "192.168.1.0/24",
+            "First IP should match"
+        );
+        assert_eq!(
+            allowed_ips[1].to_string(),
+            "10.0.0.1/32",
+            "Second IP should match"
+        );
+    }
+
+    #[test]
+    fn test_get_restrictions_with_single_country() {
+        use hakanai_lib::models::CountryCode;
+
+        let country = CountryCode::new("US").unwrap();
+        let args = SendArgs::builder().with_allowed_countries(vec![country]);
+        let result = get_restrictions(&args);
+
+        assert!(
+            result.is_some(),
+            "Expected Some(restrictions) with country set"
+        );
+        let restrictions = result.unwrap();
+        assert!(
+            restrictions.allowed_countries.is_some(),
+            "Countries should be set"
+        );
+        assert_eq!(
+            restrictions.allowed_countries.as_ref().unwrap().len(),
+            1,
+            "Should have exactly 1 country"
+        );
+        assert_eq!(
+            restrictions.allowed_countries.as_ref().unwrap()[0].as_str(),
+            "US",
+            "Country should match expected code"
+        );
+        assert!(restrictions.allowed_ips.is_none(), "IPs should not be set");
+        assert!(
+            restrictions.allowed_asns.is_none(),
+            "ASNs should not be set"
+        );
+    }
+
+    #[test]
+    fn test_get_restrictions_with_multiple_countries() {
+        use hakanai_lib::models::CountryCode;
+
+        let country1 = CountryCode::new("US").unwrap();
+        let country2 = CountryCode::new("DE").unwrap();
+        let args = SendArgs::builder().with_allowed_countries(vec![country1, country2]);
+        let result = get_restrictions(&args);
+
+        assert!(
+            result.is_some(),
+            "Expected Some(restrictions) with multiple countries"
+        );
+        let restrictions = result.unwrap();
+        assert!(
+            restrictions.allowed_countries.is_some(),
+            "Countries should be set"
+        );
+        let allowed_countries = restrictions.allowed_countries.as_ref().unwrap();
+        assert_eq!(
+            allowed_countries.len(),
+            2,
+            "Should have exactly 2 countries"
+        );
+        assert_eq!(
+            allowed_countries[0].as_str(),
+            "US",
+            "First country should be US"
+        );
+        assert_eq!(
+            allowed_countries[1].as_str(),
+            "DE",
+            "Second country should be DE"
+        );
+    }
+
+    #[test]
+    fn test_get_restrictions_with_single_asn() {
+        let args = SendArgs::builder().with_allowed_asns(vec![13335]);
+        let result = get_restrictions(&args);
+
+        assert!(result.is_some(), "Expected Some(restrictions) with ASN set");
+        let restrictions = result.unwrap();
+        assert!(restrictions.allowed_asns.is_some(), "ASNs should be set");
+        assert_eq!(
+            restrictions.allowed_asns.as_ref().unwrap().len(),
+            1,
+            "Should have exactly 1 ASN"
+        );
+        assert_eq!(
+            restrictions.allowed_asns.as_ref().unwrap()[0],
+            13335,
+            "ASN should match expected value"
+        );
+        assert!(restrictions.allowed_ips.is_none(), "IPs should not be set");
+        assert!(
+            restrictions.allowed_countries.is_none(),
+            "Countries should not be set"
+        );
+    }
+
+    #[test]
+    fn test_get_restrictions_with_multiple_asns() {
+        let args = SendArgs::builder().with_allowed_asns(vec![13335, 15169, 32934]);
+        let result = get_restrictions(&args);
+
+        assert!(
+            result.is_some(),
+            "Expected Some(restrictions) with multiple ASNs"
+        );
+        let restrictions = result.unwrap();
+        assert!(restrictions.allowed_asns.is_some(), "ASNs should be set");
+        let allowed_asns = restrictions.allowed_asns.as_ref().unwrap();
+        assert_eq!(allowed_asns.len(), 3, "Should have exactly 3 ASNs");
+        assert_eq!(
+            allowed_asns[0], 13335,
+            "First ASN should match expected value"
+        );
+        assert_eq!(
+            allowed_asns[1], 15169,
+            "Second ASN should match expected value"
+        );
+        assert_eq!(
+            allowed_asns[2], 32934,
+            "Third ASN should match expected value"
+        );
+    }
+
+    #[test]
+    fn test_get_restrictions_with_all_types_ip_country_asn() {
+        use hakanai_lib::models::CountryCode;
+        use std::str::FromStr;
+
+        let ip1 = ipnet::IpNet::from_str("192.168.1.0/24").unwrap();
+        let ip2 = ipnet::IpNet::from_str("10.0.0.1/32").unwrap();
+        let country1 = CountryCode::new("US").unwrap();
+        let country2 = CountryCode::new("DE").unwrap();
+
+        let args = SendArgs::builder()
+            .with_allowed_ips(vec![ip1, ip2])
+            .with_allowed_countries(vec![country1, country2])
+            .with_allowed_asns(vec![13335, 15169]);
+
+        let result = get_restrictions(&args);
+
+        assert!(result.is_some(), "Expected Some(restrictions)");
+        let restrictions = result.unwrap();
+
+        // Check IPs
+        assert!(restrictions.allowed_ips.is_some(), "IPs should be set");
+        let allowed_ips = restrictions.allowed_ips.as_ref().unwrap();
+        assert_eq!(allowed_ips.len(), 2);
+        assert_eq!(allowed_ips[0].to_string(), "192.168.1.0/24");
+        assert_eq!(allowed_ips[1].to_string(), "10.0.0.1/32");
+
+        // Check countries
+        assert!(
+            restrictions.allowed_countries.is_some(),
+            "Countries should be set"
+        );
+        let allowed_countries = restrictions.allowed_countries.as_ref().unwrap();
+        assert_eq!(allowed_countries.len(), 2);
+        assert_eq!(allowed_countries[0].as_str(), "US");
+        assert_eq!(allowed_countries[1].as_str(), "DE");
+
+        // Check ASNs
+        assert!(restrictions.allowed_asns.is_some(), "ASNs should be set");
+        let allowed_asns = restrictions.allowed_asns.as_ref().unwrap();
+        assert_eq!(allowed_asns.len(), 2);
+        assert_eq!(allowed_asns[0], 13335);
+        assert_eq!(allowed_asns[1], 15169);
+    }
+
+    #[test]
+    fn test_get_restrictions_with_ipv6_addresses() {
+        use std::str::FromStr;
+
+        let ipv6_single = ipnet::IpNet::from_str("2001:db8::1/128").unwrap();
+        let ipv6_cidr = ipnet::IpNet::from_str("2001:db8::/32").unwrap();
+        let args = SendArgs::builder().with_allowed_ips(vec![ipv6_single, ipv6_cidr]);
+        let result = get_restrictions(&args);
+
+        assert!(result.is_some(), "Expected Some(restrictions)");
+        let restrictions = result.unwrap();
+        assert!(restrictions.allowed_ips.is_some(), "IPs should be set");
+        let allowed_ips = restrictions.allowed_ips.as_ref().unwrap();
+        assert_eq!(allowed_ips.len(), 2);
+        assert_eq!(allowed_ips[0].to_string(), "2001:db8::1/128");
+        assert_eq!(allowed_ips[1].to_string(), "2001:db8::/32");
+    }
+
+    #[test]
+    fn test_get_restrictions_with_mixed_ipv4_ipv6() {
+        use std::str::FromStr;
+
+        let ipv4 = ipnet::IpNet::from_str("192.168.1.0/24").unwrap();
+        let ipv6 = ipnet::IpNet::from_str("2001:db8::1/128").unwrap();
+        let args = SendArgs::builder().with_allowed_ips(vec![ipv4, ipv6]);
+        let result = get_restrictions(&args);
+
+        assert!(result.is_some(), "Expected Some(restrictions)");
+        let restrictions = result.unwrap();
+        assert!(restrictions.allowed_ips.is_some(), "IPs should be set");
+        let allowed_ips = restrictions.allowed_ips.as_ref().unwrap();
+        assert_eq!(allowed_ips.len(), 2);
+        assert_eq!(allowed_ips[0].to_string(), "192.168.1.0/24");
+        assert_eq!(allowed_ips[1].to_string(), "2001:db8::1/128");
+    }
+
+    #[test]
+    fn test_get_restrictions_with_edge_case_asns() {
+        let edge_case_asns = vec![0, 1, 65535, 4294967295]; // min, small, 16-bit max, 32-bit max
+        let args = SendArgs::builder().with_allowed_asns(edge_case_asns.clone());
+        let result = get_restrictions(&args);
+
+        assert!(result.is_some(), "Expected Some(restrictions)");
+        let restrictions = result.unwrap();
+        assert!(restrictions.allowed_asns.is_some(), "ASNs should be set");
+        let allowed_asns = restrictions.allowed_asns.as_ref().unwrap();
+        assert_eq!(allowed_asns.len(), 4);
+        assert_eq!(*allowed_asns, edge_case_asns);
+    }
+
+    #[test]
+    fn test_get_restrictions_empty_vectors_treated_as_none() {
+        let args = SendArgs::builder()
+            .with_allowed_ips(vec![])
+            .with_allowed_countries(vec![])
+            .with_allowed_asns(vec![]);
+        let result = get_restrictions(&args);
+
+        // Empty vectors should still create restrictions since they're Some(vec![])
+        assert!(
+            result.is_none(),
+            "Expected None when all restriction vectors are empty"
+        );
     }
 }

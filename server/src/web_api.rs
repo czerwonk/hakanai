@@ -11,7 +11,7 @@ use hakanai_lib::models::{PostSecretRequest, PostSecretResponse, SecretRestricti
 
 use crate::app_data::AppData;
 use crate::data_store::DataStorePopResult;
-use crate::filters::{is_request_from_country, is_request_from_ip_range};
+use crate::filters;
 use crate::observer::SecretEventContext;
 use crate::size_limited_json::SizeLimitedJson;
 use crate::user::User;
@@ -110,14 +110,21 @@ async fn verify_restrictions_for_secret(
     if let Some(restrictions) = restrictions {
         if let Some(allowed_ips) = restrictions.allowed_ips
             && !allowed_ips.is_empty()
-            && !is_request_from_ip_range(http_req, app_data, &allowed_ips)
+            && !filters::is_request_from_ip_range(http_req, app_data, &allowed_ips)
         {
             return Err(error::ErrorForbidden("Not allowed to access the secret"));
         }
 
         if let Some(allowed_countries) = restrictions.allowed_countries
             && !allowed_countries.is_empty()
-            && !is_request_from_country(http_req, app_data, &allowed_countries)
+            && !filters::is_request_from_country(http_req, app_data, &allowed_countries)
+        {
+            return Err(error::ErrorForbidden("Not allowed to access the secret"));
+        }
+
+        if let Some(allowed_asns) = restrictions.allowed_asns
+            && !allowed_asns.is_empty()
+            && !filters::is_request_from_asn(http_req, app_data, &allowed_asns)
         {
             return Err(error::ErrorForbidden("Not allowed to access the secret"));
         }
@@ -186,6 +193,12 @@ fn ensure_restrictions_are_supported(
     if restrictions.allowed_countries.is_some() && app_data.country_header.is_none() {
         return Err(error::ErrorNotImplemented(
             "Country restrictions are not supported by the server",
+        ));
+    }
+
+    if restrictions.allowed_asns.is_some() && app_data.asn_header.is_none() {
+        return Err(error::ErrorNotImplemented(
+            "ASN restrictions are not supported by the server",
         ));
     }
 

@@ -185,6 +185,13 @@ pub struct Args {
         help = "HTTP header to check for client country code. This value is required to support Geo-IP based restrcttions"
     )]
     pub country_header: Option<String>,
+
+    #[arg(
+        long,
+        env = "HAKANAI_ASN_HEADER",
+        help = "HTTP header to check for client ASN. This value is required to support Geo-IP based restrcttions"
+    )]
+    pub asn_header: Option<String>,
 }
 
 impl Args {
@@ -246,6 +253,7 @@ mod tests {
             trusted_ip_ranges: None,
             trusted_ip_header: "x-forwarded-for".to_string(),
             country_header: None,
+            asn_header: None,
         }
     }
 

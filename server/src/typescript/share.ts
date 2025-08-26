@@ -5,7 +5,7 @@
  * Reads JSON data from clipboard and creates secrets
  */
 
-import { HakanaiClient } from "./hakanai-client";
+import { HakanaiClient, SecretRestrictions } from "./hakanai-client";
 import { initI18n, I18nKeys } from "./core/i18n";
 import { formatFileSize, sanitizeFileName } from "./core/formatters";
 import { hideElement, showElement } from "./core/dom-utils";
@@ -116,7 +116,7 @@ function showError(message: string): void {
 /**
  * Show success result
  */
-function showSuccess(url: string): void {
+function showSuccess(url: string, restrictions?: SecretRestrictions): void {
   const resultContainer = document.getElementById("result-success");
   if (!resultContainer) {
     console.error("Result container not found");
@@ -137,6 +137,7 @@ function showSuccess(url: string): void {
     container: resultContainer,
     separateKeyMode: separateKeyMode,
     generateQrCode: generateQrCode,
+    restrictions: restrictions,
   });
   hideOtherSections("result-success");
 }
@@ -243,7 +244,7 @@ async function createSecret(): Promise<void> {
     }
 
     progressBar.hide();
-    showSuccess(url);
+    showSuccess(url, sharePayload.restrictions);
   } catch (error) {
     progressBar.hide();
     showError(
