@@ -122,6 +122,7 @@ pub struct SendArgs {
     pub allowed_asns: Option<Vec<u32>>,
 
     #[arg(
+        short = 'p',
         long,
         help = "If set, the passphrase will be required to access the secret. The passphrase is not part of the URL and must be shared separately.",
         env = "HAKANAI_REQUIRE_PASSPHRASE"
