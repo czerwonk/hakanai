@@ -31,7 +31,7 @@
     "/api/v1/secret": {
       "post": {
         "summary": "Create a new secret",
-        "description": "Creates a new one-time secret with optional expiration and access restrictions. All encryption happens client-side. Access restrictions can limit which IP addresses and/or countries can retrieve the secret.",
+        "description": "Creates a new one-time secret with optional expiration and access restrictions. All encryption happens client-side. Access restrictions can limit which IP addresses, countries, and/or ASNs can retrieve the secret.",
         "operationId": "createSecret",
         "security": [
           {},
@@ -84,6 +84,28 @@
                       "allowed_countries": ["US", "DE"]
                     }
                   }
+                },
+                "asn_restricted": {
+                  "summary": "ASN-restricted secret",
+                  "value": {
+                    "data": "bXkgc2VjcmV0IG1lc3NhZ2U=",
+                    "expires_in": 3600,
+                    "restrictions": {
+                      "allowed_asns": [13335, 15169, 32934]
+                    }
+                  }
+                },
+                "comprehensive_restricted": {
+                  "summary": "Fully restricted secret (IP, geo, ASN)",
+                  "value": {
+                    "data": "bXkgc2VjcmV0IG1lc3NhZ2U=",
+                    "expires_in": 3600,
+                    "restrictions": {
+                      "allowed_ips": ["2001:678:1e0::/48"],
+                      "allowed_countries": ["DE"],
+                      "allowed_asns": [202739]
+                    }
+                  }
                 }
               }
             }
@@ -124,7 +146,7 @@
             }
           },
           "501": {
-            "description": "Feature not supported - e.g. country restrictions requested but server has no country detection configured",
+            "description": "Feature not supported - e.g. country/ASN restrictions requested but server has no geo detection configured",
             "content": {
               "text/plain": {
                 "schema": {
@@ -139,7 +161,7 @@
     "/api/v1/secret/{id}": {
       "get": {
         "summary": "Retrieve a secret",
-        "description": "Retrieves a one-time secret by ID. The secret is deleted after retrieval. If the secret has access restrictions, the request must come from an allowed IP address and/or country.",
+        "description": "Retrieves a one-time secret by ID. The secret is deleted after retrieval. If the secret has access restrictions, the request must come from an allowed IP address, country, and/or ASN.",
         "operationId": "getSecret",
         "parameters": [
           {
@@ -168,7 +190,7 @@
             }
           },
           "403": {
-            "description": "Forbidden - access denied due to unmet restrictions (e.g. IP or country)",
+            "description": "Forbidden - access denied due to unmet restrictions (e.g. IP, country, or ASN)",
             "content": {
               "text/plain": {
                 "schema": {
@@ -382,6 +404,16 @@
             },
             "description": "Optional list of ISO 3166-1 alpha-2 country codes that are allowed to retrieve this secret. Must be exactly 2 uppercase letters. Requires server-side country detection configuration.",
             "example": ["US", "DE", "CA", "GB", "FR", "JP"]
+          },
+          "allowed_asns": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "description": "Optional list of Autonomous System Numbers (ASNs) that are allowed to retrieve this secret. ASNs must be valid 32-bit unsigned integers (0 to 4294967295). Requires server-side ASN detection configuration.",
+            "example": [13335, 15169, 32934, 16509]
           }
         }
       }
