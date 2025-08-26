@@ -120,6 +120,13 @@ pub struct SendArgs {
         value_delimiter = ','
     )]
     pub allowed_asns: Option<Vec<u32>>,
+
+    #[arg(
+        long,
+        help = "If set, the passphrase will be required to access the secret. The passphrase is not part of the URL and must be shared separately.",
+        env = "HAKANAI_REQUIRE_PASSPHRASE"
+    )]
+    pub require_passphrase: Option<String>,
 }
 
 impl SendArgs {
@@ -157,6 +164,7 @@ impl SendArgs {
             allowed_ips: None,
             allowed_countries: None,
             allowed_asns: None,
+            require_passphrase: None,
         }
     }
 
@@ -219,6 +227,12 @@ impl SendArgs {
         self.allowed_asns = Some(allowed_asns);
         self
     }
+
+    #[cfg(test)]
+    pub fn with_require_passphrase(mut self, passphrase: &str) -> Self {
+        self.require_passphrase = Some(passphrase.to_string());
+        self
+    }
 }
 
 /// Represents the arguments for the `get` command.
@@ -261,6 +275,14 @@ pub struct GetArgs {
         help = "Save files to this directory instead of the current one."
     )]
     pub output_dir: Option<PathBuf>,
+
+    #[arg(
+        short,
+        long,
+        help = "If the secret is protected by a passphrase, provide it here.",
+        env = "HAKANAI_PASSPHRASE"
+    )]
+    pub passphrase: Option<String>,
 }
 
 impl GetArgs {
@@ -377,6 +399,7 @@ impl GetArgs {
             filename: None,
             extract: false,
             output_dir: None,
+            passphrase: None,
         }
     }
 
@@ -407,6 +430,12 @@ impl GetArgs {
     #[cfg(test)]
     pub fn with_output_dir(mut self, output_dir: &str) -> Self {
         self.output_dir = Some(PathBuf::from(output_dir));
+        self
+    }
+
+    #[cfg(test)]
+    pub fn with_passphrase(mut self, passphrase: &str) -> Self {
+        self.passphrase = Some(passphrase.to_string());
         self
     }
 }
@@ -1822,6 +1851,362 @@ mod tests {
                 }
                 _ => panic!("Expected Send command"),
             }
+        }
+    }
+
+    // Tests for --require-passphrase flag
+    #[test]
+    fn test_send_command_with_require_passphrase() {
+        let args =
+            Args::try_parse_from(["hakanai", "send", "--require-passphrase", "secret123"]).unwrap();
+
+        match args.command {
+            Command::Send(send_args) => {
+                assert_eq!(send_args.require_passphrase, Some("secret123".to_string()));
+            }
+            _ => panic!("Expected Send command"),
+        }
+    }
+
+    #[test]
+    fn test_send_command_with_require_passphrase_and_other_flags() {
+        let args = Args::try_parse_from([
+            "hakanai",
+            "send",
+            "--server",
+            "https://example.com",
+            "--ttl",
+            "1h",
+            "--require-passphrase",
+            "mypassword",
+            "--file",
+            "secret.txt",
+            "--as-file",
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Send(send_args) => {
+                assert_eq!(send_args.server.as_str(), "https://example.com/");
+                assert_eq!(send_args.ttl, Duration::from_secs(60 * 60)); // 1 hour
+                assert_eq!(send_args.require_passphrase, Some("mypassword".to_string()));
+                assert_eq!(send_args.files, Some(vec!["secret.txt".to_string()]));
+                assert!(send_args.as_file);
+            }
+            _ => panic!("Expected Send command"),
+        }
+    }
+
+    #[test]
+    fn test_send_command_without_require_passphrase() {
+        let args = Args::try_parse_from(["hakanai", "send"]).unwrap();
+
+        match args.command {
+            Command::Send(send_args) => {
+                assert!(send_args.require_passphrase.is_none());
+            }
+            _ => panic!("Expected Send command"),
+        }
+    }
+
+    #[test]
+    fn test_send_command_with_unicode_require_passphrase() {
+        let args =
+            Args::try_parse_from(["hakanai", "send", "--require-passphrase", "パスワード123🔒"])
+                .unwrap();
+
+        match args.command {
+            Command::Send(send_args) => {
+                assert_eq!(
+                    send_args.require_passphrase,
+                    Some("パスワード123🔒".to_string())
+                );
+            }
+            _ => panic!("Expected Send command"),
+        }
+    }
+
+    #[test]
+    fn test_send_command_with_special_chars_require_passphrase() {
+        let special_passphrase = "!@#$%^&*()_+-=[]{}|;':\",./<>?`~";
+        let args = Args::try_parse_from([
+            "hakanai",
+            "send",
+            "--require-passphrase",
+            special_passphrase,
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Send(send_args) => {
+                assert_eq!(
+                    send_args.require_passphrase,
+                    Some(special_passphrase.to_string())
+                );
+            }
+            _ => panic!("Expected Send command"),
+        }
+    }
+
+    #[test]
+    fn test_send_command_with_empty_require_passphrase() {
+        let args = Args::try_parse_from(["hakanai", "send", "--require-passphrase", ""]).unwrap();
+
+        match args.command {
+            Command::Send(send_args) => {
+                assert_eq!(send_args.require_passphrase, Some("".to_string()));
+            }
+            _ => panic!("Expected Send command"),
+        }
+    }
+
+    #[test]
+    fn test_send_command_with_all_restrictions_including_passphrase() {
+        let args = Args::try_parse_from([
+            "hakanai",
+            "send",
+            "--allow-ip",
+            "192.168.1.0/24",
+            "--allow-country",
+            "US",
+            "--allow-asn",
+            "13335",
+            "--require-passphrase",
+            "comprehensive",
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Send(send_args) => {
+                let allowed_ips = send_args.allowed_ips.unwrap();
+                assert_eq!(allowed_ips[0].to_string(), "192.168.1.0/24");
+
+                let allowed_countries = send_args.allowed_countries.unwrap();
+                assert_eq!(allowed_countries[0].as_str(), "US");
+
+                let allowed_asns = send_args.allowed_asns.unwrap();
+                assert_eq!(allowed_asns[0], 13335);
+
+                assert_eq!(
+                    send_args.require_passphrase,
+                    Some("comprehensive".to_string())
+                );
+            }
+            _ => panic!("Expected Send command"),
+        }
+    }
+
+    #[test]
+    fn test_send_args_builder_with_require_passphrase() {
+        let send_args = SendArgs::builder()
+            .with_server("https://test.com")
+            .with_require_passphrase("test_passphrase");
+
+        assert_eq!(send_args.server.as_str(), "https://test.com/");
+        assert_eq!(
+            send_args.require_passphrase,
+            Some("test_passphrase".to_string())
+        );
+    }
+
+    // Tests for -p/--passphrase flag
+    #[test]
+    fn test_get_command_with_passphrase_long_flag() {
+        let args = Args::try_parse_from([
+            "hakanai",
+            "get",
+            "https://example.com/s/test123",
+            "--passphrase",
+            "mypassword",
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Get(get_args) => {
+                assert_eq!(get_args.passphrase, Some("mypassword".to_string()));
+            }
+            _ => panic!("Expected Get command"),
+        }
+    }
+
+    #[test]
+    fn test_get_command_with_passphrase_short_flag() {
+        let args = Args::try_parse_from([
+            "hakanai",
+            "get",
+            "https://example.com/s/test123",
+            "-p",
+            "mypassword",
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Get(get_args) => {
+                assert_eq!(get_args.passphrase, Some("mypassword".to_string()));
+            }
+            _ => panic!("Expected Get command"),
+        }
+    }
+
+    #[test]
+    fn test_get_command_with_passphrase_and_other_flags() {
+        let args = Args::try_parse_from([
+            "hakanai",
+            "get",
+            "https://example.com/s/test123",
+            "-p",
+            "secret123",
+            "--filename",
+            "output.txt",
+            "--extract",
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Get(get_args) => {
+                assert_eq!(get_args.passphrase, Some("secret123".to_string()));
+                assert_eq!(get_args.filename, Some("output.txt".to_string()));
+                assert!(get_args.extract);
+            }
+            _ => panic!("Expected Get command"),
+        }
+    }
+
+    #[test]
+    fn test_get_command_without_passphrase() {
+        let args =
+            Args::try_parse_from(["hakanai", "get", "https://example.com/s/test123"]).unwrap();
+
+        match args.command {
+            Command::Get(get_args) => {
+                assert!(get_args.passphrase.is_none());
+            }
+            _ => panic!("Expected Get command"),
+        }
+    }
+
+    #[test]
+    fn test_get_command_with_unicode_passphrase() {
+        let args = Args::try_parse_from([
+            "hakanai",
+            "get",
+            "https://example.com/s/test123",
+            "-p",
+            "パスワード123🔒",
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Get(get_args) => {
+                assert_eq!(get_args.passphrase, Some("パスワード123🔒".to_string()));
+            }
+            _ => panic!("Expected Get command"),
+        }
+    }
+
+    #[test]
+    fn test_get_command_with_special_chars_passphrase() {
+        let special_passphrase = "!@#$%^&*()_+-=[]{}|;':\",./<>?`~";
+        let args = Args::try_parse_from([
+            "hakanai",
+            "get",
+            "https://example.com/s/test123",
+            "--passphrase",
+            special_passphrase,
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Get(get_args) => {
+                assert_eq!(get_args.passphrase, Some(special_passphrase.to_string()));
+            }
+            _ => panic!("Expected Get command"),
+        }
+    }
+
+    #[test]
+    fn test_get_command_with_empty_passphrase() {
+        let args =
+            Args::try_parse_from(["hakanai", "get", "https://example.com/s/test123", "-p", ""])
+                .unwrap();
+
+        match args.command {
+            Command::Get(get_args) => {
+                assert_eq!(get_args.passphrase, Some("".to_string()));
+            }
+            _ => panic!("Expected Get command"),
+        }
+    }
+
+    #[test]
+    fn test_get_command_with_long_passphrase() {
+        let long_passphrase = "a".repeat(512);
+        let args = Args::try_parse_from([
+            "hakanai",
+            "get",
+            "https://example.com/s/test123",
+            "-p",
+            &long_passphrase,
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Get(get_args) => {
+                assert_eq!(get_args.passphrase, Some(long_passphrase));
+            }
+            _ => panic!("Expected Get command"),
+        }
+    }
+
+    #[test]
+    fn test_get_args_builder_with_passphrase() {
+        let get_args =
+            GetArgs::builder("https://example.com/s/test#key").with_passphrase("test_password");
+
+        assert_eq!(get_args.link.as_str(), "https://example.com/s/test#key");
+        assert_eq!(get_args.passphrase, Some("test_password".to_string()));
+    }
+
+    #[test]
+    fn test_get_command_with_passphrase_and_key_arg() {
+        let args = Args::try_parse_from([
+            "hakanai",
+            "get",
+            "https://example.com/s/test123",
+            "--key",
+            "mykey",
+            "-p",
+            "mypassword",
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Get(get_args) => {
+                assert_eq!(get_args.key, Some("mykey".to_string()));
+                assert_eq!(get_args.passphrase, Some("mypassword".to_string()));
+            }
+            _ => panic!("Expected Get command"),
+        }
+    }
+
+    #[test]
+    fn test_get_command_with_passphrase_to_stdout() {
+        let args = Args::try_parse_from([
+            "hakanai",
+            "get",
+            "https://example.com/s/test123",
+            "-p",
+            "secret",
+            "--to-stdout",
+        ])
+        .unwrap();
+
+        match args.command {
+            Command::Get(get_args) => {
+                assert_eq!(get_args.passphrase, Some("secret".to_string()));
+                assert!(get_args.to_stdout);
+            }
+            _ => panic!("Expected Get command"),
         }
     }
 }

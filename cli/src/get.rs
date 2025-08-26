@@ -25,9 +25,14 @@ pub async fn get<T: Factory>(factory: T, args: GetArgs) -> Result<()> {
 
     let user_agent = get_user_agent_name();
     let observer = factory.new_observer("Receiving secret...")?;
-    let opts = SecretReceiveOptions::default()
+    let mut opts = SecretReceiveOptions::default()
         .with_user_agent(user_agent)
         .with_observer(observer);
+
+    if let Some(ref passphrase) = args.passphrase {
+        let bytes = Zeroizing::new(passphrase.bytes().collect::<Vec<u8>>());
+        opts = opts.with_passphrase(bytes.as_ref());
+    }
 
     let url = args.secret_url()?.clone();
     let payload = factory.new_client().receive_secret(url, Some(opts)).await?;
@@ -669,6 +674,110 @@ mod tests {
             "Expected no files after extracting empty archive"
         );
 
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_get_with_passphrase() -> Result<()> {
+        let payload = Payload::from_bytes(b"protected secret", None);
+        let client = MockClient::new().with_receive_success(payload);
+        let factory = MockFactory::new().with_client(client);
+
+        let args = GetArgs::builder("https://example.com/s/test123#key")
+            .with_passphrase("mypassword")
+            .with_to_stdout();
+        get(factory, args).await?;
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_get_with_empty_passphrase() -> Result<()> {
+        let payload = Payload::from_bytes(b"protected secret", None);
+        let client = MockClient::new().with_receive_success(payload);
+        let factory = MockFactory::new().with_client(client);
+
+        let args = GetArgs::builder("https://example.com/s/test123#key")
+            .with_passphrase("")
+            .with_to_stdout();
+        get(factory, args).await?;
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_get_with_unicode_passphrase() -> Result<()> {
+        let payload = Payload::from_bytes(b"unicode protected secret", None);
+        let client = MockClient::new().with_receive_success(payload);
+        let factory = MockFactory::new().with_client(client);
+
+        let args = GetArgs::builder("https://example.com/s/test123#key")
+            .with_passphrase("パスワード123🔒")
+            .with_to_stdout();
+        get(factory, args).await?;
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_get_without_passphrase() -> Result<()> {
+        let payload = Payload::from_bytes(b"unprotected secret", None);
+        let client = MockClient::new().with_receive_success(payload);
+        let factory = MockFactory::new().with_client(client);
+
+        let args = GetArgs::builder("https://example.com/s/test123#key").with_to_stdout();
+        // Should work fine without passphrase when secret doesn't require one
+        get(factory, args).await?;
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_get_passphrase_with_file_output() -> Result<()> {
+        let temp_dir = TempDir::new()?;
+        let payload =
+            Payload::from_bytes(b"protected file content", Some("protected.txt".to_string()));
+        let client = MockClient::new().with_receive_success(payload);
+        let factory = MockFactory::new().with_client(client);
+
+        let filename = temp_dir
+            .path()
+            .join("output.txt")
+            .to_string_lossy()
+            .to_string();
+        let args = GetArgs::builder("https://example.com/s/test123#key")
+            .with_passphrase("filepassword")
+            .with_filename(&filename);
+        get(factory, args).await?;
+
+        // Verify file was created with correct content
+        let content = fs::read(temp_dir.path().join("output.txt"))?;
+        assert_eq!(content, b"protected file content");
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_get_long_passphrase() -> Result<()> {
+        let payload = Payload::from_bytes(b"secret with very long passphrase", None);
+        let client = MockClient::new().with_receive_success(payload);
+        let factory = MockFactory::new().with_client(client);
+
+        // Test with a very long passphrase (512 characters)
+        let long_passphrase = "a".repeat(512);
+        let args = GetArgs::builder("https://example.com/s/test123#key")
+            .with_passphrase(&long_passphrase)
+            .with_to_stdout();
+        get(factory, args).await?;
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_get_passphrase_with_special_characters() -> Result<()> {
+        let payload = Payload::from_bytes(b"secret with special chars in passphrase", None);
+        let client = MockClient::new().with_receive_success(payload);
+        let factory = MockFactory::new().with_client(client);
+
+        let special_passphrase = "!@#$%^&*()_+-=[]{}|;':\",./<>?`~";
+        let args = GetArgs::builder("https://example.com/s/test123#key")
+            .with_passphrase(special_passphrase)
+            .with_to_stdout();
+        get(factory, args).await?;
         Ok(())
     }
 }

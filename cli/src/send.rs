@@ -88,6 +88,13 @@ fn get_restrictions(args: &SendArgs) -> Option<SecretRestrictions> {
         restrictions = restrictions.with_allowed_asns(allowed_asns.clone());
     }
 
+    if let Some(ref passphrase) = args.require_passphrase
+        && !passphrase.is_empty()
+    {
+        let bytes = Zeroizing::new(passphrase.bytes().collect::<Vec<u8>>());
+        restrictions = restrictions.with_passphrase(&bytes);
+    }
+
     if restrictions.is_empty() {
         None
     } else {
@@ -845,6 +852,90 @@ mod tests {
         assert!(
             result.is_none(),
             "Expected None when all restriction vectors are empty"
+        );
+    }
+
+    #[test]
+    fn test_get_restrictions_with_passphrase() {
+        let args = SendArgs::builder().with_require_passphrase("secret123");
+        let result = get_restrictions(&args);
+
+        assert!(
+            result.is_some(),
+            "Expected Some(restrictions) with passphrase set"
+        );
+        let restrictions = result.unwrap();
+        assert!(
+            restrictions.passphrase_hash.is_some(),
+            "Passphrase hash should be set"
+        );
+        assert!(restrictions.allowed_ips.is_none(), "IPs should not be set");
+        assert!(
+            restrictions.allowed_countries.is_none(),
+            "Countries should not be set"
+        );
+        assert!(
+            restrictions.allowed_asns.is_none(),
+            "ASNs should not be set"
+        );
+    }
+
+    #[test]
+    fn test_get_restrictions_with_empty_passphrase() {
+        let args = SendArgs::builder().with_require_passphrase("");
+        let result = get_restrictions(&args);
+
+        assert!(
+            result.is_none(),
+            "Expected None when passphrase is empty string"
+        );
+    }
+
+    #[test]
+    fn test_get_restrictions_with_passphrase_and_other_restrictions() {
+        use hakanai_lib::models::CountryCode;
+        use std::str::FromStr;
+
+        let ip = ipnet::IpNet::from_str("192.168.1.0/24").unwrap();
+        let country = CountryCode::new("US").unwrap();
+        let args = SendArgs::builder()
+            .with_allowed_ips(vec![ip])
+            .with_allowed_countries(vec![country])
+            .with_allowed_asns(vec![13335])
+            .with_require_passphrase("mypassphrase");
+        let result = get_restrictions(&args);
+
+        assert!(
+            result.is_some(),
+            "Expected Some(restrictions) with all restrictions set"
+        );
+        let restrictions = result.unwrap();
+
+        assert!(
+            restrictions.passphrase_hash.is_some(),
+            "Passphrase hash should be set"
+        );
+        assert!(restrictions.allowed_ips.is_some(), "IPs should be set");
+        assert!(
+            restrictions.allowed_countries.is_some(),
+            "Countries should be set"
+        );
+        assert!(restrictions.allowed_asns.is_some(), "ASNs should be set");
+    }
+
+    #[test]
+    fn test_get_restrictions_with_unicode_passphrase() {
+        let args = SendArgs::builder().with_require_passphrase("パスワード123🔒");
+        let result = get_restrictions(&args);
+
+        assert!(
+            result.is_some(),
+            "Expected Some(restrictions) with unicode passphrase"
+        );
+        let restrictions = result.unwrap();
+        assert!(
+            restrictions.passphrase_hash.is_some(),
+            "Passphrase hash should be set"
         );
     }
 }

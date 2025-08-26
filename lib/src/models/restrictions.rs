@@ -5,6 +5,7 @@ use std::fmt::Display;
 use serde::{Deserialize, Serialize};
 
 use super::CountryCode;
+use crate::hash;
 
 /// Represents access restrictions for a secret.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
@@ -22,6 +23,9 @@ pub struct SecretRestrictions {
 
     /// ASNs allowed to access the secret
     pub allowed_asns: Option<Vec<u32>>,
+
+    /// Optional passphrase hash for additional security
+    pub passphrase_hash: Option<String>,
 }
 
 impl SecretRestrictions {
@@ -43,6 +47,13 @@ impl SecretRestrictions {
         self
     }
 
+    /// Sets the required passhphrase to access the secret
+    pub fn with_passphrase(mut self, passphrase: &[u8]) -> Self {
+        let hash = hash::sha256_hex_from_bytes(passphrase);
+        self.passphrase_hash = Some(hash);
+        self
+    }
+
     /// Checks if any restrictions are set
     pub fn is_empty(&self) -> bool {
         let any_ips = self.allowed_ips.as_ref().is_some_and(|v| !v.is_empty());
@@ -60,6 +71,10 @@ impl SecretRestrictions {
 
         let any_asns = self.allowed_asns.as_ref().is_some_and(|v| !v.is_empty());
         if any_asns {
+            return false;
+        }
+
+        if self.passphrase_hash.as_ref().is_some_and(|h| h.len() > 0) {
             return false;
         }
 
@@ -89,6 +104,10 @@ impl Display for SecretRestrictions {
         if let Some(asns) = &self.allowed_asns {
             let asn_strings: Vec<String> = asns.iter().map(|ip| ip.to_string()).collect();
             write!(f, "Allowed ASNs: {}", asn_strings.join(", "))?;
+        }
+
+        if self.passphrase_hash.is_some() {
+            write!(f, "Passphrase: ***")?;
         }
 
         Ok(())
@@ -346,5 +365,368 @@ mod tests {
     fn test_is_with_asns() {
         let restrictions = SecretRestrictions::default().with_allowed_asns(vec![202739]);
         assert!(!restrictions.is_empty());
+    }
+
+    // Tests for passphrase functionality
+    #[test]
+    fn test_with_passphrase_basic() {
+        let restrictions = SecretRestrictions::default().with_passphrase(b"mypassword");
+
+        assert!(
+            restrictions.passphrase_hash.is_some(),
+            "Passphrase hash should be set"
+        );
+        assert!(
+            !restrictions.is_empty(),
+            "Restrictions with passphrase should not be empty"
+        );
+        // Should hash to a hex string (64 characters for SHA-256)
+        let hash = restrictions.passphrase_hash.unwrap();
+        assert_eq!(hash.len(), 64, "SHA-256 hash should be 64 characters long");
+        assert!(
+            hash.chars().all(|c| c.is_ascii_hexdigit()),
+            "Hash should contain only hex digits"
+        );
+    }
+
+    #[test]
+    fn test_with_passphrase_empty() {
+        let restrictions = SecretRestrictions::default().with_passphrase(b"");
+
+        assert!(
+            restrictions.passphrase_hash.is_some(),
+            "Empty passphrase should still produce a hash"
+        );
+        assert!(
+            !restrictions.is_empty(),
+            "Restrictions with empty passphrase should not be empty"
+        );
+        let hash = restrictions.passphrase_hash.unwrap();
+        assert_eq!(
+            hash.len(),
+            64,
+            "Empty passphrase hash should be 64 characters"
+        );
+        assert!(
+            hash.chars().all(|c| c.is_ascii_hexdigit()),
+            "Empty passphrase hash should be valid hex"
+        );
+    }
+
+    #[test]
+    fn test_with_passphrase_unicode() {
+        let unicode_phrase = "パスワード123🔒";
+        let restrictions = SecretRestrictions::default().with_passphrase(unicode_phrase.as_bytes());
+
+        assert!(
+            restrictions.passphrase_hash.is_some(),
+            "Unicode passphrase should be hashed"
+        );
+        assert!(
+            !restrictions.is_empty(),
+            "Restrictions with unicode passphrase should not be empty"
+        );
+        let hash = restrictions.passphrase_hash.unwrap();
+        assert_eq!(
+            hash.len(),
+            64,
+            "Unicode passphrase hash should be 64 characters"
+        );
+        assert!(
+            hash.chars().all(|c| c.is_ascii_hexdigit()),
+            "Unicode passphrase hash should be valid hex"
+        );
+    }
+
+    #[test]
+    fn test_with_passphrase_binary() {
+        let binary_data = vec![0u8, 1, 2, 3, 255, 254, 253, 128, 127];
+        let restrictions = SecretRestrictions::default().with_passphrase(&binary_data);
+
+        assert!(
+            restrictions.passphrase_hash.is_some(),
+            "Binary passphrase should be hashed"
+        );
+        assert!(
+            !restrictions.is_empty(),
+            "Restrictions with binary passphrase should not be empty"
+        );
+        let hash = restrictions.passphrase_hash.unwrap();
+        assert_eq!(
+            hash.len(),
+            64,
+            "Binary passphrase hash should be 64 characters"
+        );
+        assert!(
+            hash.chars().all(|c| c.is_ascii_hexdigit()),
+            "Binary passphrase hash should be valid hex"
+        );
+    }
+
+    #[test]
+    fn test_with_passphrase_special_characters() {
+        let special_chars = b"!@#$%^&*()_+-=[]{}|;':\",./<>?`~";
+        let restrictions = SecretRestrictions::default().with_passphrase(special_chars);
+
+        assert!(
+            restrictions.passphrase_hash.is_some(),
+            "Special character passphrase should be hashed"
+        );
+        assert!(
+            !restrictions.is_empty(),
+            "Restrictions with special char passphrase should not be empty"
+        );
+        let hash = restrictions.passphrase_hash.unwrap();
+        assert_eq!(
+            hash.len(),
+            64,
+            "Special char passphrase hash should be 64 characters"
+        );
+        assert!(
+            hash.chars().all(|c| c.is_ascii_hexdigit()),
+            "Special char passphrase hash should be valid hex"
+        );
+    }
+
+    #[test]
+    fn test_with_passphrase_consistency() {
+        let passphrase = b"consistent_test";
+        let restrictions1 = SecretRestrictions::default().with_passphrase(passphrase);
+        let restrictions2 = SecretRestrictions::default().with_passphrase(passphrase);
+
+        assert_eq!(
+            restrictions1.passphrase_hash, restrictions2.passphrase_hash,
+            "Same passphrase should produce identical hashes"
+        );
+    }
+
+    #[test]
+    fn test_with_passphrase_different_inputs() {
+        let restrictions1 = SecretRestrictions::default().with_passphrase(b"password1");
+        let restrictions2 = SecretRestrictions::default().with_passphrase(b"password2");
+
+        assert_ne!(
+            restrictions1.passphrase_hash, restrictions2.passphrase_hash,
+            "Different passphrases should produce different hashes"
+        );
+    }
+
+    #[test]
+    fn test_with_passphrase_case_sensitive() {
+        let restrictions1 = SecretRestrictions::default().with_passphrase(b"Password");
+        let restrictions2 = SecretRestrictions::default().with_passphrase(b"password");
+
+        assert_ne!(
+            restrictions1.passphrase_hash, restrictions2.passphrase_hash,
+            "Case-different passphrases should produce different hashes"
+        );
+    }
+
+    #[test]
+    fn test_with_passphrase_whitespace_sensitive() {
+        let restrictions1 = SecretRestrictions::default().with_passphrase(b"password");
+        let restrictions2 = SecretRestrictions::default().with_passphrase(b" password");
+        let restrictions3 = SecretRestrictions::default().with_passphrase(b"password ");
+
+        assert_ne!(
+            restrictions1.passphrase_hash, restrictions2.passphrase_hash,
+            "Leading whitespace should change the hash"
+        );
+        assert_ne!(
+            restrictions1.passphrase_hash, restrictions3.passphrase_hash,
+            "Trailing whitespace should change the hash"
+        );
+        assert_ne!(
+            restrictions2.passphrase_hash, restrictions3.passphrase_hash,
+            "Leading vs trailing whitespace should produce different hashes"
+        );
+    }
+
+    #[test]
+    fn test_with_passphrase_long_input() {
+        let long_passphrase = vec![b'a'; 1000];
+        let restrictions = SecretRestrictions::default().with_passphrase(&long_passphrase);
+
+        assert!(
+            restrictions.passphrase_hash.is_some(),
+            "Long passphrase should be hashed"
+        );
+        assert!(
+            !restrictions.is_empty(),
+            "Restrictions with long passphrase should not be empty"
+        );
+        let hash = restrictions.passphrase_hash.unwrap();
+        assert_eq!(
+            hash.len(),
+            64,
+            "Long passphrase hash should be 64 characters"
+        );
+        assert!(
+            hash.chars().all(|c| c.is_ascii_hexdigit()),
+            "Long passphrase hash should be valid hex"
+        );
+    }
+
+    #[test]
+    fn test_with_passphrase_combined_with_other_restrictions() {
+        use ipnet::IpNet;
+
+        let ip = "192.168.1.0/24".parse::<IpNet>().unwrap();
+        let country = CountryCode::new("US").unwrap();
+        let restrictions = SecretRestrictions::default()
+            .with_allowed_ips(vec![ip])
+            .with_allowed_countries(vec![country])
+            .with_allowed_asns(vec![13335])
+            .with_passphrase(b"comprehensive");
+
+        assert!(
+            restrictions.allowed_ips.is_some(),
+            "IP restrictions should be set"
+        );
+        assert!(
+            restrictions.allowed_countries.is_some(),
+            "Country restrictions should be set"
+        );
+        assert!(
+            restrictions.allowed_asns.is_some(),
+            "ASN restrictions should be set"
+        );
+        assert!(
+            restrictions.passphrase_hash.is_some(),
+            "Passphrase hash should be set"
+        );
+        assert!(
+            !restrictions.is_empty(),
+            "Combined restrictions should not be empty"
+        );
+    }
+
+    #[test]
+    fn test_is_empty_with_passphrase() {
+        let restrictions = SecretRestrictions::default().with_passphrase(b"test");
+        assert!(
+            !restrictions.is_empty(),
+            "Restrictions with passphrase should not be empty"
+        );
+    }
+
+    #[test]
+    fn test_is_empty_with_empty_string_passphrase_hash() {
+        let mut restrictions = SecretRestrictions::default();
+        restrictions.passphrase_hash = Some(String::new());
+        assert!(
+            restrictions.is_empty(),
+            "Empty string passphrase hash should be considered empty"
+        );
+    }
+
+    #[test]
+    fn test_is_empty_with_whitespace_passphrase_hash() {
+        let mut restrictions = SecretRestrictions::default();
+        restrictions.passphrase_hash = Some("   ".to_string());
+        assert!(
+            !restrictions.is_empty(),
+            "Whitespace passphrase hash should not be considered empty"
+        );
+    }
+
+    #[test]
+    fn test_display_with_passphrase_only() {
+        let restrictions = SecretRestrictions::default().with_passphrase(b"secret");
+        let display = restrictions.to_string();
+        assert!(
+            display.contains("Passphrase: ***"),
+            "Display should show masked passphrase"
+        );
+        assert!(
+            !display.contains("No restrictions"),
+            "Display should not show 'No restrictions' when passphrase is set"
+        );
+    }
+
+    #[test]
+    fn test_display_with_passphrase_and_other_restrictions() {
+        use ipnet::IpNet;
+
+        let ip = "192.168.1.0/24".parse::<IpNet>().unwrap();
+        let restrictions = SecretRestrictions::default()
+            .with_allowed_ips(vec![ip])
+            .with_passphrase(b"secret");
+
+        let display = restrictions.to_string();
+        assert!(
+            display.contains("Allowed IPs: 192.168.1.0/24"),
+            "Display should show IP restrictions"
+        );
+        assert!(
+            display.contains("Passphrase: ***"),
+            "Display should show masked passphrase"
+        );
+    }
+
+    #[test]
+    fn test_serialization_with_passphrase() {
+        let restrictions = SecretRestrictions::default().with_passphrase(b"test");
+        let serialized = serde_json::to_string(&restrictions).unwrap();
+
+        assert!(
+            serialized.contains("passphrase_hash"),
+            "Serialized JSON should contain passphrase_hash field"
+        );
+        assert!(
+            serialized.contains("\"passphrase_hash\":"),
+            "Serialized JSON should have proper passphrase_hash structure"
+        );
+
+        // Should not contain the actual passphrase
+        assert!(
+            !serialized.contains("test"),
+            "Serialized JSON should not contain plaintext passphrase"
+        );
+        // Should contain the hash (64 hex characters)
+        assert!(
+            serialized.len() > 80,
+            "Serialized JSON should be reasonably long to contain the hash"
+        ); // Account for JSON structure
+    }
+
+    #[test]
+    fn test_deserialization_with_passphrase() {
+        let json = r#"{"passphrase_hash": "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"}"#;
+        let restrictions: SecretRestrictions = serde_json::from_str(json).unwrap();
+
+        assert!(
+            restrictions.passphrase_hash.is_some(),
+            "Deserialized restrictions should have passphrase hash"
+        );
+        assert_eq!(
+            restrictions.passphrase_hash.as_ref().unwrap(),
+            "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+            "Deserialized passphrase hash should match expected value"
+        );
+        assert!(
+            !restrictions.is_empty(),
+            "Deserialized restrictions with passphrase should not be empty"
+        );
+    }
+
+    #[test]
+    fn test_deserialization_with_passphrase_and_other_fields() {
+        let json = r#"{"allowed_ips": ["192.168.1.0/24"], "passphrase_hash": "abc123"}"#;
+        let restrictions: SecretRestrictions = serde_json::from_str(json).unwrap();
+
+        assert!(
+            restrictions.allowed_ips.is_some(),
+            "Deserialized restrictions should have allowed IPs"
+        );
+        assert!(
+            restrictions.passphrase_hash.is_some(),
+            "Deserialized restrictions should have passphrase hash"
+        );
+        assert_eq!(
+            restrictions.passphrase_hash.unwrap(),
+            "abc123",
+            "Deserialized passphrase hash should match expected value"
+        );
     }
 }

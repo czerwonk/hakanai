@@ -108,14 +108,18 @@ impl Client<Vec<u8>> for WebClient {
         let timeout = opt.timeout.unwrap_or(DEFAULT_REQUEST_TIMEOUT);
         let request_id = Uuid::new_v4().to_string();
 
-        let mut resp = self
+        let mut req = self
             .web_client
             .get(url)
             .header("User-Agent", user_agent)
             .header("X-Request-Id", request_id)
-            .timeout(timeout)
-            .send()
-            .await?;
+            .timeout(timeout);
+
+        if let Some(ref hash) = opt.passphrase_hash {
+            req = req.header("X-Secret-Passphrase", hash)
+        }
+
+        let mut resp = req.send().await?;
 
         if resp.status() != reqwest::StatusCode::OK {
             let mut err_msg = format!("HTTP error: {}", resp.status());
@@ -343,6 +347,230 @@ mod tests {
             result.is_err(),
             "Expected error for invalid JSON, got: {:?}",
             result
+        );
+        Ok(())
+    }
+
+    // Tests for passphrase functionality in WebClient
+    #[tokio::test]
+    async fn test_receive_secret_with_passphrase() -> Result<()> {
+        let mut server = mockito::Server::new_async().await;
+        let client = WebClient::new();
+
+        let secret_id = Uuid::new_v4();
+        let secret_data = b"passphrase_protected_secret";
+
+        let _m = server
+            .mock("GET", format!("/s/{secret_id}").as_str())
+            .match_header(
+                "X-Secret-Passphrase",
+                "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+            ) // SHA-256 of "password"
+            .with_status(200)
+            .with_body(secret_data)
+            .create_async()
+            .await;
+
+        let base_url = Url::parse(&server.url())?;
+        let url = base_url.join(&format!("/s/{secret_id}"))?;
+
+        let opts = SecretReceiveOptions::new().with_passphrase(b"password");
+        let result = client.receive_secret(url, Some(opts)).await;
+
+        let data = result?;
+        assert_eq!(
+            data, secret_data,
+            "Should receive secret data with correct passphrase"
+        );
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_receive_secret_with_empty_passphrase() -> Result<()> {
+        let mut server = mockito::Server::new_async().await;
+        let client = WebClient::new();
+
+        let secret_id = Uuid::new_v4();
+        let secret_data = b"empty_passphrase_secret";
+
+        let _m = server
+            .mock("GET", format!("/s/{secret_id}").as_str())
+            .match_header(
+                "X-Secret-Passphrase",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            ) // SHA-256 of ""
+            .with_status(200)
+            .with_body(secret_data)
+            .create_async()
+            .await;
+
+        let base_url = Url::parse(&server.url())?;
+        let url = base_url.join(&format!("/s/{secret_id}"))?;
+
+        let opts = SecretReceiveOptions::new().with_passphrase(b"");
+        let result = client.receive_secret(url, Some(opts)).await;
+
+        let data = result?;
+        assert_eq!(
+            data, secret_data,
+            "Should receive secret data with empty passphrase"
+        );
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_receive_secret_with_unicode_passphrase() -> Result<()> {
+        let mut server = mockito::Server::new_async().await;
+        let client = WebClient::new();
+
+        let secret_id = Uuid::new_v4();
+        let secret_data = b"unicode_passphrase_secret";
+        let unicode_passphrase = "パスワード123🔒";
+
+        let _m = server
+            .mock("GET", format!("/s/{secret_id}").as_str())
+            .match_header("X-Secret-Passphrase", mockito::Matcher::Any) // Unicode hash is complex to calculate
+            .with_status(200)
+            .with_body(secret_data)
+            .create_async()
+            .await;
+
+        let base_url = Url::parse(&server.url())?;
+        let url = base_url.join(&format!("/s/{secret_id}"))?;
+
+        let opts = SecretReceiveOptions::new().with_passphrase(unicode_passphrase.as_bytes());
+        let result = client.receive_secret(url, Some(opts)).await;
+
+        let data = result?;
+        assert_eq!(
+            data, secret_data,
+            "Should receive secret data with unicode passphrase"
+        );
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_receive_secret_without_passphrase() -> Result<()> {
+        let mut server = mockito::Server::new_async().await;
+        let client = WebClient::new();
+
+        let secret_id = Uuid::new_v4();
+        let secret_data = b"unprotected_secret";
+
+        let _m = server
+            .mock("GET", format!("/s/{secret_id}").as_str())
+            .match_header("X-Secret-Passphrase", mockito::Matcher::Missing) // No passphrase header expected
+            .with_status(200)
+            .with_body(secret_data)
+            .create_async()
+            .await;
+
+        let base_url = Url::parse(&server.url())?;
+        let url = base_url.join(&format!("/s/{secret_id}"))?;
+
+        let result = client.receive_secret(url, None).await;
+
+        let data = result?;
+        assert_eq!(
+            data, secret_data,
+            "Should receive secret data without passphrase"
+        );
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_receive_secret_with_wrong_passphrase_401() -> Result<()> {
+        let mut server = mockito::Server::new_async().await;
+        let client = WebClient::new();
+
+        let secret_id = Uuid::new_v4();
+
+        let _m = server
+            .mock("GET", format!("/s/{secret_id}").as_str())
+            .match_header("X-Secret-Passphrase", mockito::Matcher::Any)
+            .with_status(401) // Unauthorized - wrong passphrase
+            .with_body("Passphrase required or incorrect")
+            .create_async()
+            .await;
+
+        let base_url = Url::parse(&server.url())?;
+        let url = base_url.join(&format!("/s/{secret_id}"))?;
+
+        let opts = SecretReceiveOptions::new().with_passphrase(b"wrongpassword");
+        let result = client.receive_secret(url, Some(opts)).await;
+
+        assert!(result.is_err(), "Should return error for wrong passphrase");
+        if let Err(ClientError::Http(msg)) = result {
+            assert!(msg.contains("401"), "Error should mention 401 status");
+        } else {
+            panic!("Expected HTTP error for wrong passphrase");
+        }
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_receive_secret_passphrase_with_other_options() -> Result<()> {
+        let mut server = mockito::Server::new_async().await;
+        let client = WebClient::new();
+
+        let secret_id = Uuid::new_v4();
+        let secret_data = b"multi_option_secret";
+
+        let _m = server
+            .mock("GET", format!("/s/{secret_id}").as_str())
+            .match_header("User-Agent", "CustomAgent/1.0")
+            .match_header("X-Secret-Passphrase", mockito::Matcher::Any)
+            .with_status(200)
+            .with_body(secret_data)
+            .create_async()
+            .await;
+
+        let base_url = Url::parse(&server.url())?;
+        let url = base_url.join(&format!("/s/{secret_id}"))?;
+
+        let opts = SecretReceiveOptions::new()
+            .with_user_agent("CustomAgent/1.0".to_string())
+            .with_timeout(Duration::from_secs(30))
+            .with_passphrase(b"combined_test");
+        let result = client.receive_secret(url, Some(opts)).await;
+
+        let data = result?;
+        assert_eq!(
+            data, secret_data,
+            "Should work with multiple options including passphrase"
+        );
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_receive_secret_passphrase_header_format() -> Result<()> {
+        let mut server = mockito::Server::new_async().await;
+        let client = WebClient::new();
+
+        let secret_id = Uuid::new_v4();
+        let secret_data = b"header_format_test";
+
+        // Verify the exact hash format
+        let expected_hash = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"; // SHA-256 of "password"
+
+        let _m = server
+            .mock("GET", format!("/s/{secret_id}").as_str())
+            .match_header("X-Secret-Passphrase", expected_hash)
+            .with_status(200)
+            .with_body(secret_data)
+            .create_async()
+            .await;
+
+        let base_url = Url::parse(&server.url())?;
+        let url = base_url.join(&format!("/s/{secret_id}"))?;
+
+        let opts = SecretReceiveOptions::new().with_passphrase(b"password");
+        let result = client.receive_secret(url, Some(opts)).await;
+
+        let data = result?;
+        assert_eq!(
+            data, secret_data,
+            "Should send passphrase as lowercase hex SHA-256 hash"
         );
         Ok(())
     }
