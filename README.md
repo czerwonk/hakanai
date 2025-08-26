@@ -209,8 +209,11 @@ echo "EU restricted" | hakanai send --allow-country DE --allow-country FR --allo
 echo "Cloudflare only" | hakanai send --allow-asn 13335
 echo "Multiple ISPs" | hakanai send --allow-asn 13335 --allow-asn 15169 --allow-asn 32934
 
-# Combine IP, country, and ASN restrictions
-echo "comprehensive restrictions" | hakanai send --allow-ip 192.168.1.0/24 --allow-country DE --allow-asn 202739
+# Require passphrase for access (phone call/out-of-band sharing)
+echo "sensitive document" | hakanai send --require-passphrase mypassword123
+
+# Combine all restriction types including passphrase
+echo "comprehensive restrictions" | hakanai send --allow-ip 192.168.1.0/24 --allow-country DE --allow-asn 202739 --require-passphrase secret123
 # Output:
 # Secret sent successfully!
 # 
@@ -235,6 +238,10 @@ hakanai get https://hakanai.example.com/s/550e8400-e29b-41d4-a716-446655440000
 
 # Get using separate key (when --separate-key was used)
 hakanai get https://hakanai.example.com/s/550e8400-e29b-41d4-a716-446655440000 --key base64-encoded-key
+
+# Get passphrase-protected secret
+hakanai get https://hakanai.example.com/s/550e8400-e29b-41d4-a716-446655440000 --passphrase mypassword123
+hakanai get https://hakanai.example.com/s/550e8400 -p secret123
 
 # Save to a specific file instead of using payload filename
 hakanai get https://hakanai.example.com/s/550e8400 --filename custom-name.txt
@@ -337,7 +344,8 @@ Create a new secret.
   "restrictions": {    // optional
     "allowed_ips": ["192.168.1.0/24", "10.0.0.1"],
     "allowed_countries": ["US", "DE", "CA"],
-    "allowed_asns": [13335, 15169, 202739]
+    "allowed_asns": [13335, 15169, 202739],
+    "passphrase_hash": "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"
   }
 }
 ```
@@ -356,8 +364,13 @@ Create a new secret.
 ### GET /api/v1/secret/{id}
 Retrieve a secret (one-time access).
 
+**Headers (when required):**
+- `X-Secret-Passphrase: sha256-hash-of-passphrase` (required for passphrase-protected secrets)
+
 **Response:**
 - `200 OK`: Plain text secret data
+- `401 Unauthorized`: Missing or incorrect passphrase
+- `403 Forbidden`: Access denied due to restrictions (IP, country, ASN)
 - `404 Not Found`: Secret doesn't exist or has expired
 - `410 Gone`: Secret was already accessed by someone else
 
