@@ -2,7 +2,8 @@
 
 import { showElement, hideElement } from "../core/dom-utils";
 import { fetchAppConfig } from "../core/app-config";
-import type { SecretRestrictions } from "../hakanai-client";
+import { type SecretRestrictions } from "../hakanai-client";
+import { RestrictionData } from "../core/restriction-data.js";
 
 export interface RestrictionsTabsConfig {
   container: HTMLElement;
@@ -12,13 +13,13 @@ export class RestrictionsTabs {
   private readonly container: HTMLElement;
   private readonly tabs: Map<string, HTMLElement> = new Map();
   private readonly tabContents: Map<string, HTMLElement> = new Map();
-  private currentActiveTab: string = "ip";
+  private currentActiveTab: string = "passphrase";
 
   constructor(config: RestrictionsTabsConfig) {
     this.container = config.container;
     this.initializeTabs();
     this.setupEventHandlers();
-    this.setActiveTab("ip"); // Start with IP tab active
+    this.setActiveTab("passphrase"); // Start with passphrase tab active
     this.hideUnsupportedRestrictions();
   }
 
@@ -67,26 +68,28 @@ export class RestrictionsTabs {
     });
 
     this.currentActiveTab = tabId;
+    this.focusActiveTab();
   }
 
   /**
    * Get all restriction data from the tabs
    */
-  getRestrictions(): SecretRestrictions | undefined {
-    const restrictions: SecretRestrictions = {};
+  getRestrictions(): RestrictionData | undefined {
+    const data = new RestrictionData();
     let hasRestrictions = false;
-    hasRestrictions = this.addIPRestrictions(restrictions) || hasRestrictions;
-    hasRestrictions =
-      this.addCountryRestrictions(restrictions) || hasRestrictions;
-    hasRestrictions = this.addASNRestrictions(restrictions) || hasRestrictions;
 
-    return hasRestrictions ? restrictions : undefined;
+    hasRestrictions = this.addIPRestrictions(data) || hasRestrictions;
+    hasRestrictions = this.addCountryRestrictions(data) || hasRestrictions;
+    hasRestrictions = this.addASNRestrictions(data) || hasRestrictions;
+    hasRestrictions = this.addPassphraseRestrictions(data) || hasRestrictions;
+
+    return hasRestrictions ? data : undefined;
   }
 
   /**
    * Add IP restrictions to the restrictions object
    */
-  private addIPRestrictions(restrictions: SecretRestrictions): boolean {
+  private addIPRestrictions(data: RestrictionData): boolean {
     const ipInput = this.container.querySelector(
       "#allowedIPs",
     ) as HTMLTextAreaElement;
@@ -100,7 +103,7 @@ export class RestrictionsTabs {
       .filter((line) => line.length > 0);
 
     if (ips.length > 0) {
-      restrictions.allowed_ips = ips;
+      data.allowed_ips = ips;
       return true;
     }
 
@@ -110,7 +113,7 @@ export class RestrictionsTabs {
   /**
    * Add country restrictions to the restrictions object
    */
-  private addCountryRestrictions(restrictions: SecretRestrictions): boolean {
+  private addCountryRestrictions(data: RestrictionData): boolean {
     const countryInput = this.container.querySelector(
       "#allowedCountries",
     ) as HTMLTextAreaElement;
@@ -124,7 +127,7 @@ export class RestrictionsTabs {
       .filter((line) => line.length > 0);
 
     if (countries.length > 0) {
-      restrictions.allowed_countries = countries;
+      data.allowed_countries = countries;
       return true;
     }
 
@@ -134,7 +137,7 @@ export class RestrictionsTabs {
   /**
    * Add ASN restrictions to the restrictions object
    */
-  private addASNRestrictions(restrictions: SecretRestrictions): boolean {
+  private addASNRestrictions(data: RestrictionData): boolean {
     const asnInput = this.container.querySelector(
       "#allowedASNs",
     ) as HTMLTextAreaElement;
@@ -155,11 +158,26 @@ export class RestrictionsTabs {
       );
 
     if (asns.length > 0) {
-      restrictions.allowed_asns = asns;
+      data.allowed_asns = asns;
       return true;
     }
 
     return false;
+  }
+
+  /**
+   * Add passphrase restrictions to the restrictions object
+   */
+  private addPassphraseRestrictions(data: RestrictionData): boolean {
+    const passphraseInput = this.container.querySelector(
+      "#passphraseRestriction",
+    ) as HTMLInputElement;
+    if (!passphraseInput?.value.trim()) {
+      return false;
+    }
+
+    data.passphrase = passphraseInput.value.trim();
+    return true;
   }
 
   /**
@@ -205,9 +223,9 @@ export class RestrictionsTabs {
       return;
     }
 
-    const inputField = activeContent.querySelector(
-      "textarea",
-    ) as HTMLTextAreaElement;
+    const inputField = activeContent.querySelector("input, textarea") as
+      | HTMLInputElement
+      | HTMLTextAreaElement;
     if (inputField) {
       inputField.focus();
     }

@@ -128,6 +128,11 @@ hakanai:
     countryHeader: ""
     # Example: "cf-ipcountry" for Cloudflare, "x-country-code" for custom setups
 
+    # ASN header for network-based restrictions (optional)
+    # Required to support ASN-based access control
+    asnHeader: ""
+    # Example: "cf-asn" for Cloudflare, "x-asn" for custom setups
+
     # CORS configuration
     cors:
       enabled: false

@@ -209,8 +209,11 @@ echo "EU restricted" | hakanai send --allow-country DE --allow-country FR --allo
 echo "Cloudflare only" | hakanai send --allow-asn 13335
 echo "Multiple ISPs" | hakanai send --allow-asn 13335 --allow-asn 15169 --allow-asn 32934
 
-# Combine IP, country, and ASN restrictions
-echo "comprehensive restrictions" | hakanai send --allow-ip 192.168.1.0/24 --allow-country DE --allow-asn 202739
+# Require passphrase for access (phone call/out-of-band sharing)
+echo "sensitive document" | hakanai send --require-passphrase mypassword123
+
+# Combine all restriction types including passphrase
+echo "comprehensive restrictions" | hakanai send --allow-ip 192.168.1.0/24 --allow-country DE --allow-asn 202739 --require-passphrase secret123
 # Output:
 # Secret sent successfully!
 # 
@@ -235,6 +238,10 @@ hakanai get https://hakanai.example.com/s/550e8400-e29b-41d4-a716-446655440000
 
 # Get using separate key (when --separate-key was used)
 hakanai get https://hakanai.example.com/s/550e8400-e29b-41d4-a716-446655440000 --key base64-encoded-key
+
+# Get passphrase-protected secret
+hakanai get https://hakanai.example.com/s/550e8400-e29b-41d4-a716-446655440000 --passphrase mypassword123
+hakanai get https://hakanai.example.com/s/550e8400 -p secret123
 
 # Save to a specific file instead of using payload filename
 hakanai get https://hakanai.example.com/s/550e8400 --filename custom-name.txt
@@ -278,10 +285,12 @@ hakanai token --server https://hakanai.example.com --limit 2m --ttl 30d
 
 Hakanai now includes a web interface for users who prefer not to use the CLI:
 - Visit the server root (e.g., `https://hakanai.example.com/`) to access the web interface
-- Create new secrets at `/create` - supports both text and file uploads
-- Paste a hakanai URL to retrieve secrets directly in your browser
+- Create new secrets at `/create` - supports both text and file uploads with comprehensive access restrictions
+- Paste a hakanai URL to retrieve secrets directly in your browser - passphrase input appears automatically when required
 - Use `/share` for clipboard-based sharing (perfect for iOS Shortcuts integration)
 - The same zero-knowledge encryption is maintained - all encryption/decryption happens in your browser
+- **Access Restrictions**: Full web UI support for IP/country/ASN restrictions and passphrase protection
+- **Passphrase Support**: Seamless inline prompts for passphrase-protected secrets during retrieval
 - **Dark/Light Mode Toggle**: Automatic system preference detection with manual override
 - Mobile-friendly responsive design
 - Multi-language support (English and German) with automatic browser language detection
@@ -306,14 +315,21 @@ https://hakanai.example.com/share#data=base64data&filename=test.txt&token=authto
      "data": "base64-encoded-content",
      "filename": "document.pdf",  // optional
      "token": "auth-token",        // optional  
-     "ttl": 86400                 // optional (seconds)
+     "ttl": 86400,                // optional (seconds)
+     "restrictions": {            // optional
+       "allowed_ips": ["192.168.1.0/24"],
+       "allowed_countries": ["US", "CA"], 
+       "allowed_asns": [13335],
+       "passphrase": "plaintext-passphrase"
+     }
    }
    ```
 
 2. **Visit `/share`** - the page reads and validates clipboard content
-3. **Review the preview** - shows file size, filename, and expiration time
-4. **Click "Create Secret"** - encrypts client-side and generates the shareable URL
+3. **Review the preview** - shows file size, filename, expiration time, and any access restrictions
+4. **Click "Create Secret"** - encrypts client-side, hashes passphrase if provided, and generates the shareable URL
 5. **URL is copied to clipboard** automatically for easy sharing
+6. **Restriction details displayed** - shows applied IP/country/ASN restrictions and passphrase requirement for recipients
 
 **iOS Shortcuts Integration**: Use fragment URLs for small secrets (< 5KB) or clipboard method for larger content. Both maintain zero-knowledge architecture. For detailed setup instructions and the ready-to-use shortcut file, see [docs/shortcuts-README.md](docs/shortcuts-README.md).
 
@@ -337,7 +353,8 @@ Create a new secret.
   "restrictions": {    // optional
     "allowed_ips": ["192.168.1.0/24", "10.0.0.1"],
     "allowed_countries": ["US", "DE", "CA"],
-    "allowed_asns": [13335, 15169, 202739]
+    "allowed_asns": [13335, 15169, 202739],
+    "passphrase_hash": "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"
   }
 }
 ```
@@ -356,8 +373,13 @@ Create a new secret.
 ### GET /api/v1/secret/{id}
 Retrieve a secret (one-time access).
 
+**Headers (when required):**
+- `X-Secret-Passphrase: sha256-hash-of-passphrase` (required for passphrase-protected secrets)
+
 **Response:**
 - `200 OK`: Plain text secret data
+- `401 Unauthorized`: Missing or incorrect passphrase
+- `403 Forbidden`: Access denied due to restrictions (IP, country, ASN)
 - `404 Not Found`: Secret doesn't exist or has expired
 - `410 Gone`: Secret was already accessed by someone else
 

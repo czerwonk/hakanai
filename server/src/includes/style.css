@@ -2658,6 +2658,58 @@ input[type="number"] {
   }
 }
 
+/* Restrictions section styling */
+.restrictions-info {
+  font-size: var(--font-size-sm);
+}
+
+.restrictions-info h4 {
+  font-size: var(--font-size-base);
+  margin-bottom: var(--spacing-sm);
+}
+
+.restrictions-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.restrictions-list li {
+  margin-bottom: var(--spacing-sm);
+}
+
+/* Passphrase container with inline text and buttons */
+.passphrase-container {
+  display: inline-flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+  margin-left: var(--spacing-xs);
+}
+
+.passphrase-text {
+  font-family: var(--font-family-mono);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+}
+
+/* Passphrase required result styling */
+.result.passphrase-required {
+  padding: var(--spacing-lg);
+  background: var(--theme-bg-container);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--theme-border);
+}
+
+.result.passphrase-required h3 {
+  margin: 0 0 var(--spacing-md) 0;
+  color: var(--theme-text);
+}
+
+.result.passphrase-required p {
+  margin: 0 0 var(--spacing-md) 0;
+  color: var(--theme-text-muted);
+}
+
 /* Mobile responsiveness for tabs */
 @media (max-width: 600px) {
   .restrictions-tab-nav .tab-button {

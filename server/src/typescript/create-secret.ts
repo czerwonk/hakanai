@@ -31,7 +31,10 @@ import {
 } from "./core/preferences";
 import { KeyboardShortcuts } from "./core/keyboard-shortcuts";
 import { FileDropzone } from "./components/file-dropzone";
-import { RestrictionsTabs } from "./components/restrictions-tabs";
+import {
+  RestrictionsTabs,
+  RestrictionData,
+} from "./components/restrictions-tabs";
 
 let ttlSelector: TTLSelector | null = null;
 let fileDropzone: FileDropzone | null = null;
@@ -63,7 +66,7 @@ interface FormValues {
   authToken: string;
   ttl: number;
   isFileMode: boolean;
-  restrictions?: SecretRestrictions;
+  restrictionData?: RestrictionData;
 }
 
 const baseUrl = window.location.origin.includes("file://")
@@ -231,7 +234,7 @@ function getFormValues(elements: Elements): FormValues {
   const restrictAccessCheckbox = document.getElementById(
     "restrictAccess",
   ) as HTMLInputElement;
-  const restrictions = restrictAccessCheckbox?.checked
+  const restrictionData = restrictAccessCheckbox?.checked
     ? restrictionsTabs?.getRestrictions()
     : undefined;
 
@@ -239,7 +242,7 @@ function getFormValues(elements: Elements): FormValues {
     authToken: elements.authTokenInput.value.trim(),
     ttl: ttlSelector?.getValue() || 3600,
     isFileMode: elements.fileRadio.checked,
-    restrictions,
+    restrictionData,
   };
 }
 
@@ -285,7 +288,8 @@ async function createSecret(): Promise<void> {
     return;
   }
 
-  const { authToken, ttl, isFileMode, restrictions } = getFormValues(elements);
+  const { authToken, ttl, isFileMode, restrictionData } =
+    getFormValues(elements);
 
   const payload = isFileMode
     ? await validateAndProcessFileInput(elements.fileInput)
@@ -302,6 +306,11 @@ async function createSecret(): Promise<void> {
   progressBar.show(window.i18n.t(I18nKeys.Msg.Creating));
 
   try {
+    // Convert restrictionData to API format
+    const restrictions = restrictionData
+      ? await restrictionData.toSecretRestrictions()
+      : undefined;
+
     // Pass the ProgressBar directly as it implements DataTransferObserver
     const secretUrl = await client.sendPayload(
       payload,
@@ -319,7 +328,7 @@ async function createSecret(): Promise<void> {
       handleAuthTokenSave(authToken, saveTokenCookie.checked);
     }
 
-    showSuccess(secretUrl, restrictions);
+    showSuccess(secretUrl, restrictionData);
     clearInputs(elements.secretInput, elements.fileInput);
   } catch (error: unknown) {
     handleCreateError(error);
@@ -359,7 +368,7 @@ function shouldGenerateQrCode(): boolean {
 
 function showSuccess(
   secretUrl: string,
-  restrictions?: SecretRestrictions,
+  restrictionData?: RestrictionData,
 ): void {
   const resultContainer = document.getElementById("result");
   if (!resultContainer) {
@@ -372,7 +381,7 @@ function showSuccess(
     container: resultContainer,
     separateKeyMode: isSeparateKeyMode(),
     generateQrCode: shouldGenerateQrCode(),
-    restrictions,
+    restrictionData,
   });
   announceToScreenReader(window.i18n.t(I18nKeys.Msg.SuccessTitle));
 }

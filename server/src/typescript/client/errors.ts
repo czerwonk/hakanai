@@ -26,6 +26,8 @@ const HakanaiErrorCodes = {
   HASH_MISMATCH: "HASH_MISMATCH",
   /** Client not allowed to access the secret */
   ACCESS_DENIED: "ACCESS_DENIED",
+  /** Secret requires a passphrase to access */
+  PASSPHRASE_REQUIRED: "PASSPHRASE_REQUIRED",
   /** Server does not support this feature or operation */
   NOT_SUPPORTED: "NOT_SUPPORTED",
 

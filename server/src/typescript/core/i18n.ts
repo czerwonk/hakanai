@@ -38,9 +38,12 @@ const I18nKeys = {
     Text: "label.text",
     Token: "label.token",
     Url: "label.url",
+    Passphrase: "label.passphrase",
+    PassphraseInput: "label.passphraseInput",
   },
 
   Placeholder: {
+    Passphrase: "placeholder.passphrase",
     Secret: "placeholder.secret",
     Token: "placeholder.token",
   },
@@ -59,6 +62,8 @@ const I18nKeys = {
     SeparateKey: "helper.separateKey",
     Token: "helper.token",
     Url: "helper.url",
+    Passphrase: "helper.passphrase",
+    PassphraseInput: "helper.passphraseInput",
   },
 
   Time: {
@@ -92,6 +97,7 @@ const I18nKeys = {
     Secondary: "dropzone.secondary",
     Helper: "dropzone.helper",
   },
+
 
   Msg: {
     BinaryDetected: "msg.binaryDetected",
@@ -131,6 +137,7 @@ const I18nKeys = {
 
   Restrictions: {
     Legend: "restrictions.legend",
+    TabPassphrase: "restrictions.tab.passphrase",
     TabIP: "restrictions.tab.ip",
     TabCountry: "restrictions.tab.country",
     TabASN: "restrictions.tab.asn",
@@ -153,6 +160,8 @@ const I18nKeys = {
     ThemeToggle: "aria.themeToggle",
     TokenInput: "aria.tokenInput",
     UrlInput: "aria.urlInput",
+    Passphrase: "aria.passphrase",
+    PassphraseInput: "aria.passphraseInput",
   },
 
   Meta: {
@@ -212,6 +221,7 @@ const I18nKeys = {
     MissingHash: "error.MISSING_HASH",
     MissingKey: "error.MISSING_KEY",
     MissingSecretId: "error.MISSING_SECRET_ID",
+    PassphraseRequired: "error.PASSPHRASE_REQUIRED",
     PayloadTooLarge: "error.PAYLOAD_TOO_LARGE",
     RetrieveFailed: "error.RETRIEVE_FAILED",
     SecretAlreadyAccessed: "error.SECRET_ALREADY_ACCESSED",
@@ -277,14 +287,19 @@ const translations: Translations = {
     [I18nKeys.Label.Text]: "📝 Text Message",
     [I18nKeys.Label.Token]: "Token:",
     [I18nKeys.Label.Url]: "Secret URL:",
+    [I18nKeys.Label.Passphrase]: "Passphrase Protection (Optional):",
+    [I18nKeys.Label.PassphraseInput]: "Passphrase:",
 
     [I18nKeys.Placeholder.Secret]: "Enter your secret message here...",
+    [I18nKeys.Placeholder.Passphrase]:
+      "Enter passphrase to protect this secret",
     [I18nKeys.Placeholder.Token]: "Enter authentication token here...",
 
     [I18nKeys.Restrictions.Legend]: "Access Restrictions (Optional):",
-    [I18nKeys.Restrictions.TabIP]: "IP Addresses",
-    [I18nKeys.Restrictions.TabCountry]: "Countries",
-    [I18nKeys.Restrictions.TabASN]: "Networks (ASN)",
+    [I18nKeys.Restrictions.TabPassphrase]: "Passphrase",
+    [I18nKeys.Restrictions.TabIP]: "IP",
+    [I18nKeys.Restrictions.TabCountry]: "Country",
+    [I18nKeys.Restrictions.TabASN]: "Network",
     [I18nKeys.Restrictions.Applied]: "Access Restrictions Applied:",
 
     [I18nKeys.Helper.AllowedIPs]:
@@ -305,12 +320,20 @@ const translations: Translations = {
       "When enabled, the URL and decryption key are displayed separately, allowing you to share them through different channels for enhanced security.",
     [I18nKeys.Helper.GenerateQrCode]:
       "When enabled, a QR code will be generated for the secret URL. Disable this if you're concerned about shoulder surfing or visual exposure.",
-    [I18nKeys.Helper.RestrictAccess]:
-      "Limit who can access this secret by IP address, country, or network provider.",
+    [I18nKeys.Helper.RestrictAccess]: "Limit who can access this secret.",
     [I18nKeys.Helper.SaveToken]:
       "Token will be stored securely in your browser for the current session only. You will need to re-enter it when you start a new browser session.",
     [I18nKeys.Helper.Expires]:
       "Secret will self-destruct after this time or first view",
+    [I18nKeys.Helper.Passphrase]:
+      "Require a passphrase to access this secret. The passphrase can be shared through a different channel (e.g., phone call) for enhanced security.",
+    [I18nKeys.Helper.PassphraseInput]:
+      "This secret requires a passphrase to access",
+
+    [I18nKeys.Aria.Passphrase]:
+      "Enter a passphrase that will be required to access this secret",
+    [I18nKeys.Aria.PassphraseInput]:
+      "Enter the passphrase for this protected secret",
 
     [I18nKeys.Time.FiveMin]: "5 minutes",
     [I18nKeys.Time.ThirtyMin]: "30 minutes",
@@ -337,6 +360,7 @@ const translations: Translations = {
     [I18nKeys.Dropzone.Primary]: "Drop files here or click to select",
     [I18nKeys.Dropzone.Secondary]: "Supports all file types",
     [I18nKeys.Dropzone.Helper]: "File will be encrypted before upload.",
+
 
     [I18nKeys.Msg.Creating]: "Creating secret...",
     [I18nKeys.Msg.Retrieving]: "Retrieving secret...",
@@ -459,6 +483,8 @@ const translations: Translations = {
     [I18nKeys.Error.MissingDecryptionKey]: "No decryption key found in URL",
     [I18nKeys.Error.MissingHash]:
       "No content integrity verification hash found in URL",
+    [I18nKeys.Error.PassphraseRequired]:
+      "This secret is protected and requires a passphrase to access",
     [I18nKeys.Error.PayloadTooLarge]: "Secret size exceeds the limit",
     [I18nKeys.Error.HashValidationFailed]:
       "Hash validation failed - data may be tempered or corrupted",
@@ -538,14 +564,19 @@ const translations: Translations = {
     [I18nKeys.Label.ExpiresIn]: "Läuft ab in:",
     [I18nKeys.Label.ContentPreview]: "Inhaltsvorschau",
     [I18nKeys.Label.QrCode]: "QR-Code:",
+    [I18nKeys.Label.Passphrase]: "Passphrase-Schutz (Optional):",
+    [I18nKeys.Label.PassphraseInput]: "Passphrase:",
 
     [I18nKeys.Placeholder.Secret]: "Hier wird gen geheime Text eingegeben...",
+    [I18nKeys.Placeholder.Passphrase]:
+      "Passphrase zum Schutz dieses Secrets eingeben",
     [I18nKeys.Placeholder.Token]: "Authentifizierungs-Token eingeben",
 
     [I18nKeys.Restrictions.Legend]: "Zugriffsbeschränkungen (Optional):",
-    [I18nKeys.Restrictions.TabIP]: "IP-Adressen",
-    [I18nKeys.Restrictions.TabCountry]: "Länder",
-    [I18nKeys.Restrictions.TabASN]: "Netzwerke (ASN)",
+    [I18nKeys.Restrictions.TabPassphrase]: "Passphrase",
+    [I18nKeys.Restrictions.TabIP]: "IP",
+    [I18nKeys.Restrictions.TabCountry]: "Land",
+    [I18nKeys.Restrictions.TabASN]: "Netzwerk",
     [I18nKeys.Restrictions.Applied]: "Zugriffsbeschränkungen:",
 
     [I18nKeys.Helper.AllowedIPs]:
@@ -574,6 +605,15 @@ const translations: Translations = {
       "Token wird sicher für die Session im Browser gespeichert. Nach dem Schließen des Tabs muss dieses neu eigegeben werden.",
     [I18nKeys.Helper.Expires]:
       "Das Secret wird nach dieser Zeit oder beim ersten Zugriff selbst zerstört",
+    [I18nKeys.Helper.Passphrase]:
+      "Erfordert eine Passphrase zum Zugriff auf dieses Secret. Für erhöhte Sicheheit kann die Passphrase über einen anderen Kanal (z.B. Telefonanruf) geteilt werden.",
+    [I18nKeys.Helper.PassphraseInput]:
+      "Dieses Secret erfordert eine Passphrase für den Zugriff",
+
+    [I18nKeys.Aria.Passphrase]:
+      "Passphrase eingeben, die für den Zugriff auf dieses Secret erforderlich ist",
+    [I18nKeys.Aria.PassphraseInput]:
+      "Passphrase für dieses geschützte Secret eingeben",
 
     [I18nKeys.Time.FiveMin]: "5 Minuten",
     [I18nKeys.Time.ThirtyMin]: "30 Minuten",
@@ -601,6 +641,7 @@ const translations: Translations = {
       "Dateien hier ablegen oder zum Auswählen klicken",
     [I18nKeys.Dropzone.Secondary]: "Unterstützt alle Dateitypen",
     [I18nKeys.Dropzone.Helper]: "Die Datei wird vor dem Upload verschlüsselt.",
+
 
     [I18nKeys.Msg.Creating]: "Secret wird erstellt...",
     [I18nKeys.Msg.Retrieving]: "Secret wird abgerufen...",
@@ -724,6 +765,8 @@ const translations: Translations = {
     [I18nKeys.Error.MissingDecryptionKey]: "Kein Schlüssel in der URL gefunden",
     [I18nKeys.Error.MissingHash]:
       "Kein Verifizierungs-Hash-Code in der URL gefunden",
+    [I18nKeys.Error.PassphraseRequired]:
+      "Dieses Secret ist geschützt und erfordert eine Passphrase zum Zugriff",
 
     [I18nKeys.Validation.MissingData]: "Fehlende oder ungültige Daten",
     [I18nKeys.Validation.InvalidFilename]:

@@ -7,7 +7,9 @@ use actix_web::{HttpRequest, Result, error, get, post, web};
 use tracing::{Span, error, instrument};
 use uuid::Uuid;
 
-use hakanai_lib::models::{PostSecretRequest, PostSecretResponse, SecretRestrictions};
+use hakanai_lib::models::{
+    PostSecretRequest, PostSecretResponse, SecretRestrictions, restrictions,
+};
 
 use crate::app_data::AppData;
 use crate::data_store::DataStorePopResult;
@@ -108,25 +110,48 @@ async fn verify_restrictions_for_secret(
 
     // Check IP restrictions if they exist
     if let Some(restrictions) = restrictions {
-        if let Some(allowed_ips) = restrictions.allowed_ips
-            && !allowed_ips.is_empty()
-            && !filters::is_request_from_ip_range(http_req, app_data, &allowed_ips)
-        {
-            return Err(error::ErrorForbidden("Not allowed to access the secret"));
-        }
+        ensure_restrictions(restrictions, http_req, app_data)?;
+    }
 
-        if let Some(allowed_countries) = restrictions.allowed_countries
-            && !allowed_countries.is_empty()
-            && !filters::is_request_from_country(http_req, app_data, &allowed_countries)
-        {
-            return Err(error::ErrorForbidden("Not allowed to access the secret"));
-        }
+    Ok(())
+}
 
-        if let Some(allowed_asns) = restrictions.allowed_asns
-            && !allowed_asns.is_empty()
-            && !filters::is_request_from_asn(http_req, app_data, &allowed_asns)
-        {
-            return Err(error::ErrorForbidden("Not allowed to access the secret"));
+fn ensure_restrictions(
+    restrictions: SecretRestrictions,
+    http_req: &HttpRequest,
+    app_data: &AppData,
+) -> Result<()> {
+    if let Some(allowed_ips) = restrictions.allowed_ips
+        && !allowed_ips.is_empty()
+        && !filters::is_request_from_ip_range(http_req, app_data, &allowed_ips)
+    {
+        return Err(error::ErrorForbidden("Not allowed to access the secret"));
+    }
+
+    if let Some(allowed_countries) = restrictions.allowed_countries
+        && !allowed_countries.is_empty()
+        && !filters::is_request_from_country(http_req, app_data, &allowed_countries)
+    {
+        return Err(error::ErrorForbidden("Not allowed to access the secret"));
+    }
+
+    if let Some(allowed_asns) = restrictions.allowed_asns
+        && !allowed_asns.is_empty()
+        && !filters::is_request_from_asn(http_req, app_data, &allowed_asns)
+    {
+        return Err(error::ErrorForbidden("Not allowed to access the secret"));
+    }
+
+    if let Some(passphrase_hash) = restrictions.passphrase_hash
+        && !passphrase_hash.is_empty()
+    {
+        let value = filters::extract_header_value(http_req, restrictions::PASSPHRASE_HEADER_NAME)
+            .ok_or_else(|| {
+            error::ErrorUnauthorized("Missing required passphrase to access the secret")
+        })?;
+
+        if value != passphrase_hash {
+            return Err(error::ErrorUnauthorized("Not allowed to access the secret"));
         }
     }
 
@@ -1437,5 +1462,324 @@ mod tests {
 
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), 200); // Should succeed with multiple countries
+    }
+
+    // Tests for passphrase functionality
+    #[actix_web::test]
+    async fn test_get_secret_with_correct_passphrase() {
+        let secret_id = uuid::Uuid::new_v4();
+        let passphrase_hash = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"; // SHA-256 of "password"
+
+        let mut restrictions = SecretRestrictions::default();
+        restrictions.passphrase_hash = Some(passphrase_hash.to_string());
+
+        let mock_store = MockDataStore::new()
+            .with_pop_result(DataStorePopResult::Found(
+                "passphrase_protected_secret".to_string(),
+            ))
+            .with_restrictions(secret_id, restrictions);
+
+        let app_data = create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
+
+        let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
+            |cfg| {
+                configure(cfg);
+            },
+        ))
+        .await;
+
+        let req = test::TestRequest::get()
+            .uri(&format!("/secret/{}", secret_id))
+            .insert_header((restrictions::PASSPHRASE_HEADER_NAME, passphrase_hash))
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 200, "Should succeed with correct passphrase");
+
+        let body = test::read_body(resp).await;
+        assert_eq!(body, "passphrase_protected_secret");
+    }
+
+    #[actix_web::test]
+    async fn test_get_secret_with_wrong_passphrase() {
+        let secret_id = uuid::Uuid::new_v4();
+        let correct_hash = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"; // SHA-256 of "password"
+        let wrong_hash = "ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f"; // SHA-256 of "secret"
+
+        let mut restrictions = SecretRestrictions::default();
+        restrictions.passphrase_hash = Some(correct_hash.to_string());
+
+        let mock_store = MockDataStore::new()
+            .with_pop_result(DataStorePopResult::Found(
+                "passphrase_protected_secret".to_string(),
+            ))
+            .with_restrictions(secret_id, restrictions);
+
+        let app_data = create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
+
+        let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
+            |cfg| {
+                configure(cfg);
+            },
+        ))
+        .await;
+
+        let req = test::TestRequest::get()
+            .uri(&format!("/secret/{}", secret_id))
+            .insert_header((restrictions::PASSPHRASE_HEADER_NAME, wrong_hash))
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 401, "Should return 401 for wrong passphrase");
+    }
+
+    #[actix_web::test]
+    async fn test_get_secret_missing_required_passphrase() {
+        let secret_id = uuid::Uuid::new_v4();
+        let passphrase_hash = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8";
+
+        let mut restrictions = SecretRestrictions::default();
+        restrictions.passphrase_hash = Some(passphrase_hash.to_string());
+
+        let mock_store = MockDataStore::new()
+            .with_pop_result(DataStorePopResult::Found(
+                "passphrase_protected_secret".to_string(),
+            ))
+            .with_restrictions(secret_id, restrictions);
+
+        let app_data = create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
+
+        let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
+            |cfg| {
+                configure(cfg);
+            },
+        ))
+        .await;
+
+        let req = test::TestRequest::get()
+            .uri(&format!("/secret/{}", secret_id))
+            // No passphrase header provided
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(
+            resp.status(),
+            401,
+            "Should return 401 when passphrase is missing"
+        );
+    }
+
+    #[actix_web::test]
+    async fn test_get_secret_with_empty_passphrase_hash() {
+        let secret_id = uuid::Uuid::new_v4();
+
+        // Empty passphrase hash should be treated as no restriction
+        let mut restrictions = SecretRestrictions::default();
+        restrictions.passphrase_hash = Some("".to_string());
+
+        let mock_store = MockDataStore::new()
+            .with_pop_result(DataStorePopResult::Found(
+                "secret_with_empty_hash".to_string(),
+            ))
+            .with_restrictions(secret_id, restrictions);
+
+        let app_data = create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
+
+        let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
+            |cfg| {
+                configure(cfg);
+            },
+        ))
+        .await;
+
+        let req = test::TestRequest::get()
+            .uri(&format!("/secret/{}", secret_id))
+            // No passphrase header needed for empty hash
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(
+            resp.status(),
+            200,
+            "Should succeed with empty passphrase hash"
+        );
+
+        let body = test::read_body(resp).await;
+        assert_eq!(body, "secret_with_empty_hash");
+    }
+
+    #[actix_web::test]
+    async fn test_get_secret_with_passphrase_and_other_restrictions() {
+        let secret_id = uuid::Uuid::new_v4();
+        let passphrase_hash = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8";
+
+        let mut restrictions = SecretRestrictions::default();
+        restrictions.passphrase_hash = Some(passphrase_hash.to_string());
+        // Add IP restriction too
+        use std::str::FromStr;
+        restrictions.allowed_ips = Some(vec![ipnet::IpNet::from_str("127.0.0.0/8").unwrap()]);
+
+        let mock_store = MockDataStore::new()
+            .with_pop_result(DataStorePopResult::Found(
+                "multi_restricted_secret".to_string(),
+            ))
+            .with_restrictions(secret_id, restrictions);
+
+        let app_data = create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
+
+        let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
+            |cfg| {
+                configure(cfg);
+            },
+        ))
+        .await;
+
+        let req = test::TestRequest::get()
+            .uri(&format!("/secret/{}", secret_id))
+            .insert_header((restrictions::PASSPHRASE_HEADER_NAME, passphrase_hash))
+            .insert_header(("x-forwarded-for", "127.0.0.1")) // Ensure IP passes the 127.0.0.0/8 restriction
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(
+            resp.status(),
+            200,
+            "Should succeed when all restrictions are satisfied"
+        );
+
+        let body = test::read_body(resp).await;
+        assert_eq!(body, "multi_restricted_secret");
+    }
+
+    #[actix_web::test]
+    async fn test_post_secret_with_passphrase_restriction() {
+        let mock_store = MockDataStore::new();
+        let app_data =
+            create_test_app_data(Box::new(mock_store.clone()), MockTokenManager::new(), true);
+
+        let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
+            |cfg| {
+                configure(cfg);
+            },
+        ))
+        .await;
+
+        let passphrase_hash = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8";
+        let mut restrictions = SecretRestrictions::default();
+        restrictions.passphrase_hash = Some(passphrase_hash.to_string());
+
+        let payload =
+            PostSecretRequest::new("passphrase_secret".to_string(), Duration::from_secs(3600))
+                .with_restrictions(restrictions);
+
+        let req = test::TestRequest::post()
+            .uri("/secret")
+            .set_json(&payload)
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(
+            resp.status(),
+            200,
+            "Should create secret with passphrase restriction"
+        );
+
+        let body: PostSecretResponse = test::read_body_json(resp).await;
+        assert!(!body.id.is_nil(), "Should return valid UUID");
+
+        // Verify the restrictions were stored
+        let restrictions_ops = mock_store.get_set_restrictions_operations();
+        assert_eq!(
+            restrictions_ops.len(),
+            1,
+            "Should have one set_restrictions operation"
+        );
+        assert_eq!(
+            restrictions_ops[0].0, body.id,
+            "Should store restrictions for correct ID"
+        );
+        assert_eq!(
+            restrictions_ops[0].1.passphrase_hash,
+            Some(passphrase_hash.to_string()),
+            "Should store correct passphrase hash"
+        );
+    }
+
+    #[actix_web::test]
+    async fn test_get_secret_unicode_passphrase() {
+        let secret_id = uuid::Uuid::new_v4();
+        // Pre-calculated hash for unicode string "パスワード123🔒"
+        let unicode_hash = "8c11c547bf7a78f0f6f3e1e67e2b24ef1df0b82e4e3f21e44bb4e8f8e3b5f4a9";
+
+        let mut restrictions = SecretRestrictions::default();
+        restrictions.passphrase_hash = Some(unicode_hash.to_string());
+
+        let mock_store = MockDataStore::new()
+            .with_pop_result(DataStorePopResult::Found(
+                "unicode_protected_secret".to_string(),
+            ))
+            .with_restrictions(secret_id, restrictions);
+
+        let app_data = create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
+
+        let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
+            |cfg| {
+                configure(cfg);
+            },
+        ))
+        .await;
+
+        let req = test::TestRequest::get()
+            .uri(&format!("/secret/{}", secret_id))
+            .insert_header((restrictions::PASSPHRASE_HEADER_NAME, unicode_hash))
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(
+            resp.status(),
+            200,
+            "Should succeed with unicode passphrase hash"
+        );
+
+        let body = test::read_body(resp).await;
+        assert_eq!(body, "unicode_protected_secret");
+    }
+
+    #[actix_web::test]
+    async fn test_get_secret_case_sensitive_passphrase() {
+        let secret_id = uuid::Uuid::new_v4();
+        let lowercase_hash = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"; // "password"
+        let uppercase_hash = "E6B87050BDB5543D56C7B06E8C528F73045A0AD81F96AB9B21DF04D9862CB63E"; // "PASSWORD" in uppercase
+
+        let mut restrictions = SecretRestrictions::default();
+        restrictions.passphrase_hash = Some(lowercase_hash.to_string());
+
+        let mock_store = MockDataStore::new()
+            .with_pop_result(DataStorePopResult::Found(
+                "case_sensitive_secret".to_string(),
+            ))
+            .with_restrictions(secret_id, restrictions);
+
+        let app_data = create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
+
+        let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
+            |cfg| {
+                configure(cfg);
+            },
+        ))
+        .await;
+
+        // Test with uppercase hash (should fail)
+        let req = test::TestRequest::get()
+            .uri(&format!("/secret/{}", secret_id))
+            .insert_header((restrictions::PASSPHRASE_HEADER_NAME, uppercase_hash))
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(
+            resp.status(),
+            401,
+            "Should fail with wrong case passphrase hash"
+        );
     }
 }

@@ -1,5 +1,8 @@
 <div class="restrictions-tab-nav">
-  <button type="button" class="tab-button active" data-tab="ip">
+  <button type="button" class="tab-button active" data-tab="passphrase">
+    <span data-i18n="restrictions.tab.passphrase">Passphrase</span>
+  </button>
+  <button type="button" class="tab-button" data-tab="ip">
     <span data-i18n="restrictions.tab.ip">IP Addresses</span>
   </button>
   <button type="button" class="tab-button" data-tab="country">
@@ -10,7 +13,28 @@
   </button>
 </div>
 <div class="restrictions-tab-contents">
-  <div class="tab-content active" data-content="ip">
+  <div class="tab-content active" data-content="passphrase">
+    <label for="passphraseRestriction" data-i18n="label.passphrase">
+      Passphrase Protection (Optional):
+    </label>
+    <input
+      type="text"
+      id="passphraseRestriction"
+      placeholder="Enter passphrase to protect this secret"
+      data-i18n-placeholder="placeholder.passphrase"
+      aria-describedby="passphrase-help"
+      autocomplete="off"
+      spellcheck="false"
+    />
+    <span data-i18n="helper.passphrase" class="input-helper">
+      Require a passphrase to access this secret. The passphrase can be shared
+      through a different channel (e.g., phone call) for enhanced security.
+    </span>
+    <span id="passphrase-help" class="sr-only" data-i18n="aria.passphrase">
+      Enter a passphrase that will be required to access this secret
+    </span>
+  </div>
+  <div class="tab-content" data-content="ip">
     <label for="allowedIPs" data-i18n="label.allowedIPs">
       IP Address Restrictions (Optional):
     </label>
