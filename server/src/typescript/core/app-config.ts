@@ -3,11 +3,14 @@
 import { showElement, hideElement } from "./dom-utils";
 
 export interface AppConfig {
+  showTokenInput: boolean;
   features: {
     impressum: boolean;
     privacy: boolean;
-    showTokenInput: boolean;
-    supportsCountryRestrictions: boolean;
+    restrictions: {
+      country: boolean;
+      asn: boolean;
+    };
   };
 }
 

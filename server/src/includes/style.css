@@ -2530,3 +2530,142 @@ input[type="number"] {
 .file-input-button {
   margin-top: var(--spacing-md);
 }
+
+/* Restrictions Tabs Component */
+.restrictions-tab-nav {
+  display: flex;
+  border-bottom: 2px solid var(--theme-border);
+  margin-bottom: var(--spacing-md);
+  gap: 0;
+}
+
+.restrictions-tab-nav .tab-button {
+  background: transparent;
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  color: var(--theme-text-muted);
+  font-weight: 400;
+  font-size: var(--font-size-base);
+  border-bottom: 2px solid transparent;
+  position: relative;
+  min-width: 0;
+  flex: 1;
+  text-align: center;
+}
+
+.restrictions-tab-nav .tab-button:hover {
+  color: var(--theme-text);
+  background-color: color-mix(in srgb, var(--theme-primary) 5%, transparent);
+}
+
+.restrictions-tab-nav .tab-button:focus-visible {
+  outline: 2px solid var(--theme-primary);
+  outline-offset: -2px;
+  z-index: 1;
+}
+
+.restrictions-tab-nav .tab-button.active {
+  color: var(--theme-primary);
+  font-weight: 500;
+  border-bottom-color: var(--theme-primary);
+  background-color: color-mix(in srgb, var(--theme-primary) 3%, transparent);
+}
+
+.restrictions-tab-nav .tab-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.restrictions-tab-contents {
+  position: relative;
+  min-height: 200px;
+}
+
+.restrictions-tab-contents .tab-content {
+  display: none;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.restrictions-tab-contents .tab-content.active {
+  display: block;
+}
+
+.restrictions-tab-contents .tab-content label {
+  display: block;
+  margin-bottom: var(--spacing-sm);
+  font-weight: 500;
+  color: var(--theme-text);
+}
+
+.restrictions-tab-contents .tab-content textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: var(--spacing-sm);
+  border: 1px solid var(--theme-border);
+  border-radius: var(--border-radius-base);
+  background-color: var(--theme-bg-input);
+  color: var(--theme-text);
+  font-family: "Monaco", "Menlo", "Ubuntu Mono", "Consolas", monospace;
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  resize: vertical;
+  transition: border-color var(--transition-fast);
+}
+
+.restrictions-tab-contents .tab-content textarea:focus {
+  outline: none;
+  border-color: var(--theme-primary);
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--theme-primary) 20%, transparent);
+}
+
+.restrictions-tab-contents .tab-content textarea:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.restrictions-tab-contents .tab-content .input-helper {
+  display: block;
+  margin-top: var(--spacing-xs);
+  font-size: var(--font-size-xs);
+  color: var(--theme-text-muted);
+  line-height: 1.4;
+}
+
+.restrictions-tab-contents .tab-content .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Fade in animation for tab content */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Mobile responsiveness for tabs */
+@media (max-width: 600px) {
+  .restrictions-tab-nav .tab-button {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: var(--font-size-sm);
+  }
+
+  .restrictions-tab-contents .tab-content textarea {
+    min-height: 80px;
+  }
+}

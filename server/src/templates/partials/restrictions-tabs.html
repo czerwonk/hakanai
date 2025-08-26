@@ -1,0 +1,77 @@
+<div class="restrictions-tab-nav">
+  <button type="button" class="tab-button active" data-tab="ip">
+    <span data-i18n="restrictions.tab.ip">IP Addresses</span>
+  </button>
+  <button type="button" class="tab-button" data-tab="country">
+    <span data-i18n="restrictions.tab.country">Countries</span>
+  </button>
+  <button type="button" class="tab-button" data-tab="asn">
+    <span data-i18n="restrictions.tab.asn">Networks (ASN)</span>
+  </button>
+</div>
+<div class="restrictions-tab-contents">
+  <div class="tab-content active" data-content="ip">
+    <label for="allowedIPs" data-i18n="label.allowedIPs">
+      IP Address Restrictions (Optional):
+    </label>
+    <textarea
+      id="allowedIPs"
+      placeholder="192.168.1.1&#10;10.0.0.0/8&#10;2001:db8::/32"
+      aria-describedby="ips-help"
+      autocomplete="off"
+      spellcheck="false"
+      rows="4"
+    ></textarea>
+    <span data-i18n="helper.allowedIPs" class="input-helper">
+      Enter IP addresses or CIDR ranges (one per line) that can access this
+      secret. Leave empty to allow access from any IP address.
+    </span>
+    <span id="ips-help" class="sr-only" data-i18n="aria.allowedIPs">
+      Enter IP addresses or CIDR ranges, one per line, to restrict access to
+      this secret
+    </span>
+  </div>
+  <div class="tab-content" data-content="country">
+    <label for="allowedCountries" data-i18n="label.allowedCountries">
+      Country Restrictions (Optional):
+    </label>
+    <textarea
+      id="allowedCountries"
+      placeholder="US&#10;DE&#10;CA"
+      aria-describedby="countries-help"
+      autocomplete="off"
+      spellcheck="false"
+      rows="4"
+    ></textarea>
+    <span data-i18n="helper.allowedCountries" class="input-helper">
+      Enter ISO 3166-1 alpha-2 country codes (one per line) that can access this
+      secret. Leave empty to allow access from any country.
+    </span>
+    <span id="countries-help" class="sr-only" data-i18n="aria.allowedCountries">
+      Enter 2-letter country codes, one per line, to restrict access to this
+      secret by geographic location
+    </span>
+  </div>
+  <div class="tab-content" data-content="asn">
+    <label for="allowedASNs" data-i18n="label.allowedASNs">
+      Network (ASN) Restrictions (Optional):
+    </label>
+    <textarea
+      id="allowedASNs"
+      placeholder="13335&#10;15169&#10;16509"
+      aria-describedby="asns-help"
+      autocomplete="off"
+      spellcheck="false"
+      rows="4"
+    ></textarea>
+    <span data-i18n="helper.allowedASNs" class="input-helper">
+      Enter Autonomous System Numbers (ASNs) (one per line) that can access this
+      secret. Common examples: Cloudflare (13335), Google (15169), Amazon
+      (16509).
+    </span>
+    <span id="asns-help" class="sr-only" data-i18n="aria.allowedASNs">
+      Enter ASN numbers, one per line, to restrict access to this secret by
+      network provider
+    </span>
+  </div>
+</div>
