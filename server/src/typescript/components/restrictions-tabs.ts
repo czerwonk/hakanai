@@ -196,6 +196,23 @@ export class RestrictionsTabs {
   }
 
   /**
+   * Focus the input field in the currently active tab
+   */
+  focusActiveTab(): void {
+    const activeContent = this.tabContents.get(this.currentActiveTab);
+    if (!activeContent) {
+      return;
+    }
+
+    const inputField = activeContent.querySelector(
+      "textarea",
+    ) as HTMLTextAreaElement;
+    if (inputField) {
+      inputField.focus();
+    }
+  }
+
+  /**
    * Fetch server configuration and configure tab visibility
    */
   private async hideUnsupportedRestrictions(): Promise<void> {

@@ -357,7 +357,10 @@ function shouldGenerateQrCode(): boolean {
   return generateQrCheckbox?.checked ?? false;
 }
 
-function showSuccess(secretUrl: string, restrictions?: SecretRestrictions): void {
+function showSuccess(
+  secretUrl: string,
+  restrictions?: SecretRestrictions,
+): void {
   const resultContainer = document.getElementById("result");
   if (!resultContainer) {
     console.error("Result container not found");
@@ -669,10 +672,10 @@ function initRestrictionsCheckbox(): void {
   restrictAccessCheckbox.addEventListener("change", () => {
     if (restrictAccessCheckbox.checked) {
       showElement(restrictionsInputGroup);
-      // Initialize component only when first shown
       if (!restrictionsTabs) {
         initRestrictionsComponent();
       }
+      restrictionsTabs?.focusActiveTab();
     } else {
       hideElement(restrictionsInputGroup);
     }
