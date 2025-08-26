@@ -17,6 +17,7 @@ import {
 import { Base64UrlSafe } from "./base64-utils";
 import { ContentAnalysis } from "./content-analysis";
 import { CryptoContext } from "./crypto-operations";
+import { HashUtils } from "./hash-utils";
 import { type PayloadData, PayloadDataImpl } from "./payload";
 import { SecureMemory } from "./secure-memory";
 import { type DataTransferObserver } from "./progress-observer";
@@ -29,6 +30,7 @@ interface SecretRestrictions {
   allowed_ips?: string[];
   allowed_countries?: string[];
   allowed_asns?: number[];
+  passphrase_hash?: string;
 }
 
 interface SecretRequest {
@@ -228,13 +230,6 @@ class HakanaiClient {
       `Failed to send secret: ${response.status} ${response.statusText}`,
       response.status,
     );
-  }
-
-  private async hashFromBytes(bytes: Uint8Array): Promise<string> {
-    const hashBuffer = await crypto.subtle.digest("SHA-256", bytes);
-    const hashArray = new Uint8Array(hashBuffer);
-    const truncated = hashArray.slice(0, 16);
-    return Base64UrlSafe.encode(truncated);
   }
 
   /**
@@ -517,7 +512,7 @@ class HakanaiClient {
           : new Uint8Array(encodedBytes);
 
       const encryptedData = await cryptoContext.encrypt(payloadBytes);
-      const hash = await this.hashFromBytes(payloadBytes);
+      const hash = await HashUtils.hashContent(payloadBytes);
 
       // Clear payload bytes after encryption
       SecureMemory.clearUint8Array(payloadBytes);
@@ -567,6 +562,20 @@ class HakanaiClient {
    * @private
    */
   private handleReceivePayloadError(response: Response): never {
+    if (response.status === 401) {
+      throw new HakanaiError(
+        HakanaiErrorCodes.PASSPHRASE_REQUIRED,
+        "This secret is protected and requires a passphrase",
+        401,
+      );
+    }
+    if (response.status === 403) {
+      throw new HakanaiError(
+        HakanaiErrorCodes.ACCESS_DENIED,
+        "Client is not authorized to access this secret",
+        403,
+      );
+    }
     if (response.status === 404) {
       throw new HakanaiError(
         HakanaiErrorCodes.SECRET_NOT_FOUND,
@@ -581,13 +590,6 @@ class HakanaiClient {
         410,
       );
     }
-    if (response.status === 403) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.ACCESS_DENIED,
-        "Client is not authorized to access this secret",
-        403,
-      );
-    }
     throw new HakanaiError(
       HakanaiErrorCodes.RETRIEVE_FAILED,
       `Failed to retrieve secret: ${response.status} ${response.statusText}`,
@@ -599,7 +601,7 @@ class HakanaiClient {
     plaintext: Uint8Array,
     expectedHash: string,
   ): Promise<void> {
-    const actualHash = await this.hashFromBytes(plaintext);
+    const actualHash = await HashUtils.hashContent(plaintext);
     if (actualHash !== expectedHash) {
       throw new HakanaiError(
         HakanaiErrorCodes.HASH_MISMATCH,
@@ -612,6 +614,7 @@ class HakanaiClient {
    * Retrieve and decrypt a payload from the server
    * @param url - Full URL with format: https://server/s/{id}#{key}
    * @param progressObserver - Optional progress observer for download tracking
+   * @param passphrase - Optional passphrase if the secret is protected
    * @returns Decrypted payload data with optional filename
    * @throws {HakanaiError} With specific error codes:
    *   - MISSING_DECRYPTION_KEY: No key found in URL fragment
@@ -623,15 +626,24 @@ class HakanaiClient {
   async receivePayload(
     url: string,
     progressObserver?: DataTransferObserver,
+    passphrase?: string,
   ): Promise<PayloadData> {
     const { secretId, key, hash } = this.validateAndParseReceiveUrl(url);
     const requestId = crypto.randomUUID();
 
+    const headers: Record<string, string> = {
+      "X-Request-Id": requestId,
+      "Accept-Encoding": "identity", // ensure no compression
+    };
+
+    // Add passphrase header if provided
+    if (passphrase) {
+      const passphraseHash = await HashUtils.hashPassphrase(passphrase);
+      headers["X-Secret-Passphrase"] = passphraseHash;
+    }
+
     const response = await fetch(`${this.baseUrl}/api/v1/secret/${secretId}`, {
-      headers: {
-        "X-Request-Id": requestId,
-        "Accept-Encoding": "identity", // ensure no compression
-      },
+      headers,
     });
 
     if (!response.ok) {

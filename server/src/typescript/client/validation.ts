@@ -322,6 +322,23 @@ class InputValidation {
         this.validateASN(asn);
       }
     }
+
+    if (restrictions.passphrase_hash !== undefined) {
+      if (typeof restrictions.passphrase_hash !== "string") {
+        throw new HakanaiError(
+          HakanaiErrorCodes.INVALID_RESTRICTIONS,
+          "passphrase_hash must be a string",
+        );
+      }
+
+      // Validate SHA-256 hex format (64 hex characters)
+      if (!/^[a-fA-F0-9]{64}$/.test(restrictions.passphrase_hash)) {
+        throw new HakanaiError(
+          HakanaiErrorCodes.INVALID_RESTRICTIONS,
+          "passphrase_hash must be a 64-character hexadecimal string (SHA-256 hash)",
+        );
+      }
+    }
   }
 }
 

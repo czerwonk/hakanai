@@ -19,6 +19,7 @@ export {
 } from "./client/browser-compat";
 export { Base64UrlSafe } from "./client/base64-utils";
 export { ContentAnalysis } from "./client/content-analysis";
+export { HashUtils } from "./client/hash-utils";
 export { CryptoContext } from "./client/crypto-operations";
 export { SecureMemory } from "./client/secure-memory";
 export { type PayloadData, PayloadDataImpl } from "./client/payload";

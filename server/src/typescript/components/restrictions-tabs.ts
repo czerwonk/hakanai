@@ -2,7 +2,7 @@
 
 import { showElement, hideElement } from "../core/dom-utils";
 import { fetchAppConfig } from "../core/app-config";
-import type { SecretRestrictions } from "../hakanai-client";
+import { HashUtils, type SecretRestrictions } from "../hakanai-client";
 
 export interface RestrictionsTabsConfig {
   container: HTMLElement;
@@ -12,13 +12,13 @@ export class RestrictionsTabs {
   private readonly container: HTMLElement;
   private readonly tabs: Map<string, HTMLElement> = new Map();
   private readonly tabContents: Map<string, HTMLElement> = new Map();
-  private currentActiveTab: string = "ip";
+  private currentActiveTab: string = "passphrase";
 
   constructor(config: RestrictionsTabsConfig) {
     this.container = config.container;
     this.initializeTabs();
     this.setupEventHandlers();
-    this.setActiveTab("ip"); // Start with IP tab active
+    this.setActiveTab("passphrase"); // Start with passphrase tab active
     this.hideUnsupportedRestrictions();
   }
 
@@ -67,18 +67,21 @@ export class RestrictionsTabs {
     });
 
     this.currentActiveTab = tabId;
+    this.focusActiveTab();
   }
 
   /**
    * Get all restriction data from the tabs
    */
-  getRestrictions(): SecretRestrictions | undefined {
+  async getRestrictions(): Promise<SecretRestrictions | undefined> {
     const restrictions: SecretRestrictions = {};
     let hasRestrictions = false;
     hasRestrictions = this.addIPRestrictions(restrictions) || hasRestrictions;
     hasRestrictions =
       this.addCountryRestrictions(restrictions) || hasRestrictions;
     hasRestrictions = this.addASNRestrictions(restrictions) || hasRestrictions;
+    hasRestrictions =
+      (await this.addPassphraseRestrictions(restrictions)) || hasRestrictions;
 
     return hasRestrictions ? restrictions : undefined;
   }
@@ -163,6 +166,26 @@ export class RestrictionsTabs {
   }
 
   /**
+   * Add passphrase restrictions to the restrictions object
+   */
+  private async addPassphraseRestrictions(
+    restrictions: SecretRestrictions,
+  ): Promise<boolean> {
+    const passphraseInput = this.container.querySelector(
+      "#passphraseRestriction",
+    ) as HTMLInputElement;
+    if (!passphraseInput?.value.trim()) {
+      return false;
+    }
+
+    const passphrase = passphraseInput.value.trim();
+    const passphraseHash = await HashUtils.hashPassphrase(passphrase);
+
+    restrictions.passphrase_hash = passphraseHash;
+    return true;
+  }
+
+  /**
    * Set enabled/disabled state for all inputs
    */
   setEnabled(enabled: boolean): void {
@@ -206,8 +229,8 @@ export class RestrictionsTabs {
     }
 
     const inputField = activeContent.querySelector(
-      "textarea",
-    ) as HTMLTextAreaElement;
+      "input, textarea",
+    ) as HTMLInputElement | HTMLTextAreaElement;
     if (inputField) {
       inputField.focus();
     }
