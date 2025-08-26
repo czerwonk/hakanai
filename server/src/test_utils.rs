@@ -563,6 +563,8 @@ pub struct MockDataStore {
     custom_pop_result: Arc<Mutex<Option<DataStorePopResult>>>,
     /// Track all put operations for testing verification
     put_operations: Arc<Mutex<Vec<(Uuid, String, Duration)>>>,
+    /// Track all set_restrictions operations for testing verification
+    set_restrictions_operations: Arc<Mutex<Vec<(Uuid, SecretRestrictions, Duration)>>>,
     /// Restrictions for secrets
     restrictions: Arc<Mutex<HashMap<String, SecretRestrictions>>>,
 }
@@ -577,6 +579,7 @@ impl MockDataStore {
             accessed_secrets: Arc::new(Mutex::new(Vec::new())),
             custom_pop_result: Arc::new(Mutex::new(None)),
             put_operations: Arc::new(Mutex::new(Vec::new())),
+            set_restrictions_operations: Arc::new(Mutex::new(Vec::new())),
             restrictions: Arc::new(Mutex::new(HashMap::new())),
         }
     }
@@ -643,6 +646,11 @@ impl MockDataStore {
     /// Get all put operations for testing verification
     pub fn get_put_operations(&self) -> Vec<(Uuid, String, Duration)> {
         self.put_operations.lock().unwrap().clone()
+    }
+
+    /// Get all set_restrictions operations for testing verification
+    pub fn get_set_restrictions_operations(&self) -> Vec<(Uuid, SecretRestrictions, Duration)> {
+        self.set_restrictions_operations.lock().unwrap().clone()
     }
 
     /// Set restrictions for a secret (for testing)
@@ -742,11 +750,18 @@ impl DataStore for MockDataStore {
         &self,
         id: Uuid,
         restrictions: &SecretRestrictions,
-        _expires_in: Duration,
+        expires_in: Duration,
     ) -> Result<(), DataStoreError> {
         if *self.should_fail.lock().unwrap() {
             return Err(DataStoreError::InternalError("Mock failure".to_string()));
         }
+
+        // Record the set_restrictions operation for testing verification
+        self.set_restrictions_operations.lock().unwrap().push((
+            id,
+            restrictions.clone(),
+            expires_in,
+        ));
 
         // Store the restrictions
         if !restrictions.is_empty() {

@@ -116,7 +116,7 @@ impl Client<Vec<u8>> for WebClient {
             .timeout(timeout);
 
         if let Some(ref hash) = opt.passphrase_hash {
-            req = req.header(restrictions::PASSHRASE_HEADER_NAME, hash)
+            req = req.header(restrictions::PASSPHRASE_HEADER_NAME, hash)
         }
 
         let mut resp = req.send().await?;
@@ -363,7 +363,7 @@ mod tests {
         let _m = server
             .mock("GET", format!("/s/{secret_id}").as_str())
             .match_header(
-                restrictions::PASSHRASE_HEADER_NAME,
+                restrictions::PASSPHRASE_HEADER_NAME,
                 "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
             ) // SHA-256 of "password"
             .with_status(200)
@@ -396,7 +396,7 @@ mod tests {
         let _m = server
             .mock("GET", format!("/s/{secret_id}").as_str())
             .match_header(
-                restrictions::PASSHRASE_HEADER_NAME,
+                restrictions::PASSPHRASE_HEADER_NAME,
                 "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
             ) // SHA-256 of ""
             .with_status(200)
@@ -429,7 +429,7 @@ mod tests {
 
         let _m = server
             .mock("GET", format!("/s/{secret_id}").as_str())
-            .match_header(restrictions::PASSHRASE_HEADER_NAME, mockito::Matcher::Any) // Unicode hash is complex to calculate
+            .match_header(restrictions::PASSPHRASE_HEADER_NAME, mockito::Matcher::Any) // Unicode hash is complex to calculate
             .with_status(200)
             .with_body(secret_data)
             .create_async()
@@ -460,7 +460,7 @@ mod tests {
         let _m = server
             .mock("GET", format!("/s/{secret_id}").as_str())
             .match_header(
-                restrictions::PASSHRASE_HEADER_NAME,
+                restrictions::PASSPHRASE_HEADER_NAME,
                 mockito::Matcher::Missing,
             ) // No passphrase header expected
             .with_status(200)
@@ -490,7 +490,7 @@ mod tests {
 
         let _m = server
             .mock("GET", format!("/s/{secret_id}").as_str())
-            .match_header(restrictions::PASSHRASE_HEADER_NAME, mockito::Matcher::Any)
+            .match_header(restrictions::PASSPHRASE_HEADER_NAME, mockito::Matcher::Any)
             .with_status(401) // Unauthorized - wrong passphrase
             .with_body("Passphrase required or incorrect")
             .create_async()
@@ -522,7 +522,7 @@ mod tests {
         let _m = server
             .mock("GET", format!("/s/{secret_id}").as_str())
             .match_header("User-Agent", "CustomAgent/1.0")
-            .match_header(restrictions::PASSHRASE_HEADER_NAME, mockito::Matcher::Any)
+            .match_header(restrictions::PASSPHRASE_HEADER_NAME, mockito::Matcher::Any)
             .with_status(200)
             .with_body(secret_data)
             .create_async()
@@ -558,7 +558,7 @@ mod tests {
 
         let _m = server
             .mock("GET", format!("/s/{secret_id}").as_str())
-            .match_header(restrictions::PASSHRASE_HEADER_NAME, expected_hash)
+            .match_header(restrictions::PASSPHRASE_HEADER_NAME, expected_hash)
             .with_status(200)
             .with_body(secret_data)
             .create_async()

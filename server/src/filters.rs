@@ -86,7 +86,7 @@ fn extract_client_ip(req: &HttpRequest, trusted_header: &str) -> Option<IpAddr> 
 }
 
 /// Extract and trim header value value from the request
-fn extract_header_value(req: &HttpRequest, header_name: &str) -> Option<String> {
+pub fn extract_header_value(req: &HttpRequest, header_name: &str) -> Option<String> {
     req.headers()
         .get(header_name)
         .and_then(|h| h.to_str().ok().map(|s| s.trim().to_string()))
@@ -371,15 +371,24 @@ mod tests {
 
         // Test request from allowed ASN
         let req = create_request_with_headers(&[("x-asn", "13335")]);
-        assert!(is_request_from_asn(&req, &app_data, &asns), "Should allow request from Cloudflare ASN 13335");
+        assert!(
+            is_request_from_asn(&req, &app_data, &asns),
+            "Should allow request from Cloudflare ASN 13335"
+        );
 
         // Test request from second allowed ASN
         let req = create_request_with_headers(&[("x-asn", "15169")]);
-        assert!(is_request_from_asn(&req, &app_data, &asns), "Should allow request from Google ASN 15169");
+        assert!(
+            is_request_from_asn(&req, &app_data, &asns),
+            "Should allow request from Google ASN 15169"
+        );
 
         // Test request from non-allowed ASN
         let req = create_request_with_headers(&[("x-asn", "32934")]);
-        assert!(!is_request_from_asn(&req, &app_data, &asns), "Should reject request from non-allowed ASN 32934");
+        assert!(
+            !is_request_from_asn(&req, &app_data, &asns),
+            "Should reject request from non-allowed ASN 32934"
+        );
     }
 
     #[actix_web::test]
@@ -388,7 +397,10 @@ mod tests {
         let app_data = AppData::default().with_asn_header(None);
 
         let req = create_request_with_headers(&[("x-asn", "13335")]);
-        assert!(!is_request_from_asn(&req, &app_data, &asns), "Should reject when no ASN header is configured in AppData");
+        assert!(
+            !is_request_from_asn(&req, &app_data, &asns),
+            "Should reject when no ASN header is configured in AppData"
+        );
     }
 
     #[actix_web::test]
@@ -397,10 +409,16 @@ mod tests {
         let app_data = AppData::default().with_asn_header(Some("x-asn".to_string()));
 
         let req = create_request_with_headers(&[("x-different-header", "13335")]);
-        assert!(!is_request_from_asn(&req, &app_data, &asns), "Should reject when configured header 'x-asn' is missing but different header exists");
+        assert!(
+            !is_request_from_asn(&req, &app_data, &asns),
+            "Should reject when configured header 'x-asn' is missing but different header exists"
+        );
 
         let req = create_request_with_headers(&[]);
-        assert!(!is_request_from_asn(&req, &app_data, &asns), "Should reject when no headers are present");
+        assert!(
+            !is_request_from_asn(&req, &app_data, &asns),
+            "Should reject when no headers are present"
+        );
     }
 
     #[actix_web::test]
@@ -410,19 +428,31 @@ mod tests {
 
         // Test non-numeric ASN
         let req = create_request_with_headers(&[("x-asn", "invalid-asn")]);
-        assert!(!is_request_from_asn(&req, &app_data, &asns), "Should reject non-numeric ASN value 'invalid-asn'");
+        assert!(
+            !is_request_from_asn(&req, &app_data, &asns),
+            "Should reject non-numeric ASN value 'invalid-asn'"
+        );
 
         // Test negative ASN (should fail parsing)
         let req = create_request_with_headers(&[("x-asn", "-1")]);
-        assert!(!is_request_from_asn(&req, &app_data, &asns), "Should reject negative ASN value '-1'");
+        assert!(
+            !is_request_from_asn(&req, &app_data, &asns),
+            "Should reject negative ASN value '-1'"
+        );
 
         // Test empty ASN
         let req = create_request_with_headers(&[("x-asn", "")]);
-        assert!(!is_request_from_asn(&req, &app_data, &asns), "Should reject empty ASN value");
+        assert!(
+            !is_request_from_asn(&req, &app_data, &asns),
+            "Should reject empty ASN value"
+        );
 
         // Test ASN with whitespace
         let req = create_request_with_headers(&[("x-asn", "  13335  ")]);
-        assert!(is_request_from_asn(&req, &app_data, &asns), "Should accept ASN with whitespace after trimming");
+        assert!(
+            is_request_from_asn(&req, &app_data, &asns),
+            "Should accept ASN with whitespace after trimming"
+        );
     }
 
     #[actix_web::test]
@@ -432,16 +462,25 @@ mod tests {
         // Test ASN 0 (reserved)
         let asns = vec![0];
         let req = create_request_with_headers(&[("x-asn", "0")]);
-        assert!(is_request_from_asn(&req, &app_data, &asns), "Should accept reserved ASN 0");
+        assert!(
+            is_request_from_asn(&req, &app_data, &asns),
+            "Should accept reserved ASN 0"
+        );
 
         // Test maximum 32-bit ASN (4294967295)
         let asns = vec![4294967295];
         let req = create_request_with_headers(&[("x-asn", "4294967295")]);
-        assert!(is_request_from_asn(&req, &app_data, &asns), "Should accept maximum 32-bit ASN 4294967295");
+        assert!(
+            is_request_from_asn(&req, &app_data, &asns),
+            "Should accept maximum 32-bit ASN 4294967295"
+        );
 
         // Test overflow (should fail parsing)
         let req = create_request_with_headers(&[("x-asn", "4294967296")]);
-        assert!(!is_request_from_asn(&req, &app_data, &asns), "Should reject ASN value that overflows u32 (4294967296)");
+        assert!(
+            !is_request_from_asn(&req, &app_data, &asns),
+            "Should reject ASN value that overflows u32 (4294967296)"
+        );
     }
 
     #[actix_web::test]
@@ -452,12 +491,19 @@ mod tests {
         // Test each ASN individually
         for asn in &asns {
             let req = create_request_with_headers(&[("x-asn", &asn.to_string())]);
-            assert!(is_request_from_asn(&req, &app_data, &asns), "Should accept allowed ASN {}", asn);
+            assert!(
+                is_request_from_asn(&req, &app_data, &asns),
+                "Should accept allowed ASN {}",
+                asn
+            );
         }
 
         // Test non-allowed ASN
         let req = create_request_with_headers(&[("x-asn", "12345")]);
-        assert!(!is_request_from_asn(&req, &app_data, &asns), "Should reject non-allowed ASN 12345");
+        assert!(
+            !is_request_from_asn(&req, &app_data, &asns),
+            "Should reject non-allowed ASN 12345"
+        );
     }
 
     #[actix_web::test]
@@ -466,7 +512,10 @@ mod tests {
         let app_data = AppData::default().with_asn_header(Some("x-asn".to_string()));
 
         let req = create_request_with_headers(&[("x-asn", "13335")]);
-        assert!(!is_request_from_asn(&req, &app_data, &asns), "Should reject when allowed ASN list is empty");
+        assert!(
+            !is_request_from_asn(&req, &app_data, &asns),
+            "Should reject when allowed ASN list is empty"
+        );
     }
 
     #[actix_web::test]
@@ -476,17 +525,26 @@ mod tests {
         // Test with custom ASN header
         let app_data = AppData::default().with_asn_header(Some("cf-asn".to_string()));
         let req = create_request_with_headers(&[("cf-asn", "13335"), ("x-asn", "15169")]);
-        assert!(is_request_from_asn(&req, &app_data, &asns), "Should accept request when configured 'cf-asn' header matches");
+        assert!(
+            is_request_from_asn(&req, &app_data, &asns),
+            "Should accept request when configured 'cf-asn' header matches"
+        );
 
         // Test with different custom header
         let app_data = AppData::default().with_asn_header(Some("x-custom-asn".to_string()));
         let req = create_request_with_headers(&[("cf-asn", "13335"), ("x-custom-asn", "13335")]);
-        assert!(is_request_from_asn(&req, &app_data, &asns), "Should accept request when configured 'x-custom-asn' header matches");
+        assert!(
+            is_request_from_asn(&req, &app_data, &asns),
+            "Should accept request when configured 'x-custom-asn' header matches"
+        );
 
         // Test when configured header doesn't match
         let app_data = AppData::default().with_asn_header(Some("x-missing-header".to_string()));
         let req = create_request_with_headers(&[("cf-asn", "13335"), ("x-asn", "13335")]);
-        assert!(!is_request_from_asn(&req, &app_data, &asns), "Should reject when configured header 'x-missing-header' is not present");
+        assert!(
+            !is_request_from_asn(&req, &app_data, &asns),
+            "Should reject when configured header 'x-missing-header' is not present"
+        );
     }
 
     #[actix_web::test]
@@ -496,19 +554,31 @@ mod tests {
         // Common real-world ASNs
         let cloudflare_asns = vec![13335];
         let req = create_request_with_headers(&[("x-asn", "13335")]);
-        assert!(is_request_from_asn(&req, &app_data, &cloudflare_asns), "Should accept Cloudflare ASN 13335");
+        assert!(
+            is_request_from_asn(&req, &app_data, &cloudflare_asns),
+            "Should accept Cloudflare ASN 13335"
+        );
 
         let google_asns = vec![15169];
         let req = create_request_with_headers(&[("x-asn", "15169")]);
-        assert!(is_request_from_asn(&req, &app_data, &google_asns), "Should accept Google ASN 15169");
+        assert!(
+            is_request_from_asn(&req, &app_data, &google_asns),
+            "Should accept Google ASN 15169"
+        );
 
         let amazon_asns = vec![16509];
         let req = create_request_with_headers(&[("x-asn", "16509")]);
-        assert!(is_request_from_asn(&req, &app_data, &amazon_asns), "Should accept Amazon ASN 16509");
+        assert!(
+            is_request_from_asn(&req, &app_data, &amazon_asns),
+            "Should accept Amazon ASN 16509"
+        );
 
         let microsoft_asns = vec![8075];
         let req = create_request_with_headers(&[("x-asn", "8075")]);
-        assert!(is_request_from_asn(&req, &app_data, &microsoft_asns), "Should accept Microsoft ASN 8075");
+        assert!(
+            is_request_from_asn(&req, &app_data, &microsoft_asns),
+            "Should accept Microsoft ASN 8075"
+        );
     }
 
     // Country-related tests
@@ -524,19 +594,31 @@ mod tests {
 
         // Test request from allowed country (lowercase)
         let req = create_request_with_headers(&[("x-country", "us")]);
-        assert!(is_request_from_country(&req, &app_data, &countries), "Should accept request from US (lowercase 'us')");
+        assert!(
+            is_request_from_country(&req, &app_data, &countries),
+            "Should accept request from US (lowercase 'us')"
+        );
 
         // Test request from allowed country (uppercase)
         let req = create_request_with_headers(&[("x-country", "US")]);
-        assert!(is_request_from_country(&req, &app_data, &countries), "Should accept request from US (uppercase 'US')");
+        assert!(
+            is_request_from_country(&req, &app_data, &countries),
+            "Should accept request from US (uppercase 'US')"
+        );
 
         // Test request from second allowed country
         let req = create_request_with_headers(&[("x-country", "de")]);
-        assert!(is_request_from_country(&req, &app_data, &countries), "Should accept request from DE (lowercase 'de')");
+        assert!(
+            is_request_from_country(&req, &app_data, &countries),
+            "Should accept request from DE (lowercase 'de')"
+        );
 
         // Test request from non-allowed country
         let req = create_request_with_headers(&[("x-country", "FR")]);
-        assert!(!is_request_from_country(&req, &app_data, &countries), "Should reject request from non-allowed country FR");
+        assert!(
+            !is_request_from_country(&req, &app_data, &countries),
+            "Should reject request from non-allowed country FR"
+        );
     }
 
     #[actix_web::test]
@@ -547,7 +629,10 @@ mod tests {
         let app_data = AppData::default().with_country_header(None);
 
         let req = create_request_with_headers(&[("x-country", "US")]);
-        assert!(!is_request_from_country(&req, &app_data, &countries), "Should reject when no country header is configured in AppData");
+        assert!(
+            !is_request_from_country(&req, &app_data, &countries),
+            "Should reject when no country header is configured in AppData"
+        );
     }
 
     #[actix_web::test]
@@ -558,10 +643,16 @@ mod tests {
         let app_data = AppData::default().with_country_header(Some("x-country".to_string()));
 
         let req = create_request_with_headers(&[("x-different-header", "US")]);
-        assert!(!is_request_from_country(&req, &app_data, &countries), "Should reject when configured header 'x-country' is missing but different header exists");
+        assert!(
+            !is_request_from_country(&req, &app_data, &countries),
+            "Should reject when configured header 'x-country' is missing but different header exists"
+        );
 
         let req = create_request_with_headers(&[]);
-        assert!(!is_request_from_country(&req, &app_data, &countries), "Should reject when no headers are present");
+        assert!(
+            !is_request_from_country(&req, &app_data, &countries),
+            "Should reject when no headers are present"
+        );
     }
 
     #[actix_web::test]
@@ -575,7 +666,11 @@ mod tests {
         let test_cases = vec!["us", "US", "Us", "uS"];
         for case in test_cases {
             let req = create_request_with_headers(&[("x-country", case)]);
-            assert!(is_request_from_country(&req, &app_data, &countries), "Should accept US country code in case: '{}'", case);
+            assert!(
+                is_request_from_country(&req, &app_data, &countries),
+                "Should accept US country code in case: '{}'",
+                case
+            );
         }
     }
 
@@ -587,10 +682,16 @@ mod tests {
         let app_data = AppData::default().with_country_header(Some("x-country".to_string()));
 
         let req = create_request_with_headers(&[("x-country", "  US  ")]);
-        assert!(is_request_from_country(&req, &app_data, &countries), "Should accept US country code with whitespace after trimming");
+        assert!(
+            is_request_from_country(&req, &app_data, &countries),
+            "Should accept US country code with whitespace after trimming"
+        );
 
         // Test invalid country code (after trimming)
         let req = create_request_with_headers(&[("x-country", "  DE  ")]);
-        assert!(!is_request_from_country(&req, &app_data, &countries), "Should reject non-allowed country DE even with whitespace");
+        assert!(
+            !is_request_from_country(&req, &app_data, &countries),
+            "Should reject non-allowed country DE even with whitespace"
+        );
     }
 }

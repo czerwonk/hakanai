@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use super::CountryCode;
 use crate::hash;
 
-pub const PASSHRASE_HEADER_NAME: &str = "X-Secret-Passphrase";
+pub const PASSPHRASE_HEADER_NAME: &str = "X-Secret-Passphrase";
 
 /// Represents access restrictions for a secret.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]

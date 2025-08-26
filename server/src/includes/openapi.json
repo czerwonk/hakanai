@@ -3,7 +3,7 @@
   "info": {
     "title": "Hakanai API",
     "description": "Zero-knowledge one-time secret sharing service",
-    "version": "2.10.7",
+    "version": "2.12.0",
     "contact": {
       "url": "https://github.com/czerwonk/hakanai"
     },
@@ -95,15 +95,26 @@
                     }
                   }
                 },
+                "passphrase_restricted": {
+                  "summary": "Passphrase-protected secret",
+                  "value": {
+                    "data": "bXkgc2VjcmV0IG1lc3NhZ2U=",
+                    "expires_in": 3600,
+                    "restrictions": {
+                      "passphrase_hash": "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"
+                    }
+                  }
+                },
                 "comprehensive_restricted": {
-                  "summary": "Fully restricted secret (IP, geo, ASN)",
+                  "summary": "Fully restricted secret (IP, geo, ASN, passphrase)",
                   "value": {
                     "data": "bXkgc2VjcmV0IG1lc3NhZ2U=",
                     "expires_in": 3600,
                     "restrictions": {
                       "allowed_ips": ["2001:678:1e0::/48"],
                       "allowed_countries": ["DE"],
-                      "allowed_asns": [202739]
+                      "allowed_asns": [202739],
+                      "passphrase_hash": "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"
                     }
                   }
                 }
@@ -161,7 +172,7 @@
     "/api/v1/secret/{id}": {
       "get": {
         "summary": "Retrieve a secret",
-        "description": "Retrieves a one-time secret by ID. The secret is deleted after retrieval. If the secret has access restrictions, the request must come from an allowed IP address, country, and/or ASN.",
+        "description": "Retrieves a one-time secret by ID. The secret is deleted after retrieval. If the secret has access restrictions, the request must come from an allowed IP address, country, and/or ASN, and include the correct passphrase hash if required.",
         "operationId": "getSecret",
         "parameters": [
           {
@@ -174,6 +185,17 @@
               "format": "uuid"
             },
             "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          {
+            "name": "X-Secret-Passphrase",
+            "in": "header",
+            "required": false,
+            "description": "SHA-256 hash of the passphrase (if the secret is passphrase-protected). Required only for secrets created with passphrase restrictions.",
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{64}$"
+            },
+            "example": "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"
           }
         ],
         "responses": {
@@ -186,6 +208,26 @@
                   "description": "Base64-encoded secret data"
                 },
                 "example": "bXkgc2VjcmV0IG1lc3NhZ2U="
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - missing or incorrect passphrase",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                },
+                "examples": {
+                  "missing_passphrase": {
+                    "summary": "Missing required passphrase",
+                    "value": "Missing required passphrase to access the secret"
+                  },
+                  "wrong_passphrase": {
+                    "summary": "Incorrect passphrase",
+                    "value": "Not allowed to access the secret"
+                  }
+                }
               }
             }
           },
@@ -414,6 +456,12 @@
             },
             "description": "Optional list of Autonomous System Numbers (ASNs) that are allowed to retrieve this secret. ASNs must be valid 32-bit unsigned integers (0 to 4294967295). Requires server-side ASN detection configuration.",
             "example": [13335, 15169, 32934, 16509]
+          },
+          "passphrase_hash": {
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{64}$",
+            "description": "Optional SHA-256 hash of a passphrase required to access this secret. The hash must be exactly 64 hexadecimal characters. Clients must provide the same hash in the X-Secret-Passphrase header when retrieving the secret.",
+            "example": "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"
           }
         }
       }
