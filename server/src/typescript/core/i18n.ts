@@ -29,6 +29,7 @@ const I18nKeys = {
     GenerateQrCode: "label.generateQrCode",
     Key: "label.key",
     QrCode: "label.qrCode",
+    RestrictAccess: "label.restrictAccess",
     SaveToken: "label.saveToken",
     Secret: "label.secret",
     SecretType: "label.secretType",
@@ -52,6 +53,7 @@ const I18nKeys = {
     FileSelect: "helper.fileSelect",
     GenerateQrCode: "helper.generateQrCode",
     Key: "helper.key",
+    RestrictAccess: "helper.restrictAccess",
     SaveToken: "helper.saveToken",
     Secret: "helper.secret",
     SeparateKey: "helper.separateKey",
@@ -265,6 +267,7 @@ const translations: Translations = {
     [I18nKeys.Label.Key]: "Decryption Key:",
     [I18nKeys.Label.QrCode]: "QR Code:",
     [I18nKeys.Label.GenerateQrCode]: "Generate QR code for easy sharing",
+    [I18nKeys.Label.RestrictAccess]: "Restrict access to this secret",
     [I18nKeys.Label.SaveToken]: "Remember authentication token",
     [I18nKeys.Label.SecretType]: "Secret Type:",
     [I18nKeys.Label.Secret]: "Secret message:",
@@ -300,6 +303,8 @@ const translations: Translations = {
       "When enabled, the URL and decryption key are displayed separately, allowing you to share them through different channels for enhanced security.",
     [I18nKeys.Helper.GenerateQrCode]:
       "When enabled, a QR code will be generated for the secret URL. Disable this if you're concerned about shoulder surfing or visual exposure.",
+    [I18nKeys.Helper.RestrictAccess]:
+      "Limit who can access this secret by IP address, country, or network provider.",
     [I18nKeys.Helper.SaveToken]:
       "Token will be stored securely in your browser for the current session only. You will need to re-enter it when you start a new browser session.",
     [I18nKeys.Helper.Expires]:
@@ -523,6 +528,7 @@ const translations: Translations = {
     [I18nKeys.Label.Key]: "Geheimer Schlüssel:",
     [I18nKeys.Label.GenerateQrCode]:
       "QR-Code für vereinfachtes Teilen erstellen",
+    [I18nKeys.Label.RestrictAccess]: "Zugriff auf dieses Secret beschränken",
     [I18nKeys.Label.SeparateKey]: "Schlüssel separat anzeigen",
     [I18nKeys.Label.SaveToken]: "Token merken",
     [I18nKeys.Label.Filename]: "Dateiname:",
@@ -540,11 +546,11 @@ const translations: Translations = {
     [I18nKeys.Restrictions.TabASN]: "Netzwerke (ASN)",
 
     [I18nKeys.Helper.AllowedIPs]:
-      "Geben Sie IP-Adressen oder CIDR-Bereiche (eine pro Zeile) ein, die auf dieses Secret zugreifen können. Leer lassen, um Zugriff von jeder IP-Adresse zu ermöglichen.",
+      "IP-Adressen oder CIDR-Bereiche (eine pro Zeile), die auf dieses Secret zugreifen können. Leer lassen, um Zugriff von jeder IP-Adresse zu ermöglichen.",
     [I18nKeys.Helper.AllowedCountries]:
-      "Geben Sie ISO 3166-1 alpha-2 Ländercodes (eine pro Zeile) ein, die auf dieses Secret zugreifen können. Leer lassen, um Zugriff aus jedem Land zu ermöglichen.",
+      "ISO 3166-1 alpha-2 Ländercodes (eine pro Zeile), die auf dieses Secret zugreifen können. Leer lassen, um Zugriff aus jedem Land zu ermöglichen.",
     [I18nKeys.Helper.AllowedASNs]:
-      "Geben Sie Autonome Systemnummern (ASNs) (eine pro Zeile) ein, die auf dieses Secret zugreifen können. Beispiele: Cloudflare (13335), Google (15169), Amazon (16509).",
+      "Autonome Systemnummern (ASNs) (eine pro Zeile), die auf dieses Secret zugreifen können. Beispiele: Cloudflare (13335), Google (15169), Amazon (16509).",
     [I18nKeys.Helper.Url]:
       "Der geheime Schlüssel nach dem # wird niemals an den Server gesendet",
     [I18nKeys.Helper.Secret]:
@@ -559,6 +565,8 @@ const translations: Translations = {
       "Wenn aktiviert, werden URL und geheimer Schlüssel separat angezeigt, so dass sie über verschiedene Kanäle für erweiterte Sicherheit geteilt werden können.",
     [I18nKeys.Helper.GenerateQrCode]:
       "Wenn aktiviert, wird ein QR-Code für die Secret-URL erstellt. Bei Verwendung in ungeschützten Räumen wie der Öffentlichkeit sollte diese Option deaktiviert werden, um Scannen durch Dritte zu verhindern.",
+    [I18nKeys.Helper.RestrictAccess]:
+      "Zugriff auf dieses Secret auf IP-Adresse, Land oder Netzwerkanbieter beschränken.",
     [I18nKeys.Helper.SaveToken]:
       "Token wird sicher für die Session im Browser gespeichert. Nach dem Schließen des Tabs muss dieses neu eigegeben werden.",
     [I18nKeys.Helper.Expires]:

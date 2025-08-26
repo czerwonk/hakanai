@@ -228,7 +228,12 @@ function clearInputs(
 }
 
 function getFormValues(elements: Elements): FormValues {
-  const restrictions = restrictionsTabs?.getRestrictions();
+  const restrictAccessCheckbox = document.getElementById(
+    "restrictAccess",
+  ) as HTMLInputElement;
+  const restrictions = restrictAccessCheckbox?.checked
+    ? restrictionsTabs?.getRestrictions()
+    : undefined;
 
   return {
     authToken: elements.authTokenInput.value.trim(),
@@ -635,22 +640,6 @@ async function shouldShowTokenInput(): Promise<boolean> {
   return config?.showTokenInput ?? false;
 }
 
-function shouldShowRestrictionsInput(): boolean {
-  const urlParams = new URLSearchParams(window.location.search);
-  const showRestrictionsParam = urlParams.get("show_restrictions");
-  return showRestrictionsParam === "1" || showRestrictionsParam === "true";
-}
-
-async function shouldShowCountryRestrictions(): Promise<boolean> {
-  const config = await fetchAppConfig();
-  return config?.features?.restrictions?.country ?? false;
-}
-
-async function shouldShowASNRestrictions(): Promise<boolean> {
-  const config = await fetchAppConfig();
-  return config?.features?.restrictions?.asn ?? false;
-}
-
 function initRestrictionsComponent(): void {
   const restrictionsTabsContainer = document.getElementById("restrictionsTabs");
   if (restrictionsTabsContainer) {
@@ -660,17 +649,33 @@ function initRestrictionsComponent(): void {
   }
 }
 
-async function initRestrictionsInputVisibility(): Promise<void> {
+function initRestrictionsCheckbox(): void {
+  const restrictAccessCheckbox = document.getElementById(
+    "restrictAccess",
+  ) as HTMLInputElement;
   const restrictionsInputGroup = document.getElementById(
     "restrictionsInputGroup",
   ) as HTMLElement;
 
-  if (shouldShowRestrictionsInput()) {
-    if (restrictionsInputGroup) showElement(restrictionsInputGroup);
-    initRestrictionsComponent();
-  } else {
-    if (restrictionsInputGroup) hideElement(restrictionsInputGroup);
+  if (!restrictAccessCheckbox || !restrictionsInputGroup) {
+    return;
   }
+
+  // Initially hide restrictions (checkbox is unchecked by default)
+  hideElement(restrictionsInputGroup);
+
+  // Set up event handler for checkbox
+  restrictAccessCheckbox.addEventListener("change", () => {
+    if (restrictAccessCheckbox.checked) {
+      showElement(restrictionsInputGroup);
+      // Initialize component only when first shown
+      if (!restrictionsTabs) {
+        initRestrictionsComponent();
+      }
+    } else {
+      hideElement(restrictionsInputGroup);
+    }
+  });
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -684,7 +689,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   initializeAuthToken();
   await initFeatures();
   await initTokenInputVisibility();
-  await initRestrictionsInputVisibility();
+  initRestrictionsCheckbox();
   initKeyboardShortcuts();
 
   const separateKeyCheckbox = document.getElementById(
