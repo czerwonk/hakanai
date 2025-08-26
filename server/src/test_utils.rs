@@ -322,7 +322,7 @@ mod tests {
     use super::*;
 
     #[tokio::test]
-    async fn test_mock_token_manager_builder() {
+    async fn test_mock_token_manager_builder() -> Result<(), Box<dyn std::error::Error>> {
         let mock = MockTokenManager::new()
             .with_user_token(
                 "user_token",
@@ -334,17 +334,15 @@ mod tests {
             .with_created_token("new_token");
 
         // Test user token validation
-        let result = mock.validate_user_token("user_token").await;
-        assert!(result.is_ok());
-        assert_eq!(result.unwrap().upload_size_limit, Some(1024));
+        let result = mock.validate_user_token("user_token").await?;
+        assert_eq!(result.upload_size_limit, Some(1024));
 
         // Test invalid user token
         let result = mock.validate_user_token("invalid_token").await;
         assert!(result.is_err());
 
         // Test admin token validation
-        let result = mock.validate_admin_token("admin_token").await;
-        assert!(result.is_ok());
+        mock.validate_admin_token("admin_token").await?;
 
         // Test invalid admin token
         let result = mock.validate_admin_token("invalid_admin").await;
@@ -358,9 +356,10 @@ mod tests {
                 },
                 Duration::from_secs(3600),
             )
-            .await;
-        assert!(result.is_ok());
-        assert_eq!(result.unwrap(), "new_token");
+            .await?;
+        assert_eq!(result, "new_token");
+
+        Ok(())
     }
 
     #[tokio::test]
@@ -379,27 +378,31 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_mock_token_manager_bulk_methods() {
+    async fn test_mock_token_manager_bulk_methods() -> Result<(), Box<dyn std::error::Error>> {
         let mock = MockTokenManager::new()
             .with_unlimited_user_tokens(&["token1", "token2"])
             .with_admin_tokens(&["admin1", "admin2"]);
 
         // Test multiple user tokens
-        assert!(mock.validate_user_token("token1").await.is_ok());
-        assert!(mock.validate_user_token("token2").await.is_ok());
+        mock.validate_user_token("token1").await?;
+        mock.validate_user_token("token2").await?;
 
         // Test multiple admin tokens
-        assert!(mock.validate_admin_token("admin1").await.is_ok());
-        assert!(mock.validate_admin_token("admin2").await.is_ok());
+        mock.validate_admin_token("admin1").await?;
+        mock.validate_admin_token("admin2").await?;
+
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_mock_token_manager_limited_user_token() {
+    async fn test_mock_token_manager_limited_user_token() -> Result<(), Box<dyn std::error::Error>>
+    {
         let mock = MockTokenManager::new().with_limited_user_token("limited_token", 2048);
 
-        let result = mock.validate_user_token("limited_token").await;
-        assert!(result.is_ok());
-        assert_eq!(result.unwrap().upload_size_limit, Some(2048));
+        let result = mock.validate_user_token("limited_token").await?;
+        assert_eq!(result.upload_size_limit, Some(2048));
+
+        Ok(())
     }
 
     #[tokio::test]

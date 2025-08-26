@@ -196,6 +196,10 @@ impl Args {
             );
         }
 
+        if self.enable_admin_token && self.trusted_ip_ranges.is_none() {
+            return Err("--enable-admin-token requires --trusted-ip-ranges to be set".to_string());
+        }
+
         Ok(())
     }
 
@@ -246,15 +250,16 @@ mod tests {
     }
 
     #[test]
-    fn test_validate_reset_admin_token_with_enable() {
+    fn test_validate_reset_admin_token_with_enable() -> Result<(), String> {
         let args = Args {
             reset_admin_token: true,
             enable_admin_token: true,
+            trusted_ip_ranges: Some(vec!["127.0.0.0/8".parse().unwrap()]),
             ..create_test_args()
         };
 
-        let result = args.validate();
-        assert!(result.is_ok());
+        args.validate()?;
+        Ok(())
     }
 
     #[test]
@@ -275,42 +280,43 @@ mod tests {
     }
 
     #[test]
-    fn test_validate_valid_size_limits() {
+    fn test_validate_valid_size_limits() -> Result<(), String> {
         let args = Args {
             anonymous_upload_size_limit: 32 * 1024, // 32KB in bytes
             upload_size_limit: 10 * 1024 * 1024,    // 10MB in bytes
             ..create_test_args()
         };
 
-        let result = args.validate();
-        assert!(result.is_ok());
+        args.validate()?;
+        Ok(())
     }
 
     #[test]
-    fn test_validate_all_valid() {
+    fn test_validate_all_valid() -> Result<(), String> {
         let args = Args {
             enable_admin_token: true,
             reset_admin_token: true,
             anonymous_upload_size_limit: 32 * 1024, // 32KB in bytes
             upload_size_limit: 10 * 1024 * 1024,    // 10MB in bytes
             allow_anonymous: true,
+            trusted_ip_ranges: Some(vec!["127.0.0.0/8".parse().unwrap()]),
             ..create_test_args()
         };
 
-        let result = args.validate();
-        assert!(result.is_ok());
+        args.validate()?;
+        Ok(())
     }
 
     #[test]
-    fn test_validate_edge_case_equal_limits() {
+    fn test_validate_edge_case_equal_limits() -> Result<(), String> {
         let args = Args {
             anonymous_upload_size_limit: 1024 * 1024, // 1MB in bytes
             upload_size_limit: 1024 * 1024,           // 1MB in bytes
             ..create_test_args()
         };
 
-        let result = args.validate();
-        assert!(result.is_ok());
+        args.validate()?;
+        Ok(())
     }
 
     #[test]

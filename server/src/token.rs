@@ -489,8 +489,7 @@ mod tests {
         let test_hash = sha256_hex_from_string(test_token);
         mock_store.set_admin_token(&test_hash).await;
 
-        let result = manager.validate_admin_token(test_token).await;
-        assert!(result.is_ok());
+        manager.validate_admin_token(test_token).await?;
         Ok(())
     }
 
@@ -533,8 +532,7 @@ mod tests {
         base64::prelude::BASE64_URL_SAFE_NO_PAD.decode(&token)?;
 
         // Verify token can be validated
-        let result = manager.validate_admin_token(&token).await;
-        assert!(result.is_ok());
+        manager.validate_admin_token(&token).await?;
         Ok(())
     }
 

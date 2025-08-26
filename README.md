@@ -145,11 +145,11 @@ hakanai-server --allow-anonymous
 # Configure anonymous size limits (humanized format)
 hakanai-server --allow-anonymous --anonymous-size-limit 64k
 
-# Enable admin token system for token management
-hakanai-server --enable-admin-token
+# Enable admin token system for token management (requires trusted IP ranges)
+hakanai-server --enable-admin-token --trusted-ip-ranges "127.0.0.0/8,10.0.0.0/8"
 
 # Production setup with admin token and monitoring
-hakanai-server --enable-admin-token --allow-anonymous --anonymous-size-limit 32k --upload-size-limit 10m
+hakanai-server --enable-admin-token --trusted-ip-ranges "192.168.1.0/24" --allow-anonymous --anonymous-size-limit 32k --upload-size-limit 10m
 
 # With webhook notifications for audit/monitoring (v2.8+)
 hakanai-server --webhook-url https://example.com/webhook --webhook-token "token123"
@@ -358,10 +358,11 @@ Retrieve a secret (one-time access).
 
 
 ### POST /api/v1/admin/tokens
-Create user tokens (admin authentication required).
+Create user tokens (admin authentication and trusted IP required).
 
 **Headers:**
 - `Authorization: Bearer {admin-token}` (required)
+- Request must originate from trusted IP range configured with `--trusted-ip-ranges`
 
 **Request:**
 ```json
@@ -570,7 +571,7 @@ For example:
 - `--redis-dsn`: Override the Redis connection string
 - `--allow-anonymous`: Allow anonymous access without authentication
 - `--anonymous-size-limit`: Set upload size limit for anonymous users (supports humanized format like 32k, 1m)
-- `--enable-admin-token`: Enable admin token system for token management
+- `--enable-admin-token`: Enable admin token system for token management (requires --trusted-ip-ranges)
 - `--reset-admin-token`: Force regenerate admin token (requires --enable-admin-token) without starting the server
 - `--reset-user-tokens`: Clear all user tokens and create new default token without starting the server
 - `--impressum-file`: Path to impressum/legal information text file (displays impressum link in footer when provided)
@@ -651,7 +652,11 @@ The web interface includes optional restriction fields:
 
 #### Server-Level IP Whitelisting
 
-Hakanai also supports server-level IP whitelisting that bypasses upload size limits for trusted networks. This is useful for internal services, monitoring systems, or backup operations that need to upload larger files.
+Hakanai supports server-level IP whitelisting that serves two purposes:
+1. **Bypass upload size limits** for trusted networks (internal services, monitoring systems, backup operations)
+2. **Required for admin API access** when `--enable-admin-token` is used
+
+This provides defense-in-depth security by ensuring administrative operations can only be performed from trusted networks.
 
 **Configuration:**
 ```bash
@@ -680,6 +685,8 @@ export HAKANAI_TRUSTED_IP_RANGES="172.16.0.0/12,2001:db8:85a3::/48"
 - IPs are extracted from configurable proxy headers (default: `x-forwarded-for`)
 - Falls back to connection peer address if header is missing
 - Invalid CIDR ranges prevent server startup
+- Admin API requires both valid admin token AND trusted IP (defense in depth)
+- Admin token system cannot be enabled without configuring trusted IP ranges
 
 ### Security Features
 

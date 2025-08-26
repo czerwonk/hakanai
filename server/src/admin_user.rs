@@ -8,6 +8,7 @@ use actix_web::{Error, FromRequest, HttpRequest, error};
 use tracing::warn;
 
 use crate::app_data::AppData;
+use crate::filters::is_request_from_whitelisted_ip;
 use crate::token::TokenError;
 
 /// Represents an admin user for administrative operations
@@ -24,6 +25,12 @@ impl FromRequest for AdminUser {
         Box::pin(async move {
             let app_data = get_app_data(&req)?;
             let token = extract_admin_token_from_header(&req)?;
+
+            if !is_request_from_whitelisted_ip(&req, &app_data) {
+                return Err(error::ErrorForbidden(
+                    "Request IP not allowed to access admin API",
+                ));
+            }
 
             match app_data.token_validator.validate_admin_token(&token).await {
                 Ok(()) => Ok(AdminUser),

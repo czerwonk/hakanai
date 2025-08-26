@@ -71,6 +71,9 @@ mod tests {
     use crate::test_utils::MockTokenManager;
 
     fn create_test_app_data(token_manager: MockTokenManager) -> AppData {
+        // Configure with localhost trusted IP for tests
+        let trusted_ranges = vec!["127.0.0.0/8".parse::<ipnet::IpNet>().unwrap()];
+
         AppData::default()
             .with_token_validator(Box::new(token_manager.clone()))
             .with_token_creator(Box::new(token_manager))
@@ -79,6 +82,8 @@ mod tests {
                 allowed: true,
                 upload_size_limit: 32 * 1024,
             })
+            .with_trusted_ip_ranges(Some(trusted_ranges))
+            .with_trusted_ip_header("x-forwarded-for".to_string())
     }
 
     #[actix_web::test]
@@ -104,6 +109,7 @@ mod tests {
         let req = test::TestRequest::post()
             .uri("/api/v1/admin/tokens")
             .insert_header(("Authorization", "Bearer admin_token"))
+            .insert_header(("x-forwarded-for", "127.0.0.1"))
             .set_json(&request_body)
             .to_request();
 
@@ -161,6 +167,7 @@ mod tests {
         let req = test::TestRequest::post()
             .uri("/api/v1/admin/tokens")
             .insert_header(("Authorization", "Bearer invalid_admin_token"))
+            .insert_header(("x-forwarded-for", "127.0.0.1"))
             .set_json(&request_body)
             .to_request();
 
@@ -189,6 +196,7 @@ mod tests {
         let req = test::TestRequest::post()
             .uri("/api/v1/admin/tokens")
             .insert_header(("Authorization", "admin_token")) // Missing "Bearer " prefix
+            .insert_header(("x-forwarded-for", "127.0.0.1"))
             .set_json(&request_body)
             .to_request();
 
@@ -219,6 +227,7 @@ mod tests {
         let req = test::TestRequest::post()
             .uri("/api/v1/admin/tokens")
             .insert_header(("Authorization", "Bearer admin_token"))
+            .insert_header(("x-forwarded-for", "127.0.0.1"))
             .set_json(&request_body)
             .to_request();
 
@@ -257,6 +266,7 @@ mod tests {
         let req = test::TestRequest::post()
             .uri("/api/v1/admin/tokens")
             .insert_header(("Authorization", "Bearer admin_token"))
+            .insert_header(("x-forwarded-for", "127.0.0.1"))
             .set_json(&request_body)
             .to_request();
 
@@ -283,6 +293,7 @@ mod tests {
         let req = test::TestRequest::post()
             .uri("/api/v1/admin/tokens")
             .insert_header(("Authorization", "Bearer admin_token"))
+            .insert_header(("x-forwarded-for", "127.0.0.1"))
             .insert_header(("Content-Type", "application/json"))
             .set_payload(r#"{"invalid": json}"#) // Invalid JSON
             .to_request();
@@ -307,6 +318,7 @@ mod tests {
         let req = test::TestRequest::post()
             .uri("/api/v1/admin/tokens")
             .insert_header(("Authorization", "Bearer admin_token"))
+            .insert_header(("x-forwarded-for", "127.0.0.1"))
             .set_json(serde_json::json!({
                 "upload_size_limit": 1024
                 // Missing ttl_seconds field
@@ -340,6 +352,7 @@ mod tests {
         let req = test::TestRequest::post()
             .uri("/api/v1/admin/tokens")
             .insert_header(("Authorization", "Bearer admin_token"))
+            .insert_header(("x-forwarded-for", "127.0.0.1"))
             .set_json(&request_body)
             .to_request();
 
@@ -348,5 +361,214 @@ mod tests {
 
         let response: CreateTokenResponse = test::read_body_json(resp).await;
         assert_eq!(response.token, "long_lived_token");
+    }
+
+    #[actix_web::test]
+    async fn test_admin_api_with_valid_token_but_untrusted_ip() {
+        let token_manager = MockTokenManager::new()
+            .with_admin_token("admin_token")
+            .with_created_token("new_user_token");
+        let trusted_ranges = vec!["10.0.0.0/8".parse::<ipnet::IpNet>().unwrap()];
+
+        let app_data = create_test_app_data(token_manager)
+            .with_trusted_ip_ranges(Some(trusted_ranges))
+            .with_trusted_ip_header("x-forwarded-for".to_string());
+
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(app_data))
+                .service(web::scope("/api/v1").configure(configure_routes)),
+        )
+        .await;
+
+        let request_body = CreateTokenRequest {
+            upload_size_limit: Some(1024),
+            ttl_seconds: 3600,
+        };
+
+        let req = test::TestRequest::post()
+            .uri("/api/v1/admin/tokens")
+            .insert_header(("Authorization", "Bearer admin_token"))
+            .insert_header(("x-forwarded-for", "192.168.1.1")) // Not in trusted range
+            .set_json(&request_body)
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 403);
+
+        let body = test::read_body(resp).await;
+        let body_str = String::from_utf8_lossy(&body);
+        assert!(body_str.contains("Request IP not allowed"));
+    }
+
+    #[actix_web::test]
+    async fn test_admin_api_no_ip_header_with_trusted_ranges() {
+        let token_manager = MockTokenManager::new().with_admin_token("admin_token");
+        let trusted_ranges = vec!["10.0.0.0/8".parse::<ipnet::IpNet>().unwrap()];
+
+        let app_data = create_test_app_data(token_manager)
+            .with_trusted_ip_ranges(Some(trusted_ranges))
+            .with_trusted_ip_header("x-forwarded-for".to_string());
+
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(app_data))
+                .service(web::scope("/api/v1").configure(configure_routes)),
+        )
+        .await;
+
+        let request_body = CreateTokenRequest {
+            upload_size_limit: Some(1024),
+            ttl_seconds: 3600,
+        };
+
+        let req = test::TestRequest::post()
+            .uri("/api/v1/admin/tokens")
+            .insert_header(("Authorization", "Bearer admin_token"))
+            // No x-forwarded-for header
+            .set_json(&request_body)
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 403);
+
+        let body = test::read_body(resp).await;
+        let body_str = String::from_utf8_lossy(&body);
+        assert!(body_str.contains("Request IP not allowed"));
+    }
+
+    #[actix_web::test]
+    async fn test_admin_api_ipv6_trusted_range() {
+        let token_manager = MockTokenManager::new()
+            .with_admin_token("admin_token")
+            .with_created_token("new_user_token");
+        let trusted_ranges = vec!["2001:db8::/32".parse::<ipnet::IpNet>().unwrap()];
+
+        let app_data = create_test_app_data(token_manager)
+            .with_trusted_ip_ranges(Some(trusted_ranges))
+            .with_trusted_ip_header("x-forwarded-for".to_string());
+
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(app_data))
+                .service(web::scope("/api/v1").configure(configure_routes)),
+        )
+        .await;
+
+        let request_body = CreateTokenRequest {
+            upload_size_limit: Some(1024),
+            ttl_seconds: 3600,
+        };
+
+        let req = test::TestRequest::post()
+            .uri("/api/v1/admin/tokens")
+            .insert_header(("Authorization", "Bearer admin_token"))
+            .insert_header(("x-forwarded-for", "2001:db8::1"))
+            .set_json(&request_body)
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 200);
+
+        let response: CreateTokenResponse = test::read_body_json(resp).await;
+        assert_eq!(response.token, "new_user_token");
+    }
+
+    #[actix_web::test]
+    async fn test_admin_api_multiple_trusted_ranges() {
+        let token_manager = MockTokenManager::new()
+            .with_admin_token("admin_token")
+            .with_created_token("new_user_token");
+        let trusted_ranges = vec![
+            "10.0.0.0/8".parse::<ipnet::IpNet>().unwrap(),
+            "192.168.1.0/24".parse::<ipnet::IpNet>().unwrap(),
+        ];
+
+        let app_data = create_test_app_data(token_manager)
+            .with_trusted_ip_ranges(Some(trusted_ranges))
+            .with_trusted_ip_header("x-forwarded-for".to_string());
+
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(app_data))
+                .service(web::scope("/api/v1").configure(configure_routes)),
+        )
+        .await;
+
+        let request_body = CreateTokenRequest {
+            upload_size_limit: Some(1024),
+            ttl_seconds: 3600,
+        };
+
+        // Test first range
+        let req = test::TestRequest::post()
+            .uri("/api/v1/admin/tokens")
+            .insert_header(("Authorization", "Bearer admin_token"))
+            .insert_header(("x-forwarded-for", "10.1.2.3"))
+            .set_json(&request_body)
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 200);
+
+        // Test second range
+        let req = test::TestRequest::post()
+            .uri("/api/v1/admin/tokens")
+            .insert_header(("Authorization", "Bearer admin_token"))
+            .insert_header(("x-forwarded-for", "192.168.1.100"))
+            .set_json(&request_body)
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 200);
+    }
+
+    #[actix_web::test]
+    async fn test_admin_api_localhost_trusted() {
+        let token_manager = MockTokenManager::new()
+            .with_admin_token("admin_token")
+            .with_created_token("new_user_token");
+        let trusted_ranges = vec![
+            "127.0.0.0/8".parse::<ipnet::IpNet>().unwrap(),
+            "::1/128".parse::<ipnet::IpNet>().unwrap(),
+        ];
+
+        let app_data = create_test_app_data(token_manager)
+            .with_trusted_ip_ranges(Some(trusted_ranges))
+            .with_trusted_ip_header("x-forwarded-for".to_string());
+
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(app_data))
+                .service(web::scope("/api/v1").configure(configure_routes)),
+        )
+        .await;
+
+        let request_body = CreateTokenRequest {
+            upload_size_limit: Some(1024),
+            ttl_seconds: 3600,
+        };
+
+        // Test IPv4 localhost
+        let req = test::TestRequest::post()
+            .uri("/api/v1/admin/tokens")
+            .insert_header(("Authorization", "Bearer admin_token"))
+            .insert_header(("x-forwarded-for", "127.0.0.1"))
+            .set_json(&request_body)
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 200);
+
+        // Test IPv6 localhost
+        let req = test::TestRequest::post()
+            .uri("/api/v1/admin/tokens")
+            .insert_header(("Authorization", "Bearer admin_token"))
+            .insert_header(("x-forwarded-for", "::1"))
+            .set_json(&request_body)
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 200);
     }
 }

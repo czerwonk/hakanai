@@ -171,13 +171,13 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_update_token_count() {
+    async fn test_update_token_count() -> Result<(), Box<dyn std::error::Error>> {
         let collector = MetricsCollector::new();
         let mock_store = MockTokenStore::new().with_token_count(5);
 
         // This should not panic and should complete successfully
-        let result = collector.update_token_count(&mock_store).await;
-        assert!(result.is_ok());
+        collector.update_token_count(&mock_store).await?;
+        Ok(())
     }
 
     #[tokio::test]
@@ -191,13 +191,13 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_update_secret_count() {
+    async fn test_update_secret_count() -> Result<(), Box<dyn std::error::Error>> {
         let collector = MetricsCollector::new();
         let mock_store = MockDataStore::new().with_secret_count(15);
 
         // This should not panic and should complete successfully
-        let result = collector.update_secret_count(&mock_store).await;
-        assert!(result.is_ok());
+        collector.update_secret_count(&mock_store).await?;
+        Ok(())
     }
 
     #[tokio::test]
