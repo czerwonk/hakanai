@@ -285,10 +285,12 @@ hakanai token --server https://hakanai.example.com --limit 2m --ttl 30d
 
 Hakanai now includes a web interface for users who prefer not to use the CLI:
 - Visit the server root (e.g., `https://hakanai.example.com/`) to access the web interface
-- Create new secrets at `/create` - supports both text and file uploads
-- Paste a hakanai URL to retrieve secrets directly in your browser
+- Create new secrets at `/create` - supports both text and file uploads with comprehensive access restrictions
+- Paste a hakanai URL to retrieve secrets directly in your browser - passphrase input appears automatically when required
 - Use `/share` for clipboard-based sharing (perfect for iOS Shortcuts integration)
 - The same zero-knowledge encryption is maintained - all encryption/decryption happens in your browser
+- **Access Restrictions**: Full web UI support for IP/country/ASN restrictions and passphrase protection
+- **Passphrase Support**: Seamless inline prompts for passphrase-protected secrets during retrieval
 - **Dark/Light Mode Toggle**: Automatic system preference detection with manual override
 - Mobile-friendly responsive design
 - Multi-language support (English and German) with automatic browser language detection
@@ -313,14 +315,21 @@ https://hakanai.example.com/share#data=base64data&filename=test.txt&token=authto
      "data": "base64-encoded-content",
      "filename": "document.pdf",  // optional
      "token": "auth-token",        // optional  
-     "ttl": 86400                 // optional (seconds)
+     "ttl": 86400,                // optional (seconds)
+     "restrictions": {            // optional
+       "allowed_ips": ["192.168.1.0/24"],
+       "allowed_countries": ["US", "CA"], 
+       "allowed_asns": [13335],
+       "passphrase": "plaintext-passphrase"
+     }
    }
    ```
 
 2. **Visit `/share`** - the page reads and validates clipboard content
-3. **Review the preview** - shows file size, filename, and expiration time
-4. **Click "Create Secret"** - encrypts client-side and generates the shareable URL
+3. **Review the preview** - shows file size, filename, expiration time, and any access restrictions
+4. **Click "Create Secret"** - encrypts client-side, hashes passphrase if provided, and generates the shareable URL
 5. **URL is copied to clipboard** automatically for easy sharing
+6. **Restriction details displayed** - shows applied IP/country/ASN restrictions and passphrase requirement for recipients
 
 **iOS Shortcuts Integration**: Use fragment URLs for small secrets (< 5KB) or clipboard method for larger content. Both maintain zero-knowledge architecture. For detailed setup instructions and the ready-to-use shortcut file, see [docs/shortcuts-README.md](docs/shortcuts-README.md).
 

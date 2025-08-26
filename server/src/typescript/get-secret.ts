@@ -192,7 +192,10 @@ function showPassphraseInput(): void {
   const { passphraseInputGroup, passphraseInput } = getElements();
   showElement(passphraseInputGroup);
   passphraseInput.required = true;
-  passphraseInput.focus();
+  // Small delay to ensure element is fully rendered before focusing
+  setTimeout(() => {
+    passphraseInput.focus();
+  }, 100);
 }
 
 function hidePassphraseInput(): void {
