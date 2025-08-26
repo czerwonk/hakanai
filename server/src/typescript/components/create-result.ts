@@ -4,7 +4,7 @@ import { createButton, generateRandomId, hideElement } from "../core/dom-utils";
 import { copyToClipboard, copyToClipboardByElementId } from "../core/clipboard";
 import { QRCodeGenerator } from "../core/qr-generator";
 import { I18nKeys } from "../core/i18n";
-import type { RestrictionData } from "./restrictions-tabs";
+import type { RestrictionData } from "../core/restriction-data.js";
 
 /**
  * Options for success result display
@@ -388,38 +388,38 @@ function createRestrictionsSection(
   const restrictionsList = document.createElement("ul");
   restrictionsList.className = "restrictions-list";
 
-  if (restrictionData.allowedIps && restrictionData.allowedIps.length > 0) {
+  if (restrictionData.allowed_ips && restrictionData.allowed_ips.length > 0) {
     const ipItem = document.createElement("li");
     const strong = document.createElement("strong");
     strong.textContent = "IP Addresses: ";
     ipItem.appendChild(strong);
     ipItem.appendChild(
-      document.createTextNode(restrictionData.allowedIps.join(", ")),
+      document.createTextNode(restrictionData.allowed_ips.join(", ")),
     );
     restrictionsList.appendChild(ipItem);
   }
 
   if (
-    restrictionData.allowedCountries &&
-    restrictionData.allowedCountries.length > 0
+    restrictionData.allowed_countries &&
+    restrictionData.allowed_countries.length > 0
   ) {
     const countryItem = document.createElement("li");
     const strong = document.createElement("strong");
     strong.textContent = "Countries: ";
     countryItem.appendChild(strong);
     countryItem.appendChild(
-      document.createTextNode(restrictionData.allowedCountries.join(", ")),
+      document.createTextNode(restrictionData.allowed_countries.join(", ")),
     );
     restrictionsList.appendChild(countryItem);
   }
 
-  if (restrictionData.allowedAsns && restrictionData.allowedAsns.length > 0) {
+  if (restrictionData.allowed_asns && restrictionData.allowed_asns.length > 0) {
     const asnItem = document.createElement("li");
     const strong = document.createElement("strong");
     strong.textContent = "Networks (ASN): ";
     asnItem.appendChild(strong);
     asnItem.appendChild(
-      document.createTextNode(restrictionData.allowedAsns.join(", ")),
+      document.createTextNode(restrictionData.allowed_asns.join(", ")),
     );
     restrictionsList.appendChild(asnItem);
   }
