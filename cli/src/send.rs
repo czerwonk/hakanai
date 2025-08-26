@@ -21,6 +21,7 @@ use crate::cli::SendArgs;
 use crate::factory::Factory;
 use crate::helper::get_user_agent_name;
 
+#[derive(Debug)]
 struct Secret {
     bytes: Zeroizing<Vec<u8>>,
     filename: Option<String>,
@@ -281,7 +282,11 @@ mod tests {
             filename: None,
         };
         let result = get_filename(&secret, args);
-        assert!(result.is_err());
+        assert!(
+            result.is_err(),
+            "Expected error for missing filename, got: {:?}",
+            result
+        );
         assert!(
             result
                 .unwrap_err()
@@ -334,7 +339,11 @@ mod tests {
     fn test_read_secret_file_not_found() {
         let args = SendArgs::builder().with_file("/nonexistent/file.txt");
         let result = read_secret(args);
-        assert!(result.is_err());
+        assert!(
+            result.is_err(),
+            "Expected error for missing filename, got: {:?}",
+            result
+        );
     }
 
     #[test]
@@ -376,7 +385,11 @@ mod tests {
             .with_file(file_path.to_string_lossy().as_ref());
         let result = send(factory, args).await;
 
-        assert!(result.is_err());
+        assert!(
+            result.is_err(),
+            "Expected error for missing filename, got: {:?}",
+            result
+        );
         assert!(
             result
                 .unwrap_err()
@@ -400,7 +413,11 @@ mod tests {
             .with_file(file_path.to_string_lossy().as_ref());
         let result = send(factory, args).await;
 
-        assert!(result.is_err());
+        assert!(
+            result.is_err(),
+            "Expected error for missing filename, got: {:?}",
+            result
+        );
         assert!(
             result
                 .unwrap_err()
@@ -425,7 +442,11 @@ mod tests {
             .with_as_file();
         let result = send(factory, args).await;
 
-        assert!(result.is_err());
+        assert!(
+            result.is_err(),
+            "Expected error for missing filename, got: {:?}",
+            result
+        );
         let error_msg = result.unwrap_err().to_string();
         // Should fail on empty secret validation
         assert!(error_msg.contains("No secret provided"));
@@ -511,7 +532,11 @@ mod tests {
             .with_file(file_path.to_string_lossy().as_ref());
         let result = send(factory, args).await;
 
-        assert!(result.is_err());
+        assert!(
+            result.is_err(),
+            "Expected error for missing filename, got: {:?}",
+            result
+        );
         assert!(result.unwrap_err().to_string().contains("Network error"));
         Ok(())
     }

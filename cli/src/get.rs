@@ -307,7 +307,11 @@ mod tests {
             Cursor::new(&b"content"[..]),
             temp_dir.path(),
         );
-        assert!(result.is_err());
+        assert!(
+            result.is_err(),
+            "Expected error for empty filename, got: {:?}",
+            result
+        );
         assert!(
             result
                 .unwrap_err()
@@ -435,7 +439,7 @@ mod tests {
         let args = GetArgs::builder("https://example.com/s/test123#key").with_to_stdout();
         let result = get(factory, args).await;
 
-        assert!(result.is_err());
+        assert!(result.is_err(), "Expected network error, got: {:?}", result);
         assert!(result.unwrap_err().to_string().contains("Network timeout"));
         Ok(())
     }

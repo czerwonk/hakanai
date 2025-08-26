@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::path::{Path, PathBuf};
+use std::str::FromStr;
 use std::time::Duration;
 
 use anyhow::{Result, anyhow};
@@ -9,11 +10,10 @@ use url::Url;
 
 use hakanai_lib::models::CountryCode;
 use hakanai_lib::utils::ip_parser::parse_ipnet;
-use std::str::FromStr;
 use hakanai_lib::utils::size_parser::parse_size_limit;
 
 /// Represents the command-line arguments for the application.
-#[derive(Parser)]
+#[derive(Debug, Parser)]
 #[command(
     version,
     name = "hakanai",
@@ -456,37 +456,45 @@ mod tests {
     }
 
     #[test]
-    fn test_get_command_without_key() {
-        let args =
-            Args::try_parse_from(["hakanai", "get", "https://example.com/secret/abc123"]).unwrap();
+    fn test_get_command_without_key() -> Result<()> {
+        let args = Args::try_parse_from(["hakanai", "get", "https://example.com/secret/abc123"])?;
 
         match args.command {
             Command::Get(get_args) => {
                 let url = get_args.secret_url();
-                assert!(url.is_err());
+                assert!(
+                    url.is_err(),
+                    "Expected error for URL without key, got: {:?}",
+                    url
+                );
             }
             _ => panic!("expected get command"),
         }
+        Ok(())
     }
 
     #[test]
-    fn test_get_command_with_conflicting_keys() {
+    fn test_get_command_with_conflicting_keys() -> Result<()> {
         let args = Args::try_parse_from([
             "hakanai",
             "get",
             "https://example.com/secret/abc123#foo",
             "-k",
             "bar",
-        ])
-        .unwrap();
+        ])?;
 
         match args.command {
             Command::Get(get_args) => {
                 let url = get_args.secret_url();
-                assert!(url.is_err());
+                assert!(
+                    url.is_err(),
+                    "Expected error for conflicting keys, got: {:?}",
+                    url
+                );
             }
             _ => panic!("expected get command"),
         }
+        Ok(())
     }
 
     #[test]
@@ -615,14 +623,22 @@ mod tests {
     fn test_invalid_url_parsing() {
         let result = Args::try_parse_from(["hakanai", "get", "not-a-valid-url"]);
 
-        assert!(result.is_err());
+        assert!(
+            result.is_err(),
+            "Expected error for invalid URL, got: {:?}",
+            result
+        );
     }
 
     #[test]
     fn test_invalid_ttl_parsing() {
         let result = Args::try_parse_from(["hakanai", "send", "--ttl", "invalid-duration"]);
 
-        assert!(result.is_err());
+        assert!(
+            result.is_err(),
+            "Expected error for invalid TTL, got: {:?}",
+            result
+        );
     }
 
     #[test]
@@ -653,13 +669,21 @@ mod tests {
     #[test]
     fn test_missing_subcommand() {
         let result = Args::try_parse_from(["hakanai"]);
-        assert!(result.is_err());
+        assert!(
+            result.is_err(),
+            "Expected error for missing subcommand, got: {:?}",
+            result
+        );
     }
 
     #[test]
     fn test_get_command_missing_link() {
         let result = Args::try_parse_from(["hakanai", "get"]);
-        assert!(result.is_err());
+        assert!(
+            result.is_err(),
+            "Expected error for missing link, got: {:?}",
+            result
+        );
     }
 
     #[test]
@@ -890,43 +914,52 @@ mod tests {
     }
 
     #[test]
-    fn test_get_args_validate_success_with_defaults() {
+    fn test_get_args_validate_success_with_defaults() -> Result<()> {
         let args = GetArgs::builder("https://example.com/s/test#key");
-        assert!(args.validate().is_ok());
+        args.validate()?;
+        Ok(())
     }
 
     #[test]
-    fn test_get_args_validate_success_with_to_stdout() {
+    fn test_get_args_validate_success_with_to_stdout() -> Result<()> {
         let args = GetArgs::builder("https://example.com/s/test#key").with_to_stdout();
-        assert!(args.validate().is_ok());
+        args.validate()?;
+        Ok(())
     }
 
     #[test]
-    fn test_get_args_validate_success_with_filename() {
+    fn test_get_args_validate_success_with_filename() -> Result<()> {
         let args = GetArgs::builder("https://example.com/s/test#key").with_filename("output.txt");
-        assert!(args.validate().is_ok());
+        args.validate()?;
+        Ok(())
     }
 
     #[test]
-    fn test_get_args_validate_success_with_extract() {
+    fn test_get_args_validate_success_with_extract() -> Result<()> {
         let args = GetArgs::builder("https://example.com/s/test#key").with_extract();
-        assert!(args.validate().is_ok());
+        args.validate()?;
+        Ok(())
     }
 
     #[test]
-    fn test_get_args_validate_error_extract_with_filename() {
+    fn test_get_args_validate_error_extract_with_filename() -> Result<()> {
         let args = GetArgs::builder("https://example.com/s/test#key")
             .with_extract()
             .with_filename("output.txt");
 
         let result = args.validate();
-        assert!(result.is_err());
         assert!(
+            result.is_err(),
+            "Expected validation error, got: {:?}",
             result
-                .unwrap_err()
-                .to_string()
-                .contains("--extract option cannot be used with --filename")
         );
+        let error_msg = result.unwrap_err().to_string();
+        assert!(
+            error_msg.contains("--extract option cannot be used with --filename"),
+            "Error message doesn't contain expected text: {}",
+            error_msg
+        );
+        Ok(())
     }
 
     #[test]
@@ -936,7 +969,7 @@ mod tests {
             .with_filename("output.txt");
 
         let result = args.validate();
-        assert!(result.is_err());
+        assert!(result.is_err(), "Expected error, got: {:?}", result);
         assert!(
             result
                 .unwrap_err()
@@ -952,7 +985,7 @@ mod tests {
             .with_extract();
 
         let result = args.validate();
-        assert!(result.is_err());
+        assert!(result.is_err(), "Expected error, got: {:?}", result);
         assert!(
             result
                 .unwrap_err()
@@ -968,7 +1001,7 @@ mod tests {
             .with_output_dir("test");
 
         let result = args.validate();
-        assert!(result.is_err());
+        assert!(result.is_err(), "Expected error, got: {:?}", result);
         assert!(
             result
                 .unwrap_err()
@@ -983,7 +1016,7 @@ mod tests {
             .with_output_dir("/nonexistent/directory/path");
 
         let result = args.validate();
-        assert!(result.is_err());
+        assert!(result.is_err(), "Expected error, got: {:?}", result);
         assert!(
             result
                 .unwrap_err()
@@ -1003,7 +1036,7 @@ mod tests {
             .with_output_dir(file_path.to_string_lossy().as_ref());
 
         let result = args.validate();
-        assert!(result.is_err());
+        assert!(result.is_err(), "Expected error, got: {:?}", result);
         assert!(
             result
                 .unwrap_err()
@@ -1013,15 +1046,15 @@ mod tests {
     }
 
     #[test]
-    fn test_get_args_validate_success_with_valid_output_dir() {
+    fn test_get_args_validate_success_with_valid_output_dir() -> Result<()> {
         use tempfile::TempDir;
 
         let temp_dir = TempDir::new().unwrap();
         let args = GetArgs::builder("https://example.com/s/test#key")
             .with_output_dir(temp_dir.path().to_string_lossy().as_ref());
 
-        let result = args.validate();
-        assert!(result.is_ok());
+        args.validate()?;
+        Ok(())
     }
 
     #[test]
@@ -1032,7 +1065,7 @@ mod tests {
             .with_filename("output.txt");
 
         let result = args.validate();
-        assert!(result.is_err());
+        assert!(result.is_err(), "Expected error, got: {:?}", result);
         // Should fail on the first conflict check
         assert!(
             result
@@ -1063,7 +1096,7 @@ mod tests {
     fn test_secret_url_error_no_key() {
         let args = GetArgs::builder("https://example.com/s/test");
         let result = args.secret_url();
-        assert!(result.is_err());
+        assert!(result.is_err(), "Expected error, got: {:?}", result);
         assert!(
             result
                 .unwrap_err()
@@ -1076,7 +1109,7 @@ mod tests {
     fn test_secret_url_error_both_fragment_and_key() {
         let args = GetArgs::builder("https://example.com/s/test#fragmentkey").with_key("paramkey");
         let result = args.secret_url();
-        assert!(result.is_err());
+        assert!(result.is_err(), "Expected error, got: {:?}", result);
         assert!(
             result
                 .unwrap_err()
@@ -1089,7 +1122,7 @@ mod tests {
     fn test_secret_url_with_empty_key_parameter() {
         let args = GetArgs::builder("https://example.com/s/test").with_key("");
         let result = args.secret_url();
-        assert!(result.is_err());
+        assert!(result.is_err(), "Expected error, got: {:?}", result);
         assert!(
             result
                 .unwrap_err()
@@ -1142,8 +1175,7 @@ mod tests {
 
     #[test]
     fn test_send_command_with_ipv6_allowed_ip() {
-        let args =
-            Args::try_parse_from(["hakanai", "send", "--allow-ip", "2001:db8::1"]).unwrap();
+        let args = Args::try_parse_from(["hakanai", "send", "--allow-ip", "2001:db8::1"]).unwrap();
 
         match args.command {
             Command::Send(send_args) => {
@@ -1252,7 +1284,7 @@ mod tests {
     fn test_send_command_invalid_ip_address() {
         let result = Args::try_parse_from(["hakanai", "send", "--allow-ip", "not-an-ip"]);
 
-        assert!(result.is_err());
+        assert!(result.is_err(), "Expected error, got: {:?}", result);
     }
 
     #[test]
@@ -1264,7 +1296,7 @@ mod tests {
             "192.168.1.0/33", // Invalid CIDR - /33 is not valid for IPv4
         ]);
 
-        assert!(result.is_err());
+        assert!(result.is_err(), "Expected error, got: {:?}", result);
     }
 
     #[test]
@@ -1406,21 +1438,21 @@ mod tests {
     fn test_send_command_invalid_country_code() {
         let result = Args::try_parse_from(["hakanai", "send", "--allow-country", "invalid"]);
 
-        assert!(result.is_err());
+        assert!(result.is_err(), "Expected error, got: {:?}", result);
     }
 
     #[test]
     fn test_send_command_lowercase_country_code() {
         let result = Args::try_parse_from(["hakanai", "send", "--allow-country", "us"]);
 
-        assert!(result.is_err());
+        assert!(result.is_err(), "Expected error, got: {:?}", result);
     }
 
     #[test]
     fn test_send_command_three_letter_country_code() {
         let result = Args::try_parse_from(["hakanai", "send", "--allow-country", "USA"]);
 
-        assert!(result.is_err());
+        assert!(result.is_err(), "Expected error, got: {:?}", result);
     }
 
     #[test]
