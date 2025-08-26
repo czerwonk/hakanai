@@ -22,8 +22,9 @@ import { displayErrorMessage } from "./components/error-display";
 import { formatFileSize } from "./core/formatters";
 import { ProgressBar } from "./components/progress-bar";
 import { initTheme } from "./core/theme";
-import { ErrorHandler, handleAPIError } from "./core/error";
+import { ErrorHandler, handleAPIError, isHakanaiError } from "./core/error";
 import { initFeatures } from "./core/app-config";
+import { HakanaiErrorCodes } from "./hakanai-client";
 
 const TIMEOUTS = {
   DEBOUNCE: 300,
@@ -41,6 +42,12 @@ function getElements() {
     urlInput: document.getElementById("secretUrl") as HTMLInputElement,
     keyInput: document.getElementById("secretKey") as HTMLInputElement,
     keyInputGroup: document.getElementById("keyInputGroup") as HTMLElement,
+    passphraseInput: document.getElementById(
+      "passphraseInput",
+    ) as HTMLInputElement,
+    passphraseInputGroup: document.getElementById(
+      "passphraseInputGroup",
+    ) as HTMLElement,
     resultDiv: document.getElementById("result") as HTMLElement,
     button: document.getElementById("retrieveBtn") as HTMLButtonElement,
   };
@@ -66,16 +73,18 @@ function validateInputs(
 }
 
 function setElementsState(disabled: boolean): void {
-  const { urlInput, keyInput, button } = getElements();
+  const { urlInput, keyInput, passphraseInput, button } = getElements();
   button.disabled = disabled;
   urlInput.disabled = disabled;
   keyInput.disabled = disabled;
+  passphraseInput.disabled = disabled;
 }
 
 function clearInputs(): void {
-  const { urlInput, keyInput } = getElements();
+  const { urlInput, keyInput, passphraseInput } = getElements();
   secureInputClear(urlInput);
   secureInputClear(keyInput);
+  secureInputClear(passphraseInput);
 }
 
 function showLoadingState(): void {
@@ -90,10 +99,11 @@ function hideLoadingState(): void {
 }
 
 async function processRetrieveRequest(): Promise<void> {
-  const { urlInput, keyInput } = getElements();
+  const { urlInput, keyInput, passphraseInput } = getElements();
 
   const url = urlInput.value.trim();
   const key = keyInput?.value?.trim() ?? "";
+  const passphrase = passphraseInput?.value?.trim() ?? "";
 
   const processedUrl = normalizeUrl(url);
   const hasFragment = hasUrlFragment(processedUrl);
@@ -115,22 +125,7 @@ async function processRetrieveRequest(): Promise<void> {
 
   const finalUrl = hasFragment ? processedUrl : `${processedUrl}#${key}`;
 
-  const progressBar = new ProgressBar();
-  progressBar.show(window.i18n.t(I18nKeys.Msg.Retrieving));
-
-  showLoadingState();
-
-  try {
-    const payload = await client.receivePayload(finalUrl, progressBar);
-    showSuccess(payload);
-    clearInputs();
-    toggleKeyInputVisibility();
-  } catch (error: unknown) {
-    handleRetrieveError(error);
-  } finally {
-    progressBar.hide();
-    hideLoadingState();
-  }
+  await performRetrieval(finalUrl, passphrase || undefined);
 }
 
 function normalizeUrl(url: string): string {
@@ -138,6 +133,28 @@ function normalizeUrl(url: string): string {
     return window.location.protocol + "//" + url;
   }
   return url;
+}
+
+async function performRetrieval(
+  url: string,
+  passphrase?: string,
+): Promise<void> {
+  const progressBar = new ProgressBar();
+  progressBar.show(window.i18n.t(I18nKeys.Msg.Retrieving));
+  showLoadingState();
+
+  try {
+    const payload = await client.receivePayload(url, progressBar, passphrase);
+    showSuccess(payload);
+    clearInputs();
+    toggleKeyInputVisibility();
+    hidePassphraseInput();
+  } catch (error: unknown) {
+    handleRetrieveError(error, url);
+  } finally {
+    progressBar.hide();
+    hideLoadingState();
+  }
 }
 
 function showError(message: string): void {
@@ -154,12 +171,34 @@ class GetSecretErrorHandler implements ErrorHandler {
 
 const errorHandler = new GetSecretErrorHandler();
 
-function handleRetrieveError(error: unknown): void {
+function handleRetrieveError(error: unknown, url?: string): void {
+  if (
+    url &&
+    isHakanaiError(error) &&
+    error.code === HakanaiErrorCodes.PASSPHRASE_REQUIRED
+  ) {
+    showPassphraseInput();
+    return;
+  }
+
   handleAPIError(
     error,
     window.i18n.t(I18nKeys.Msg.RetrieveFailed),
     errorHandler,
   );
+}
+
+function showPassphraseInput(): void {
+  const { passphraseInputGroup, passphraseInput } = getElements();
+  showElement(passphraseInputGroup);
+  passphraseInput.required = true;
+  passphraseInput.focus();
+}
+
+function hidePassphraseInput(): void {
+  const { passphraseInputGroup, passphraseInput } = getElements();
+  hideElement(passphraseInputGroup);
+  passphraseInput.required = false;
 }
 
 const retrieveSecretDebounced = debounce(

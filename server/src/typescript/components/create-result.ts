@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { createButton, generateRandomId, hideElement } from "../core/dom-utils";
-import { copyToClipboardByElementId } from "../core/clipboard";
+import { copyToClipboard, copyToClipboardByElementId } from "../core/clipboard";
 import { QRCodeGenerator } from "../core/qr-generator";
 import { I18nKeys } from "../core/i18n";
-import type { SecretRestrictions } from "../hakanai-client";
+import type { RestrictionData } from "./restrictions-tabs";
 
 /**
  * Options for success result display
@@ -13,7 +13,7 @@ interface SuccessDisplayOptions {
   separateKeyMode?: boolean;
   generateQrCode?: boolean;
   container: HTMLElement;
-  restrictions?: SecretRestrictions;
+  restrictionData?: RestrictionData;
 }
 
 /**
@@ -49,8 +49,8 @@ export function displaySuccessResult(
 
   createNoteSection(container);
 
-  if (options.restrictions) {
-    createRestrictionsSection(container, options.restrictions);
+  if (options.restrictionData) {
+    createRestrictionsSection(container, options.restrictionData);
   }
 
   ensureQRCodeGeneratorCleanup();
@@ -327,11 +327,56 @@ function createNoteSection(container: HTMLElement): void {
 }
 
 /**
+ * Create passphrase restriction item with show/hide and copy functionality
+ */
+function createPassphraseRestrictionItem(passphrase: string): HTMLElement {
+  const passphraseItem = document.createElement("li");
+  const strong = document.createElement("strong");
+  strong.textContent = "Passphrase: ";
+  passphraseItem.appendChild(strong);
+
+  const passphraseContainer = document.createElement("span");
+  passphraseContainer.className = "passphrase-container";
+
+  const passphraseText = document.createElement("span");
+  passphraseText.className = "passphrase-text";
+  passphraseText.textContent = "••••••";
+  passphraseText.setAttribute("data-passphrase", passphrase);
+  passphraseContainer.appendChild(passphraseText);
+
+  let isVisible = false;
+  const showButton = createButton(
+    "secondary-button",
+    "👁",
+    "Show/hide passphrase",
+    () => {
+      isVisible = !isVisible;
+      passphraseText.textContent = isVisible ? passphrase : "••••••";
+      showButton.textContent = isVisible ? "🙈" : "👁";
+    },
+  );
+  passphraseContainer.appendChild(showButton);
+
+  const copyButton = createButton(
+    "copy-button",
+    window.i18n.t(I18nKeys.Button.Copy),
+    "Copy passphrase to clipboard",
+    () => {
+      copyToClipboard(passphrase, copyButton as HTMLButtonElement);
+    },
+  );
+  passphraseContainer.appendChild(copyButton);
+
+  passphraseItem.appendChild(passphraseContainer);
+  return passphraseItem;
+}
+
+/**
  * Create access restrictions section
  */
 function createRestrictionsSection(
   container: HTMLElement,
-  restrictions: SecretRestrictions,
+  restrictionData: RestrictionData,
 ): void {
   const restrictionsDiv = document.createElement("div");
   restrictionsDiv.className = "restrictions-info";
@@ -343,40 +388,46 @@ function createRestrictionsSection(
   const restrictionsList = document.createElement("ul");
   restrictionsList.className = "restrictions-list";
 
-  if (restrictions.allowed_ips && restrictions.allowed_ips.length > 0) {
+  if (restrictionData.allowedIps && restrictionData.allowedIps.length > 0) {
     const ipItem = document.createElement("li");
     const strong = document.createElement("strong");
     strong.textContent = "IP Addresses: ";
     ipItem.appendChild(strong);
     ipItem.appendChild(
-      document.createTextNode(restrictions.allowed_ips.join(", ")),
+      document.createTextNode(restrictionData.allowedIps.join(", ")),
     );
     restrictionsList.appendChild(ipItem);
   }
 
   if (
-    restrictions.allowed_countries &&
-    restrictions.allowed_countries.length > 0
+    restrictionData.allowedCountries &&
+    restrictionData.allowedCountries.length > 0
   ) {
     const countryItem = document.createElement("li");
     const strong = document.createElement("strong");
     strong.textContent = "Countries: ";
     countryItem.appendChild(strong);
     countryItem.appendChild(
-      document.createTextNode(restrictions.allowed_countries.join(", ")),
+      document.createTextNode(restrictionData.allowedCountries.join(", ")),
     );
     restrictionsList.appendChild(countryItem);
   }
 
-  if (restrictions.allowed_asns && restrictions.allowed_asns.length > 0) {
+  if (restrictionData.allowedAsns && restrictionData.allowedAsns.length > 0) {
     const asnItem = document.createElement("li");
     const strong = document.createElement("strong");
     strong.textContent = "Networks (ASN): ";
     asnItem.appendChild(strong);
     asnItem.appendChild(
-      document.createTextNode(restrictions.allowed_asns.join(", ")),
+      document.createTextNode(restrictionData.allowedAsns.join(", ")),
     );
     restrictionsList.appendChild(asnItem);
+  }
+
+  if (restrictionData.passphrase && restrictionData.passphrase.trim()) {
+    restrictionsList.appendChild(
+      createPassphraseRestrictionItem(restrictionData.passphrase.trim()),
+    );
   }
 
   restrictionsDiv.appendChild(restrictionsList);

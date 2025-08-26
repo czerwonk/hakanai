@@ -39,6 +39,7 @@ const I18nKeys = {
     Token: "label.token",
     Url: "label.url",
     Passphrase: "label.passphrase",
+    PassphraseInput: "label.passphraseInput",
   },
 
   Placeholder: {
@@ -62,6 +63,7 @@ const I18nKeys = {
     Token: "helper.token",
     Url: "helper.url",
     Passphrase: "helper.passphrase",
+    PassphraseInput: "helper.passphraseInput",
   },
 
   Time: {
@@ -95,6 +97,7 @@ const I18nKeys = {
     Secondary: "dropzone.secondary",
     Helper: "dropzone.helper",
   },
+
 
   Msg: {
     BinaryDetected: "msg.binaryDetected",
@@ -158,6 +161,7 @@ const I18nKeys = {
     TokenInput: "aria.tokenInput",
     UrlInput: "aria.urlInput",
     Passphrase: "aria.passphrase",
+    PassphraseInput: "aria.passphraseInput",
   },
 
   Meta: {
@@ -284,6 +288,7 @@ const translations: Translations = {
     [I18nKeys.Label.Token]: "Token:",
     [I18nKeys.Label.Url]: "Secret URL:",
     [I18nKeys.Label.Passphrase]: "Passphrase Protection (Optional):",
+    [I18nKeys.Label.PassphraseInput]: "Passphrase:",
 
     [I18nKeys.Placeholder.Secret]: "Enter your secret message here...",
     [I18nKeys.Placeholder.Passphrase]:
@@ -322,9 +327,13 @@ const translations: Translations = {
       "Secret will self-destruct after this time or first view",
     [I18nKeys.Helper.Passphrase]:
       "Require a passphrase to access this secret. The passphrase can be shared through a different channel (e.g., phone call) for enhanced security.",
+    [I18nKeys.Helper.PassphraseInput]:
+      "This secret requires a passphrase to access",
 
     [I18nKeys.Aria.Passphrase]:
       "Enter a passphrase that will be required to access this secret",
+    [I18nKeys.Aria.PassphraseInput]:
+      "Enter the passphrase for this protected secret",
 
     [I18nKeys.Time.FiveMin]: "5 minutes",
     [I18nKeys.Time.ThirtyMin]: "30 minutes",
@@ -351,6 +360,7 @@ const translations: Translations = {
     [I18nKeys.Dropzone.Primary]: "Drop files here or click to select",
     [I18nKeys.Dropzone.Secondary]: "Supports all file types",
     [I18nKeys.Dropzone.Helper]: "File will be encrypted before upload.",
+
 
     [I18nKeys.Msg.Creating]: "Creating secret...",
     [I18nKeys.Msg.Retrieving]: "Retrieving secret...",
@@ -555,6 +565,7 @@ const translations: Translations = {
     [I18nKeys.Label.ContentPreview]: "Inhaltsvorschau",
     [I18nKeys.Label.QrCode]: "QR-Code:",
     [I18nKeys.Label.Passphrase]: "Passphrase-Schutz (Optional):",
+    [I18nKeys.Label.PassphraseInput]: "Passphrase:",
 
     [I18nKeys.Placeholder.Secret]: "Hier wird gen geheime Text eingegeben...",
     [I18nKeys.Placeholder.Passphrase]:
@@ -596,9 +607,13 @@ const translations: Translations = {
       "Das Secret wird nach dieser Zeit oder beim ersten Zugriff selbst zerstört",
     [I18nKeys.Helper.Passphrase]:
       "Erfordert eine Passphrase zum Zugriff auf dieses Secret. Für erhöhte Sicheheit kann die Passphrase über einen anderen Kanal (z.B. Telefonanruf) geteilt werden.",
+    [I18nKeys.Helper.PassphraseInput]:
+      "Dieses Secret erfordert eine Passphrase für den Zugriff",
 
     [I18nKeys.Aria.Passphrase]:
       "Passphrase eingeben, die für den Zugriff auf dieses Secret erforderlich ist",
+    [I18nKeys.Aria.PassphraseInput]:
+      "Passphrase für dieses geschützte Secret eingeben",
 
     [I18nKeys.Time.FiveMin]: "5 Minuten",
     [I18nKeys.Time.ThirtyMin]: "30 Minuten",
@@ -626,6 +641,7 @@ const translations: Translations = {
       "Dateien hier ablegen oder zum Auswählen klicken",
     [I18nKeys.Dropzone.Secondary]: "Unterstützt alle Dateitypen",
     [I18nKeys.Dropzone.Helper]: "Die Datei wird vor dem Upload verschlüsselt.",
+
 
     [I18nKeys.Msg.Creating]: "Secret wird erstellt...",
     [I18nKeys.Msg.Retrieving]: "Secret wird abgerufen...",
