@@ -48,6 +48,8 @@ helm install my-hakanai hakanai/hakanai \
 | `hakanai.server.allowAnonymous` | Allow anonymous access | `false` |
 | `hakanai.server.anonymousSizeLimit` | Anonymous upload size limit | `32k` |
 | `hakanai.server.enableAdminToken` | Enable admin token system | `false` |
+| `hakanai.server.countryHeader` | Country header for geo-IP restrictions | `""` |
+| `hakanai.server.asnHeader` | ASN header for network restrictions | `""` |
 | `redis.enabled` | Deploy Redis with Sentinel for HA | `true` |
 | `redis.architecture` | Redis architecture (standalone/replication) | `replication` |
 | `redis.sentinel.enabled` | Enable Redis Sentinel for HA | `true` |
@@ -85,6 +87,20 @@ hakanai:
       - "192.168.0.0/16"
       - "2001:db8::/32"
     proxyHeader: "x-forwarded-for"
+```
+
+#### Access Control Headers
+
+Configure headers for geo-IP and ASN-based access restrictions:
+
+```yaml
+hakanai:
+  server:
+    # Country-based restrictions (requires geo-IP provider)
+    countryHeader: "cf-ipcountry"  # Cloudflare example
+    
+    # ASN-based restrictions (requires ASN provider)
+    asnHeader: "cf-asn"  # Cloudflare example
 ```
 
 #### Network Policies

@@ -68,6 +68,10 @@ spec:
             - name: HAKANAI_COUNTRY_HEADER
               value: {{ .Values.hakanai.server.countryHeader | quote }}
             {{- end }}
+            {{- if .Values.hakanai.server.asnHeader }}
+            - name: HAKANAI_ASN_HEADER
+              value: {{ .Values.hakanai.server.asnHeader | quote }}
+            {{- end }}
             {{- if .Values.hakanai.server.cors.enabled }}
             - name: HAKANAI_CORS_ALLOWED_ORIGINS
               value: {{ .Values.hakanai.server.cors.origins | join "," | quote }}
