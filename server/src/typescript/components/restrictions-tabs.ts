@@ -74,12 +74,7 @@ export class RestrictionsTabs {
    * Get all restriction data from the tabs
    */
   getRestrictions(): RestrictionData | undefined {
-    const data: RestrictionData = {
-      allowed_ips: [],
-      allowed_countries: [],
-      allowed_asns: [],
-      passphrase: "",
-    };
+    const data: RestrictionData = {};
     let hasRestrictions = false;
 
     hasRestrictions = this.addIPRestrictions(data) || hasRestrictions;
