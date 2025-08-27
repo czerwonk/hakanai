@@ -224,11 +224,15 @@ function clearInputs(
   updateFileInfo();
 }
 
-function getFormValues(elements: Elements): FormValues {
+function areRestrictionsEnabled(): boolean {
   const restrictAccessCheckbox = document.getElementById(
     "restrictAccess",
   ) as HTMLInputElement;
-  const restrictionData = restrictAccessCheckbox?.checked
+  return restrictAccessCheckbox?.checked ?? false;
+}
+
+function getFormValues(elements: Elements): FormValues {
+  const restrictionData = areRestrictionsEnabled()
     ? restrictionsTabs?.getRestrictions()
     : undefined;
 
@@ -279,6 +283,10 @@ async function createSecret(): Promise<void> {
   const elements = getElements();
   if (!elements) {
     showError("Page not fully loaded. Please refresh and try again.");
+    return;
+  }
+
+  if (areRestrictionsEnabled() && !restrictionsTabs?.validateUserInput()) {
     return;
   }
 

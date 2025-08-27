@@ -222,6 +222,7 @@ const I18nKeys = {
     MissingKey: "error.MISSING_KEY",
     MissingSecretId: "error.MISSING_SECRET_ID",
     PassphraseRequired: "error.PASSPHRASE_REQUIRED",
+    PassphraseTooShort: "error.PASSPHRASE_TOO_SHORT",
     PayloadTooLarge: "error.PAYLOAD_TOO_LARGE",
     RetrieveFailed: "error.RETRIEVE_FAILED",
     SecretAlreadyAccessed: "error.SECRET_ALREADY_ACCESSED",
@@ -485,6 +486,8 @@ const translations: Translations = {
       "No content integrity verification hash found in URL",
     [I18nKeys.Error.PassphraseRequired]:
       "This secret is protected and requires a passphrase to access",
+    [I18nKeys.Error.PassphraseTooShort]:
+      "Passphrase must be at least 8 characters long",
     [I18nKeys.Error.PayloadTooLarge]: "Secret size exceeds the limit",
     [I18nKeys.Error.HashValidationFailed]:
       "Hash validation failed - data may be tempered or corrupted",
@@ -767,6 +770,8 @@ const translations: Translations = {
       "Kein Verifizierungs-Hash-Code in der URL gefunden",
     [I18nKeys.Error.PassphraseRequired]:
       "Dieses Secret ist geschützt und erfordert eine Passphrase zum Zugriff",
+    [I18nKeys.Error.PassphraseTooShort]:
+      "Passphrase muss mindestens 8 Zeichen lang sein",
 
     [I18nKeys.Validation.MissingData]: "Fehlende oder ungültige Daten",
     [I18nKeys.Validation.InvalidFilename]:

@@ -3,6 +3,7 @@
 import { showElement, hideElement } from "../core/dom-utils";
 import { fetchAppConfig } from "../core/app-config";
 import { RestrictionData } from "../core/restriction-data.js";
+import { I18nKeys } from "../core/i18n";
 
 export interface RestrictionsTabsConfig {
   container: HTMLElement;
@@ -171,12 +172,63 @@ export class RestrictionsTabs {
     const passphraseInput = this.container.querySelector(
       "#passphraseRestriction",
     ) as HTMLInputElement;
-    if (!passphraseInput?.value.trim()) {
-      return false;
+    const passphrase = passphraseInput?.value.trim();
+    if (!passphrase) {
+      return false; // empty passphrase means no restriction
     }
 
-    data.passphrase = passphraseInput.value.trim();
+    data.passphrase = passphrase;
     return true;
+  }
+
+  /**
+   * Validates all user inputs across tabs
+   */
+  public validateUserInput(): boolean {
+    return this.validatePassphrase();
+  }
+
+  private validatePassphrase(): boolean {
+    const passphraseInput = this.container.querySelector(
+      "#passphraseRestriction",
+    ) as HTMLInputElement;
+    const passphrase = passphraseInput?.value.trim();
+    if (!passphrase) {
+      return true; // empty passphrase is allowed (no restriction)
+    }
+
+    if (passphrase.length >= 8) {
+      return true; // valid passphrase
+    }
+
+    const message = (window as any).i18n.t(I18nKeys.Error.PassphraseTooShort);
+    this.showPassphraseError(message);
+    return false;
+  }
+
+  /**
+   * Show passphrase validation error message
+   */
+  private showPassphraseError(message: string): void {
+    const passphraseInput = this.container.querySelector(
+      "#passphraseRestriction",
+    ) as HTMLInputElement;
+
+    if (!passphraseInput) {
+      return;
+    }
+
+    passphraseInput.classList.add("error");
+    passphraseInput.setCustomValidity(message);
+    passphraseInput.reportValidity();
+
+    // Clear error after user starts typing again
+    const clearError = () => {
+      passphraseInput.classList.remove("error");
+      passphraseInput.setCustomValidity("");
+      passphraseInput.removeEventListener("input", clearError);
+    };
+    passphraseInput.addEventListener("input", clearError);
   }
 
   /**
