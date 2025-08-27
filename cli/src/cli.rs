@@ -12,6 +12,8 @@ use hakanai_lib::models::CountryCode;
 use hakanai_lib::utils::ip_parser::parse_ipnet;
 use hakanai_lib::utils::size_parser::parse_size_limit;
 
+const MIN_PASSPHRASE_LENGTH: usize = 8;
+
 /// Represents the command-line arguments for the application.
 #[derive(Debug, Parser)]
 #[command(
@@ -131,6 +133,18 @@ pub struct SendArgs {
 }
 
 impl SendArgs {
+    pub fn validate(&self) -> Result<()> {
+        if let Some(passphrase) = &self.require_passphrase
+            && passphrase.trim().chars().count() < MIN_PASSPHRASE_LENGTH
+        {
+            return Err(anyhow!(format!(
+                "The passphrase must be at least {MIN_PASSPHRASE_LENGTH} characters long if set."
+            )));
+        }
+
+        Ok(())
+    }
+
     /// Get the processed token, reading from file if needed
     pub fn token(&self) -> Result<Option<String>> {
         if let Some(path) = self.token_file.clone() {
@@ -2209,5 +2223,123 @@ mod tests {
             }
             _ => panic!("Expected Get command"),
         }
+    }
+
+    #[test]
+    fn test_send_args_validate_passphrase_exactly_8_chars() -> Result<()> {
+        let args = SendArgs::builder().with_require_passphrase("12345678");
+        args.validate()?;
+        Ok(())
+    }
+
+    #[test]
+    fn test_send_args_validate_passphrase_more_than_8_chars() -> Result<()> {
+        let args = SendArgs::builder().with_require_passphrase("123456789");
+        args.validate()?;
+        Ok(())
+    }
+
+    #[test]
+    fn test_send_args_validate_passphrase_7_chars_fails() {
+        let args = SendArgs::builder().with_require_passphrase("1234567");
+        let result = args.validate();
+
+        assert!(result.is_err(), "Expected error for 7-char passphrase");
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("passphrase must be at least 8 characters"),
+            "Error message should mention 8 character minimum"
+        );
+    }
+
+    #[test]
+    fn test_send_args_validate_passphrase_empty_fails() {
+        let args = SendArgs::builder().with_require_passphrase("");
+        let result = args.validate();
+
+        assert!(result.is_err(), "Expected error for empty passphrase");
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("passphrase must be at least 8 characters"),
+            "Error message should mention 8 character minimum"
+        );
+    }
+
+    #[test]
+    fn test_send_args_validate_passphrase_8_spaces_fails() {
+        // 8 spaces should fail validation because trimmed length is 0
+        let args = SendArgs::builder().with_require_passphrase("        "); // 8 spaces
+        let result = args.validate();
+
+        assert!(
+            result.is_err(),
+            "Expected error for 8 spaces (trimmed to empty)"
+        );
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("passphrase must be at least 8 characters"),
+            "Error message should mention 8 character minimum"
+        );
+    }
+
+    #[test]
+    fn test_send_args_validate_passphrase_with_leading_trailing_spaces() -> Result<()> {
+        // Should validate based on trimmed length
+        let args = SendArgs::builder().with_require_passphrase("  123456  ");
+        let result = args.validate();
+
+        assert!(
+            result.is_err(),
+            "Expected error for passphrase with trimmed length < 8"
+        );
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("passphrase must be at least 8 characters"),
+            "Error message should mention 8 character minimum"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn test_send_args_validate_passphrase_unicode_8_chars() -> Result<()> {
+        // 8 Unicode characters (not bytes) should pass
+        let args = SendArgs::builder().with_require_passphrase("パスワード四文字");
+        args.validate()?;
+        Ok(())
+    }
+
+    #[test]
+    fn test_send_args_validate_passphrase_unicode_7_chars_fails() {
+        // 7 Unicode characters should fail
+        let args = SendArgs::builder().with_require_passphrase("パスワード三文");
+        let result = args.validate();
+
+        assert!(
+            result.is_err(),
+            "Expected error for 7 Unicode char passphrase"
+        );
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("passphrase must be at least 8 characters"),
+            "Error message should mention 8 character minimum"
+        );
+    }
+
+    #[test]
+    fn test_send_args_validate_no_passphrase() -> Result<()> {
+        // No passphrase should pass validation (it's optional)
+        let args = SendArgs::builder();
+        args.validate()?;
+        Ok(())
     }
 }

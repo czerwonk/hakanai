@@ -28,6 +28,8 @@ struct Secret {
 }
 
 pub async fn send<T: Factory>(factory: T, args: SendArgs) -> Result<()> {
+    args.validate()?;
+
     if args.ttl.as_secs() == 0 {
         return Err(anyhow!("TTL must be greater than zero seconds."));
     }
