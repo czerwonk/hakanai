@@ -98,7 +98,6 @@ const I18nKeys = {
     Helper: "dropzone.helper",
   },
 
-
   Msg: {
     BinaryDetected: "msg.binaryDetected",
     ClipboardEmpty: "msg.clipboardEmpty",
@@ -224,6 +223,10 @@ const I18nKeys = {
     PassphraseRequired: "error.PASSPHRASE_REQUIRED",
     PassphraseTooShort: "error.PASSPHRASE_TOO_SHORT",
     PayloadTooLarge: "error.PAYLOAD_TOO_LARGE",
+    InvalidIPAddress: "error.INVALID_IP_ADDRESS",
+    InvalidCountryCode: "error.INVALID_COUNTRY_CODE",
+    InvalidASN: "error.INVALID_ASN",
+    ASNMustBeNumber: "error.ASN_MUST_BE_NUMBER",
     RetrieveFailed: "error.RETRIEVE_FAILED",
     SecretAlreadyAccessed: "error.SECRET_ALREADY_ACCESSED",
     SecretNotFound: "error.SECRET_NOT_FOUND",
@@ -362,7 +365,6 @@ const translations: Translations = {
     [I18nKeys.Dropzone.Secondary]: "Supports all file types",
     [I18nKeys.Dropzone.Helper]: "File will be encrypted before upload.",
 
-
     [I18nKeys.Msg.Creating]: "Creating secret...",
     [I18nKeys.Msg.Retrieving]: "Retrieving secret...",
     [I18nKeys.Msg.JsRequired]: "JavaScript Required",
@@ -488,6 +490,12 @@ const translations: Translations = {
       "This secret is protected and requires a passphrase to access",
     [I18nKeys.Error.PassphraseTooShort]:
       "Passphrase must be at least 8 characters long",
+    [I18nKeys.Error.InvalidIPAddress]: "Invalid IP address or CIDR notation",
+    [I18nKeys.Error.InvalidCountryCode]:
+      "Invalid country code. Must be a 2-letter uppercase code (e.g., US, DE, CA)",
+    [I18nKeys.Error.InvalidASN]:
+      "Invalid ASN. Must be between 1 and 4294967295",
+    [I18nKeys.Error.ASNMustBeNumber]: "ASN must be a number",
     [I18nKeys.Error.PayloadTooLarge]: "Secret size exceeds the limit",
     [I18nKeys.Error.HashValidationFailed]:
       "Hash validation failed - data may be tempered or corrupted",
@@ -645,7 +653,6 @@ const translations: Translations = {
     [I18nKeys.Dropzone.Secondary]: "Unterstützt alle Dateitypen",
     [I18nKeys.Dropzone.Helper]: "Die Datei wird vor dem Upload verschlüsselt.",
 
-
     [I18nKeys.Msg.Creating]: "Secret wird erstellt...",
     [I18nKeys.Msg.Retrieving]: "Secret wird abgerufen...",
     [I18nKeys.Msg.JsRequired]: "JavaScript erforderlich",
@@ -772,6 +779,13 @@ const translations: Translations = {
       "Dieses Secret ist geschützt und erfordert eine Passphrase zum Zugriff",
     [I18nKeys.Error.PassphraseTooShort]:
       "Passphrase muss mindestens 8 Zeichen lang sein",
+    [I18nKeys.Error.InvalidIPAddress]:
+      "Ungültige IP-Adresse oder CIDR-Notation",
+    [I18nKeys.Error.InvalidCountryCode]:
+      "Ungültiger Ländercode. Muss ein 2-stelliger Großbuchstaben-Code sein (z.B. US, DE, CA)",
+    [I18nKeys.Error.InvalidASN]:
+      "Ungültige ASN. Muss zwischen 1 und 4294967295 liegen",
+    [I18nKeys.Error.ASNMustBeNumber]: "ASN muss eine Zahl sein",
 
     [I18nKeys.Validation.MissingData]: "Fehlende oder ungültige Daten",
     [I18nKeys.Validation.InvalidFilename]:

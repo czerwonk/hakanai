@@ -4,6 +4,7 @@ import { showElement, hideElement } from "../core/dom-utils";
 import { fetchAppConfig } from "../core/app-config";
 import { RestrictionData } from "../core/restriction-data.js";
 import { I18nKeys } from "../core/i18n";
+import { InputValidation } from "../client/validation";
 
 export interface RestrictionsTabsConfig {
   container: HTMLElement;
@@ -185,7 +186,12 @@ export class RestrictionsTabs {
    * Validates all user inputs across tabs
    */
   public validateUserInput(): boolean {
-    return this.validatePassphrase();
+    return (
+      this.validatePassphrase() &&
+      this.validateIPs() &&
+      this.validateCountries() &&
+      this.validateASNs()
+    );
   }
 
   private validatePassphrase(): boolean {
@@ -201,34 +207,122 @@ export class RestrictionsTabs {
       return true; // valid passphrase
     }
 
+    this.setActiveTab("passphrase");
     const message = (window as any).i18n.t(I18nKeys.Error.PassphraseTooShort);
-    this.showPassphraseError(message);
+    this.showValidationError(passphraseInput, message);
     return false;
   }
 
-  /**
-   * Show passphrase validation error message
-   */
-  private showPassphraseError(message: string): void {
-    const passphraseInput = this.container.querySelector(
-      "#passphraseRestriction",
-    ) as HTMLInputElement;
+  private validateIPs(): boolean {
+    const ipInput = this.container.querySelector(
+      "#allowedIPs",
+    ) as HTMLTextAreaElement;
+    if (!ipInput?.value.trim()) {
+      return true; // empty is allowed
+    }
 
-    if (!passphraseInput) {
+    const ips = ipInput.value
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
+
+    for (const ip of ips) {
+      try {
+        InputValidation.validateIPAddress(ip);
+      } catch {
+        this.setActiveTab("ip");
+        const message = (window as any).i18n.t(I18nKeys.Error.InvalidIPAddress);
+        this.showValidationError(ipInput, `${message}: ${ip}`);
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private validateCountries(): boolean {
+    const countryInput = this.container.querySelector(
+      "#allowedCountries",
+    ) as HTMLTextAreaElement;
+    if (!countryInput?.value.trim()) {
+      return true; // empty is allowed
+    }
+
+    const countries = countryInput.value
+      .split("\n")
+      .map((line) => line.trim().toUpperCase())
+      .filter((line) => line.length > 0);
+
+    for (const country of countries) {
+      try {
+        InputValidation.validateCountryCode(country);
+      } catch {
+        this.setActiveTab("country");
+        const message = (window as any).i18n.t(
+          I18nKeys.Error.InvalidCountryCode,
+        );
+        this.showValidationError(countryInput, `${message}: ${country}`);
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private validateASNs(): boolean {
+    const asnInput = this.container.querySelector(
+      "#allowedASNs",
+    ) as HTMLTextAreaElement;
+    if (!asnInput?.value.trim()) {
+      return true; // empty is allowed
+    }
+
+    const lines = asnInput.value
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
+
+    for (const line of lines) {
+      const asn = parseInt(line, 10);
+      if (isNaN(asn)) {
+        this.setActiveTab("asn");
+        const message = (window as any).i18n.t(I18nKeys.Error.ASNMustBeNumber);
+        this.showValidationError(asnInput, `${message}: ${line}`);
+        return false;
+      }
+
+      try {
+        InputValidation.validateASN(asn);
+      } catch {
+        this.setActiveTab("asn");
+        const message = (window as any).i18n.t(I18nKeys.Error.InvalidASN);
+        this.showValidationError(asnInput, `${message}: ${asn}`);
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Show validation error message for any input element
+   */
+  private showValidationError(
+    input: HTMLInputElement | HTMLTextAreaElement,
+    message: string,
+  ): void {
+    if (!input) {
       return;
     }
 
-    passphraseInput.classList.add("error");
-    passphraseInput.setCustomValidity(message);
-    passphraseInput.reportValidity();
+    input.classList.add("error");
+    input.setCustomValidity(message);
+    input.reportValidity();
 
     // Clear error after user starts typing again
     const clearError = () => {
-      passphraseInput.classList.remove("error");
-      passphraseInput.setCustomValidity("");
-      passphraseInput.removeEventListener("input", clearError);
+      input.classList.remove("error");
+      input.setCustomValidity("");
+      input.removeEventListener("input", clearError);
     };
-    passphraseInput.addEventListener("input", clearError);
+    input.addEventListener("input", clearError);
   }
 
   /**
