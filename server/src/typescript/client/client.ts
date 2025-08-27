@@ -441,7 +441,6 @@ class HakanaiClient {
     }
 
     const bodyData = JSON.stringify(requestBody);
-    console.log(bodyData);
     const requestId = crypto.randomUUID();
 
     const headers: Record<string, string> = {
