@@ -9,10 +9,7 @@ import { HakanaiClient } from "./hakanai-client";
 import { initI18n, I18nKeys } from "./core/i18n";
 import { formatFileSize, sanitizeFileName } from "./core/formatters";
 import { hideElement, showElement } from "./core/dom-utils";
-import {
-  initSeparateKeyCheckbox,
-  initGenerateQrCodeCheckbox,
-} from "./core/preferences";
+import { initSeparateKeyCheckbox } from "./core/preferences";
 import { KeyboardShortcuts } from "./core/keyboard-shortcuts";
 import { displaySuccessResult } from "./components/create-result";
 import { displayErrorMessage } from "./components/error-display";
@@ -129,15 +126,9 @@ function showSuccess(url: string, restrictions?: RestrictionData): void {
   ) as HTMLInputElement;
   const separateKeyMode = separateKeyCheckbox?.checked ?? false;
 
-  const generateQrCheckbox = document.getElementById(
-    "generateQrCode",
-  ) as HTMLInputElement;
-  const generateQrCode = generateQrCheckbox?.checked ?? false;
-
   displaySuccessResult(url, {
     container: resultContainer,
     separateKeyMode: separateKeyMode,
-    generateQrCode: generateQrCode,
     restrictionData: restrictions,
   });
   hideOtherSections("result-success");
@@ -338,11 +329,6 @@ document.addEventListener("DOMContentLoaded", () => {
     "separate-key-mode",
   ) as HTMLInputElement;
   initSeparateKeyCheckbox(separateKeyCheckbox);
-
-  const generateQrCheckbox = document.getElementById(
-    "generateQrCode",
-  ) as HTMLInputElement;
-  initGenerateQrCodeCheckbox(generateQrCheckbox);
 
   initShareData();
 });

@@ -21,10 +21,7 @@ import { ErrorHandler, handleAPIError } from "./core/error";
 import { initFeatures, fetchAppConfig } from "./core/app-config";
 import { ProgressBar } from "./components/progress-bar";
 import { TTLSelector } from "./components/ttl-selector";
-import {
-  initSeparateKeyCheckbox,
-  initGenerateQrCodeCheckbox,
-} from "./core/preferences";
+import { initSeparateKeyCheckbox } from "./core/preferences";
 import { KeyboardShortcuts } from "./core/keyboard-shortcuts";
 import { FileDropzone } from "./components/file-dropzone";
 import { RestrictionsTabs } from "./components/restrictions-tabs";
@@ -361,13 +358,6 @@ function isSeparateKeyMode(): boolean {
   return separateKeyCheckbox?.checked ?? false;
 }
 
-function shouldGenerateQrCode(): boolean {
-  const generateQrCheckbox = document.getElementById(
-    "generateQrCode",
-  ) as HTMLInputElement;
-  return generateQrCheckbox?.checked ?? false;
-}
-
 function showSuccess(
   secretUrl: string,
   restrictionData?: RestrictionData,
@@ -382,7 +372,6 @@ function showSuccess(
   displaySuccessResult(secretUrl, {
     container: resultContainer,
     separateKeyMode: isSeparateKeyMode(),
-    generateQrCode: shouldGenerateQrCode(),
     restrictionData,
   });
   announceToScreenReader(window.i18n.t(I18nKeys.Msg.SuccessTitle));
@@ -711,9 +700,4 @@ document.addEventListener("DOMContentLoaded", async () => {
     "separateKey",
   ) as HTMLInputElement;
   initSeparateKeyCheckbox(separateKeyCheckbox);
-
-  const generateQrCheckbox = document.getElementById(
-    "generateQrCode",
-  ) as HTMLInputElement;
-  initGenerateQrCodeCheckbox(generateQrCheckbox);
 });

@@ -38,11 +38,7 @@ describe("Success Display Component", () => {
       displaySuccessResult(testUrl, {
         container,
         separateKeyMode: false,
-        generateQrCode: true, // Explicitly enable QR code generation for this test
       });
-
-      // Wait for async QR code generation
-      await new Promise((resolve) => setTimeout(resolve, 0));
 
       expect(container.className).toBe("result success");
 
@@ -64,13 +60,16 @@ describe("Success Display Component", () => {
       const copyButton = container.querySelector(".copy-button");
       expect(copyButton).toBeTruthy();
 
-      // Check for QR code section
-      const qrSection = container.querySelector(".qr-code-section");
-      expect(qrSection).toBeTruthy();
-
       // Check for security note exists
       const note = container.querySelector(".secret-note");
       expect(note).toBeTruthy();
+
+      // QR button should be present
+      const qrButton = container.querySelector(
+        'button[aria-label="button.showQrCode"]',
+      );
+      expect(qrButton).toBeTruthy();
+      expect(qrButton?.textContent).toBe("▦ QR");
     });
 
     test("should create separate URL and key display when in separate key mode", async () => {
@@ -80,9 +79,6 @@ describe("Success Display Component", () => {
         container,
         separateKeyMode: true,
       });
-
-      // Wait for async QR code generation
-      await new Promise((resolve) => setTimeout(resolve, 0));
 
       // Should have two input fields - one for URL, one for key
       const inputs = container.querySelectorAll('input[type="text"]');
@@ -111,31 +107,13 @@ describe("Success Display Component", () => {
       const mockI18n = window.i18n as { t: jest.Mock };
       expect(mockI18n.t).toHaveBeenCalledWith("label.url");
       expect(mockI18n.t).toHaveBeenCalledWith("label.key");
-    });
 
-    test("should handle QR code generation failure gracefully", async () => {
-      const {
-        QRCodeGenerator,
-      } = require("../../server/src/typescript/core/qr-generator");
-      QRCodeGenerator.generateQRCode.mockReturnValue(null);
-
-      const testUrl = "https://example.com/s/123#abcdef";
-
-      displaySuccessResult(testUrl, {
-        container,
-        separateKeyMode: false,
-      });
-
-      // Wait for async QR code generation
-      await new Promise((resolve) => setTimeout(resolve, 0));
-
-      // QR code section should not be present
-      const qrSection = container.querySelector(".qr-code-section");
-      expect(qrSection).toBeFalsy();
-
-      // But other elements should still be present
-      const title = container.querySelector("h3");
-      expect(title).toBeTruthy();
+      // QR button should be present
+      const qrButton = container.querySelector(
+        'button[aria-label="button.showQrCode"]',
+      );
+      expect(qrButton).toBeTruthy();
+      expect(qrButton?.textContent).toBe("▦ QR");
     });
 
     test("should use correct i18n keys for all text elements", async () => {
@@ -146,9 +124,6 @@ describe("Success Display Component", () => {
         container,
         separateKeyMode: false,
       });
-
-      // Wait for async QR code generation
-      await new Promise((resolve) => setTimeout(resolve, 0));
 
       // Verify i18n.t was called with core keys (QR code might not be generated)
       expect(mockI18n.t).toHaveBeenCalledWith("msg.successTitle");
@@ -172,57 +147,6 @@ describe("Success Display Component", () => {
 
       const note = container.querySelector(".secret-note");
       expect(note?.textContent).toBe("msg.createNote");
-    });
-
-    test("should use correct i18n key for QR code label when QR generation succeeds", async () => {
-      const testUrl = "https://example.com/s/123#abcdef";
-      const mockI18n = window.i18n as { t: jest.Mock };
-
-      // Ensure QR code generation succeeds
-      const {
-        QRCodeGenerator,
-      } = require("../../server/src/typescript/core/qr-generator");
-      QRCodeGenerator.generateQRCode.mockReturnValue("<svg>qr code</svg>");
-
-      displaySuccessResult(testUrl, {
-        container,
-        separateKeyMode: false,
-        generateQrCode: true, // Explicitly enable QR code generation for this test
-      });
-
-      // Wait for async QR code generation
-      await new Promise((resolve) => setTimeout(resolve, 0));
-
-      // QR code section should be present
-      const qrSection = container.querySelector(".qr-code-section");
-      expect(qrSection).toBeTruthy();
-
-      // Verify QR code label i18n key was used
-      expect(mockI18n.t).toHaveBeenCalledWith("label.qrCode");
-
-      const qrLabel = qrSection?.querySelector("label");
-      expect(qrLabel?.textContent).toBe("label.qrCode");
-    });
-
-    test("should show QR button when QR generation is disabled", () => {
-      const testUrl = "https://example.com/s/123#abcdef";
-
-      displaySuccessResult(testUrl, {
-        container,
-        separateKeyMode: false,
-        generateQrCode: false, // QR generation disabled
-      });
-
-      // QR code section should NOT be present
-      const qrSection = container.querySelector(".qr-code-section");
-      expect(qrSection).toBeFalsy();
-
-      // QR button should be present
-      const qrButton = container.querySelector(
-        'button[aria-label="button.showQrCode"]',
-      );
-      expect(qrButton).toBeTruthy();
-      expect(qrButton?.textContent).toBe("▦ QR");
     });
   });
 });

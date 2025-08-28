@@ -26,9 +26,7 @@ const I18nKeys = {
     File: "label.file",
     FileSelect: "label.fileSelect",
     Filename: "label.filename",
-    GenerateQrCode: "label.generateQrCode",
     Key: "label.key",
-    QrCode: "label.qrCode",
     RestrictAccess: "label.restrictAccess",
     SaveToken: "label.saveToken",
     Secret: "label.secret",
@@ -54,7 +52,6 @@ const I18nKeys = {
     AllowedASNs: "helper.allowedASNs",
     Expires: "helper.expires",
     FileSelect: "helper.fileSelect",
-    GenerateQrCode: "helper.generateQrCode",
     Key: "helper.key",
     RestrictAccess: "helper.restrictAccess",
     SaveToken: "helper.saveToken",
@@ -280,8 +277,6 @@ const translations: Translations = {
     [I18nKeys.Label.File]: "🗂️ File",
     [I18nKeys.Label.Filename]: "Filename:",
     [I18nKeys.Label.Key]: "Decryption Key:",
-    [I18nKeys.Label.QrCode]: "QR Code:",
-    [I18nKeys.Label.GenerateQrCode]: "Generate QR code for easy sharing",
     [I18nKeys.Label.RestrictAccess]: "Restrict access to this secret",
     [I18nKeys.Label.SaveToken]: "Remember authentication token",
     [I18nKeys.Label.SecretType]: "Secret Type:",
@@ -322,8 +317,6 @@ const translations: Translations = {
       "Base64-encoded decryption key with optional hash (shared separately)",
     [I18nKeys.Helper.SeparateKey]:
       "When enabled, the URL and decryption key are displayed separately, allowing you to share them through different channels for enhanced security.",
-    [I18nKeys.Helper.GenerateQrCode]:
-      "When enabled, a QR code will be generated for the secret URL. Disable this if you're concerned about shoulder surfing or visual exposure.",
     [I18nKeys.Helper.RestrictAccess]: "Limit who can access this secret.",
     [I18nKeys.Helper.SaveToken]:
       "Token will be stored securely in your browser for the current session only. You will need to re-enter it when you start a new browser session.",
@@ -565,8 +558,6 @@ const translations: Translations = {
     [I18nKeys.Label.Expires]: "Läuft ab nach:",
     [I18nKeys.Label.Url]: "Secret-URL:",
     [I18nKeys.Label.Key]: "Geheimer Schlüssel:",
-    [I18nKeys.Label.GenerateQrCode]:
-      "QR-Code für vereinfachtes Teilen erstellen",
     [I18nKeys.Label.RestrictAccess]: "Zugriff auf dieses Secret beschränken",
     [I18nKeys.Label.SeparateKey]: "Schlüssel separat anzeigen",
     [I18nKeys.Label.SaveToken]: "Token merken",
@@ -574,7 +565,6 @@ const translations: Translations = {
     [I18nKeys.Label.Size]: "Größe:",
     [I18nKeys.Label.ExpiresIn]: "Läuft ab in:",
     [I18nKeys.Label.ContentPreview]: "Inhaltsvorschau",
-    [I18nKeys.Label.QrCode]: "QR-Code:",
     [I18nKeys.Label.Passphrase]: "Passphrase-Schutz (Optional):",
     [I18nKeys.Label.PassphraseInput]: "Passphrase:",
 
@@ -608,8 +598,6 @@ const translations: Translations = {
       "Base64-kodierter geheimer Schlüssel mit optionalen Hash-Informationen (separat geteilt)",
     [I18nKeys.Helper.SeparateKey]:
       "Wenn aktiviert, werden URL und geheimer Schlüssel separat angezeigt, so dass sie über verschiedene Kanäle für erweiterte Sicherheit geteilt werden können.",
-    [I18nKeys.Helper.GenerateQrCode]:
-      "Wenn aktiviert, wird ein QR-Code für die Secret-URL erstellt. Bei Verwendung in ungeschützten Räumen wie der Öffentlichkeit sollte diese Option deaktiviert werden, um Scannen durch Dritte zu verhindern.",
     [I18nKeys.Helper.RestrictAccess]:
       "Zugriff auf dieses Secret auf IP-Adresse, Land oder Netzwerkanbieter beschränken.",
     [I18nKeys.Helper.SaveToken]:

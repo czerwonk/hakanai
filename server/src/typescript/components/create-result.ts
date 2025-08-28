@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import { createButton, generateRandomId, hideElement } from "../core/dom-utils";
+import { createButton, generateRandomId } from "../core/dom-utils";
 import { copyToClipboard, copyToClipboardByElementId } from "../core/clipboard";
 import { QRCodeGenerator } from "../core/qr-generator";
 import { I18nKeys } from "../core/i18n";
@@ -11,7 +11,6 @@ import type { RestrictionData } from "../core/restriction-data.js";
  */
 interface SuccessDisplayOptions {
   separateKeyMode?: boolean;
-  generateQrCode?: boolean;
   container: HTMLElement;
   restrictionData?: RestrictionData;
 }
@@ -35,36 +34,13 @@ export function displaySuccessResult(
 
   createSuccessHeader(container);
 
-  // Pass whether to show QR button (when QR auto-generation is disabled)
-  createUrlSection(
-    container,
-    url,
-    options.separateKeyMode,
-    options.generateQrCode !== true,
-  );
-
-  if (options.generateQrCode === true) {
-    createQRCodeSection(container, url);
-  }
+  createUrlSection(container, url, options);
 
   createNoteSection(container);
 
   if (options.restrictionData) {
     createRestrictionsSection(container, options.restrictionData);
   }
-
-  ensureQRCodeGeneratorCleanup();
-}
-
-function ensureQRCodeGeneratorCleanup() {
-  if (cleanupListenerAdded) {
-    return;
-  }
-
-  window.addEventListener("beforeunload", () => {
-    QRCodeGenerator.cleanup();
-  });
-  cleanupListenerAdded = true;
 }
 
 /**
@@ -87,16 +63,15 @@ function createSuccessHeader(container: HTMLElement): void {
 function createUrlSection(
   container: HTMLElement,
   url: string,
-  separateKeyMode?: boolean,
-  showQrButton?: boolean,
+  options: SuccessDisplayOptions,
 ): void {
   const urlContainer = document.createElement("div");
   urlContainer.className = "url-container";
 
-  if (separateKeyMode) {
-    createSeparateUrlDisplay(urlContainer, url, showQrButton);
+  if (options.separateKeyMode) {
+    createSeparateUrlDisplay(urlContainer, url);
   } else {
-    createCombinedUrlDisplay(urlContainer, url, showQrButton);
+    createCombinedUrlDisplay(urlContainer, url);
   }
 
   container.appendChild(urlContainer);
@@ -111,8 +86,6 @@ function createLabeledInputWithCopy(
   inputId: string,
   value: string,
   ariaLabel: string,
-  showQrButton?: boolean,
-  fullUrl?: string,
 ): void {
   const label = document.createElement("label");
   label.textContent = window.i18n.t(labelKey);
@@ -138,11 +111,8 @@ function createLabeledInputWithCopy(
   );
   inputContainer.appendChild(copyButton);
 
-  // Add QR button if requested
-  if (showQrButton && fullUrl) {
-    const qrButton = createQrButton(fullUrl);
-    inputContainer.appendChild(qrButton);
-  }
+  const qrButton = createQrButton(value);
+  inputContainer.appendChild(qrButton);
 
   container.appendChild(inputContainer);
 }
@@ -172,11 +142,7 @@ function createQrButton(url: string): HTMLButtonElement {
 /**
  * Create combined URL display (traditional mode)
  */
-function createCombinedUrlDisplay(
-  container: HTMLElement,
-  url: string,
-  showQrButton?: boolean,
-): void {
+function createCombinedUrlDisplay(container: HTMLElement, url: string): void {
   const urlId = generateRandomId();
   createLabeledInputWithCopy(
     container,
@@ -184,8 +150,6 @@ function createCombinedUrlDisplay(
     urlId,
     url,
     "Copy secret URL to clipboard",
-    showQrButton,
-    url,
   );
 }
 
@@ -195,7 +159,6 @@ function createCombinedUrlDisplay(
 function createSeparateUrlDisplay(
   container: HTMLElement,
   fullUrl: string,
-  showQrButton?: boolean,
 ): void {
   const [url, key] = fullUrl.split("#");
   const baseId = generateRandomId();
@@ -207,8 +170,6 @@ function createSeparateUrlDisplay(
     baseId,
     url,
     "Copy secret URL to clipboard",
-    showQrButton,
-    fullUrl, // Pass full URL for QR generation
   );
 
   // Key section
@@ -219,53 +180,6 @@ function createSeparateUrlDisplay(
     key,
     "Copy decryption key to clipboard",
   );
-}
-
-/**
- * Create QR code section (with graceful degradation)
- */
-async function createQRCodeSection(
-  container: HTMLElement,
-  url: string,
-): Promise<void> {
-  try {
-    await QRCodeGenerator.ensureWasmLoaded();
-    const qrSvg = QRCodeGenerator.generateQRCode(url);
-
-    if (qrSvg) {
-      const qrSection = createQRDisplayElement(qrSvg);
-      container.appendChild(qrSection);
-    }
-  } catch (error) {
-    // showing QR codes is optional, so we can ignore errors
-  }
-}
-
-/**
- * Create QR code display element
- */
-function createQRDisplayElement(qrSvg: string): HTMLElement {
-  const qrSection = document.createElement("div");
-  hideElement(qrSection);
-  qrSection.className = "qr-code-section";
-
-  const qrLabel = document.createElement("label");
-  qrLabel.textContent = window.i18n.t(I18nKeys.Label.QrCode);
-  qrSection.appendChild(qrLabel);
-
-  const qrContainer = document.createElement("div");
-  qrContainer.className = "qr-code-container";
-  qrContainer.innerHTML = qrSvg;
-  qrContainer.title = "Click to view full screen";
-
-  // Add click handler for fullscreen
-  qrContainer.addEventListener("click", () => {
-    showQRFullscreen(qrSvg);
-  });
-
-  qrSection.appendChild(qrContainer);
-
-  return qrSection;
 }
 
 /**
