@@ -9,13 +9,6 @@ const I18nKeys = {
     ShareTitle: "page.share.title",
   },
 
-  Header: {
-    Create: "header.create",
-    Get: "header.get",
-    Homepage: "header.homepage",
-    Share: "header.share",
-  },
-
   Label: {
     AllowedIPs: "label.allowedIPs",
     AllowedCountries: "label.allowedCountries",
@@ -262,11 +255,6 @@ const translations: Translations = {
     [I18nKeys.Page.HomepageTitle]: "Hakanai - One-Time Secret Sharing",
     [I18nKeys.Page.ShareTitle]: "Hakanai - Share Data",
 
-    [I18nKeys.Header.Create]: "Create One-Time Secret",
-    [I18nKeys.Header.Get]: "One-Time Secret",
-    [I18nKeys.Header.Homepage]: "One-Time Secret Sharing",
-    [I18nKeys.Header.Share]: "Share Data",
-
     [I18nKeys.Label.AllowedIPs]: "IP Address Restrictions (Optional):",
     [I18nKeys.Label.AllowedCountries]: "Country Restrictions (Optional):",
     [I18nKeys.Label.AllowedASNs]: "Network (ASN) Restrictions (Optional):",
@@ -308,7 +296,7 @@ const translations: Translations = {
     [I18nKeys.Helper.AllowedASNs]:
       "Enter Autonomous System Numbers (ASNs) (one per line) that can access this secret. Common examples: Cloudflare (13335), Google (15169), Amazon (16509).",
     [I18nKeys.Helper.Url]:
-      "The decryption key after # is never sent to the server",
+      "Enter the URL to access the secret.\nThe decryption key after # is never sent to the server",
     [I18nKeys.Helper.Secret]:
       "Your message will be encrypted before leaving your browser",
     [I18nKeys.Helper.FileSelect]: "File will be encrypted before upload.",
@@ -541,11 +529,6 @@ const translations: Translations = {
     [I18nKeys.Page.HomepageTitle]: "Hakanai - Einmal-Secret-Sharing",
     [I18nKeys.Page.ShareTitle]: "Hakanai - Daten teilen",
 
-    [I18nKeys.Header.Create]: "Einmal-Secret erstellen",
-    [I18nKeys.Header.Get]: "Einmal-Secret",
-    [I18nKeys.Header.Homepage]: "Einmal-Secret-Sharing",
-    [I18nKeys.Header.Share]: "Daten teilen",
-
     [I18nKeys.Label.AllowedIPs]: "IP-Adress-Beschränkungen (Optional):",
     [I18nKeys.Label.AllowedCountries]: "Länder-Beschränkungen (Optional):",
     [I18nKeys.Label.AllowedASNs]: "Netzwerk-(ASN-)Beschränkungen (Optional):",
@@ -587,7 +570,7 @@ const translations: Translations = {
     [I18nKeys.Helper.AllowedASNs]:
       "Autonome Systemnummern (ASNs) (eine pro Zeile), die auf dieses Secret zugreifen können. Beispiele: Cloudflare (13335), Google (15169), Amazon (16509).",
     [I18nKeys.Helper.Url]:
-      "Der geheime Schlüssel nach dem # wird niemals an den Server gesendet",
+      "URL eigeben um auf das Secret zuzugreifen.\nDer geheime Schlüssel nach dem # wird niemals an den Server gesendet",
     [I18nKeys.Helper.Secret]:
       "Die Nachricht wird verschlüsselt, bevor sie den Browser verlässt",
     [I18nKeys.Helper.FileSelect]:

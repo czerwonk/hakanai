@@ -857,7 +857,7 @@ body[data-theme="light"] #theme-toggle {
 
 .header {
   text-align: center;
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
   padding: var(--spacing-xl) var(--spacing-lg) var(--spacing-lg)
     var(--spacing-lg);
   border-bottom: 1px solid var(--color-border);
@@ -868,7 +868,7 @@ body[data-theme="light"] #theme-toggle {
   background-repeat: no-repeat;
   border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
   margin: calc(-1 * var(--spacing-xl)) calc(-1 * var(--spacing-xl))
-    var(--spacing-lg) calc(-1 * var(--spacing-xl));
+    var(--spacing-xl) calc(-1 * var(--spacing-xl));
   min-height: 200px;
   display: flex;
   align-items: center;
@@ -1776,6 +1776,7 @@ button.loading::after {
   padding-left: var(--spacing-xs);
   opacity: 0.75;
   transition: opacity var(--transition-fast);
+  white-space: pre-line;
 }
 
 /* Slightly more visible on hover/focus of parent input */
