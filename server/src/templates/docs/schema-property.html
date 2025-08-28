@@ -1,5 +1,9 @@
-<li>
-  <strong>{property_name}</strong>{required_marker | unescaped}
-  <code>{property_type}</code> - {description}{example | unescaped}
+<li class="property-item">
+  <div class="property-header">
+    <span class="property-name">{property_name}</span>
+    <span class="property-type">{property_type}</span>
+    {required_marker | unescaped}
+  </div>
+  <div class="property-description">{description}</div>
+  {example | unescaped}
 </li>
-

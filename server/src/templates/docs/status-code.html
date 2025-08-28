@@ -1,3 +1,8 @@
-<li>
-  <strong>{code} {status_text}</strong> - {description}{examples | unescaped}
+<li class="status-code-item">
+  <div class="status-code-header">
+    <span class="status-code code-{code}">{code}</span>
+    <span class="status-text">{status_text}</span>
+  </div>
+  <div class="status-description">{description}</div>
+  {examples | unescaped}
 </li>

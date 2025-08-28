@@ -387,7 +387,7 @@ fn generate_single_property(
     context.insert(
         "required_marker".to_string(),
         if is_required {
-            " <em>(required)</em>".to_string()
+            r#"<span class="property-required">required</span>"#.to_string()
         } else {
             String::new()
         },

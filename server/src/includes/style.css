@@ -2137,6 +2137,168 @@ body:has(.privacy-content) {
   margin-bottom: var(--spacing-sm);
 }
 
+/* API Documentation property styling */
+.docs-content .property-item {
+  list-style: none;
+  margin-bottom: var(--spacing-md);
+  padding: var(--spacing-sm) 0;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--theme-border) 30%, transparent);
+}
+
+.docs-content .property-item:last-child {
+  border-bottom: none;
+}
+
+.docs-content .property-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-shrink: 0;
+  min-width: 200px;
+}
+
+.docs-content .property-name {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--theme-primary);
+  font-size: var(--font-size-sm);
+  min-width: 80px;
+}
+
+.docs-content .property-type {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  padding: 2px 6px;
+  background: color-mix(
+    in srgb,
+    var(--theme-heading-secondary) 20%,
+    transparent
+  );
+  color: var(--theme-heading-secondary);
+  border-radius: 3px;
+  font-weight: 500;
+}
+
+.docs-content .property-required {
+  font-size: var(--font-size-xs);
+  padding: 2px 6px;
+  background: color-mix(in srgb, var(--theme-error) 15%, transparent);
+  color: var(--theme-error);
+  border-radius: 3px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.docs-content .property-description {
+  color: var(--theme-text);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  flex: 1;
+}
+
+.docs-content ul:has(.property-item) {
+  padding: 0;
+  margin: 0;
+}
+
+/* Property examples styling - inline with description */
+.docs-content .property-item .code-block {
+  display: inline-block;
+  margin-top: var(--spacing-xs);
+  margin-left: var(--spacing-sm);
+  font-size: var(--font-size-xs);
+  padding: 2px 6px;
+  background: color-mix(in srgb, var(--theme-bg-input) 80%, transparent);
+  border: 1px solid color-mix(in srgb, var(--theme-border) 50%, transparent);
+  border-radius: 3px;
+}
+
+.docs-content .property-item .code-block code {
+  font-size: inherit;
+  background: none;
+  padding: 0;
+}
+
+.docs-content .status-code-item {
+  list-style: none;
+  margin-bottom: var(--spacing-sm);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.docs-content .status-code-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-shrink: 0;
+  min-width: 140px;
+}
+
+.docs-content .status-code {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: var(--font-size-sm);
+  padding: 2px 4px;
+  border-radius: 3px;
+  color: white;
+  width: 40px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.docs-content .status-code.code-200,
+.docs-content .status-code.code-201,
+.docs-content .status-code.code-204 {
+  background: var(--theme-success);
+}
+
+.docs-content .status-code.code-400,
+.docs-content .status-code.code-401,
+.docs-content .status-code.code-403,
+.docs-content .status-code.code-404 {
+  background: var(--theme-error);
+}
+
+.docs-content .status-code.code-500 {
+  background: var(--theme-text-muted);
+}
+
+.docs-content .status-text {
+  font-weight: 600;
+  color: var(--theme-text);
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+  width: 120px;
+  flex-shrink: 0;
+}
+
+.docs-content .status-description {
+  color: var(--theme-text);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  flex: 1;
+}
+
+.docs-content ul:has(.status-code-item) {
+  padding: 0;
+  margin: 0;
+}
+
+/* Status Code examples styling */
+.docs-content .status-code-item .example-section {
+  width: 100%;
+  margin-top: var(--spacing-sm);
+  margin-left: calc(40px + var(--spacing-sm) + 120px + var(--spacing-md));
+}
+
 .impressum-content h4,
 .impressum-content h5,
 .impressum-content h6,
