@@ -274,7 +274,7 @@ const translations: Translations = {
     [I18nKeys.Label.Text]: "📝 Text Message",
     [I18nKeys.Label.Token]: "Token:",
     [I18nKeys.Label.Url]: "Secret URL:",
-    [I18nKeys.Label.Passphrase]: "Passphrase Protection (Optional):",
+    [I18nKeys.Label.Passphrase]: "Passphrase Protection:",
     [I18nKeys.Label.PassphraseInput]: "Passphrase:",
 
     [I18nKeys.Placeholder.Secret]: "Enter your secret message here...",
@@ -294,7 +294,7 @@ const translations: Translations = {
     [I18nKeys.Helper.AllowedCountries]:
       "Enter ISO 3166-1 alpha-2 country codes (one per line) that can access this secret. Leave empty to allow access from any country.",
     [I18nKeys.Helper.AllowedASNs]:
-      "Enter Autonomous System Numbers (ASNs) (one per line) that can access this secret. Common examples: Cloudflare (13335), Google (15169), Amazon (16509).",
+      "Enter Autonomous System Numbers (ASNs) (one per line) that can access this secret. Leave empty to allow access from any ASN.",
     [I18nKeys.Helper.Url]:
       "Enter the URL to access the secret.\nThe decryption key after # is never sent to the server",
     [I18nKeys.Helper.Secret]:
@@ -568,7 +568,7 @@ const translations: Translations = {
     [I18nKeys.Helper.AllowedCountries]:
       "ISO 3166-1 alpha-2 Ländercodes (eine pro Zeile), die auf dieses Secret zugreifen können. Leer lassen, um Zugriff aus jedem Land zu ermöglichen.",
     [I18nKeys.Helper.AllowedASNs]:
-      "Autonome Systemnummern (ASNs) (eine pro Zeile), die auf dieses Secret zugreifen können. Beispiele: Cloudflare (13335), Google (15169), Amazon (16509).",
+      "Autonome Systemnummern (ASNs) (eine pro Zeile), die auf dieses Secret zugreifen können. Leer lassen um Zugriff aus allen autonomen Systemen zu ermöglichen.",
     [I18nKeys.Helper.Url]:
       "URL eigeben um auf das Secret zuzugreifen.\nDer geheime Schlüssel nach dem # wird niemals an den Server gesendet",
     [I18nKeys.Helper.Secret]:
