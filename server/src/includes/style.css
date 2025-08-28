@@ -12,6 +12,7 @@
   --dark-error-light: #ff5d62; /* Kanagawa Light Samurai Red */
   --dark-accent: #6ba5d4; /* Ocean Blue accent */
   --dark-secondary: #7aa89f; /* Kanagawa Wave Blue secondary */
+  --dark-heading-secondary: #dca561; /* Autumn Yellow - Secondary heading color (h4) */
 
   /* Theme Palette - Light (Kanagawa theme) */
   --light-primary: #2d4f67; /* Kanagawa Wave Blue (darker) */
@@ -26,6 +27,7 @@
   --light-error-light: #e82424; /* Kanagawa Samurai Red */
   --light-accent: #5a8ca8; /* Light ocean blue */
   --light-secondary: #76946a; /* Kanagawa Autumn Green */
+  --light-heading-secondary: #b98900; /* Darker Autumn Yellow - Secondary heading color (h4) */
 
   /* Theme-specific values */
   --dark-error-bg: color-mix(in srgb, var(--dark-error) 10%, transparent);
@@ -66,6 +68,7 @@
   --theme-accent: var(--dark-accent);
   --theme-accent-bg: var(--dark-accent-bg);
   --theme-secondary: var(--dark-secondary);
+  --theme-heading-secondary: var(--dark-heading-secondary);
   --theme-success: var(--dark-success);
 
   /* Spacing */
@@ -145,6 +148,7 @@ body[data-theme="light"] {
   --theme-accent: var(--light-accent);
   --theme-accent-bg: var(--light-accent-bg);
   --theme-secondary: var(--light-secondary);
+  --theme-heading-secondary: var(--light-heading-secondary);
   --theme-success: var(--light-success);
 
   /* Override gradient stops for light theme */
@@ -177,6 +181,7 @@ body[data-theme="light"] {
     --theme-accent: var(--light-accent);
     --theme-accent-bg: var(--light-accent-bg);
     --theme-secondary: var(--light-secondary);
+    --theme-heading-secondary: var(--light-heading-secondary);
     --theme-success: var(--light-success);
 
     /* Override gradient stops for system light theme */
@@ -2109,6 +2114,27 @@ body:has(.privacy-content) {
 .impressum-content h3,
 .privacy-content h3 {
   font-size: var(--font-size-lg);
+}
+
+/* API Documentation styling */
+.docs-content h3 {
+  color: var(--theme-accent);
+  font-size: var(--font-size-lg);
+  margin-top: var(--spacing-xl);
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-xs);
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--theme-accent) 20%, transparent);
+}
+
+.docs-content h4 {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--theme-heading-secondary);
+  margin-top: var(--spacing-lg);
+  margin-bottom: var(--spacing-sm);
 }
 
 .impressum-content h4,
