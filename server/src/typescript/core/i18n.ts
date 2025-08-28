@@ -268,7 +268,7 @@ const translations: Translations = {
     [I18nKeys.Label.RestrictAccess]: "Restrict access to this secret",
     [I18nKeys.Label.SaveToken]: "Remember authentication token",
     [I18nKeys.Label.SecretType]: "Secret Type:",
-    [I18nKeys.Label.Secret]: "Secret message:",
+    [I18nKeys.Label.Secret]: "Message:",
     [I18nKeys.Label.SeparateKey]: "Show Key separately",
     [I18nKeys.Label.Size]: "Size:",
     [I18nKeys.Label.Text]: "📝 Text Message",
