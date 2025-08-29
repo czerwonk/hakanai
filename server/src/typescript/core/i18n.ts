@@ -73,6 +73,7 @@ const I18nKeys = {
 
   Button: {
     ChooseFile: "button.chooseFile",
+    Close: "button.close",
     Copied: "button.copied",
     Copy: "button.copy",
     Create: "button.create",
@@ -139,6 +140,7 @@ const I18nKeys = {
     AllowedASNs: "aria.allowedASNs",
     CopySecret: "aria.copySecret",
     DownloadSecret: "aria.downloadSecret",
+    DownloadQRCode: "aria.downloadQRCode",
     ExpiresSelect: "aria.expiresSelect",
     FileInput: "aria.fileInput",
     KeyInput: "aria.keyInput",
@@ -337,6 +339,7 @@ const translations: Translations = {
     [I18nKeys.Button.Retrieve]: "📖 Retrieve Secret",
     [I18nKeys.Button.Copy]: "📋 Copy",
     [I18nKeys.Button.Copied]: "Copied!",
+    [I18nKeys.Button.Close]: "Close",
     [I18nKeys.Button.ShowQrCode]: "Show QR Code",
     [I18nKeys.Button.Download]: "💾 Download",
     [I18nKeys.Button.ChooseFile]: "📁 Choose File",
@@ -395,6 +398,7 @@ const translations: Translations = {
 
     [I18nKeys.Aria.CopySecret]: "Copy secret to clipboard",
     [I18nKeys.Aria.DownloadSecret]: "Download secret as file",
+    [I18nKeys.Aria.DownloadQRCode]: "Download QR code as SVG file",
     [I18nKeys.Aria.AllowedIPs]:
       "Enter IP addresses or CIDR ranges, one per line, to restrict access to this secret",
     [I18nKeys.Aria.AllowedCountries]:
@@ -614,6 +618,7 @@ const translations: Translations = {
     [I18nKeys.Button.Retrieve]: "📖 Secret abrufen",
     [I18nKeys.Button.Copy]: "📋 Kopieren",
     [I18nKeys.Button.Copied]: "Kopiert!",
+    [I18nKeys.Button.Close]: "Schließen",
     [I18nKeys.Button.ShowQrCode]: "QR-Code anzeigen",
     [I18nKeys.Button.Download]: "💾 Speichern",
     [I18nKeys.Button.ChooseFile]: "📁 Datei auswählen",
@@ -680,6 +685,7 @@ const translations: Translations = {
       "ASN-Nummern eingeben, eine pro Zeile, um den Zugriff auf dieses Secret nach Netzwerkanbieter zu beschränken",
     [I18nKeys.Aria.CopySecret]: "Secret in die Zwischenablage kopieren",
     [I18nKeys.Aria.DownloadSecret]: "Secret als Datei herunterladen",
+    [I18nKeys.Aria.DownloadQRCode]: "QR-Code als SVG-Datei herunterladen",
     [I18nKeys.Aria.SecretInput]:
       "Bitte die geheime Nachricht eingeben, die sicher geteult werden soll",
     [I18nKeys.Aria.FileInput]:

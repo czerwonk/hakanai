@@ -344,25 +344,80 @@ function showQRFullscreen(qrSvg: string): void {
   // Create container for the QR code
   const qrFullscreenContainer = document.createElement("div");
   qrFullscreenContainer.className = "qr-fullscreen-container";
-  qrFullscreenContainer.innerHTML = qrSvg;
+
+  // Close handler (declare early for use in close button)
+  const closeModal = () => {
+    overlay.remove();
+    document.removeEventListener("keydown", escapeHandler);
+  };
+
+  // Add close button
+  const closeButton = createButton(
+    "qr-close-button",
+    "✕",
+    window.i18n.t(I18nKeys.Button.Close) || "Close",
+    (e: Event) => {
+      e.stopPropagation(); // Prevent closing the modal
+      closeModal();
+    },
+  );
+  qrFullscreenContainer.appendChild(closeButton);
+
+  // Add QR code
+  const qrContainer = document.createElement("div");
+  qrContainer.innerHTML = qrSvg;
+  qrFullscreenContainer.appendChild(qrContainer);
+
+  // Add download button
+  const downloadButton = createButton(
+    "primary-button qr-download-button",
+    window.i18n.t(I18nKeys.Button.Download) || "Download",
+    window.i18n.t(I18nKeys.Aria.DownloadQRCode),
+    (e: Event) => {
+      e.stopPropagation(); // Prevent closing the modal
+      downloadQRCode(qrSvg);
+    },
+  );
+  qrFullscreenContainer.appendChild(downloadButton);
 
   overlay.appendChild(qrFullscreenContainer);
 
-  // Close on click anywhere
-  overlay.addEventListener("click", () => {
-    overlay.remove();
+  // Close on click
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) {
+      closeModal();
+    }
   });
 
   // Close on Escape key
   const escapeHandler = (e: KeyboardEvent) => {
     if (e.key === "Escape") {
-      overlay.remove();
-      document.removeEventListener("keydown", escapeHandler);
+      closeModal();
     }
   };
   document.addEventListener("keydown", escapeHandler);
 
   document.body.appendChild(overlay);
+}
+
+/**
+ * Download QR code as SVG file
+ */
+function downloadQRCode(svgContent: string): void {
+  // Create a blob from the SVG content
+  const blob = new Blob([svgContent], { type: "image/svg+xml" });
+  const url = URL.createObjectURL(blob);
+
+  // Create a temporary link element and trigger download
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `hakanai-qr-${Date.now()}.svg`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  // Clean up the blob URL
+  setTimeout(() => URL.revokeObjectURL(url), 100);
 }
 
 /**

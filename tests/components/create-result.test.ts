@@ -10,6 +10,10 @@ jest.mock("../../server/src/typescript/core/qr-generator", () => ({
   },
 }));
 
+// Mock URL.createObjectURL and URL.revokeObjectURL
+global.URL.createObjectURL = jest.fn(() => "blob:mock-url");
+global.URL.revokeObjectURL = jest.fn();
+
 describe("Success Display Component", () => {
   let container: HTMLElement;
 
@@ -145,6 +149,43 @@ describe("Success Display Component", () => {
 
       const note = container.querySelector(".secret-note");
       expect(note?.textContent).toBe("msg.createNote");
+    });
+
+    test("should allow QR code download", async () => {
+      const testUrl = "https://example.com/s/123#abcdef";
+
+      displaySuccessResult(testUrl, {
+        container,
+      });
+
+      // Find and click the QR button
+      const qrButton = container.querySelector('[aria-label="button.showQrCode"]') as HTMLButtonElement;
+      expect(qrButton).toBeTruthy();
+
+      // Click QR button to open modal
+      await qrButton.click();
+
+      // Check that modal was created
+      const overlay = document.querySelector('.qr-fullscreen-overlay');
+      expect(overlay).toBeTruthy();
+
+      // Find download button in modal
+      const downloadButton = overlay!.querySelector('.qr-download-button') as HTMLButtonElement;
+      expect(downloadButton).toBeTruthy();
+      expect(downloadButton.textContent).toContain('button.download');
+
+      // Click download button
+      downloadButton.click();
+
+      // Verify blob creation and download
+      expect(global.URL.createObjectURL).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: "image/svg+xml"
+        })
+      );
+
+      // Clean up modal
+      overlay!.remove();
     });
   });
 });

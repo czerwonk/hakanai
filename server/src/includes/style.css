@@ -2548,11 +2548,18 @@ input[type="number"] {
 
 .qr-fullscreen-container {
   background: white;
+  color: black;
   padding: 20px;
   border-radius: 8px;
   max-width: 90vmin;
   max-height: 90vmin;
   animation: scaleIn 0.2s ease-out;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  border: 1px solid var(--light-border);
+  position: relative;
 }
 
 .qr-fullscreen-container svg {
@@ -2560,6 +2567,38 @@ input[type="number"] {
   height: 100%;
   max-width: 80vmin;
   max-height: 80vmin;
+}
+
+.qr-close-button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: #999;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  line-height: 1;
+  z-index: 1;
+  padding: 0;
+}
+
+.qr-close-button:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #777;
+}
+
+.qr-download-button {
+  margin-top: 0.5rem;
+  background: var(--light-primary) !important;
+  color: var(--light-bg-container) !important;
+  border: 1px solid var(--light-border) !important;
 }
 
 /* Animations */
