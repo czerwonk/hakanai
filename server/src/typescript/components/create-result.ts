@@ -5,6 +5,7 @@ import { copyToClipboard, copyToClipboardByElementId } from "../core/clipboard";
 import { QRCodeGenerator } from "../core/qr-generator";
 import { I18nKeys } from "../core/i18n";
 import type { RestrictionData } from "../core/restriction-data.js";
+import { PreferenceStorage } from "../core/preferences.js";
 
 /**
  * Options for success result display
@@ -12,6 +13,7 @@ import type { RestrictionData } from "../core/restriction-data.js";
 interface SuccessDisplayOptions {
   container: HTMLElement;
   restrictionData?: RestrictionData;
+  initialSeparateKeyModeState?: boolean;
 }
 
 export function displaySuccessResult(
@@ -59,13 +61,115 @@ function createUrlSection(
   const urlContainer = document.createElement("div");
   urlContainer.className = "url-container";
 
-  if (options.separateKeyMode) {
-    createSeparateUrlDisplay(urlContainer, url);
+  // Create URL display container
+  const urlDisplayContainer = document.createElement("div");
+  urlDisplayContainer.id = "urlDisplayContainer";
+
+  // Initial display with saved preference
+  const savedPreference =
+    PreferenceStorage.getSeparateKeyMode() ??
+    options?.initialSeparateKeyModeState ??
+    false;
+  updateUrlDisplay(urlDisplayContainer, url, savedPreference);
+
+  urlContainer.appendChild(urlDisplayContainer);
+  container.appendChild(urlContainer);
+
+  // Add separate key checkbox below the main URL display
+  const checkboxElement = createSeparateKeyCheckbox(
+    (checked) => updateUrlDisplay(urlDisplayContainer, url, checked),
+    savedPreference,
+  );
+  container.appendChild(checkboxElement);
+}
+
+/**
+ * Create security note section
+ */
+function createNoteSection(container: HTMLElement): void {
+  const note = document.createElement("p");
+  note.className = "secret-note";
+
+  const noteText = window.i18n.t(I18nKeys.Msg.CreateNote);
+  const colonIndex = noteText.indexOf(":");
+
+  if (colonIndex > 0) {
+    const strong = document.createElement("strong");
+    strong.textContent = noteText.substring(0, colonIndex + 1);
+    note.appendChild(strong);
+
+    const remaining = document.createTextNode(
+      noteText.substring(colonIndex + 1),
+    );
+    note.appendChild(remaining);
   } else {
-    createCombinedUrlDisplay(urlContainer, url);
+    note.textContent = noteText;
   }
 
-  container.appendChild(urlContainer);
+  container.appendChild(note);
+}
+
+/**
+ * Create access restrictions section
+ */
+function createRestrictionsSection(
+  container: HTMLElement,
+  restrictionData: RestrictionData,
+): void {
+  const restrictionsDiv = document.createElement("div");
+  restrictionsDiv.className = "restrictions-info";
+
+  const title = document.createElement("h4");
+  title.textContent = window.i18n.t(I18nKeys.Restrictions.Applied);
+  restrictionsDiv.appendChild(title);
+
+  const restrictionsList = document.createElement("ul");
+  restrictionsList.className = "restrictions-list";
+
+  if (restrictionData.allowed_ips && restrictionData.allowed_ips.length > 0) {
+    const ipItem = document.createElement("li");
+    const strong = document.createElement("strong");
+    strong.textContent = "IP Addresses: ";
+    ipItem.appendChild(strong);
+    ipItem.appendChild(
+      document.createTextNode(restrictionData.allowed_ips.join(", ")),
+    );
+    restrictionsList.appendChild(ipItem);
+  }
+
+  if (
+    restrictionData.allowed_countries &&
+    restrictionData.allowed_countries.length > 0
+  ) {
+    const countryItem = document.createElement("li");
+    const strong = document.createElement("strong");
+    strong.textContent = "Countries: ";
+    countryItem.appendChild(strong);
+    countryItem.appendChild(
+      document.createTextNode(restrictionData.allowed_countries.join(", ")),
+    );
+    restrictionsList.appendChild(countryItem);
+  }
+
+  if (restrictionData.allowed_asns && restrictionData.allowed_asns.length > 0) {
+    const asnItem = document.createElement("li");
+    const strong = document.createElement("strong");
+    strong.textContent = "Networks (ASN): ";
+    asnItem.appendChild(strong);
+    asnItem.appendChild(
+      document.createTextNode(restrictionData.allowed_asns.join(", ")),
+    );
+    restrictionsList.appendChild(asnItem);
+  }
+
+  if (restrictionData.passphrase && restrictionData.passphrase.trim()) {
+    restrictionsList.appendChild(
+      createPassphraseRestrictionItem(restrictionData.passphrase.trim()),
+    );
+  }
+
+  restrictionsDiv.appendChild(restrictionsList);
+  container.appendChild(restrictionsDiv);
 }
 
 /**
@@ -128,6 +232,62 @@ function createQrButton(url: string): HTMLButtonElement {
       }
     },
   );
+}
+
+/**
+ * Update URL display based on separate key mode
+ */
+function updateUrlDisplay(
+  container: HTMLElement,
+  url: string,
+  separateMode: boolean,
+): void {
+  container.innerHTML = "";
+  if (separateMode) {
+    createSeparateUrlDisplay(container, url);
+  } else {
+    createCombinedUrlDisplay(container, url);
+  }
+}
+
+/**
+ * Create checkbox for separate key mode
+ */
+function createSeparateKeyCheckbox(
+  onChangeCallback: (checked: boolean) => void,
+  initialState: boolean,
+): HTMLElement {
+  const inputGroup = document.createElement("div");
+  inputGroup.className = "input-group";
+
+  // Create checkbox with label wrapper
+  const label = document.createElement("label");
+  label.className = "checkbox-label";
+
+  const checkbox = document.createElement("input");
+  checkbox.type = "checkbox";
+  checkbox.id = "separateKeyCheckbox";
+  checkbox.checked = initialState;
+
+  const labelText = document.createElement("span");
+  labelText.textContent = window.i18n.t(I18nKeys.Label.SeparateKey);
+
+  label.appendChild(checkbox);
+  label.appendChild(labelText);
+  inputGroup.appendChild(label);
+
+  // Add helper text
+  const helperText = document.createElement("span");
+  helperText.className = "input-helper";
+  helperText.textContent = window.i18n.t(I18nKeys.Helper.SeparateKey);
+  inputGroup.appendChild(helperText);
+
+  checkbox.addEventListener("change", () => {
+    PreferenceStorage.saveSeparateKeyMode(checkbox.checked);
+    onChangeCallback(checkbox.checked);
+  });
+
+  return inputGroup;
 }
 
 /**
@@ -206,32 +366,6 @@ function showQRFullscreen(qrSvg: string): void {
 }
 
 /**
- * Create security note section
- */
-function createNoteSection(container: HTMLElement): void {
-  const note = document.createElement("p");
-  note.className = "secret-note";
-
-  const noteText = window.i18n.t(I18nKeys.Msg.CreateNote);
-  const colonIndex = noteText.indexOf(":");
-
-  if (colonIndex > 0) {
-    const strong = document.createElement("strong");
-    strong.textContent = noteText.substring(0, colonIndex + 1);
-    note.appendChild(strong);
-
-    const remaining = document.createTextNode(
-      noteText.substring(colonIndex + 1),
-    );
-    note.appendChild(remaining);
-  } else {
-    note.textContent = noteText;
-  }
-
-  container.appendChild(note);
-}
-
-/**
  * Create passphrase restriction item with show/hide and copy functionality
  */
 function createPassphraseRestrictionItem(passphrase: string): HTMLElement {
@@ -274,67 +408,4 @@ function createPassphraseRestrictionItem(passphrase: string): HTMLElement {
 
   passphraseItem.appendChild(passphraseContainer);
   return passphraseItem;
-}
-
-/**
- * Create access restrictions section
- */
-function createRestrictionsSection(
-  container: HTMLElement,
-  restrictionData: RestrictionData,
-): void {
-  const restrictionsDiv = document.createElement("div");
-  restrictionsDiv.className = "restrictions-info";
-
-  const title = document.createElement("h4");
-  title.textContent = window.i18n.t(I18nKeys.Restrictions.Applied);
-  restrictionsDiv.appendChild(title);
-
-  const restrictionsList = document.createElement("ul");
-  restrictionsList.className = "restrictions-list";
-
-  if (restrictionData.allowed_ips && restrictionData.allowed_ips.length > 0) {
-    const ipItem = document.createElement("li");
-    const strong = document.createElement("strong");
-    strong.textContent = "IP Addresses: ";
-    ipItem.appendChild(strong);
-    ipItem.appendChild(
-      document.createTextNode(restrictionData.allowed_ips.join(", ")),
-    );
-    restrictionsList.appendChild(ipItem);
-  }
-
-  if (
-    restrictionData.allowed_countries &&
-    restrictionData.allowed_countries.length > 0
-  ) {
-    const countryItem = document.createElement("li");
-    const strong = document.createElement("strong");
-    strong.textContent = "Countries: ";
-    countryItem.appendChild(strong);
-    countryItem.appendChild(
-      document.createTextNode(restrictionData.allowed_countries.join(", ")),
-    );
-    restrictionsList.appendChild(countryItem);
-  }
-
-  if (restrictionData.allowed_asns && restrictionData.allowed_asns.length > 0) {
-    const asnItem = document.createElement("li");
-    const strong = document.createElement("strong");
-    strong.textContent = "Networks (ASN): ";
-    asnItem.appendChild(strong);
-    asnItem.appendChild(
-      document.createTextNode(restrictionData.allowed_asns.join(", ")),
-    );
-    restrictionsList.appendChild(asnItem);
-  }
-
-  if (restrictionData.passphrase && restrictionData.passphrase.trim()) {
-    restrictionsList.appendChild(
-      createPassphraseRestrictionItem(restrictionData.passphrase.trim()),
-    );
-  }
-
-  restrictionsDiv.appendChild(restrictionsList);
-  container.appendChild(restrictionsDiv);
 }

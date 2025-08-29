@@ -67,24 +67,3 @@ export class PreferenceStorage {
     return undefined;
   }
 }
-
-/**
- * Initialize separate key checkbox on any page
- * @param checkboxId - The ID of the checkbox element
- */
-export function initSeparateKeyCheckbox(checkbox: HTMLInputElement): void {
-  if (!checkbox) {
-    return;
-  }
-
-  // Restore saved preference
-  const savedPreference = PreferenceStorage.getSeparateKeyMode();
-  if (savedPreference !== undefined) {
-    checkbox.checked = savedPreference;
-  }
-
-  // Save preference when checkbox changes
-  checkbox.addEventListener("change", () => {
-    PreferenceStorage.saveSeparateKeyMode(checkbox.checked);
-  });
-}

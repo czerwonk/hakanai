@@ -37,7 +37,6 @@ describe("Success Display Component", () => {
 
       displaySuccessResult(testUrl, {
         container,
-        separateKeyMode: false,
       });
 
       expect(container.className).toBe("result success");
@@ -77,7 +76,7 @@ describe("Success Display Component", () => {
 
       displaySuccessResult(testUrl, {
         container,
-        separateKeyMode: true,
+        initialSeparateKeyModeState: true,
       });
 
       // Should have two input fields - one for URL, one for key
@@ -122,7 +121,6 @@ describe("Success Display Component", () => {
 
       displaySuccessResult(testUrl, {
         container,
-        separateKeyMode: false,
       });
 
       // Verify i18n.t was called with core keys (QR code might not be generated)
