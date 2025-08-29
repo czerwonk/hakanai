@@ -21,7 +21,6 @@ import { ErrorHandler, handleAPIError } from "./core/error";
 import { initFeatures, fetchAppConfig } from "./core/app-config";
 import { ProgressBar } from "./components/progress-bar";
 import { TTLSelector } from "./components/ttl-selector";
-import { initSeparateKeyCheckbox } from "./core/preferences";
 import { KeyboardShortcuts } from "./core/keyboard-shortcuts";
 import { FileDropzone } from "./components/file-dropzone";
 import { RestrictionsTabs } from "./components/restrictions-tabs";
@@ -188,9 +187,6 @@ function setElementsState(elements: Elements, disabled: boolean): void {
   const saveTokenCheckbox = document.getElementById(
     "saveTokenCookie",
   ) as HTMLInputElement;
-  const separateKeyCheckbox = document.getElementById(
-    "separateKey",
-  ) as HTMLInputElement;
 
   button.disabled = disabled;
   secretInput.disabled = disabled;
@@ -201,7 +197,6 @@ function setElementsState(elements: Elements, disabled: boolean): void {
 
   if (fileInputButton) fileInputButton.disabled = disabled;
   if (saveTokenCheckbox) saveTokenCheckbox.disabled = disabled;
-  if (separateKeyCheckbox) separateKeyCheckbox.disabled = disabled;
 
   ttlSelector?.setEnabled(!disabled);
   fileDropzone?.setEnabled(!disabled);
@@ -351,13 +346,6 @@ function hideForm(): void {
   }
 }
 
-function isSeparateKeyMode(): boolean {
-  const separateKeyCheckbox = document.getElementById(
-    "separateKey",
-  ) as HTMLInputElement;
-  return separateKeyCheckbox?.checked ?? false;
-}
-
 function showSuccess(
   secretUrl: string,
   restrictionData?: RestrictionData,
@@ -371,7 +359,6 @@ function showSuccess(
   hideForm();
   displaySuccessResult(secretUrl, {
     container: resultContainer,
-    separateKeyMode: isSeparateKeyMode(),
     restrictionData,
   });
   announceToScreenReader(window.i18n.t(I18nKeys.Msg.SuccessTitle));
@@ -598,21 +585,6 @@ function initKeyboardShortcuts(): void {
     },
     description: "Create secret",
   });
-
-  // Ctrl + K to toggle separate key mode
-  shortcuts.register({
-    key: "k",
-    ctrl: true,
-    handler: () => {
-      const checkbox = document.getElementById(
-        "separateKey",
-      ) as HTMLInputElement;
-      if (checkbox) {
-        checkbox.checked = !checkbox.checked;
-      }
-    },
-    description: "Toggle separate key mode",
-  });
 }
 
 async function initTokenInputVisibility(): Promise<void> {
@@ -695,9 +667,4 @@ document.addEventListener("DOMContentLoaded", async () => {
   await initTokenInputVisibility();
   initRestrictionsCheckbox();
   initKeyboardShortcuts();
-
-  const separateKeyCheckbox = document.getElementById(
-    "separateKey",
-  ) as HTMLInputElement;
-  initSeparateKeyCheckbox(separateKeyCheckbox);
 });

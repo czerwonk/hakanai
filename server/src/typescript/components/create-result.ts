@@ -10,18 +10,9 @@ import type { RestrictionData } from "../core/restriction-data.js";
  * Options for success result display
  */
 interface SuccessDisplayOptions {
-  separateKeyMode?: boolean;
   container: HTMLElement;
   restrictionData?: RestrictionData;
 }
-
-/**
- * Display unified success result with URL, QR code, and security note
- * @param url - The secret URL to display
- * @param options - Configuration options
- */
-// Flag to ensure we only add the cleanup listener once
-let cleanupListenerAdded = false;
 
 export function displaySuccessResult(
   url: string,

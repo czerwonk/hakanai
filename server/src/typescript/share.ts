@@ -9,7 +9,6 @@ import { HakanaiClient } from "./hakanai-client";
 import { initI18n, I18nKeys } from "./core/i18n";
 import { formatFileSize, sanitizeFileName } from "./core/formatters";
 import { hideElement, showElement } from "./core/dom-utils";
-import { initSeparateKeyCheckbox } from "./core/preferences";
 import { KeyboardShortcuts } from "./core/keyboard-shortcuts";
 import { displaySuccessResult } from "./components/create-result";
 import { displayErrorMessage } from "./components/error-display";
@@ -121,14 +120,8 @@ function showSuccess(url: string, restrictions?: RestrictionData): void {
     return;
   }
 
-  const separateKeyCheckbox = document.getElementById(
-    "separate-key-mode",
-  ) as HTMLInputElement;
-  const separateKeyMode = separateKeyCheckbox?.checked ?? false;
-
   displaySuccessResult(url, {
     container: resultContainer,
-    separateKeyMode: separateKeyMode,
     restrictionData: restrictions,
   });
   hideOtherSections("result-success");
@@ -295,21 +288,6 @@ function initKeyboardShortcuts(): void {
     },
     description: "Create secret",
   });
-
-  // Ctrl + K to toggle separate key mode
-  shortcuts.register({
-    key: "k",
-    ctrl: true,
-    handler: () => {
-      const checkbox = document.getElementById(
-        "separate-key-mode",
-      ) as HTMLInputElement;
-      if (checkbox) {
-        checkbox.checked = !checkbox.checked;
-      }
-    },
-    description: "Toggle separate key mode",
-  });
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -324,11 +302,6 @@ document.addEventListener("DOMContentLoaded", () => {
   document
     .getElementById("share-button")
     ?.addEventListener("click", createSecret);
-
-  const separateKeyCheckbox = document.getElementById(
-    "separate-key-mode",
-  ) as HTMLInputElement;
-  initSeparateKeyCheckbox(separateKeyCheckbox);
 
   initShareData();
 });
