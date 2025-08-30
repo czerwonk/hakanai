@@ -22,7 +22,6 @@ pub mod restrictions;
 pub mod secret;
 pub mod token;
 
-// Re-export all public types for convenience
 pub use country_code::CountryCode;
 pub use errors::ValidationError;
 pub use payload::Payload;

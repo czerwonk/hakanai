@@ -12,9 +12,9 @@ use reqwest::Url;
 use zeroize::{Zeroize, Zeroizing};
 
 use crate::client::{Client, ClientError};
-use crate::hash::sha256_truncated_base64_from_bytes;
 use crate::models::Payload;
 use crate::options::{SecretReceiveOptions, SecretSendOptions};
+use crate::utils::hashing;
 
 const AES_GCM_KEY_SIZE: usize = 32; // AES-256 requires a 32-byte key
 const AES_GCM_NONCE_SIZE: usize = 12; // AES-GCM uses a 12-byte nonce
@@ -187,7 +187,7 @@ impl Client<Payload> for CryptoClient {
         let mut crypto_context = CryptoContext::generate();
 
         let data = Zeroizing::new(payload.serialize()?);
-        let hash = sha256_truncated_base64_from_bytes(&data);
+        let hash = hashing::sha256_truncated_base64_from_bytes(&data);
 
         let ciphertext = crypto_context.encrypt(&data)?;
 
@@ -262,7 +262,7 @@ fn decrypt(
 }
 
 fn verify_hash(plaintext: &[u8], expected_hash: &str) -> Result<(), ClientError> {
-    let actual_hash = sha256_truncated_base64_from_bytes(plaintext);
+    let actual_hash = hashing::sha256_truncated_base64_from_bytes(plaintext);
     if actual_hash != expected_hash {
         return Err(ClientError::HashValidationError());
     }

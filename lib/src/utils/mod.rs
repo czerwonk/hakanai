@@ -9,6 +9,7 @@
 //! # Submodules
 //!
 //! - [`content_analysis`] - Functions for analyzing content types (binary vs text detection)
+//! - [`hashing`] - Functions for hashing data
 //! - [`ip_parser`] - Functions for parsing IP addresses and CIDR notation
 //! - [`serde_utils`] - Serde utility functions for custom serialization and deserialization
 //! - [`size_parser`] - Functions for parsing human-readable size strings
@@ -16,6 +17,7 @@
 //!
 
 pub mod content_analysis;
+pub mod hashing;
 pub mod ip_parser;
 pub mod serde_utils;
 pub mod size_parser;

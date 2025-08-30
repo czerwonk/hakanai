@@ -5,7 +5,7 @@ use std::fmt::Display;
 use serde::{Deserialize, Serialize};
 
 use super::CountryCode;
-use crate::hash;
+use crate::utils::hashing;
 
 pub const PASSPHRASE_HEADER_NAME: &str = "X-Secret-Passphrase";
 
@@ -51,7 +51,7 @@ impl SecretRestrictions {
 
     /// Sets the required passhphrase to access the secret
     pub fn with_passphrase(mut self, passphrase: &[u8]) -> Self {
-        let hash = hash::sha256_hex_from_bytes(passphrase);
+        let hash = hashing::sha256_hex_from_bytes(passphrase);
         self.passphrase_hash = Some(hash);
         self
     }

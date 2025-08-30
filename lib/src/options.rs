@@ -3,9 +3,9 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use crate::hash;
 use crate::models::SecretRestrictions;
 use crate::observer::DataTransferObserver;
+use crate::utils::hashing;
 
 /// Options for sending a secret.
 ///
@@ -160,7 +160,7 @@ impl SecretReceiveOptions {
 
     /// Sets a passphrase for accessing the secret
     pub fn with_passphrase(mut self, passphrase: &[u8]) -> Self {
-        let hash = hash::sha256_hex_from_bytes(passphrase);
+        let hash = hashing::sha256_hex_from_bytes(passphrase);
         self.passphrase_hash = Some(hash);
         self
     }
@@ -443,8 +443,8 @@ mod tests {
             .with_passphrase(b"first_password")
             .with_passphrase(b"second_password");
 
-        let hash1 = hash::sha256_hex_from_bytes(b"first_password");
-        let hash2 = hash::sha256_hex_from_bytes(b"second_password");
+        let hash1 = hashing::sha256_hex_from_bytes(b"first_password");
+        let hash2 = hashing::sha256_hex_from_bytes(b"second_password");
 
         assert!(
             opts.passphrase_hash.is_some(),

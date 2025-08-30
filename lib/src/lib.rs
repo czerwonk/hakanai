@@ -112,13 +112,13 @@
 //!
 
 pub mod client;
-mod crypto;
-pub mod hash;
 pub mod models;
 pub mod observer;
 pub mod options;
 pub mod utils;
-mod web;
 
 #[cfg(any(test, feature = "testing"))]
 pub mod client_mock;
+
+mod crypto;
+mod web;
