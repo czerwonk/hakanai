@@ -23,7 +23,7 @@ jobs:
         with:
           node-version: "24"
           cache: "npm"
-          cache-dependency-path: typescript/tests/package-lock.json
+          cache-dependency-path: typescript/package-lock.json
       - name: Install system dependencies
         run: |
           sudo apt-get update
