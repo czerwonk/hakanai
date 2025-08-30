@@ -14,7 +14,7 @@ use zip::ZipArchive;
 use hakanai_lib::client::Client;
 use hakanai_lib::models::Payload;
 use hakanai_lib::options::SecretReceiveOptions;
-use hakanai_lib::timestamp;
+use hakanai_lib::utils::timestamp;
 
 use crate::cli::GetArgs;
 use crate::factory::Factory;

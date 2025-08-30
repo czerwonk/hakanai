@@ -112,13 +112,13 @@
 //!
 
 pub mod client;
-#[cfg(any(test, feature = "testing"))]
-pub mod client_mock;
 mod crypto;
 pub mod hash;
 pub mod models;
 pub mod observer;
 pub mod options;
-pub mod timestamp;
 pub mod utils;
 mod web;
+
+#[cfg(any(test, feature = "testing"))]
+pub mod client_mock;

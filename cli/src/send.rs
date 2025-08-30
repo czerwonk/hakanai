@@ -15,7 +15,7 @@ use zip::{ZipWriter, write::ExtendedFileOptions, write::FileOptions};
 use hakanai_lib::client::Client;
 use hakanai_lib::models::{Payload, SecretRestrictions};
 use hakanai_lib::options::SecretSendOptions;
-use hakanai_lib::timestamp;
+use hakanai_lib::utils::timestamp;
 
 use crate::cli::SendArgs;
 use crate::factory::Factory;

@@ -11,7 +11,7 @@ use tracing::instrument;
 use uuid::Uuid;
 
 use hakanai_lib::models::SecretRestrictions;
-use hakanai_lib::timestamp;
+use hakanai_lib::utils::timestamp;
 
 use crate::data_store::{DataStore, DataStoreError, DataStorePopResult};
 use crate::token::{TokenData, TokenError, TokenStore};
