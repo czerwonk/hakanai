@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import { displaySuccessResult } from "../../server/typescript/components/create-result";
+import { displaySuccessResult } from "../../src/components/create-result";
 
 // Mock the QR code generator
-jest.mock("../../server/typescript/core/qr-generator", () => ({
+jest.mock("../../src/core/qr-generator", () => ({
   QRCodeGenerator: {
     ensureWasmLoaded: jest.fn().mockResolvedValue(undefined),
     generateQRCode: jest.fn().mockReturnValue("<svg>mock qr code</svg>"),

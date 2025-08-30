@@ -4,7 +4,7 @@
  * Tests for Base64UrlSafe encoding/decoding functionality
  */
 
-import { Base64UrlSafe } from "../../server/typescript/hakanai-client";
+import { Base64UrlSafe } from "../../src/hakanai-client";
 
 describe("Base64UrlSafe", () => {
   test("encode and decode round trip with text", () => {

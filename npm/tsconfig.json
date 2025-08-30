@@ -31,6 +31,6 @@
   },
   "files": [
     "index.ts",
-    "../server/typescript/hakanai-client.ts"
+    "../typescript/src/hakanai-client.ts"
   ]
 }

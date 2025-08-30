@@ -9,7 +9,7 @@ import {
   HakanaiErrorCodes,
   Base64UrlSafe,
   ContentAnalysis,
-} from "../../server/typescript/hakanai-client";
+} from "../../src/hakanai-client";
 
 // Helper function to ensure we get proper Uint8Array in tests
 function encodeText(text: string): Uint8Array {
@@ -347,8 +347,7 @@ describe("Error Code Constants", () => {
   });
 
   test("MISSING vs INVALID error differentiation", async () => {
-    const { InputValidation } =
-      require("../../server/typescript/hakanai-client") as any;
+    const { InputValidation } = require("../../src/hakanai-client") as any;
     const client = new HakanaiClient("http://localhost:8080");
 
     // Test auth token: empty should be valid (no error thrown)

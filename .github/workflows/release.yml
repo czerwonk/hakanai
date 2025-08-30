@@ -37,12 +37,12 @@ jobs:
       - name: Add wasm32 target
         run: rustup target add wasm32-unknown-unknown
       - name: Ensure npm modules are installed
-        run: npm install
+        run: npm install --prefix typescript
 
       - name: Compile WASM
         run: cd wasm && ./build.sh
       - name: Compile TypeScript
-        run: npx rollup -c
+        run: npm run build --prefix typescript
 
       - name: Upload compiled assets
         uses: actions/upload-artifact@v4

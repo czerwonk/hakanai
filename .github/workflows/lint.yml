@@ -23,7 +23,7 @@ jobs:
         with:
           node-version: "24"
           cache: "npm"
-          cache-dependency-path: tests/package-lock.json
+          cache-dependency-path: typescript/tests/package-lock.json
       - name: Install system dependencies
         run: |
           sudo apt-get update
@@ -35,7 +35,7 @@ jobs:
       - name: Add wasm32 target
         run: rustup target add wasm32-unknown-unknown
       - name: Ensure npm modules are installed
-        run: npm install
+        run: npm install --prefix typescript
 
       - name: Run clippy
         run: cargo clippy --workspace

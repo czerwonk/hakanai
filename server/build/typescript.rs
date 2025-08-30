@@ -21,7 +21,7 @@ pub fn compile() -> Result<()> {
     // Bundle TypeScript files with Rollup
     let output = Command::new("npx")
         .args(["rollup", "-c"])
-        .current_dir("..") // Run from workspace root where rollup.config.js is located
+        .current_dir("../typescript") // Run from typescript directory where rollup.config.js is located
         .output()?;
 
     if !output.status.success() {

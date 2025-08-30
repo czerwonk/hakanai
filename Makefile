@@ -17,7 +17,7 @@ build-wasm: clean-wasm
 
 .PHONY: build-ts
 build-ts: clean-ts build-wasm
-	npm run build
+	cd typescript && npm run build
 
 .PHONY: release
 release:
@@ -33,7 +33,7 @@ test-rust:
 
 .PHONY: test-ts
 test-ts: build-ts
-	cd tests && npm test
+	cd typescript/tests && npm test
 
 # Clean builds
 .PHONY: clean

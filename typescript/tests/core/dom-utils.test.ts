@@ -6,7 +6,7 @@ import {
   announceToScreenReader,
   secureInputClear,
   generateRandomId,
-} from "../../server/typescript/core/dom-utils";
+} from "../../src/core/dom-utils";
 
 describe("DOM Utilities", () => {
   beforeEach(() => {

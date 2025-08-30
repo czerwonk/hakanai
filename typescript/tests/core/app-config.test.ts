@@ -4,7 +4,7 @@ import {
   initFeatures,
   resetCache,
   fetchAppConfig,
-} from "../../server/typescript/core/app-config";
+} from "../../src/core/app-config";
 
 describe("app-config", () => {
   let fetchMock: jest.Mock;

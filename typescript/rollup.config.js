@@ -20,9 +20,9 @@ const commonConfig = {
 };
 
 const createBundle = (fileName) => ({
-  input: `server/typescript/${fileName}.ts`,
+  input: `src/${fileName}.ts`,
   output: {
-    file: `server/includes/${fileName}.js`,
+    file: `../server/includes/${fileName}.js`,
     format: "es",
   },
   ...commonConfig,

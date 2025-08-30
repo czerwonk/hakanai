@@ -55,10 +55,10 @@ jobs:
         run: rustup target add wasm32-unknown-unknown
 
       - name: Install npm dependencies
-        run: npm install
+        run: npm install --prefix typescript
 
       - name: Build TypeScript
-        run: npm run build
+        run: npm run build --prefix typescript
 
       - name: Build WASM
         run: cd wasm && ./build.sh

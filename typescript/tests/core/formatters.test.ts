@@ -4,7 +4,7 @@ import {
   formatFileSize,
   formatTTL,
   sanitizeFileName,
-} from "../../server/typescript/core/formatters";
+} from "../../src/core/formatters";
 
 describe("formatFileSize", () => {
   test("returns correct formatted sizes", () => {

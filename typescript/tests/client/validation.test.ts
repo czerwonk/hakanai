@@ -4,11 +4,10 @@
  * Input validation tests for all validation functions
  */
 
-import { HakanaiErrorCodes } from "../../server/typescript/hakanai-client";
+import { HakanaiErrorCodes } from "../../src/hakanai-client";
 
 describe("InputValidation", () => {
-  const { InputValidation } =
-    require("../../server/typescript/hakanai-client") as any;
+  const { InputValidation } = require("../../src/hakanai-client") as any;
 
   describe("validateHash", () => {
     test("accepts valid 22-character base64url hashes", () => {

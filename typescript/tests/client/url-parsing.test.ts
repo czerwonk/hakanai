@@ -4,11 +4,10 @@
  * URL parsing tests for secret URLs with hash validation
  */
 
-import { HakanaiErrorCodes } from "../../server/typescript/hakanai-client";
+import { HakanaiErrorCodes } from "../../src/hakanai-client";
 
 describe("UrlParser", () => {
-  const { UrlParser } =
-    require("../../server/typescript/hakanai-client") as any;
+  const { UrlParser } = require("../../src/hakanai-client") as any;
 
   describe("parseSecretUrl", () => {
     test("parses URLs with hash correctly", () => {

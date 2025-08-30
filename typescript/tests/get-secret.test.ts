@@ -11,7 +11,7 @@ describe("get-secret.ts", () => {
       },
     };
 
-    getSecretModule = await import("../server/typescript/get-secret");
+    getSecretModule = await import("../src/get-secret");
   });
 
   describe("URL validation functions", () => {

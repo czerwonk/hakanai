@@ -46,10 +46,10 @@ fn main() -> Result<()> {
     register_files_for_recompilation("templates", "html")?;
     register_files_for_recompilation("templates/docs", "html")?;
     register_files_for_recompilation("templates/partials", "html")?;
-    register_files_for_recompilation("typescript", "ts")?;
-    println!("cargo:rerun-if-changed=tsconfig.json");
-    println!("cargo:rerun-if-changed=rollup.config.js");
-    println!("cargo:rerun-if-changed=package.json");
+    register_files_for_recompilation("../typescript", "ts")?;
+    println!("cargo:rerun-if-changed=../typescript/tsconfig.json");
+    println!("cargo:rerun-if-changed=../typescript/rollup.config.js");
+    println!("cargo:rerun-if-changed=../typescript/package.json");
     println!("cargo:rerun-if-changed=../wasm/src/lib.rs");
     println!("cargo:rerun-if-changed=../wasm/Cargo.toml");
 

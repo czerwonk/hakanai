@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import {
-  I18n,
-  translations,
-  type LanguageCode,
-} from "../../server/typescript/core/i18n";
+import { I18n, translations, type LanguageCode } from "../../src/core/i18n";
 
 describe("I18n Translation Completeness", () => {
   let i18n: I18n;

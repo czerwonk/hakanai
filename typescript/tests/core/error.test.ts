@@ -6,8 +6,8 @@ import {
   isHakanaiError,
   isStandardError,
   isErrorLike,
-} from "../../server/typescript/core/error";
-import { HakanaiErrorCodes } from "../../server/typescript/hakanai-client";
+} from "../../src/core/error";
+import { HakanaiErrorCodes } from "../../src/hakanai-client";
 
 // Type declaration for window.i18n used in tests
 declare global {

@@ -4,7 +4,7 @@
  * Tests for ContentAnalysis binary detection functionality
  */
 
-import { ContentAnalysis } from "../../server/typescript/hakanai-client";
+import { ContentAnalysis } from "../../src/hakanai-client";
 
 // Helper function to ensure we get proper Uint8Array in tests
 function encodeText(text: string): Uint8Array {
