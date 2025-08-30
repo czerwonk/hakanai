@@ -123,7 +123,7 @@ fn build_impressum_html(args: &Args) -> Result<Option<String>> {
                 "Building impressum HTML ({} bytes of content)",
                 content.len()
             );
-            let template = include_str!("includes/impressum.html");
+            let template = include_str!("../includes/impressum.html");
             Some(template.replace(
                 r#"<div id="impressum-content-placeholder"></div>"#,
                 &content,
@@ -140,7 +140,7 @@ fn build_privacy_html(args: &Args) -> Result<Option<String>> {
                 "Building privacy policy HTML ({} bytes of content)",
                 content.len()
             );
-            let template = include_str!("includes/privacy.html");
+            let template = include_str!("../includes/privacy.html");
             Some(template.replace(r#"<div id="privacy-content-placeholder"></div>"#, &content))
         }
         None => None,

@@ -7,62 +7,78 @@ use anyhow::{Context, Result};
 use serde_json::Value;
 use tinytemplate::TinyTemplate;
 
-/// Main function to generate documentation HTML from OpenAPI spec
-pub fn generate_docs_html(openapi: &Value) -> Result<String> {
-    let docs_template = load_template("src/templates/docs/docs.html", "docs template")?;
-    let endpoint_template = load_template("src/templates/docs/endpoint.html", "endpoint template")?;
+use super::cache_buster;
+
+// Main function to generate documentation
+pub fn generate() -> Result<()> {
+    println!("cargo:warning=Generate docs...");
+    let openapi = load_openapi()?;
+
+    let html = generate_docs_html(&openapi).context("failed to generate docs HTML")?;
+
+    fs::write("includes/docs_generated.html", html)
+        .context("failed to write docs_generated.html")?;
+    Ok(())
+}
+
+fn load_openapi() -> Result<Value> {
+    let content =
+        fs::read_to_string("includes/openapi.json").context("failed to read openapi.json")?;
+
+    serde_json::from_str(&content).context("failed to parse openapi.json")
+}
+
+fn generate_docs_html(openapi: &Value) -> Result<String> {
+    let docs_template = load_template("templates/docs/docs.html", "docs template")?;
+    let endpoint_template = load_template("templates/docs/endpoint.html", "endpoint template")?;
 
     // Load component templates
     let schema_section_template = load_template(
-        "src/templates/docs/schema-section.html",
+        "templates/docs/schema-section.html",
         "schema section template",
     )?;
     let schema_definition_template = load_template(
-        "src/templates/docs/schema-definition.html",
+        "templates/docs/schema-definition.html",
         "schema definition template",
     )?;
     let schema_property_template = load_template(
-        "src/templates/docs/schema-property.html",
+        "templates/docs/schema-property.html",
         "schema property template",
     )?;
     let example_single_template = load_template(
-        "src/templates/docs/example-single.html",
+        "templates/docs/example-single.html",
         "single example template",
     )?;
     let example_multiple_template = load_template(
-        "src/templates/docs/example-multiple.html",
+        "templates/docs/example-multiple.html",
         "multiple example template",
     )?;
-    let example_item_template = load_template(
-        "src/templates/docs/example-item.html",
-        "example item template",
-    )?;
-    let status_code_template = load_template(
-        "src/templates/docs/status-code.html",
-        "status code template",
-    )?;
+    let example_item_template =
+        load_template("templates/docs/example-item.html", "example item template")?;
+    let status_code_template =
+        load_template("templates/docs/status-code.html", "status code template")?;
     let property_example_template = load_template(
-        "src/templates/docs/property-example.html",
+        "templates/docs/property-example.html",
         "property example template",
     )?;
     let schema_reference_template = load_template(
-        "src/templates/docs/schema-reference.html",
+        "templates/docs/schema-reference.html",
         "schema reference template",
     )?;
     let schema_description_template = load_template(
-        "src/templates/docs/schema-description.html",
+        "templates/docs/schema-description.html",
         "schema description template",
     )?;
     let schema_properties_header_template = load_template(
-        "src/templates/docs/schema-properties-header.html",
+        "templates/docs/schema-properties-header.html",
         "schema properties header template",
     )?;
     let request_body_header_template = load_template(
-        "src/templates/docs/request-body-header.html",
+        "templates/docs/request-body-header.html",
         "request body header template",
     )?;
     let examples_header_template = load_template(
-        "src/templates/docs/examples-header.html",
+        "templates/docs/examples-header.html",
         "examples header template",
     )?;
 
@@ -304,18 +320,19 @@ fn generate_request_examples(request_body: &Value, tt: &TinyTemplate) -> String 
 /// Generate the schemas section
 fn generate_schemas_section(openapi: &Value, tt: &TinyTemplate) -> String {
     if let Some(components) = openapi["components"].as_object()
-        && let Some(schemas) = components["schemas"].as_object() {
-            let mut schemas_html = String::new();
+        && let Some(schemas) = components["schemas"].as_object()
+    {
+        let mut schemas_html = String::new();
 
-            for (schema_name, schema) in schemas {
-                schemas_html.push_str(&generate_single_schema(schema_name, schema, tt));
-            }
-
-            let mut context = HashMap::new();
-            context.insert("schemas".to_string(), schemas_html);
-
-            return tt.render("schema_section", &context).unwrap_or_default();
+        for (schema_name, schema) in schemas {
+            schemas_html.push_str(&generate_single_schema(schema_name, schema, tt));
         }
+
+        let mut context = HashMap::new();
+        context.insert("schemas".to_string(), schemas_html);
+
+        return tt.render("schema_section", &context).unwrap_or_default();
+    }
 
     String::new()
 }
@@ -475,7 +492,7 @@ fn create_docs_context(
     context.insert("description".to_string(), get_api_description(info));
     context.insert("endpoints".to_string(), endpoints_html.to_string());
     context.insert("schemas".to_string(), schemas_html.to_string());
-    context.insert("cache_buster".to_string(), generate_cache_buster());
+    context.insert("cache_buster".to_string(), cache_buster::generate());
 
     context
 }
@@ -579,17 +596,17 @@ struct TemplatePartials {
 /// Load all template partials
 fn load_partials() -> Result<TemplatePartials> {
     Ok(TemplatePartials {
-        head: fs::read_to_string("src/templates/partials/head.html")
+        head: fs::read_to_string("templates/partials/head.html")
             .context("Failed to read head partial")?,
-        theme_switcher: fs::read_to_string("src/templates/partials/theme-switcher.html")
+        theme_switcher: fs::read_to_string("templates/partials/theme-switcher.html")
             .context("Failed to read theme-switcher partial")?,
-        language_selector: fs::read_to_string("src/templates/partials/language-selector.html")
+        language_selector: fs::read_to_string("templates/partials/language-selector.html")
             .context("Failed to read language-selector partial")?,
-        footer: fs::read_to_string("src/templates/partials/footer.html")
+        footer: fs::read_to_string("templates/partials/footer.html")
             .context("Failed to read footer partial")?,
-        header: fs::read_to_string("src/templates/partials/header.html")
+        header: fs::read_to_string("templates/partials/header.html")
             .context("Failed to read header partial")?,
-        ttl_selector: fs::read_to_string("src/templates/partials/ttl-selector.html")
+        ttl_selector: fs::read_to_string("templates/partials/ttl-selector.html")
             .context("Failed to read ttl-selector partial")?,
     })
 }
@@ -603,37 +620,4 @@ fn apply_partials(template_content: String, partials: &TemplatePartials) -> Stri
         .replace("[[FOOTER]]", &partials.footer)
         .replace("[[HEADER]]", &partials.header)
         .replace("[[TTL_SELECTOR]]", &partials.ttl_selector)
-}
-
-/// Generate cache buster string based on file modification times
-fn generate_cache_buster() -> String {
-    use std::time::SystemTime;
-
-    let get_latest_modified = |path: &str, ext: &str| -> SystemTime {
-        let mut latest = SystemTime::UNIX_EPOCH;
-        if let Ok(entries) = fs::read_dir(path) {
-            for entry in entries.filter_map(|e| e.ok()) {
-                if entry.path().extension().is_some_and(|e| e == ext)
-                    && let Ok(metadata) = entry.metadata()
-                    && let Ok(modified) = metadata.modified()
-                {
-                    latest = latest.max(modified);
-                }
-            }
-        }
-        latest
-    };
-
-    let typescript_modified = get_latest_modified("src/typescript", "ts");
-    let includes_modified = get_latest_modified("src/includes", "css");
-    let templates_modified = get_latest_modified("src/templates", "html");
-
-    [typescript_modified, includes_modified, templates_modified]
-        .iter()
-        .max()
-        .unwrap_or(&SystemTime::UNIX_EPOCH)
-        .duration_since(SystemTime::UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_secs()
-        .to_string()
 }

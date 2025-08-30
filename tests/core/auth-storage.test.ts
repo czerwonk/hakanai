@@ -4,7 +4,7 @@ import {
   saveAuthTokenToStorage,
   getAuthTokenFromStorage,
   clearAuthTokenStorage,
-} from "../../server/src/typescript/core/auth-storage";
+} from "../../server/typescript/core/auth-storage";
 
 describe("SessionStorage Auth Token Management", () => {
   beforeEach(() => {

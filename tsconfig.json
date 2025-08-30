@@ -3,7 +3,7 @@
     "target": "es2022",
     "module": "es2022",
     "lib": ["ES2022", "DOM"],
-    "outDir": "./server/src/includes",
+    "outDir": "./server/includes",
     "allowJs": true,
     "declaration": false,
     "skipLibCheck": true,
@@ -14,11 +14,11 @@
     "forceConsistentCasingInFileNames": true
   },
   "include": [
-    "server/src/typescript/*.ts",
+    "server/typescript/*.ts",
   ],
   "exclude": [
     "node_modules",
     "target",
-    "server/src/includes/*.js"
+    "server/includes/*.js"
   ]
 }

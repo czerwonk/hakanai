@@ -32,13 +32,6 @@
     "testMatch": [
       "**/*.test.ts"
     ],
-    "collectCoverageFrom": [
-      "../server/src/typescript/hakanai-client.ts",
-      "../server/src/typescript/core/i18n.ts",
-      "../server/src/typescript/core/types.ts",
-      "../server/src/typescript/create-secret.ts",
-      "../server/src/typescript/get-secret.ts"
-    ],
     "coverageDirectory": "coverage",
     "coverageReporters": [
       "text",

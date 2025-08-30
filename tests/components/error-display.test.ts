@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import { displayErrorMessage } from "../../server/src/typescript/components/error-display";
+import { displayErrorMessage } from "../../server/typescript/components/error-display";
 
 // Mock DOM utilities
-jest.mock("../../server/src/typescript/core/dom-utils", () => ({
+jest.mock("../../server/typescript/core/dom-utils", () => ({
   announceToScreenReader: jest.fn(),
 }));
 
@@ -108,7 +108,7 @@ describe("Error Display Component", () => {
     test("should announce to screen reader", () => {
       const {
         announceToScreenReader,
-      } = require("../../server/src/typescript/core/dom-utils");
+      } = require("../../server/typescript/core/dom-utils");
       const testMessage = "Screen reader test";
 
       displayErrorMessage(testMessage, container);

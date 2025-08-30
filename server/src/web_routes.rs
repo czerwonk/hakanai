@@ -50,7 +50,7 @@ fn serve_with_caching_header(content: &[u8], content_type: &str, max_age: u64) -
 /// Serves the HTML page for getting a secret
 pub async fn serve_get_secret_html() -> HttpResponse {
     serve_with_caching_header(
-        include_bytes!("includes/get-secret.html"),
+        include_bytes!("../includes/get-secret.html"),
         "text/html",
         HIGHLY_VOLATILE_CACHE_MAX_AGE,
     )
@@ -58,7 +58,7 @@ pub async fn serve_get_secret_html() -> HttpResponse {
 
 async fn serve_create_secret_html() -> HttpResponse {
     serve_with_caching_header(
-        include_bytes!("includes/create-secret.html"),
+        include_bytes!("../includes/create-secret.html"),
         "text/html",
         HIGHLY_VOLATILE_CACHE_MAX_AGE,
     )
@@ -66,7 +66,7 @@ async fn serve_create_secret_html() -> HttpResponse {
 
 async fn serve_js_client() -> impl Responder {
     serve_with_caching_header(
-        include_bytes!("includes/hakanai-client.js"),
+        include_bytes!("../includes/hakanai-client.js"),
         "application/javascript",
         VOLATILE_CACHE_MAX_AGE,
     )
@@ -74,7 +74,7 @@ async fn serve_js_client() -> impl Responder {
 
 async fn serve_css() -> impl Responder {
     serve_with_caching_header(
-        include_bytes!("includes/style.css"),
+        include_bytes!("../includes/style.css"),
         "text/css",
         VOLATILE_CACHE_MAX_AGE,
     )
@@ -106,7 +106,7 @@ async fn serve_icon() -> impl Responder {
 
 async fn serve_get_secret_js() -> impl Responder {
     serve_with_caching_header(
-        include_bytes!("includes/get-secret.js"),
+        include_bytes!("../includes/get-secret.js"),
         "application/javascript",
         VOLATILE_CACHE_MAX_AGE,
     )
@@ -114,7 +114,7 @@ async fn serve_get_secret_js() -> impl Responder {
 
 async fn serve_create_secret_js() -> impl Responder {
     serve_with_caching_header(
-        include_bytes!("includes/create-secret.js"),
+        include_bytes!("../includes/create-secret.js"),
         "application/javascript",
         VOLATILE_CACHE_MAX_AGE,
     )
@@ -122,7 +122,7 @@ async fn serve_create_secret_js() -> impl Responder {
 
 async fn serve_docs_html() -> impl Responder {
     serve_with_caching_header(
-        include_str!("includes/docs_generated.html").as_bytes(),
+        include_str!("../includes/docs_generated.html").as_bytes(),
         "text/html",
         VOLATILE_CACHE_MAX_AGE,
     )
@@ -130,7 +130,7 @@ async fn serve_docs_html() -> impl Responder {
 
 async fn serve_openapi_json() -> impl Responder {
     serve_with_caching_header(
-        include_str!("includes/openapi.json").as_bytes(),
+        include_str!("../includes/openapi.json").as_bytes(),
         "application/json",
         DEFAULT_CACHE_MAX_AGE,
     )
@@ -138,7 +138,7 @@ async fn serve_openapi_json() -> impl Responder {
 
 async fn serve_index() -> HttpResponse {
     serve_with_caching_header(
-        include_bytes!("includes/index.html"),
+        include_bytes!("../includes/index.html"),
         "text/html",
         VOLATILE_CACHE_MAX_AGE,
     )
@@ -146,7 +146,7 @@ async fn serve_index() -> HttpResponse {
 
 async fn serve_manifest() -> impl Responder {
     serve_with_caching_header(
-        include_bytes!("includes/manifest.json"),
+        include_bytes!("../includes/manifest.json"),
         "application/manifest+json",
         DEFAULT_CACHE_MAX_AGE,
     )
@@ -154,7 +154,7 @@ async fn serve_manifest() -> impl Responder {
 
 async fn serve_robots_txt() -> impl Responder {
     serve_with_caching_header(
-        include_bytes!("includes/robots.txt"),
+        include_bytes!("../includes/robots.txt"),
         "text/plain",
         DEFAULT_CACHE_MAX_AGE,
     )
@@ -216,7 +216,7 @@ async fn serve_config(app_data: web::Data<crate::app_data::AppData>) -> impl Res
 
 async fn serve_share_html() -> impl Responder {
     serve_with_caching_header(
-        include_bytes!("includes/share.html"),
+        include_bytes!("../includes/share.html"),
         "text/html",
         HIGHLY_VOLATILE_CACHE_MAX_AGE,
     )
@@ -224,7 +224,7 @@ async fn serve_share_html() -> impl Responder {
 
 async fn serve_share_js() -> impl Responder {
     serve_with_caching_header(
-        include_bytes!("includes/share.js"),
+        include_bytes!("../includes/share.js"),
         "application/javascript",
         VOLATILE_CACHE_MAX_AGE,
     )
@@ -240,7 +240,7 @@ async fn serve_shortcut() -> impl Responder {
 
 async fn serve_common_js() -> impl Responder {
     serve_with_caching_header(
-        include_bytes!("includes/common.js"),
+        include_bytes!("../includes/common.js"),
         "application/javascript",
         VOLATILE_CACHE_MAX_AGE,
     )
@@ -248,7 +248,7 @@ async fn serve_common_js() -> impl Responder {
 
 async fn serve_wasm_js() -> impl Responder {
     serve_with_caching_header(
-        include_bytes!("includes/hakanai_wasm.js"),
+        include_bytes!("../includes/hakanai_wasm.js"),
         "application/javascript",
         HIGHLY_VOLATILE_CACHE_MAX_AGE,
     )
@@ -256,7 +256,7 @@ async fn serve_wasm_js() -> impl Responder {
 
 async fn serve_wasm_binary() -> impl Responder {
     serve_with_caching_header(
-        include_bytes!("includes/hakanai_wasm_bg.wasm"),
+        include_bytes!("../includes/hakanai_wasm_bg.wasm"),
         "application/wasm",
         HIGHLY_VOLATILE_CACHE_MAX_AGE,
     )

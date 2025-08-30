@@ -45,9 +45,9 @@ clean-rust:
 
 .PHONY: clean-ts
 clean-ts:
-	rm -rf server/src/includes/*.js server/src/includes/core server/src/includes/components
+	rm -rf server/includes/*.js server/includes/core server/includes/components
 	rm -rf tests/node_modules tests/coverage
 
 .PHONY: clean-wasm
 clean-wasm:
-	rm -rf server/src/includes/*.wasm
+	rm -rf server/includes/*.wasm

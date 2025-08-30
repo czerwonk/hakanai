@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import { displaySuccessResult } from "../../server/src/typescript/components/create-result";
+import { displaySuccessResult } from "../../server/typescript/components/create-result";
 
 // Mock the QR code generator
-jest.mock("../../server/src/typescript/core/qr-generator", () => ({
+jest.mock("../../server/typescript/core/qr-generator", () => ({
   QRCodeGenerator: {
     ensureWasmLoaded: jest.fn().mockResolvedValue(undefined),
     generateQRCode: jest.fn().mockReturnValue("<svg>mock qr code</svg>"),
@@ -159,20 +159,24 @@ describe("Success Display Component", () => {
       });
 
       // Find and click the QR button
-      const qrButton = container.querySelector('[aria-label="button.showQrCode"]') as HTMLButtonElement;
+      const qrButton = container.querySelector(
+        '[aria-label="button.showQrCode"]',
+      ) as HTMLButtonElement;
       expect(qrButton).toBeTruthy();
 
       // Click QR button to open modal
       await qrButton.click();
 
       // Check that modal was created
-      const overlay = document.querySelector('.qr-fullscreen-overlay');
+      const overlay = document.querySelector(".qr-fullscreen-overlay");
       expect(overlay).toBeTruthy();
 
       // Find download button in modal
-      const downloadButton = overlay!.querySelector('.qr-download-button') as HTMLButtonElement;
+      const downloadButton = overlay!.querySelector(
+        ".qr-download-button",
+      ) as HTMLButtonElement;
       expect(downloadButton).toBeTruthy();
-      expect(downloadButton.textContent).toContain('button.download');
+      expect(downloadButton.textContent).toContain("button.download");
 
       // Click download button
       downloadButton.click();
@@ -180,8 +184,8 @@ describe("Success Display Component", () => {
       // Verify blob creation and download
       expect(global.URL.createObjectURL).toHaveBeenCalledWith(
         expect.objectContaining({
-          type: "image/svg+xml"
-        })
+          type: "image/svg+xml",
+        }),
       );
 
       // Clean up modal

@@ -4,11 +4,11 @@
  * URL parsing tests for secret URLs with hash validation
  */
 
-import { HakanaiErrorCodes } from "../../server/src/typescript/hakanai-client";
+import { HakanaiErrorCodes } from "../../server/typescript/hakanai-client";
 
 describe("UrlParser", () => {
   const { UrlParser } =
-    require("../../server/src/typescript/hakanai-client") as any;
+    require("../../server/typescript/hakanai-client") as any;
 
   describe("parseSecretUrl", () => {
     test("parses URLs with hash correctly", () => {
@@ -50,7 +50,7 @@ describe("UrlParser", () => {
         } catch (error: any) {
           expect(error.code).toBe(HakanaiErrorCodes.MISSING_HASH);
           expect(error.message).toBe(
-            "URL fragment must contain a hash for content integrity verification"
+            "URL fragment must contain a hash for content integrity verification",
           );
         }
       }
@@ -78,7 +78,7 @@ describe("UrlParser", () => {
       } catch (error: any) {
         expect(error.code).toBe(HakanaiErrorCodes.MISSING_HASH);
         expect(error.message).toBe(
-          "URL fragment must contain a hash for content integrity verification"
+          "URL fragment must contain a hash for content integrity verification",
         );
       }
     });
@@ -109,7 +109,7 @@ describe("UrlParser", () => {
       } catch (error: any) {
         expect(error.code).toBe(HakanaiErrorCodes.MISSING_HASH);
         expect(error.message).toBe(
-          "URL fragment must contain a hash for content integrity verification"
+          "URL fragment must contain a hash for content integrity verification",
         );
       }
     });

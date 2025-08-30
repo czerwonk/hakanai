@@ -9,7 +9,7 @@ import {
   HakanaiClient,
   HakanaiErrorCodes,
   Base64UrlSafe,
-} from "../../server/src/typescript/hakanai-client";
+} from "../../server/typescript/hakanai-client";
 
 // Helper function to ensure we get proper Uint8Array in tests
 function encodeText(text: string): Uint8Array {

@@ -4,7 +4,7 @@
  * Tests for ShareData class validation and parsing
  */
 
-import { ShareData } from "../../server/src/typescript/core/share-data";
+import { ShareData } from "../../server/typescript/core/share-data";
 
 describe("ShareData", () => {
   describe("constructor and validation", () => {

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import { initTheme } from "../../server/src/typescript/core/theme";
+import { initTheme } from "../../server/typescript/core/theme";
 
 describe("Theme Management", () => {
   beforeEach(() => {

@@ -4,11 +4,11 @@
  * Input validation tests for all validation functions
  */
 
-import { HakanaiErrorCodes } from "../../server/src/typescript/hakanai-client";
+import { HakanaiErrorCodes } from "../../server/typescript/hakanai-client";
 
 describe("InputValidation", () => {
   const { InputValidation } =
-    require("../../server/src/typescript/hakanai-client") as any;
+    require("../../server/typescript/hakanai-client") as any;
 
   describe("validateHash", () => {
     test("accepts valid 22-character base64url hashes", () => {
@@ -335,17 +335,17 @@ describe("InputValidation", () => {
   describe("validateASN", () => {
     test("accepts valid ASN numbers", () => {
       const validASNs = [
-        1,           // Minimum valid ASN
-        13335,       // Cloudflare
-        15169,       // Google
-        16509,       // Amazon
-        32934,       // Facebook
-        64512,       // Start of private 16-bit range
-        65534,       // End of private 16-bit range  
-        100000,      // Valid ASN
-        4200000000,  // Start of private 32-bit range
-        4294967294,  // End of private 32-bit range
-        4294967295,  // Maximum valid ASN (2^32 - 1)
+        1, // Minimum valid ASN
+        13335, // Cloudflare
+        15169, // Google
+        16509, // Amazon
+        32934, // Facebook
+        64512, // Start of private 16-bit range
+        65534, // End of private 16-bit range
+        100000, // Valid ASN
+        4200000000, // Start of private 32-bit range
+        4294967294, // End of private 32-bit range
+        4294967295, // Maximum valid ASN (2^32 - 1)
       ];
 
       for (const asn of validASNs) {
@@ -365,7 +365,7 @@ describe("InputValidation", () => {
 
     test("rejects negative ASN numbers", () => {
       const negativeASNs = [-1, -100, -65535, -4294967295];
-      
+
       for (const asn of negativeASNs) {
         expect(() => InputValidation.validateASN(asn)).toThrow();
         try {
@@ -378,8 +378,13 @@ describe("InputValidation", () => {
     });
 
     test("rejects ASN numbers above maximum (2^32)", () => {
-      const oversizedASNs = [4294967296, 4294967297, 5000000000, Number.MAX_SAFE_INTEGER];
-      
+      const oversizedASNs = [
+        4294967296,
+        4294967297,
+        5000000000,
+        Number.MAX_SAFE_INTEGER,
+      ];
+
       for (const asn of oversizedASNs) {
         expect(() => InputValidation.validateASN(asn)).toThrow();
         try {
@@ -393,7 +398,7 @@ describe("InputValidation", () => {
 
     test("rejects non-integer ASN values", () => {
       const nonIntegerASNs = [1.5, 100.1, 65535.999, Math.PI];
-      
+
       for (const asn of nonIntegerASNs) {
         expect(() => InputValidation.validateASN(asn)).toThrow();
         try {
@@ -407,7 +412,7 @@ describe("InputValidation", () => {
 
     test("rejects non-number ASN values", () => {
       const invalidInputs = ["13335", null, undefined, {}, [], true, false];
-      
+
       for (const input of invalidInputs) {
         expect(() => InputValidation.validateASN(input as any)).toThrow();
         try {
@@ -422,12 +427,12 @@ describe("InputValidation", () => {
     test("accepts private ASN ranges without error", () => {
       // Private ASN ranges should be accepted (logging can happen server-side)
       const privateASNs = [
-        64512,       // Start of 16-bit private range
-        65000,       // Middle of 16-bit private range
-        65534,       // End of 16-bit private range
-        4200000000,  // Start of 32-bit private range
-        4250000000,  // Middle of 32-bit private range
-        4294967294,  // End of 32-bit private range
+        64512, // Start of 16-bit private range
+        65000, // Middle of 16-bit private range
+        65534, // End of 16-bit private range
+        4200000000, // Start of 32-bit private range
+        4250000000, // Middle of 32-bit private range
+        4294967294, // End of 32-bit private range
       ];
 
       for (const asn of privateASNs) {
@@ -472,9 +477,9 @@ describe("InputValidation", () => {
 
     test("accepts valid restrictions object with allowed_asns", () => {
       const validRestrictions = [
-        { allowed_asns: [13335] },  // Cloudflare
-        { allowed_asns: [15169, 16509] },  // Google and Amazon
-        { allowed_asns: [1, 65535, 4294967295] },  // Min, mid, max
+        { allowed_asns: [13335] }, // Cloudflare
+        { allowed_asns: [15169, 16509] }, // Google and Amazon
+        { allowed_asns: [1, 65535, 4294967295] }, // Min, mid, max
         { allowed_asns: [] },
       ];
 
@@ -533,8 +538,8 @@ describe("InputValidation", () => {
 
     test("rejects invalid allowed_asns array types", () => {
       const invalidRestrictions = [
-        { allowed_asns: 13335 },  // Not an array
-        { allowed_asns: "13335" },  // String instead of array
+        { allowed_asns: 13335 }, // Not an array
+        { allowed_asns: "13335" }, // String instead of array
         { allowed_asns: {} },
         { allowed_asns: true },
       ];
@@ -554,12 +559,12 @@ describe("InputValidation", () => {
 
     test("rejects invalid ASN values in allowed_asns", () => {
       const invalidRestrictions = [
-        { allowed_asns: [0] },  // ASN 0 is reserved
-        { allowed_asns: [-1] },  // Negative ASN
-        { allowed_asns: [4294967296] },  // Above max (2^32)
-        { allowed_asns: [1.5] },  // Non-integer
-        { allowed_asns: ["13335" as any] },  // String instead of number
-        { allowed_asns: [13335, 0] },  // Mix of valid and invalid
+        { allowed_asns: [0] }, // ASN 0 is reserved
+        { allowed_asns: [-1] }, // Negative ASN
+        { allowed_asns: [4294967296] }, // Above max (2^32)
+        { allowed_asns: [1.5] }, // Non-integer
+        { allowed_asns: ["13335" as any] }, // String instead of number
+        { allowed_asns: [13335, 0] }, // Mix of valid and invalid
         { allowed_asns: [null as any] },
         { allowed_asns: [undefined as any] },
       ];

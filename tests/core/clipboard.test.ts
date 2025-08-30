@@ -3,7 +3,7 @@
 import {
   copyToClipboard,
   copyToClipboardByElementId,
-} from "../../server/src/typescript/core/clipboard";
+} from "../../server/typescript/core/clipboard";
 
 describe("Clipboard Operations", () => {
   let mockButton: HTMLButtonElement;
