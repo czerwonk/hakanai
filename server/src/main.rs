@@ -12,8 +12,6 @@ mod otel;
 mod redis_client;
 mod size_limit;
 mod size_limited_json;
-#[cfg(test)]
-mod test_utils;
 mod token;
 mod user;
 mod web_api;
@@ -31,6 +29,9 @@ use tracing::{info, warn};
 use crate::options::Args;
 use crate::redis_client::RedisClient;
 use crate::token::TokenManager;
+
+#[cfg(test)]
+mod test_utils;
 
 #[actix_web::main]
 async fn main() -> Result<()> {
@@ -62,16 +63,18 @@ async fn main() -> Result<()> {
 
     let token_manager = token::TokenManager::new(redis_client.clone());
     if args.reset_admin_token
-        && let Err(e) = reset_admin_token(&token_manager).await {
-            eprintln!("Failed to reset admin token: {e}");
-            return Err(std::io::Error::other(e));
-        }
+        && let Err(e) = reset_admin_token(&token_manager).await
+    {
+        eprintln!("Failed to reset admin token: {e}");
+        return Err(std::io::Error::other(e));
+    }
 
     if args.reset_user_tokens
-        && let Err(e) = reset_user_tokens(&token_manager).await {
-            eprintln!("Failed to reset user tokens: {e}");
-            return Err(std::io::Error::other(e));
-        }
+        && let Err(e) = reset_user_tokens(&token_manager).await
+    {
+        eprintln!("Failed to reset user tokens: {e}");
+        return Err(std::io::Error::other(e));
+    }
 
     if args.reset_user_tokens || args.reset_admin_token {
         return Ok(()); // do not start server on reset
