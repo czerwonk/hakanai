@@ -11,12 +11,12 @@
 //! - [`content_analysis`] - Functions for analyzing content types (binary vs text detection)
 //! - [`hashing`] - Functions for hashing data
 //! - [`ip`] - Functions for parsing IP addresses and CIDR notation
-//! - [`size_parser`] - Functions for parsing human-readable size strings
+//! - [`human_size`] - Functions for parsing human-readable size strings
 //! - [`timestamp`] - Functions for handling and formatting timestamps
 //!
 
 pub mod content_analysis;
 pub mod hashing;
+pub mod human_size;
 pub mod ip;
-pub mod size_parser;
 pub mod timestamp;

@@ -9,8 +9,7 @@ use clap::{Parser, Subcommand};
 use url::Url;
 
 use hakanai_lib::models::CountryCode;
-use hakanai_lib::utils::ip::parse_ipnet;
-use hakanai_lib::utils::size_parser::parse_size_limit;
+use hakanai_lib::utils::{human_size, ip};
 
 const MIN_PASSPHRASE_LENGTH: usize = 8;
 
@@ -102,7 +101,7 @@ pub struct SendArgs {
         env = "HAKANAI_ALLOWED_IPS",
         help = "Comma-separated list of IP addresses (CIDR notation) that are allowed to access the secret.",
         value_delimiter = ',',
-        value_parser = parse_ipnet
+        value_parser = ip::parse_ipnet,
     )]
     pub allowed_ips: Option<Vec<ipnet::IpNet>>,
 
@@ -377,7 +376,7 @@ pub struct TokenArgs {
         short,
         long,
         help = "Optional upload size limit for secret data before encryption (e.g., 1m, 500k, 1024).",
-        value_parser = parse_size_limit
+        value_parser = human_size::parse,
     )]
     pub limit: Option<i64>,
 }

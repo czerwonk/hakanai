@@ -30,29 +30,29 @@
 /// # Examples
 ///
 /// ```
-/// use hakanai_lib::utils::size_parser::parse_size_limit;
+/// use hakanai_lib::utils::human_size::parse;
 ///
 /// // Plain bytes
-/// assert_eq!(parse_size_limit("1024"), Ok(1024));
-/// assert_eq!(parse_size_limit("0"), Ok(0));
+/// assert_eq!(parse("1024"), Ok(1024));
+/// assert_eq!(parse("0"), Ok(0));
 ///
 /// // Kilobytes
-/// assert_eq!(parse_size_limit("1k"), Ok(1024));
-/// assert_eq!(parse_size_limit("2K"), Ok(2048));
-/// assert_eq!(parse_size_limit("1.5k"), Ok(1536));
+/// assert_eq!(parse("1k"), Ok(1024));
+/// assert_eq!(parse("2K"), Ok(2048));
+/// assert_eq!(parse("1.5k"), Ok(1536));
 ///
 /// // Megabytes
-/// assert_eq!(parse_size_limit("1m"), Ok(1048576));
-/// assert_eq!(parse_size_limit("2M"), Ok(2097152));
-/// assert_eq!(parse_size_limit("0.5m"), Ok(524288));
+/// assert_eq!(parse("1m"), Ok(1048576));
+/// assert_eq!(parse("2M"), Ok(2097152));
+/// assert_eq!(parse("0.5m"), Ok(524288));
 ///
 /// // Whitespace handling
-/// assert_eq!(parse_size_limit("  1k  "), Ok(1024));
+/// assert_eq!(parse("  1k  "), Ok(1024));
 ///
 /// // Error cases
-/// assert!(parse_size_limit("invalid").is_err());
-/// assert!(parse_size_limit("1g").is_err());
-/// assert!(parse_size_limit("").is_err());
+/// assert!(parse("invalid").is_err());
+/// assert!(parse("1g").is_err());
+/// assert!(parse("").is_err());
 /// ```
 ///
 /// # Error Messages
@@ -67,7 +67,7 @@
 /// which is common in computing contexts:
 /// - 1k = 1024 bytes
 /// - 1m = 1024 × 1024 = 1048576 bytes
-pub fn parse_size_limit(s: &str) -> Result<i64, String> {
+pub fn parse(s: &str) -> Result<i64, String> {
     let s = s.trim().to_lowercase();
 
     // Handle plain numbers (assume bytes)
@@ -99,105 +99,105 @@ mod tests {
 
     #[test]
     fn test_parse_bytes() {
-        assert_eq!(parse_size_limit("1024"), Ok(1024));
-        assert_eq!(parse_size_limit("0"), Ok(0));
-        assert_eq!(parse_size_limit("999"), Ok(999));
-        assert_eq!(parse_size_limit("  1024  "), Ok(1024));
+        assert_eq!(parse("1024"), Ok(1024));
+        assert_eq!(parse("0"), Ok(0));
+        assert_eq!(parse("999"), Ok(999));
+        assert_eq!(parse("  1024  "), Ok(1024));
     }
 
     #[test]
     fn test_parse_kilobytes() {
-        assert_eq!(parse_size_limit("1k"), Ok(1024));
-        assert_eq!(parse_size_limit("1K"), Ok(1024));
-        assert_eq!(parse_size_limit("0.5k"), Ok(512));
-        assert_eq!(parse_size_limit("2k"), Ok(2048));
-        assert_eq!(parse_size_limit("  1k  "), Ok(1024));
+        assert_eq!(parse("1k"), Ok(1024));
+        assert_eq!(parse("1K"), Ok(1024));
+        assert_eq!(parse("0.5k"), Ok(512));
+        assert_eq!(parse("2k"), Ok(2048));
+        assert_eq!(parse("  1k  "), Ok(1024));
     }
 
     #[test]
     fn test_parse_megabytes() {
-        assert_eq!(parse_size_limit("1m"), Ok(1048576));
-        assert_eq!(parse_size_limit("1M"), Ok(1048576));
-        assert_eq!(parse_size_limit("0.5m"), Ok(524288));
-        assert_eq!(parse_size_limit("2m"), Ok(2097152));
-        assert_eq!(parse_size_limit("  1m  "), Ok(1048576));
+        assert_eq!(parse("1m"), Ok(1048576));
+        assert_eq!(parse("1M"), Ok(1048576));
+        assert_eq!(parse("0.5m"), Ok(524288));
+        assert_eq!(parse("2m"), Ok(2097152));
+        assert_eq!(parse("  1m  "), Ok(1048576));
     }
 
     #[test]
     fn test_parse_decimal_values() {
-        assert_eq!(parse_size_limit("1.5k"), Ok(1536));
-        assert_eq!(parse_size_limit("2.25m"), Ok(2359296));
-        assert_eq!(parse_size_limit("0.75k"), Ok(768));
+        assert_eq!(parse("1.5k"), Ok(1536));
+        assert_eq!(parse("2.25m"), Ok(2359296));
+        assert_eq!(parse("0.75k"), Ok(768));
     }
 
     #[test]
     fn test_parse_invalid_format() {
         assert!(
-            parse_size_limit("invalid").is_err(),
+            parse("invalid").is_err(),
             "Expected error for 'invalid', got: {:?}",
-            parse_size_limit("invalid")
+            parse("invalid")
         );
         assert!(
-            parse_size_limit("1g").is_err(),
+            parse("1g").is_err(),
             "Expected error for '1g', got: {:?}",
-            parse_size_limit("1g")
+            parse("1g")
         );
         assert!(
-            parse_size_limit("1kb").is_err(),
+            parse("1kb").is_err(),
             "Expected error for '1kb', got: {:?}",
-            parse_size_limit("1kb")
+            parse("1kb")
         );
         assert!(
-            parse_size_limit("k").is_err(),
+            parse("k").is_err(),
             "Expected error for 'k', got: {:?}",
-            parse_size_limit("k")
+            parse("k")
         );
         assert!(
-            parse_size_limit("m").is_err(),
+            parse("m").is_err(),
             "Expected error for 'm', got: {:?}",
-            parse_size_limit("m")
+            parse("m")
         );
         assert!(
-            parse_size_limit("").is_err(),
+            parse("").is_err(),
             "Expected error for empty string, got: {:?}",
-            parse_size_limit("")
+            parse("")
         );
     }
 
     #[test]
     fn test_parse_invalid_numbers() {
         assert!(
-            parse_size_limit("abc").is_err(),
+            parse("abc").is_err(),
             "Expected error for 'abc', got: {:?}",
-            parse_size_limit("abc")
+            parse("abc")
         );
         assert!(
-            parse_size_limit("1.2.3k").is_err(),
+            parse("1.2.3k").is_err(),
             "Expected error for '1.2.3k', got: {:?}",
-            parse_size_limit("1.2.3k")
+            parse("1.2.3k")
         );
         assert!(
-            parse_size_limit("--1k").is_err(),
+            parse("--1k").is_err(),
             "Expected error for '--1k', got: {:?}",
-            parse_size_limit("--1k")
+            parse("--1k")
         );
         assert!(
-            parse_size_limit("1..5m").is_err(),
+            parse("1..5m").is_err(),
             "Expected error for '1..5m', got: {:?}",
-            parse_size_limit("1..5m")
+            parse("1..5m")
         );
     }
 
     #[test]
     fn test_parse_negative_values() {
-        assert_eq!(parse_size_limit("-1"), Ok(-1));
-        assert_eq!(parse_size_limit("-1k"), Ok(-1024));
-        assert_eq!(parse_size_limit("-0.5m"), Ok(-524288));
+        assert_eq!(parse("-1"), Ok(-1));
+        assert_eq!(parse("-1k"), Ok(-1024));
+        assert_eq!(parse("-0.5m"), Ok(-524288));
     }
 
     #[test]
     fn test_parse_large_values() {
-        assert_eq!(parse_size_limit("1000m"), Ok(1048576000));
-        assert_eq!(parse_size_limit("9999k"), Ok(10238976));
+        assert_eq!(parse("1000m"), Ok(1048576000));
+        assert_eq!(parse("9999k"), Ok(10238976));
     }
 }

@@ -3,12 +3,12 @@
 use std::time::Duration;
 
 use clap::Parser;
-use hakanai_lib::utils::ip::parse_ipnet;
-use hakanai_lib::utils::size_parser::parse_size_limit;
+
+use hakanai_lib::utils::{human_size, ip};
 
 /// Parse a size limit for server configuration, returns value in bytes
 fn parse_size_limit_bytes(s: &str) -> Result<usize, String> {
-    let bytes = parse_size_limit(s)?;
+    let bytes = human_size::parse(s)?;
     Ok(bytes.max(1) as usize)
 }
 
@@ -167,7 +167,7 @@ pub struct Args {
         value_delimiter = ',',
         env = "HAKANAI_TRUSTED_IP_RANGES",
         help = "IP ranges (CIDR notation) that bypass size limits. Example: 10.0.0.0/8,192.168.1.0/24",
-        value_parser = parse_ipnet
+        value_parser = ip::parse_ipnet
     )]
     pub trusted_ip_ranges: Option<Vec<ipnet::IpNet>>,
 
