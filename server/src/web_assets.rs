@@ -48,7 +48,7 @@ impl AssetManager {
         Ok(original_content.to_vec())
     }
 
-    /// Get the embedded asset and append any override content if it exists.
+    /// Get the embedded asset and append any custom content if it exists.
     pub async fn get_embedded_asset_append_custom(
         &self,
         name: &str,
@@ -62,6 +62,7 @@ impl AssetManager {
 
         let override_content = self.get_custom(name).await?;
         if let Some(content) = override_content {
+            result_content.push(b'\n');
             result_content.extend_from_slice(&content);
             self.insert_into_cache(name, result_content.clone()).await?;
         }
@@ -193,7 +194,7 @@ mod tests {
     async fn test_get_embedded_asset_append_with_override() -> Result<(), Box<dyn std::error::Error>>
     {
         let temp_dir = TempDir::new()?;
-        create_test_file(&temp_dir, "style.css", b"\n/* custom styles */")?;
+        create_test_file(&temp_dir, "style.css", b"/* custom styles */")?;
 
         let manager = AssetManager::new(Some(temp_dir.path().to_path_buf()));
         let original = b"/* original styles */";
@@ -211,7 +212,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_embedded_asset_append_caching() -> Result<(), Box<dyn std::error::Error>> {
         let temp_dir = TempDir::new()?;
-        create_test_file(&temp_dir, "style.css", b"\n/* custom */")?;
+        create_test_file(&temp_dir, "style.css", b"/* custom */")?;
 
         let manager = AssetManager::new(Some(temp_dir.path().to_path_buf()));
         let original = b"/* base */";
