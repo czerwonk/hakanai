@@ -1183,7 +1183,7 @@ mod tests {
             .uri("/secret")
             .insert_header(("content-type", "application/json"))
             .insert_header(("authorization", "Bearer valid-token"))
-            .set_json(&serde_json::json!({
+            .set_json(serde_json::json!({
                 "data": "dGVzdF9zZWNyZXQ=",
                 "expires_in": 3600,
                 "restrictions": {
@@ -1218,7 +1218,7 @@ mod tests {
             .uri("/secret")
             .insert_header(("content-type", "application/json"))
             .insert_header(("authorization", "Bearer valid-token"))
-            .set_json(&serde_json::json!({
+            .set_json(serde_json::json!({
                 "data": "dGVzdF9zZWNyZXQ=",
                 "expires_in": 3600,
                 "restrictions": {
@@ -1255,7 +1255,7 @@ mod tests {
             .uri("/secret")
             .insert_header(("content-type", "application/json"))
             .insert_header(("authorization", "Bearer valid-token"))
-            .set_json(&serde_json::json!({
+            .set_json(serde_json::json!({
                 "data": "dGVzdF9zZWNyZXQ=",
                 "expires_in": 3600,
                 "restrictions": {
@@ -1289,7 +1289,7 @@ mod tests {
             .uri("/secret")
             .insert_header(("content-type", "application/json"))
             .insert_header(("authorization", "Bearer valid-token"))
-            .set_json(&serde_json::json!({
+            .set_json(serde_json::json!({
                 "data": "dGVzdF9zZWNyZXQ=",
                 "expires_in": 3600,
                 "restrictions": {
@@ -1323,7 +1323,7 @@ mod tests {
             .uri("/secret")
             .insert_header(("content-type", "application/json"))
             .insert_header(("authorization", "Bearer valid-token"))
-            .set_json(&serde_json::json!({
+            .set_json(serde_json::json!({
                 "data": "dGVzdF9zZWNyZXQ=",
                 "expires_in": 3600,
                 "restrictions": {
@@ -1356,7 +1356,7 @@ mod tests {
             .uri("/secret")
             .insert_header(("content-type", "application/json"))
             .insert_header(("authorization", "Bearer valid-token"))
-            .set_json(&serde_json::json!({
+            .set_json(serde_json::json!({
                 "data": "dGVzdF9zZWNyZXQ=",
                 "expires_in": 3600
             }))
@@ -1386,7 +1386,7 @@ mod tests {
             .uri("/secret")
             .insert_header(("content-type", "application/json"))
             .insert_header(("authorization", "Bearer valid-token"))
-            .set_json(&serde_json::json!({
+            .set_json(serde_json::json!({
                 "data": "dGVzdF9zZWNyZXQ=",
                 "expires_in": 3600,
                 "restrictions": {
@@ -1419,7 +1419,7 @@ mod tests {
             .uri("/secret")
             .insert_header(("content-type", "application/json"))
             .insert_header(("authorization", "Bearer valid-token"))
-            .set_json(&serde_json::json!({
+            .set_json(serde_json::json!({
                 "data": "dGVzdF9zZWNyZXQ=",
                 "expires_in": 3600,
                 "restrictions": {
@@ -1452,7 +1452,7 @@ mod tests {
             .uri("/secret")
             .insert_header(("content-type", "application/json"))
             .insert_header(("authorization", "Bearer valid-token"))
-            .set_json(&serde_json::json!({
+            .set_json(serde_json::json!({
                 "data": "dGVzdF9zZWNyZXQ=",
                 "expires_in": 3600,
                 "restrictions": {
