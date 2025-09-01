@@ -15,21 +15,21 @@ pub enum AssetError {
 }
 
 pub struct AssetManager {
-    override_dir: Option<PathBuf>,
+    custom_dir: Option<PathBuf>,
     cache: Mutex<HashMap<String, Vec<u8>>>,
 }
 
 impl AssetManager {
-    /// Create a new AssetManager with an optional override directory.
-    pub fn new(override_path: Option<PathBuf>) -> Self {
+    /// Create a new AssetManager with an optional custom directory.
+    pub fn new(custom_dir: Option<PathBuf>) -> Self {
         AssetManager {
-            override_dir: override_path,
+            custom_dir,
             cache: Mutex::new(HashMap::new()),
         }
     }
 
-    /// Get the embedded asset or an override if it exists.
-    pub async fn get_embedded_asset_or_override(
+    /// Get the embedded asset or an custom asset if it exists.
+    pub async fn get_embedded_asset_or_custom(
         &self,
         name: &str,
         original_content: &[u8],
@@ -39,7 +39,7 @@ impl AssetManager {
             return Ok(cached.clone());
         }
 
-        let override_content = self.load_override(name).await?;
+        let override_content = self.get_custom(name).await?;
         if let Some(content) = override_content {
             self.insert_into_cache(name, content.clone()).await?;
             return Ok(content);
@@ -49,7 +49,7 @@ impl AssetManager {
     }
 
     /// Get the embedded asset and append any override content if it exists.
-    pub async fn get_embedded_asset_append_override(
+    pub async fn get_embedded_asset_append_custom(
         &self,
         name: &str,
         original_content: &[u8],
@@ -60,7 +60,7 @@ impl AssetManager {
 
         let mut result_content = original_content.to_vec();
 
-        let override_content = self.load_override(name).await?;
+        let override_content = self.get_custom(name).await?;
         if let Some(content) = override_content {
             result_content.extend_from_slice(&content);
             self.insert_into_cache(name, result_content.clone()).await?;
@@ -80,8 +80,8 @@ impl AssetManager {
         Ok(())
     }
 
-    async fn load_override(&self, name: &str) -> Result<Option<Vec<u8>>, std::io::Error> {
-        if let Some(dir) = &self.override_dir {
+    async fn get_custom(&self, name: &str) -> Result<Option<Vec<u8>>, std::io::Error> {
+        if let Some(dir) = &self.custom_dir {
             let path = dir.join(name);
 
             if path.exists() {
@@ -116,7 +116,7 @@ mod tests {
         let original = b"original content";
 
         let result = manager
-            .get_embedded_asset_or_override("test.txt", original)
+            .get_embedded_asset_or_custom("test.txt", original)
             .await?;
         assert_eq!(
             result, original,
@@ -134,7 +134,7 @@ mod tests {
         let original = b"original logo";
 
         let result = manager
-            .get_embedded_asset_or_override("logo.svg", original)
+            .get_embedded_asset_or_custom("logo.svg", original)
             .await?;
         assert_eq!(
             result, b"custom logo content",
@@ -153,7 +153,7 @@ mod tests {
 
         // First call loads from file
         let result1 = manager
-            .get_embedded_asset_or_override("favicon.ico", original)
+            .get_embedded_asset_or_custom("favicon.ico", original)
             .await?;
         assert_eq!(
             result1, b"custom favicon",
@@ -165,7 +165,7 @@ mod tests {
 
         // Second call should use cache
         let result2 = manager
-            .get_embedded_asset_or_override("favicon.ico", original)
+            .get_embedded_asset_or_custom("favicon.ico", original)
             .await?;
         assert_eq!(
             result2, b"custom favicon",
@@ -180,7 +180,7 @@ mod tests {
         let original = b"/* original styles */";
 
         let result = manager
-            .get_embedded_asset_append_override("style.css", original)
+            .get_embedded_asset_append_custom("style.css", original)
             .await?;
         assert_eq!(
             result, original,
@@ -199,7 +199,7 @@ mod tests {
         let original = b"/* original styles */";
 
         let result = manager
-            .get_embedded_asset_append_override("style.css", original)
+            .get_embedded_asset_append_custom("style.css", original)
             .await?;
         assert_eq!(
             result, b"/* original styles */\n/* custom styles */",
@@ -218,7 +218,7 @@ mod tests {
 
         // First call combines and caches
         let result1 = manager
-            .get_embedded_asset_append_override("style.css", original)
+            .get_embedded_asset_append_custom("style.css", original)
             .await?;
         assert_eq!(
             result1, b"/* base */\n/* custom */",
@@ -230,7 +230,7 @@ mod tests {
 
         // Second call uses cache
         let result2 = manager
-            .get_embedded_asset_append_override("style.css", original)
+            .get_embedded_asset_append_custom("style.css", original)
             .await?;
         assert_eq!(
             result2, b"/* base */\n/* custom */",
@@ -245,7 +245,7 @@ mod tests {
         let original = b"original";
 
         let result = manager
-            .get_embedded_asset_or_override("test.txt", original)
+            .get_embedded_asset_or_custom("test.txt", original)
             .await?;
         assert_eq!(
             result, original,
@@ -261,7 +261,7 @@ mod tests {
         let original = b"original";
 
         let result = manager
-            .get_embedded_asset_or_override("missing.txt", original)
+            .get_embedded_asset_or_custom("missing.txt", original)
             .await?;
         assert_eq!(
             result, original,

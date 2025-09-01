@@ -196,10 +196,10 @@ pub struct Args {
 
     #[arg(
         long,
-        env = "HAKANAI_ASSET_OVERRIDE_PATH",
+        env = "HAKANAI_CUSTOM_ASSETS_DIR",
         help = "Directory path to override embedded web assets (e.g., for custom branding or theming)."
     )]
-    pub asset_override_dir: Option<PathBuf>,
+    pub custom_assets_dir: Option<PathBuf>,
 }
 
 impl Args {
@@ -262,7 +262,7 @@ mod tests {
             trusted_ip_header: "x-forwarded-for".to_string(),
             country_header: None,
             asn_header: None,
-            asset_override_dir: None,
+            custom_assets_dir: None,
         }
     }
 

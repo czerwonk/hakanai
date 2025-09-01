@@ -77,7 +77,7 @@ async fn serve_js_client() -> impl Responder {
 
 async fn serve_css(asset_manager: web::Data<AssetManager>) -> impl Responder {
     let asset_res = asset_manager
-        .get_embedded_asset_append_override("style.css", include_bytes!("../includes/style.css"))
+        .get_embedded_asset_append_custom("style.css", include_bytes!("../includes/style.css"))
         .await;
 
     match asset_res {
@@ -91,7 +91,7 @@ async fn serve_css(asset_manager: web::Data<AssetManager>) -> impl Responder {
 
 async fn serve_banner(asset_manager: web::Data<AssetManager>) -> impl Responder {
     let asset_res = asset_manager
-        .get_embedded_asset_or_override("banner.svg", include_bytes!("../../banner.svg"))
+        .get_embedded_asset_or_custom("banner.svg", include_bytes!("../../banner.svg"))
         .await;
 
     match asset_res {
@@ -105,7 +105,7 @@ async fn serve_banner(asset_manager: web::Data<AssetManager>) -> impl Responder 
 
 async fn serve_logo(asset_manager: web::Data<AssetManager>) -> impl Responder {
     let asset_res = asset_manager
-        .get_embedded_asset_or_override("logo.svg", include_bytes!("../../logo.svg"))
+        .get_embedded_asset_or_custom("logo.svg", include_bytes!("../../logo.svg"))
         .await;
 
     match asset_res {
@@ -119,7 +119,7 @@ async fn serve_logo(asset_manager: web::Data<AssetManager>) -> impl Responder {
 
 async fn serve_icon(asset_manager: web::Data<AssetManager>) -> impl Responder {
     let asset_res = asset_manager
-        .get_embedded_asset_or_override("icon.svg", include_bytes!("../../icon.svg"))
+        .get_embedded_asset_or_custom("icon.svg", include_bytes!("../../icon.svg"))
         .await;
 
     match asset_res {

@@ -85,7 +85,7 @@ All size limits apply to the secret data before encryption. The server automatic
 
 | Flag | Environment Variable | Description |
 |------|---------------------|-------------|
-| `--override-dir` | `HAKANAI_OVERRIDE_DIR` | Directory containing custom assets (logo, CSS, icons) |
+| `--custom-assets-dir` | `HAKANAI_CUSTOM_ASSETS_DIR` | Directory containing custom assets (logo, CSS, icons) |
 
 For detailed customization options, see [CUSTOMIZATION.md](CUSTOMIZATION.md).
 

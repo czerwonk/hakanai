@@ -48,7 +48,7 @@ where
             webhook_token.clone(),
             webhook_headers.clone(),
         );
-        let asset_manager = AssetManager::new(args.asset_override_dir.clone());
+        let asset_manager = AssetManager::new(args.custom_assets_dir.clone());
         let app_data = AppData {
             data_store: Box::new(data_store.clone()),
             token_validator: Box::new(token_manager.clone()),
