@@ -15,6 +15,7 @@ mod size_limited_json;
 mod token;
 mod user;
 mod web_api;
+mod web_assets;
 mod web_routes;
 mod web_server;
 mod webhook_observer;

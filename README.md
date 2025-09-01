@@ -107,6 +107,7 @@ We implement true client-side encryption - your secrets are encrypted before lea
 - **[CLI Documentation](docs/CLI.md)** - Complete command-line reference
 - **[API Reference](docs/API.md)** - REST API documentation and examples
 - **[Configuration](docs/CONFIGURATION.md)** - Server and CLI configuration options
+- **[Customization](docs/CUSTOMIZATION.md)** - Asset overrides and white-labeling
 - **[Deployment](docs/DEPLOYMENT.md)** - Production deployment and architecture
 - **[Development](docs/DEVELOPMENT.md)** - Building, testing, and contributing
 

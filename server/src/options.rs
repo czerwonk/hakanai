@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
+use std::path::PathBuf;
 use std::time::Duration;
 
 use clap::Parser;
@@ -192,6 +193,13 @@ pub struct Args {
         help = "HTTP header to check for client ASN. This value is required to support Geo-IP based restrcttions"
     )]
     pub asn_header: Option<String>,
+
+    #[arg(
+        long,
+        env = "HAKANAI_ASSET_OVERRIDE_PATH",
+        help = "Directory path to override embedded web assets (e.g., for custom branding or theming)."
+    )]
+    pub asset_override_dir: Option<PathBuf>,
 }
 
 impl Args {
@@ -254,6 +262,7 @@ mod tests {
             trusted_ip_header: "x-forwarded-for".to_string(),
             country_header: None,
             asn_header: None,
+            asset_override_dir: None,
         }
     }
 

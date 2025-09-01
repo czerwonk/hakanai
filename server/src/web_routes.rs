@@ -2,6 +2,9 @@
 
 use actix_web::http::header;
 use actix_web::{HttpResponse, Responder, web};
+use tracing::error;
+
+use crate::web_assets::AssetManager;
 
 const DEFAULT_CACHE_MAX_AGE: u64 = 604800; // 7 days
 const VOLATILE_CACHE_MAX_AGE: u64 = 86400; // 1 day
@@ -72,36 +75,60 @@ async fn serve_js_client() -> impl Responder {
     )
 }
 
-async fn serve_css() -> impl Responder {
-    serve_with_caching_header(
-        include_bytes!("../includes/style.css"),
-        "text/css",
-        VOLATILE_CACHE_MAX_AGE,
-    )
+async fn serve_css(asset_manager: web::Data<AssetManager>) -> impl Responder {
+    let asset_res = asset_manager
+        .get_embedded_asset_append_override("style.css", include_bytes!("../includes/style.css"))
+        .await;
+
+    match asset_res {
+        Ok(content) => serve_with_caching_header(&content, "text/css", VOLATILE_CACHE_MAX_AGE),
+        Err(e) => {
+            error!("Failed to load CSS asset: {e}");
+            HttpResponse::InternalServerError().body("Internal Server Error")
+        }
+    }
 }
 
-async fn serve_banner() -> impl Responder {
-    serve_with_caching_header(
-        include_bytes!("../../banner.svg"),
-        "image/svg+xml",
-        DEFAULT_CACHE_MAX_AGE,
-    )
+async fn serve_banner(asset_manager: web::Data<AssetManager>) -> impl Responder {
+    let asset_res = asset_manager
+        .get_embedded_asset_or_override("banner.svg", include_bytes!("../../banner.svg"))
+        .await;
+
+    match asset_res {
+        Ok(content) => serve_with_caching_header(&content, "image/svg+xml", DEFAULT_CACHE_MAX_AGE),
+        Err(e) => {
+            error!("Failed to load banner asset: {e}");
+            HttpResponse::InternalServerError().body("Internal Server Error")
+        }
+    }
 }
 
-async fn serve_logo() -> impl Responder {
-    serve_with_caching_header(
-        include_bytes!("../../logo.svg"),
-        "image/svg+xml",
-        DEFAULT_CACHE_MAX_AGE,
-    )
+async fn serve_logo(asset_manager: web::Data<AssetManager>) -> impl Responder {
+    let asset_res = asset_manager
+        .get_embedded_asset_or_override("logo.svg", include_bytes!("../../logo.svg"))
+        .await;
+
+    match asset_res {
+        Ok(content) => serve_with_caching_header(&content, "image/svg+xml", DEFAULT_CACHE_MAX_AGE),
+        Err(e) => {
+            error!("Failed to load logo asset: {e}");
+            HttpResponse::InternalServerError().body("Internal Server Error")
+        }
+    }
 }
 
-async fn serve_icon() -> impl Responder {
-    serve_with_caching_header(
-        include_bytes!("../../icon.svg"),
-        "image/svg+xml",
-        DEFAULT_CACHE_MAX_AGE,
-    )
+async fn serve_icon(asset_manager: web::Data<AssetManager>) -> impl Responder {
+    let asset_res = asset_manager
+        .get_embedded_asset_or_override("icon.svg", include_bytes!("../../icon.svg"))
+        .await;
+
+    match asset_res {
+        Ok(content) => serve_with_caching_header(&content, "image/svg+xml", DEFAULT_CACHE_MAX_AGE),
+        Err(e) => {
+            error!("Failed to load icon asset: {e}");
+            HttpResponse::InternalServerError().body("Internal Server Error")
+        }
+    }
 }
 
 async fn serve_get_secret_js() -> impl Responder {

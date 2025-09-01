@@ -17,6 +17,7 @@ use crate::options::Args;
 use crate::size_limit;
 use crate::token::{TokenCreator, TokenValidator};
 use crate::web_api;
+use crate::web_assets::AssetManager;
 use crate::web_routes;
 use crate::webhook_observer::WebhookObserver;
 use crate::{admin_api, observer};
@@ -47,6 +48,7 @@ where
             webhook_token.clone(),
             webhook_headers.clone(),
         );
+        let asset_manager = AssetManager::new(args.asset_override_dir.clone());
         let app_data = AppData {
             data_store: Box::new(data_store.clone()),
             token_validator: Box::new(token_manager.clone()),
@@ -67,6 +69,7 @@ where
             .app_data(web::Data::new(app_data))
             .app_data(web::PayloadConfig::new(size_limit))
             .app_data(web::JsonConfig::default().limit(size_limit))
+            .app_data(web::Data::new(asset_manager))
             .wrap(Logger::new("%a %{X-Forwarded-For}i %t \"%r\" %s %b %Ts"))
             .wrap(RequestTracing::new())
             .wrap(RequestMetrics::default())
