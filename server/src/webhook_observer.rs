@@ -51,6 +51,13 @@ impl SecretObserver for WebhookObserver {
             details.insert("restrictions".to_string(), restrictions.to_string());
         }
 
+        if let Some(ttl) = context.ttl {
+            details.insert(
+                "ttl".to_string(),
+                humantime::format_duration(ttl).to_string(),
+            );
+        }
+
         let payload = WebhookPayload {
             secret_id,
             action: WebhookAction::Created,

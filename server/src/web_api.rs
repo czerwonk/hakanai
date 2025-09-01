@@ -179,8 +179,9 @@ async fn post_secret(
     }
 
     let id = uuid::Uuid::new_v4();
-    let mut ctx =
-        SecretEventContext::new(http_req.headers().clone()).with_user_type(user.user_type);
+    let mut ctx = SecretEventContext::new(http_req.headers().clone())
+        .with_user_type(user.user_type)
+        .with_ttl(req.expires_in);
 
     if let Some(ref restrictions) = req.restrictions {
         app_data

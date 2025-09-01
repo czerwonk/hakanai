@@ -14,10 +14,7 @@ pub const PASSPHRASE_HEADER_NAME: &str = "X-Secret-Passphrase";
 pub struct SecretRestrictions {
     /// IP addresses/ranges allowed to access the secret
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(
-        default,
-        deserialize_with = "crate::utils::serde_utils::deserialize_ip_nets"
-    )]
+    #[serde(default, deserialize_with = "crate::utils::ip::deserialize_ip_nets")]
     pub allowed_ips: Option<Vec<ipnet::IpNet>>,
 
     /// Geo-IP locations allowed to access the secret

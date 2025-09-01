@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
+use std::time::Duration;
+
 use actix_web::http::header::HeaderMap;
 use async_trait::async_trait;
 use tracing::instrument;
@@ -11,6 +13,8 @@ use crate::user::UserType;
 
 #[derive(Clone)]
 pub struct SecretEventContext {
+    /// Time to live (TTL) of the secret.
+    pub ttl: Option<Duration>,
     /// Headers associated with the secret event.
     pub headers: HeaderMap,
     /// User type associated with the secret event, if any.
@@ -25,6 +29,7 @@ impl SecretEventContext {
             headers,
             user_type: None,
             restrictions: None,
+            ttl: None,
         }
     }
 
@@ -35,6 +40,11 @@ impl SecretEventContext {
 
     pub fn with_restrictions(mut self, restrictions: SecretRestrictions) -> Self {
         self.restrictions = Some(restrictions);
+        self
+    }
+
+    pub fn with_ttl(mut self, ttl: Duration) -> Self {
+        self.ttl = Some(ttl);
         self
     }
 }

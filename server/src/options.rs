@@ -3,7 +3,7 @@
 use std::time::Duration;
 
 use clap::Parser;
-use hakanai_lib::utils::ip_parser::parse_ipnet;
+use hakanai_lib::utils::ip::parse_ipnet;
 use hakanai_lib::utils::size_parser::parse_size_limit;
 
 /// Parse a size limit for server configuration, returns value in bytes

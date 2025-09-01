@@ -8,6 +8,8 @@
 
 use std::net::IpAddr;
 
+use serde::{Deserialize, Deserializer};
+
 /// Parses an IP network from a string (supports both single IPs and CIDR notation).
 ///
 /// This function first attempts to parse the input as CIDR notation. If that fails,
@@ -26,7 +28,7 @@ use std::net::IpAddr;
 /// # Examples
 ///
 /// ```
-/// use hakanai_lib::utils::ip_parser::parse_ipnet;
+/// use hakanai_lib::utils::ip::parse_ipnet;
 ///
 /// // CIDR notation
 /// let network = parse_ipnet("192.168.1.0/24").unwrap();
@@ -63,6 +65,29 @@ pub fn parse_ipnet(s: &str) -> Result<ipnet::IpNet, String> {
     }
 
     Err(format!("Invalid IP address or CIDR notation: {}", s))
+}
+
+/// Custom deserializer for converting JSON string arrays to Vec<ipnet::IpNet>
+pub fn deserialize_ip_nets<'de, D>(deserializer: D) -> Result<Option<Vec<ipnet::IpNet>>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    use serde::de::Error;
+
+    // Handle both Vec<String> and null/missing cases
+    let strings_opt = Option::<Vec<String>>::deserialize(deserializer)?;
+
+    match strings_opt {
+        Some(strings) => {
+            let mut ip_nets = Vec::new();
+            for s in strings {
+                let ip_net = parse_ipnet(&s).map_err(Error::custom)?;
+                ip_nets.push(ip_net);
+            }
+            Ok(Some(ip_nets))
+        }
+        None => Ok(None),
+    }
 }
 
 #[cfg(test)]

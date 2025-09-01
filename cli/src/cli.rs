@@ -9,7 +9,7 @@ use clap::{Parser, Subcommand};
 use url::Url;
 
 use hakanai_lib::models::CountryCode;
-use hakanai_lib::utils::ip_parser::parse_ipnet;
+use hakanai_lib::utils::ip::parse_ipnet;
 use hakanai_lib::utils::size_parser::parse_size_limit;
 
 const MIN_PASSPHRASE_LENGTH: usize = 8;
