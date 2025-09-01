@@ -35,7 +35,7 @@ impl AssetManager {
         original_content: &[u8],
     ) -> Result<Vec<u8>, AssetError> {
         // Check cache first
-        if let Some(cached) = self.from_cache(name).await? {
+        if let Some(cached) = self.asset_from_cache(name).await? {
             return Ok(cached.clone());
         }
 
@@ -54,7 +54,7 @@ impl AssetManager {
         name: &str,
         original_content: &[u8],
     ) -> Result<Vec<u8>, AssetError> {
-        if let Some(cached) = self.from_cache(name).await? {
+        if let Some(cached) = self.asset_from_cache(name).await? {
             return Ok(cached.clone());
         }
 
@@ -69,7 +69,7 @@ impl AssetManager {
         Ok(result_content)
     }
 
-    async fn from_cache(&self, name: &str) -> Result<Option<Vec<u8>>, AssetError> {
+    async fn asset_from_cache(&self, name: &str) -> Result<Option<Vec<u8>>, AssetError> {
         let cache = self.cache.lock().map_err(|_| AssetError::MutexPoisoned)?;
         Ok(cache.get(name).cloned())
     }
