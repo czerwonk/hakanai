@@ -1,0 +1,163 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: ["main"]
+    tags:
+      - "v*"
+  pull_request:
+    branches: ["main"]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: "-Dwarnings"
+
+jobs:
+  # Build TypeScript and WASM assets once for entire pipeline
+  build-assets:
+    runs-on: ubuntu-latest
+    outputs:
+      artifact-name: ${{ steps.set-artifact-name.outputs.name }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set artifact name
+        id: set-artifact-name
+        run: echo "name=compiled-assets-${{ github.run_id }}" >> $GITHUB_OUTPUT
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+          cache-dependency-path: typescript/package-lock.json
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lld
+
+      - name: Install wasm-pack
+        uses: jetli/wasm-pack-action@v0.4.0
+        with:
+          version: "v0.13.1"
+
+      - name: Add wasm32 target
+        run: rustup target add wasm32-unknown-unknown
+
+      - name: Install npm dependencies
+        run: npm install --prefix typescript
+
+      - name: Build TypeScript
+        run: npm run build --prefix typescript
+
+      - name: Build WASM
+        run: cd wasm && ./build.sh
+
+      - name: Upload compiled assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.set-artifact-name.outputs.name }}
+          path: |
+            server/includes/*.js
+            server/includes/*.wasm
+          retention-days: 1
+
+  # Run clippy in parallel with assets
+  clippy:
+    needs: build-assets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download pre-compiled assets
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build-assets.outputs.artifact-name }}
+          path: server/includes/
+
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+
+      - name: Run Clippy
+        env:
+          SKIP_TYPESCRIPT_BUILD: 1
+          SKIP_WASM_BUILD: 1
+        run: cargo clippy --workspace --all-targets --all-features
+
+  # Run Rust tests in parallel with assets
+  rust-test:
+    needs: build-assets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download pre-compiled assets
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build-assets.outputs.artifact-name }}
+          path: server/includes/
+
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+
+      - name: Run Rust tests
+        env:
+          SKIP_TYPESCRIPT_BUILD: 1
+          SKIP_WASM_BUILD: 1
+        run: cargo test --verbose --workspace
+
+  # Run TypeScript tests in parallel
+  typescript-test:
+    needs: build-assets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+          cache-dependency-path: typescript/package-lock.json
+
+      - name: Install npm dependencies
+        run: npm install --prefix typescript
+
+      - name: Run TypeScript tests
+        run: npm test
+        working-directory: ./typescript/tests
+
+  # Gate job to ensure all tests pass
+  tests-passed:
+    needs: [clippy, rust-test, typescript-test]
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "All tests passed!"
+
+  # Trigger release workflows for tags
+  trigger-docker:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [tests-passed, build-assets]
+    uses: ./.github/workflows/docker.yml
+    secrets: inherit
+    with:
+      assets-artifact-name: ${{ needs.build-assets.outputs.artifact-name }}
+
+  trigger-release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [tests-passed, build-assets]
+    uses: ./.github/workflows/release.yml
+    secrets: inherit
+    with:
+      assets-artifact-name: ${{ needs.build-assets.outputs.artifact-name }}
+
+  trigger-publish:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [tests-passed]
+    uses: ./.github/workflows/publish.yml
+    secrets: inherit

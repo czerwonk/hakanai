@@ -1,60 +1,19 @@
 name: Build and Release
 
 on:
-  push:
-    tags:
-      - "v*"
+  workflow_call:
+    inputs:
+      assets-artifact-name:
+        required: true
+        type: string
+        description: "Name of the artifact containing compiled assets"
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  lint-check:
-    uses: ./.github/workflows/lint.yml
-
-  test-check:
-    uses: ./.github/workflows/test.yml
-
-  precompile-assets:
-    name: Pre-compile TypeScript and WASM
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: "24"
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y lld
-      - name: Install wasm-pack
-        uses: jetli/wasm-pack-action@v0.4.0
-        with:
-          version: "v0.13.1"
-      - name: Add wasm32 target
-        run: rustup target add wasm32-unknown-unknown
-      - name: Ensure npm modules are installed
-        run: npm install --prefix typescript
-
-      - name: Compile WASM
-        run: cd wasm && ./build.sh
-      - name: Compile TypeScript
-        run: npm run build --prefix typescript
-
-      - name: Upload compiled assets
-        uses: actions/upload-artifact@v4
-        with:
-          name: compiled-assets
-          path: |
-            server/includes/*.js
-            server/includes/*.wasm
-
   build:
     name: Build - ${{ matrix.platform.release_for }}
-    needs: [lint-check, test-check, precompile-assets]
     strategy:
       matrix:
         platform:
@@ -87,7 +46,7 @@ jobs:
       - name: Download pre-compiled assets
         uses: actions/download-artifact@v4
         with:
-          name: compiled-assets
+          name: ${{ inputs.assets-artifact-name }}
           path: server/includes/
 
       - name: Set skip build flags
