@@ -11,6 +11,8 @@ RUN cargo build --release --package hakanai-server
 
 FROM gcr.io/distroless/cc-debian12
 COPY --from=builder /src/target/release/hakanai-server /app/hakanai-server
+ADD ./server/custom /custom
+ENV HAKANAI_CUSTOM_ASSETS_DIR=/custom
 USER nonroot
 EXPOSE 8080
 ENTRYPOINT ["/app/hakanai-server"]
