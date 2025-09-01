@@ -4,8 +4,9 @@ use std::sync::Arc;
 
 use anyhow::Result;
 
+use hakanai_lib::client::Client;
+use hakanai_lib::models::Payload;
 use hakanai_lib::observer::DataTransferObserver;
-use hakanai_lib::{client::Client, models::Payload};
 
 use crate::observer::ProgressObserver;
 

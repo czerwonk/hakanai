@@ -6,7 +6,6 @@ use std::io::{self, Cursor, Read, Write};
 
 use anyhow::{Result, anyhow};
 use colored::Colorize;
-use hakanai_lib::utils::content_analysis;
 use qrcode::{QrCode, render::unicode};
 use url::Url;
 use zeroize::{Zeroize, Zeroizing};
@@ -15,11 +14,12 @@ use zip::{ZipWriter, write::ExtendedFileOptions, write::FileOptions};
 use hakanai_lib::client::Client;
 use hakanai_lib::models::{Payload, SecretRestrictions};
 use hakanai_lib::options::SecretSendOptions;
+use hakanai_lib::utils::content_analysis;
 use hakanai_lib::utils::timestamp;
 
 use crate::cli::SendArgs;
 use crate::factory::Factory;
-use crate::helper::get_user_agent_name;
+use crate::helper;
 
 #[derive(Debug)]
 struct Secret {
@@ -49,7 +49,7 @@ pub async fn send<T: Factory>(factory: T, args: SendArgs) -> Result<()> {
     let filename = get_filename(&secret, args.clone())?;
     let payload = Payload::from_bytes(secret.bytes.as_ref(), filename);
 
-    let user_agent = get_user_agent_name();
+    let user_agent = helper::get_user_agent_name();
     let observer = factory.new_observer("Sending secret...")?;
     let mut opts = SecretSendOptions::default()
         .with_user_agent(user_agent)

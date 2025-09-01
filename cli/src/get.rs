@@ -18,12 +18,12 @@ use hakanai_lib::utils::timestamp;
 
 use crate::cli::GetArgs;
 use crate::factory::Factory;
-use crate::helper::get_user_agent_name;
+use crate::helper;
 
 pub async fn get<T: Factory>(factory: T, args: GetArgs) -> Result<()> {
     args.validate()?;
 
-    let user_agent = get_user_agent_name();
+    let user_agent = helper::get_user_agent_name();
     let observer = factory.new_observer("Receiving secret...")?;
     let mut opts = SecretReceiveOptions::default()
         .with_user_agent(user_agent)

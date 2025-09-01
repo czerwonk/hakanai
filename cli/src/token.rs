@@ -7,7 +7,7 @@ use rpassword::prompt_password;
 use hakanai_lib::models::{CreateTokenRequest, CreateTokenResponse};
 
 use crate::cli::TokenArgs;
-use crate::helper::get_user_agent_name;
+use crate::helper;
 
 pub async fn token(args: TokenArgs) -> Result<()> {
     let admin_token = prompt_password("Enter admin token: ")?;
@@ -34,7 +34,7 @@ async fn create_token_request(admin_token: &str, args: &TokenArgs) -> Result<Cre
 
     let response = client
         .post(url)
-        .header("User-Agent", get_user_agent_name())
+        .header("User-Agent", helper::get_user_agent_name())
         .header("Authorization", format!("Bearer {admin_token}"))
         .json(&request)
         .send()
