@@ -34,7 +34,6 @@ impl AssetManager {
         name: &str,
         original_content: &[u8],
     ) -> Result<Vec<u8>, AssetError> {
-        // Check cache first
         if let Some(cached) = self.asset_from_cache(name).await? {
             return Ok(cached.clone());
         }
