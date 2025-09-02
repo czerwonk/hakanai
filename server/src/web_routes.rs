@@ -295,37 +295,18 @@ mod tests {
     use crate::app_data::{AnonymousOptions, AppData};
     use actix_web::{App, test, web};
 
-    fn create_test_app_data(impressum_html: Option<String>) -> AppData {
+    fn create_test_app_data() -> AppData {
         AppData::default()
             .with_max_ttl(std::time::Duration::from_secs(7200))
             .with_anonymous_usage(AnonymousOptions {
                 allowed: true,
                 upload_size_limit: 32 * 1024,
             })
-            .with_impressum_html(impressum_html)
     }
 
     #[actix_web::test]
-    async fn test_serve_config_with_impressum() {
-        let app_data = create_test_app_data(Some("Test impressum content".to_string()));
-        let app = test::init_service(
-            App::new()
-                .app_data(web::Data::new(app_data))
-                .route("/config.json", web::get().to(serve_config)),
-        )
-        .await;
-
-        let req = test::TestRequest::get().uri("/config.json").to_request();
-        let resp = test::call_service(&app, req).await;
-
-        assert!(resp.status().is_success());
-        let body: serde_json::Value = test::read_body_json(resp).await;
-        assert_eq!(body["features"]["impressum"], true);
-    }
-
-    #[actix_web::test]
-    async fn test_serve_config_without_impressum() {
-        let app_data = create_test_app_data(None);
+    async fn test_serve_config_defaults() {
+        let app_data = create_test_app_data();
         let app = test::init_service(
             App::new()
                 .app_data(web::Data::new(app_data))
@@ -343,9 +324,82 @@ mod tests {
     }
 
     #[actix_web::test]
+    async fn test_serve_config_with_impressum() {
+        let app_data = create_test_app_data().with_impressum_html("Test impressum content");
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(app_data))
+                .route("/config.json", web::get().to(serve_config)),
+        )
+        .await;
+
+        let req = test::TestRequest::get().uri("/config.json").to_request();
+        let resp = test::call_service(&app, req).await;
+
+        assert!(resp.status().is_success());
+        let body: serde_json::Value = test::read_body_json(resp).await;
+        assert_eq!(body["features"]["impressum"], true);
+    }
+
+    #[actix_web::test]
+    async fn test_serve_config_without_impressum() {
+        let app_data = create_test_app_data();
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(app_data))
+                .route("/config.json", web::get().to(serve_config)),
+        )
+        .await;
+
+        let req = test::TestRequest::get().uri("/config.json").to_request();
+        let resp = test::call_service(&app, req).await;
+
+        assert!(resp.status().is_success());
+        let body: serde_json::Value = test::read_body_json(resp).await;
+        assert_eq!(body["features"]["impressum"], false);
+    }
+
+    #[actix_web::test]
+    async fn test_serve_impressum_configured() {
+        let app_data =
+            create_test_app_data().with_impressum_html("<h1>Impressum</h1><p>Test content</p>");
+
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(app_data))
+                .route("/impressum", web::get().to(serve_impressum)),
+        )
+        .await;
+
+        let req = test::TestRequest::get().uri("/impressum").to_request();
+        let resp = test::call_service(&app, req).await;
+
+        assert!(resp.status().is_success());
+        let body = test::read_body(resp).await;
+        let body_str = std::str::from_utf8(&body).unwrap();
+        assert!(body_str.contains("Impressum"));
+        assert!(body_str.contains("Test content"));
+    }
+
+    #[actix_web::test]
+    async fn test_serve_impressum_not_configured() {
+        let app_data = create_test_app_data();
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(app_data))
+                .route("/impressum", web::get().to(serve_impressum)),
+        )
+        .await;
+
+        let req = test::TestRequest::get().uri("/impressum").to_request();
+        let resp = test::call_service(&app, req).await;
+
+        assert_eq!(resp.status(), 404);
+    }
+
+    #[actix_web::test]
     async fn test_serve_config_with_privacy() {
-        let mut app_data = create_test_app_data(None);
-        app_data.privacy_html = Some("Test privacy content".to_string());
+        let app_data = create_test_app_data().with_privacy_html("Test privacy content");
 
         let app = test::init_service(
             App::new()
@@ -364,8 +418,8 @@ mod tests {
 
     #[actix_web::test]
     async fn test_serve_privacy_configured() {
-        let mut app_data = create_test_app_data(None);
-        app_data.privacy_html = Some("<h1>Privacy Policy</h1><p>Test content</p>".to_string());
+        let app_data =
+            create_test_app_data().with_privacy_html("<h1>Privacy Policy</h1><p>Test content</p>");
 
         let app = test::init_service(
             App::new()
@@ -386,7 +440,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_serve_privacy_not_configured() {
-        let app_data = create_test_app_data(None);
+        let app_data = create_test_app_data();
         let app = test::init_service(
             App::new()
                 .app_data(web::Data::new(app_data))
@@ -403,7 +457,7 @@ mod tests {
     #[actix_web::test]
     async fn test_serve_config_token_input_hidden_with_anonymous() {
         // show_token_input = false, anonymous allowed
-        let mut app_data = create_test_app_data(None);
+        let mut app_data = create_test_app_data();
         app_data.show_token_input = false;
         app_data.anonymous_usage.allowed = true;
 
@@ -423,7 +477,7 @@ mod tests {
     #[actix_web::test]
     async fn test_serve_config_token_input_explicitly_shown() {
         // show_token_input = true, anonymous allowed
-        let mut app_data = create_test_app_data(None);
+        let mut app_data = create_test_app_data();
         app_data.show_token_input = true;
         app_data.anonymous_usage.allowed = true;
 
@@ -443,7 +497,7 @@ mod tests {
     #[actix_web::test]
     async fn test_serve_config_token_input_forced_without_anonymous() {
         // show_token_input = false, anonymous NOT allowed (should force show)
-        let mut app_data = create_test_app_data(None);
+        let mut app_data = create_test_app_data();
         app_data.show_token_input = false;
         app_data.anonymous_usage.allowed = false;
 

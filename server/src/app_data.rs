@@ -115,8 +115,14 @@ impl AppData {
     }
 
     #[cfg(test)]
-    pub fn with_impressum_html(mut self, impressum_html: Option<String>) -> Self {
-        self.impressum_html = impressum_html;
+    pub fn with_impressum_html(mut self, impressum_html: &str) -> Self {
+        self.impressum_html = Some(impressum_html.to_string());
+        self
+    }
+
+    #[cfg(test)]
+    pub fn with_privacy_html(mut self, privacy_html: &str) -> Self {
+        self.privacy_html = Some(privacy_html.to_string());
         self
     }
 

@@ -90,3 +90,87 @@ impl ObserverManager {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::test_utils::MockObserver;
+
+    #[tokio::test]
+    async fn test_notify_secret_created_with_multiple_observers() {
+        let mut manager = ObserverManager::new();
+        let observer1 = MockObserver::new();
+        let observer1_ref = observer1.clone();
+        let observer2 = MockObserver::new();
+        let observer2_ref = observer2.clone();
+
+        manager.register_observer(Box::new(observer1));
+        manager.register_observer(Box::new(observer2));
+
+        let secret_id = Uuid::new_v4();
+        let context = SecretEventContext::new(HeaderMap::new());
+
+        manager.notify_secret_created(secret_id, &context).await;
+
+        let created_events_1 = observer1_ref.get_created_events();
+        let created_events_2 = observer2_ref.get_created_events();
+
+        assert_eq!(
+            created_events_1.len(),
+            1,
+            "First observer should be called for secret creation"
+        );
+        assert_eq!(
+            created_events_1[0].0, secret_id,
+            "First observer should receive correct secret ID"
+        );
+        assert_eq!(
+            created_events_2.len(),
+            1,
+            "Second observer should be called for secret creation"
+        );
+        assert_eq!(
+            created_events_2[0].0, secret_id,
+            "Second observer should receive correct secret ID"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_notify_secret_retrieved_with_multiple_observers() {
+        let mut manager = ObserverManager::new();
+        let observer1 = MockObserver::new();
+        let observer1_ref = observer1.clone();
+        let observer2 = MockObserver::new();
+        let observer2_ref = observer2.clone();
+
+        manager.register_observer(Box::new(observer1));
+        manager.register_observer(Box::new(observer2));
+
+        let secret_id = Uuid::new_v4();
+        let context = SecretEventContext::new(HeaderMap::new());
+
+        manager.notify_secret_retrieved(secret_id, &context).await;
+
+        let retrieved_events_1 = observer1_ref.get_retrieved_events();
+        let retrieved_events_2 = observer2_ref.get_retrieved_events();
+
+        assert_eq!(
+            retrieved_events_1.len(),
+            1,
+            "First observer should be called for secret retrieval"
+        );
+        assert_eq!(
+            retrieved_events_1[0].0, secret_id,
+            "First observer should receive correct secret ID"
+        );
+        assert_eq!(
+            retrieved_events_2.len(),
+            1,
+            "Second observer should be called for secret retrieval"
+        );
+        assert_eq!(
+            retrieved_events_2[0].0, secret_id,
+            "Second observer should receive correct secret ID"
+        );
+    }
+}

@@ -111,7 +111,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_get_embedded_asset_no_override() -> Result<(), AssetError> {
+    async fn test_get_or_custom_no_override() -> Result<(), AssetError> {
         let manager = AssetManager::new(None);
         let original = b"original content";
 
@@ -126,7 +126,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_get_embedded_asset_with_override() -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_get_or_custom_with_override() -> Result<(), Box<dyn std::error::Error>> {
         let temp_dir = TempDir::new()?;
         create_test_file(&temp_dir, "logo.svg", b"custom logo content")?;
 
@@ -144,7 +144,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_get_embedded_asset_caching() -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_get_or_custom_caching() -> Result<(), Box<dyn std::error::Error>> {
         let temp_dir = TempDir::new()?;
         create_test_file(&temp_dir, "favicon.ico", b"custom favicon")?;
 
@@ -175,7 +175,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_get_embedded_asset_append_no_override() -> Result<(), AssetError> {
+    async fn test_get_and_append_no_custom() -> Result<(), AssetError> {
         let manager = AssetManager::new(None);
         let original = b"/* original styles */";
 
@@ -190,8 +190,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_get_embedded_asset_append_with_override() -> Result<(), Box<dyn std::error::Error>>
-    {
+    async fn test_get_and_append_with_custom() -> Result<(), Box<dyn std::error::Error>> {
         let temp_dir = TempDir::new()?;
         create_test_file(&temp_dir, "style.css", b"/* custom styles */")?;
 
@@ -209,7 +208,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_get_embedded_asset_append_caching() -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_get_and_append_caching() -> Result<(), Box<dyn std::error::Error>> {
         let temp_dir = TempDir::new()?;
         create_test_file(&temp_dir, "style.css", b"/* custom */")?;
 
@@ -240,7 +239,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_nonexistent_override_directory() -> Result<(), AssetError> {
+    async fn test_get_or_custom_nonexistent_dir() -> Result<(), AssetError> {
         let manager = AssetManager::new(Some(PathBuf::from("/nonexistent/path")));
         let original = b"original";
 
@@ -255,7 +254,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_nonexistent_override_file() -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_get_or_custom_nonexistent_file() -> Result<(), Box<dyn std::error::Error>> {
         let temp_dir = TempDir::new()?;
         let manager = AssetManager::new(Some(temp_dir.path().to_path_buf()));
         let original = b"original";

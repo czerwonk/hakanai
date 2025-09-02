@@ -257,61 +257,16 @@ fn ensure_ttl_is_valid(expires_in: Duration, max_ttl: Duration) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::{Arc, Mutex};
     use std::time::Duration;
 
-    use actix_web::http::header::HeaderMap;
     use actix_web::{App, test};
-    use async_trait::async_trait;
 
     use crate::app_data::AnonymousOptions;
     use crate::data_store::DataStore;
-    use crate::observer::SecretObserver;
-    use crate::test_utils::{MockDataStore, MockTokenManager};
+    use crate::test_utils::{MockDataStore, MockObserver, MockTokenManager};
     use crate::token::TokenData;
 
     use hakanai_lib::models::SecretRestrictions;
-
-    // Mock observer for testing
-    #[derive(Clone)]
-    struct MockObserver {
-        created_events: Arc<Mutex<Vec<(Uuid, HeaderMap)>>>,
-        retrieved_events: Arc<Mutex<Vec<(Uuid, HeaderMap)>>>,
-    }
-
-    impl MockObserver {
-        fn new() -> Self {
-            MockObserver {
-                created_events: Arc::new(Mutex::new(Vec::new())),
-                retrieved_events: Arc::new(Mutex::new(Vec::new())),
-            }
-        }
-
-        fn get_created_events(&self) -> Vec<(Uuid, HeaderMap)> {
-            self.created_events.lock().unwrap().clone()
-        }
-
-        fn get_retrieved_events(&self) -> Vec<(Uuid, HeaderMap)> {
-            self.retrieved_events.lock().unwrap().clone()
-        }
-    }
-
-    #[async_trait]
-    impl SecretObserver for MockObserver {
-        async fn on_secret_created(&self, secret_id: Uuid, context: &SecretEventContext) {
-            self.created_events
-                .lock()
-                .unwrap()
-                .push((secret_id, context.headers.clone()));
-        }
-
-        async fn on_secret_retrieved(&self, secret_id: Uuid, context: &SecretEventContext) {
-            self.retrieved_events
-                .lock()
-                .unwrap()
-                .push((secret_id, context.headers.clone()));
-        }
-    }
 
     // Helper function to create test AppData with default values
     fn create_test_app_data(

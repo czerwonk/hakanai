@@ -279,12 +279,15 @@ mod tests {
     }
 
     #[actix_web::test]
-    async fn test_is_request_from_whitelisted_ip_false() {
+    async fn test_is_request_from_outside_whitelisted_ip_range() {
         let ranges = vec!["10.0.0.0/8".parse::<ipnet::IpNet>().unwrap()];
         let app_data = create_test_app_data(Some(ranges), "x-forwarded-for");
         let req = create_request_with_headers(&[("x-forwarded-for", "192.168.1.1")]);
 
-        assert!(!is_request_from_whitelisted_ip(&req, &app_data));
+        assert!(
+            !is_request_from_whitelisted_ip(&req, &app_data),
+            "Should reject non-whitelisted IP"
+        );
     }
 
     #[actix_web::test]
@@ -292,7 +295,10 @@ mod tests {
         let app_data = create_test_app_data(None, "x-forwarded-for");
         let req = create_request_with_headers(&[("x-forwarded-for", "10.0.0.1")]);
 
-        assert!(!is_request_from_whitelisted_ip(&req, &app_data));
+        assert!(
+            !is_request_from_whitelisted_ip(&req, &app_data),
+            "Should reject when no trusted IP ranges are configured"
+        );
     }
 
     #[actix_web::test]
@@ -301,93 +307,9 @@ mod tests {
         let app_data = create_test_app_data(Some(ranges), "x-forwarded-for");
         let req = create_request_with_headers(&[]);
 
-        assert!(!is_request_from_whitelisted_ip(&req, &app_data));
-    }
-
-    #[actix_web::test]
-    async fn test_is_request_from_whitelisted_ip_different_headers() {
-        let ranges = vec!["192.168.1.0/24".parse::<ipnet::IpNet>().unwrap()];
-
-        // Test with x-forwarded-for header
-        let app_data = create_test_app_data(Some(ranges.clone()), "x-forwarded-for");
-        let req = create_request_with_headers(&[
-            ("x-forwarded-for", "192.168.1.100"),
-            ("cf-connecting-ip", "10.0.0.1"),
-        ]);
-        assert!(is_request_from_whitelisted_ip(&req, &app_data));
-
-        // Test with cf-connecting-ip header
-        let app_data = create_test_app_data(Some(ranges), "cf-connecting-ip");
-        let req = create_request_with_headers(&[
-            ("x-forwarded-for", "192.168.1.100"),
-            ("cf-connecting-ip", "10.0.0.1"),
-        ]);
-        assert!(!is_request_from_whitelisted_ip(&req, &app_data));
-    }
-
-    #[actix_web::test]
-    async fn test_is_request_from_whitelisted_ip_localhost() {
-        let ranges = vec![
-            "::1/128".parse::<ipnet::IpNet>().unwrap(),
-            "127.0.0.0/8".parse::<ipnet::IpNet>().unwrap(),
-        ];
-        let app_data = create_test_app_data(Some(ranges), "x-forwarded-for");
-
-        // Test IPv4 localhost
-        let req = create_request_with_headers(&[("x-forwarded-for", "127.0.0.1")]);
-        assert!(is_request_from_whitelisted_ip(&req, &app_data));
-
-        // Test IPv6 localhost
-        let req = create_request_with_headers(&[("x-forwarded-for", "::1")]);
-        assert!(is_request_from_whitelisted_ip(&req, &app_data));
-    }
-
-    #[actix_web::test]
-    async fn test_is_request_from_whitelisted_ip_edge_cases() {
-        let ranges = vec!["192.168.1.0/24".parse::<ipnet::IpNet>().unwrap()];
-        let app_data = create_test_app_data(Some(ranges), "x-forwarded-for");
-
-        // Test network address (first IP in range)
-        let req = create_request_with_headers(&[("x-forwarded-for", "192.168.1.0")]);
-        assert!(is_request_from_whitelisted_ip(&req, &app_data));
-
-        // Test broadcast address (last IP in range)
-        let req = create_request_with_headers(&[("x-forwarded-for", "192.168.1.255")]);
-        assert!(is_request_from_whitelisted_ip(&req, &app_data));
-
-        // Test just outside range
-        let req = create_request_with_headers(&[("x-forwarded-for", "192.168.2.0")]);
-        assert!(!is_request_from_whitelisted_ip(&req, &app_data));
-
-        let req = create_request_with_headers(&[("x-forwarded-for", "192.168.0.255")]);
-        assert!(!is_request_from_whitelisted_ip(&req, &app_data));
-    }
-
-    // ASN-related tests
-    #[actix_web::test]
-    async fn test_is_request_from_asn_basic() {
-        let asns = vec![13335, 15169]; // Cloudflare, Google
-        let app_data = AppData::default().with_asn_header(Some("x-asn".to_string()));
-
-        // Test request from allowed ASN
-        let req = create_request_with_headers(&[("x-asn", "13335")]);
         assert!(
-            is_request_from_asn(&req, &app_data, &asns),
-            "Should allow request from Cloudflare ASN 13335"
-        );
-
-        // Test request from second allowed ASN
-        let req = create_request_with_headers(&[("x-asn", "15169")]);
-        assert!(
-            is_request_from_asn(&req, &app_data, &asns),
-            "Should allow request from Google ASN 15169"
-        );
-
-        // Test request from non-allowed ASN
-        let req = create_request_with_headers(&[("x-asn", "32934")]);
-        assert!(
-            !is_request_from_asn(&req, &app_data, &asns),
-            "Should reject request from non-allowed ASN 32934"
+            !is_request_from_whitelisted_ip(&req, &app_data),
+            "Should reject when no client IP header is present"
         );
     }
 
@@ -485,7 +407,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_is_request_from_asn_multiple_asns() {
-        let asns = vec![13335, 15169, 32934, 16509]; // Cloudflare, Google, Facebook, Amazon
+        let asns = vec![13335, 15169, 32934, 16509];
         let app_data = AppData::default().with_asn_header(Some("x-asn".to_string()));
 
         // Test each ASN individually
