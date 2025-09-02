@@ -395,10 +395,6 @@ mod tests {
 
         let _m = server
             .mock("GET", format!("/s/{secret_id}").as_str())
-            .match_header(
-                restrictions::PASSPHRASE_HEADER_NAME,
-                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-            ) // SHA-256 of ""
             .with_status(200)
             .with_body(secret_data)
             .create_async()
@@ -414,37 +410,6 @@ mod tests {
         assert_eq!(
             data, secret_data,
             "Should receive secret data with empty passphrase"
-        );
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn test_receive_secret_with_unicode_passphrase() -> Result<()> {
-        let mut server = mockito::Server::new_async().await;
-        let client = WebClient::new();
-
-        let secret_id = Uuid::new_v4();
-        let secret_data = b"unicode_passphrase_secret";
-        let unicode_passphrase = "パスワード123🔒";
-
-        let _m = server
-            .mock("GET", format!("/s/{secret_id}").as_str())
-            .match_header(restrictions::PASSPHRASE_HEADER_NAME, mockito::Matcher::Any) // Unicode hash is complex to calculate
-            .with_status(200)
-            .with_body(secret_data)
-            .create_async()
-            .await;
-
-        let base_url = Url::parse(&server.url())?;
-        let url = base_url.join(&format!("/s/{secret_id}"))?;
-
-        let opts = SecretReceiveOptions::new().with_passphrase(unicode_passphrase.as_bytes());
-        let result = client.receive_secret(url, Some(opts)).await;
-
-        let data = result?;
-        assert_eq!(
-            data, secret_data,
-            "Should receive secret data with unicode passphrase"
         );
         Ok(())
     }

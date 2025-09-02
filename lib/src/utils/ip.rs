@@ -141,7 +141,12 @@ mod tests {
 
         for (input, expected) in cases {
             let result = parse_ipnet(input).unwrap();
-            assert_eq!(result.to_string(), expected);
+            assert_eq!(
+                result.to_string(),
+                expected,
+                "Private network {} should parse correctly",
+                input
+            );
         }
     }
 
@@ -150,13 +155,15 @@ mod tests {
         let result = parse_ipnet("not-an-ip");
         assert!(
             result.is_err(),
-            "Expected error for invalid IP, got: {:?}",
+            "Invalid IP should be rejected, got: {:?}",
             result
         );
+
+        let error_msg = result.unwrap_err();
         assert!(
-            result
-                .unwrap_err()
-                .contains("Invalid IP address or CIDR notation")
+            error_msg.contains("Invalid IP address or CIDR notation"),
+            "Error message should mention invalid IP or CIDR, got: {}",
+            error_msg
         );
     }
 
@@ -193,7 +200,12 @@ mod tests {
 
         for invalid in invalid_cases {
             let result = parse_ipnet(invalid);
-            assert!(result.is_err(), "Expected error for input: {}", invalid);
+            assert!(
+                result.is_err(),
+                "Malformed input '{}' should be rejected, got: {:?}",
+                invalid,
+                result
+            );
         }
     }
 
@@ -208,7 +220,12 @@ mod tests {
 
         for (input, expected) in cases {
             let result = parse_ipnet(input).unwrap();
-            assert_eq!(result.to_string(), expected);
+            assert_eq!(
+                result.to_string(),
+                expected,
+                "Edge case CIDR {} should parse correctly",
+                input
+            );
         }
     }
 }

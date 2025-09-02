@@ -99,105 +99,199 @@ mod tests {
 
     #[test]
     fn test_parse_bytes() {
-        assert_eq!(parse("1024"), Ok(1024));
-        assert_eq!(parse("0"), Ok(0));
-        assert_eq!(parse("999"), Ok(999));
-        assert_eq!(parse("  1024  "), Ok(1024));
+        assert_eq!(
+            parse("1024"),
+            Ok(1024),
+            "Standard byte value should parse correctly"
+        );
+        assert_eq!(parse("0"), Ok(0), "Zero bytes should parse correctly");
+        assert_eq!(
+            parse("999"),
+            Ok(999),
+            "Arbitrary byte value should parse correctly"
+        );
+        assert_eq!(parse("  1024  "), Ok(1024), "Whitespace should be trimmed");
     }
 
     #[test]
     fn test_parse_kilobytes() {
-        assert_eq!(parse("1k"), Ok(1024));
-        assert_eq!(parse("1K"), Ok(1024));
-        assert_eq!(parse("0.5k"), Ok(512));
-        assert_eq!(parse("2k"), Ok(2048));
-        assert_eq!(parse("  1k  "), Ok(1024));
+        assert_eq!(
+            parse("1k"),
+            Ok(1024),
+            "Lowercase k should parse as kilobytes"
+        );
+        assert_eq!(
+            parse("1K"),
+            Ok(1024),
+            "Uppercase K should parse as kilobytes"
+        );
+        assert_eq!(
+            parse("0.5k"),
+            Ok(512),
+            "Decimal kilobytes should parse correctly"
+        );
+        assert_eq!(
+            parse("2k"),
+            Ok(2048),
+            "Multiple kilobytes should parse correctly"
+        );
+        assert_eq!(
+            parse("  1k  "),
+            Ok(1024),
+            "Whitespace should be trimmed for kilobytes"
+        );
     }
 
     #[test]
     fn test_parse_megabytes() {
-        assert_eq!(parse("1m"), Ok(1048576));
-        assert_eq!(parse("1M"), Ok(1048576));
-        assert_eq!(parse("0.5m"), Ok(524288));
-        assert_eq!(parse("2m"), Ok(2097152));
-        assert_eq!(parse("  1m  "), Ok(1048576));
+        assert_eq!(
+            parse("1m"),
+            Ok(1048576),
+            "Lowercase m should parse as megabytes"
+        );
+        assert_eq!(
+            parse("1M"),
+            Ok(1048576),
+            "Uppercase M should parse as megabytes"
+        );
+        assert_eq!(
+            parse("0.5m"),
+            Ok(524288),
+            "Decimal megabytes should parse correctly"
+        );
+        assert_eq!(
+            parse("2m"),
+            Ok(2097152),
+            "Multiple megabytes should parse correctly"
+        );
+        assert_eq!(
+            parse("  1m  "),
+            Ok(1048576),
+            "Whitespace should be trimmed for megabytes"
+        );
     }
 
     #[test]
     fn test_parse_decimal_values() {
-        assert_eq!(parse("1.5k"), Ok(1536));
-        assert_eq!(parse("2.25m"), Ok(2359296));
-        assert_eq!(parse("0.75k"), Ok(768));
+        assert_eq!(
+            parse("1.5k"),
+            Ok(1536),
+            "Decimal kilobytes should calculate correctly"
+        );
+        assert_eq!(
+            parse("2.25m"),
+            Ok(2359296),
+            "Decimal megabytes should calculate correctly"
+        );
+        assert_eq!(
+            parse("0.75k"),
+            Ok(768),
+            "Fractional kilobytes should calculate correctly"
+        );
     }
 
     #[test]
     fn test_parse_invalid_format() {
+        let result = parse("invalid");
         assert!(
-            parse("invalid").is_err(),
-            "Expected error for 'invalid', got: {:?}",
-            parse("invalid")
+            result.is_err(),
+            "Word 'invalid' should be rejected, got: {:?}",
+            result
         );
+
+        let result = parse("1g");
         assert!(
-            parse("1g").is_err(),
-            "Expected error for '1g', got: {:?}",
-            parse("1g")
+            result.is_err(),
+            "Unsupported 'g' suffix should be rejected, got: {:?}",
+            result
         );
+
+        let result = parse("1kb");
         assert!(
-            parse("1kb").is_err(),
-            "Expected error for '1kb', got: {:?}",
-            parse("1kb")
+            result.is_err(),
+            "Multi-char 'kb' suffix should be rejected, got: {:?}",
+            result
         );
+
+        let result = parse("k");
         assert!(
-            parse("k").is_err(),
-            "Expected error for 'k', got: {:?}",
-            parse("k")
+            result.is_err(),
+            "Suffix without number should be rejected, got: {:?}",
+            result
         );
+
+        let result = parse("m");
         assert!(
-            parse("m").is_err(),
-            "Expected error for 'm', got: {:?}",
-            parse("m")
+            result.is_err(),
+            "Suffix without number should be rejected, got: {:?}",
+            result
         );
+
+        let result = parse("");
         assert!(
-            parse("").is_err(),
-            "Expected error for empty string, got: {:?}",
-            parse("")
+            result.is_err(),
+            "Empty string should be rejected, got: {:?}",
+            result
         );
     }
 
     #[test]
     fn test_parse_invalid_numbers() {
+        let result = parse("abc");
         assert!(
-            parse("abc").is_err(),
-            "Expected error for 'abc', got: {:?}",
-            parse("abc")
+            result.is_err(),
+            "Non-numeric text should be rejected, got: {:?}",
+            result
         );
+
+        let result = parse("1.2.3k");
         assert!(
-            parse("1.2.3k").is_err(),
-            "Expected error for '1.2.3k', got: {:?}",
-            parse("1.2.3k")
+            result.is_err(),
+            "Multiple decimal points should be rejected, got: {:?}",
+            result
         );
+
+        let result = parse("--1k");
         assert!(
-            parse("--1k").is_err(),
-            "Expected error for '--1k', got: {:?}",
-            parse("--1k")
+            result.is_err(),
+            "Double negative should be rejected, got: {:?}",
+            result
         );
+
+        let result = parse("1..5m");
         assert!(
-            parse("1..5m").is_err(),
-            "Expected error for '1..5m', got: {:?}",
-            parse("1..5m")
+            result.is_err(),
+            "Double decimal points should be rejected, got: {:?}",
+            result
         );
     }
 
     #[test]
     fn test_parse_negative_values() {
-        assert_eq!(parse("-1"), Ok(-1));
-        assert_eq!(parse("-1k"), Ok(-1024));
-        assert_eq!(parse("-0.5m"), Ok(-524288));
+        assert_eq!(parse("-1"), Ok(-1), "Negative bytes should parse correctly");
+        assert_eq!(
+            parse("-1k"),
+            Ok(-1024),
+            "Negative kilobytes should parse correctly"
+        );
+        assert_eq!(
+            parse("-0.5m"),
+            Ok(-524288),
+            "Negative decimal megabytes should parse correctly"
+        );
     }
 
     #[test]
     fn test_parse_large_values() {
-        assert_eq!(parse("1000m"), Ok(1048576000));
-        assert_eq!(parse("9999k"), Ok(10238976));
+        assert_eq!(
+            parse("1000m"),
+            Ok(1048576000),
+            "Large megabyte values should parse correctly"
+        );
+        assert_eq!(
+            parse("9999k"),
+            Ok(10238976),
+            "Large kilobyte values should parse correctly"
+        );
     }
 }

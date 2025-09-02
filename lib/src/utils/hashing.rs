@@ -47,28 +47,41 @@ mod tests {
         let input = "test_token_123";
         let hash1 = sha256_hex_from_string(input);
         let hash2 = sha256_hex_from_string(input);
-        assert_eq!(hash1, hash2);
+        assert_eq!(hash1, hash2, "Same input should produce identical hashes");
     }
 
     #[test]
     fn test_sha256_hex_from_string_different_inputs() {
         let hash1 = sha256_hex_from_string("token1");
         let hash2 = sha256_hex_from_string("token2");
-        assert_ne!(hash1, hash2);
+        assert_ne!(
+            hash1, hash2,
+            "Different inputs should produce different hashes"
+        );
     }
 
     #[test]
     fn test_sha256_hex_from_string_unicode() {
         let result = sha256_hex_from_string("hello 世界 🌍");
-        assert_eq!(result.len(), 64);
-        assert!(result.chars().all(|c| c.is_ascii_hexdigit()));
+        assert_eq!(result.len(), 64, "Unicode hash should be 64 characters");
+        assert!(
+            result.chars().all(|c| c.is_ascii_hexdigit()),
+            "Unicode hash should contain only hex digits"
+        );
     }
 
     #[test]
     fn test_sha256_hex_from_string_special_characters() {
         let result = sha256_hex_from_string("!@#$%^&*()_+-=[]{}|;':\",./<>?");
-        assert_eq!(result.len(), 64);
-        assert!(result.chars().all(|c| c.is_ascii_hexdigit()));
+        assert_eq!(
+            result.len(),
+            64,
+            "Special character hash should be 64 characters"
+        );
+        assert!(
+            result.chars().all(|c| c.is_ascii_hexdigit()),
+            "Special character hash should contain only hex digits"
+        );
     }
 
     #[test]
@@ -78,20 +91,26 @@ mod tests {
         let hash3 = sha256_hex_from_string("token ");
         let hash4 = sha256_hex_from_string(" token ");
 
-        assert_ne!(hash1, hash2);
-        assert_ne!(hash1, hash3);
-        assert_ne!(hash1, hash4);
-        assert_ne!(hash2, hash3);
-        assert_ne!(hash2, hash4);
-        assert_ne!(hash3, hash4);
+        assert_ne!(hash1, hash2, "Leading whitespace should change hash");
+        assert_ne!(hash1, hash3, "Trailing whitespace should change hash");
+        assert_ne!(hash1, hash4, "Both whitespace should change hash");
+        assert_ne!(
+            hash2, hash3,
+            "Different whitespace positions should produce different hashes"
+        );
+        assert_ne!(hash2, hash4, "Leading vs both whitespace should differ");
+        assert_ne!(hash3, hash4, "Trailing vs both whitespace should differ");
     }
 
     #[test]
     fn test_sha256_hex_from_string_long_input() {
         let long_string = "a".repeat(1000);
         let result = sha256_hex_from_string(&long_string);
-        assert_eq!(result.len(), 64);
-        assert!(result.chars().all(|c| c.is_ascii_hexdigit()));
+        assert_eq!(result.len(), 64, "Long input hash should be 64 characters");
+        assert!(
+            result.chars().all(|c| c.is_ascii_hexdigit()),
+            "Long input hash should contain only hex digits"
+        );
     }
 
     #[test]
@@ -114,39 +133,65 @@ mod tests {
         let hash3 = sha256_hex_from_string("tEst");
         let hash4 = sha256_hex_from_string("TEST");
 
-        assert_ne!(hash1, hash2);
-        assert_ne!(hash1, hash3);
-        assert_ne!(hash1, hash4);
-        assert_ne!(hash2, hash3);
-        assert_ne!(hash2, hash4);
-        assert_ne!(hash3, hash4);
+        assert_ne!(
+            hash1, hash2,
+            "Case difference should change hash: 'test' vs 'Test'"
+        );
+        assert_ne!(
+            hash1, hash3,
+            "Case difference should change hash: 'test' vs 'tEst'"
+        );
+        assert_ne!(
+            hash1, hash4,
+            "Case difference should change hash: 'test' vs 'TEST'"
+        );
+        assert_ne!(
+            hash2, hash3,
+            "Case difference should change hash: 'Test' vs 'tEst'"
+        );
+        assert_ne!(
+            hash2, hash4,
+            "Case difference should change hash: 'Test' vs 'TEST'"
+        );
+        assert_ne!(
+            hash3, hash4,
+            "Case difference should change hash: 'tEst' vs 'TEST'"
+        );
     }
 
     #[test]
     fn test_sha256_truncated_base64_from_bytes_basic() {
         let result = sha256_truncated_base64_from_bytes(b"hello");
         // Should be 22 characters (16 bytes * 4/3, rounded up, no padding)
-        assert_eq!(result.len(), 22);
+        assert_eq!(result.len(), 22, "Truncated base64 should be 22 characters");
         // Should only contain URL-safe base64 characters
         assert!(
             result
                 .chars()
-                .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+                .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_'),
+            "Should contain only URL-safe base64 characters"
         );
         // Should not contain padding
-        assert!(!result.contains('='));
+        assert!(
+            !result.contains('='),
+            "Should not contain padding characters"
+        );
     }
 
     #[test]
     fn test_sha256_truncated_base64_from_bytes_empty() {
         let result = sha256_truncated_base64_from_bytes(b"");
-        assert_eq!(result.len(), 22);
+        assert_eq!(result.len(), 22, "Empty input hash should be 22 characters");
         assert!(
             result
                 .chars()
-                .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+                .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_'),
+            "Empty input should produce URL-safe base64"
         );
-        assert!(!result.contains('='));
+        assert!(
+            !result.contains('='),
+            "Empty input should not contain padding"
+        );
     }
 
     #[test]
@@ -154,14 +199,20 @@ mod tests {
         let input = b"test_token_123";
         let hash1 = sha256_truncated_base64_from_bytes(input);
         let hash2 = sha256_truncated_base64_from_bytes(input);
-        assert_eq!(hash1, hash2);
+        assert_eq!(
+            hash1, hash2,
+            "Same input should produce identical truncated hashes"
+        );
     }
 
     #[test]
     fn test_sha256_truncated_base64_from_bytes_different_inputs() {
         let hash1 = sha256_truncated_base64_from_bytes(b"token1");
         let hash2 = sha256_truncated_base64_from_bytes(b"token2");
-        assert_ne!(hash1, hash2);
+        assert_ne!(
+            hash1, hash2,
+            "Different inputs should produce different truncated hashes"
+        );
     }
 
     #[test]
@@ -181,13 +232,21 @@ mod tests {
     fn test_sha256_truncated_base64_from_bytes_special_characters() {
         let input = b"!@#$%^&*()_+-=[]{}|;':\",./<>?";
         let result = sha256_truncated_base64_from_bytes(input);
-        assert_eq!(result.len(), 22);
+        assert_eq!(
+            result.len(),
+            22,
+            "Special chars hash should be 22 characters"
+        );
         assert!(
             result
                 .chars()
-                .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+                .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_'),
+            "Special chars should produce URL-safe base64"
         );
-        assert!(!result.contains('='));
+        assert!(
+            !result.contains('='),
+            "Special chars should not contain padding"
+        );
     }
 
     #[test]
@@ -197,25 +256,35 @@ mod tests {
         let hash3 = sha256_truncated_base64_from_bytes(b"token ");
         let hash4 = sha256_truncated_base64_from_bytes(b" token ");
 
-        assert_ne!(hash1, hash2);
-        assert_ne!(hash1, hash3);
-        assert_ne!(hash1, hash4);
-        assert_ne!(hash2, hash3);
-        assert_ne!(hash2, hash4);
-        assert_ne!(hash3, hash4);
+        assert_ne!(
+            hash1, hash2,
+            "Leading whitespace should change truncated hash"
+        );
+        assert_ne!(
+            hash1, hash3,
+            "Trailing whitespace should change truncated hash"
+        );
+        assert_ne!(hash1, hash4, "Both whitespace should change truncated hash");
+        assert_ne!(hash2, hash3, "Different whitespace positions should differ");
+        assert_ne!(hash2, hash4, "Leading vs both whitespace should differ");
+        assert_ne!(hash3, hash4, "Trailing vs both whitespace should differ");
     }
 
     #[test]
     fn test_sha256_truncated_base64_from_bytes_long_input() {
         let long_bytes = vec![b'a'; 1000];
         let result = sha256_truncated_base64_from_bytes(&long_bytes);
-        assert_eq!(result.len(), 22);
+        assert_eq!(result.len(), 22, "Long input hash should be 22 characters");
         assert!(
             result
                 .chars()
-                .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+                .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_'),
+            "Long input should produce URL-safe base64"
         );
-        assert!(!result.contains('='));
+        assert!(
+            !result.contains('='),
+            "Long input should not contain padding"
+        );
     }
 
     #[test]
@@ -261,25 +330,47 @@ mod tests {
         let hash3 = sha256_truncated_base64_from_bytes(b"tEst");
         let hash4 = sha256_truncated_base64_from_bytes(b"TEST");
 
-        assert_ne!(hash1, hash2);
-        assert_ne!(hash1, hash3);
-        assert_ne!(hash1, hash4);
-        assert_ne!(hash2, hash3);
-        assert_ne!(hash2, hash4);
-        assert_ne!(hash3, hash4);
+        assert_ne!(
+            hash1, hash2,
+            "Case difference should change truncated hash: 'test' vs 'Test'"
+        );
+        assert_ne!(
+            hash1, hash3,
+            "Case difference should change truncated hash: 'test' vs 'tEst'"
+        );
+        assert_ne!(
+            hash1, hash4,
+            "Case difference should change truncated hash: 'test' vs 'TEST'"
+        );
+        assert_ne!(
+            hash2, hash3,
+            "Case difference should change truncated hash: 'Test' vs 'tEst'"
+        );
+        assert_ne!(
+            hash2, hash4,
+            "Case difference should change truncated hash: 'Test' vs 'TEST'"
+        );
+        assert_ne!(
+            hash3, hash4,
+            "Case difference should change truncated hash: 'tEst' vs 'TEST'"
+        );
     }
 
     #[test]
     fn test_sha256_truncated_base64_from_bytes_binary_data() {
         let binary_data = vec![0u8, 1, 2, 3, 255, 254, 253, 128, 127];
         let result = sha256_truncated_base64_from_bytes(&binary_data);
-        assert_eq!(result.len(), 22);
+        assert_eq!(result.len(), 22, "Binary data hash should be 22 characters");
         assert!(
             result
                 .chars()
-                .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+                .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_'),
+            "Binary data should produce URL-safe base64"
         );
-        assert!(!result.contains('='));
+        assert!(
+            !result.contains('='),
+            "Binary data should not contain padding"
+        );
     }
 
     #[test]
@@ -296,15 +387,20 @@ mod tests {
 
         for input in inputs {
             let result = sha256_truncated_base64_from_bytes(input);
-            // Should not contain standard base64 characters that are not URL-safe
-            assert!(!result.contains('+'));
-            assert!(!result.contains('/'));
-            assert!(!result.contains('='));
-            // Should only contain URL-safe characters
+            assert!(
+                !result.contains('+'),
+                "Should not contain standard base64 plus"
+            );
+            assert!(
+                !result.contains('/'),
+                "Should not contain standard base64 slash"
+            );
+            assert!(!result.contains('='), "Should not contain padding");
             assert!(
                 result
                     .chars()
-                    .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+                    .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_'),
+                "Should contain only URL-safe characters"
             );
         }
     }
@@ -316,11 +412,16 @@ mod tests {
         let truncated = sha256_truncated_base64_from_bytes(input);
         let full_hash = sha256_hex_from_bytes(input);
 
-        // Truncated should be much shorter (22 chars vs 64 chars)
-        assert_eq!(truncated.len(), 22);
-        assert_eq!(full_hash.len(), 64);
+        assert_eq!(
+            truncated.len(),
+            22,
+            "Truncated hash should be 22 characters"
+        );
+        assert_eq!(full_hash.len(), 64, "Full hash should be 64 characters");
 
-        // They should be different representations
-        assert_ne!(truncated, full_hash);
+        assert_ne!(
+            truncated, full_hash,
+            "Truncated hash should differ from full hash"
+        );
     }
 }
