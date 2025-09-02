@@ -6,7 +6,7 @@ use rpassword::prompt_password;
 
 use hakanai_lib::models::{CreateTokenRequest, CreateTokenResponse};
 
-use crate::cli::TokenArgs;
+use crate::args::TokenArgs;
 use crate::helper;
 
 pub async fn token(args: TokenArgs) -> Result<()> {
