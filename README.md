@@ -1,4 +1,4 @@
-# Hakanai (儚い)
+# Hakanai (はかない)
 
 ![Banner](banner.svg)
 
