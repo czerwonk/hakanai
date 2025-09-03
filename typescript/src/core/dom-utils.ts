@@ -121,3 +121,11 @@ export function showElement(element: HTMLElement): void {
 export function hideElement(element: HTMLElement): void {
   element.classList.add("hidden");
 }
+
+export function expandView() {
+  document.body.classList.add("expanded-view");
+}
+
+export function unexpandView() {
+  document.body.classList.remove("expanded-view");
+}

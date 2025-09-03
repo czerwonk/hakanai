@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import { createButton, generateRandomId } from "../core/dom-utils";
+import { createButton, generateRandomId, expandView } from "../core/dom-utils";
 import { copyToClipboard, copyToClipboardByElementId } from "../core/clipboard";
 import { QRCodeGenerator } from "../core/qr-generator";
 import { I18nKeys } from "../core/i18n";
@@ -34,6 +34,8 @@ export function displaySuccessResult(
   if (options.restrictionData) {
     createRestrictionsSection(container, options.restrictionData);
   }
+
+  expandView();
 }
 
 /**

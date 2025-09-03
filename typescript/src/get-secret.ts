@@ -16,6 +16,8 @@ import {
   hideElement,
   secureInputClear,
   showElement,
+  expandView,
+  unexpandView,
 } from "./core/dom-utils";
 import { copyToClipboard } from "./core/clipboard";
 import { displayErrorMessage } from "./components/error-display";
@@ -97,7 +99,7 @@ function clearResult(): void {
 
 function resetView() {
   clearResult();
-  document.body.classList.remove("expanded-view");
+  unexpandView();
 }
 
 function showLoadingState(): void {
@@ -170,7 +172,8 @@ async function performRetrieval(
 }
 
 function showError(message: string): void {
-  document.body.classList.remove("expanded-view");
+  unexpandView();
+
   const resultContainer = document.getElementById("result")!;
   displayErrorMessage(message, resultContainer);
 }
@@ -299,8 +302,8 @@ function createTextSecret(
   buttonsContainer.appendChild(createDownloadButton(payload, decodedBytes));
   container.appendChild(buttonsContainer);
 
+  expandView();
   if (window.innerWidth > 640) {
-    document.body.classList.add("expanded-view");
     resizeTextarea(textarea);
   }
 
