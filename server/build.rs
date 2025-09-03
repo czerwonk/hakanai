@@ -5,15 +5,15 @@ use std::fs;
 use anyhow::{Context, Result};
 
 mod build {
+    pub mod assets;
     pub mod cache_buster;
     pub mod docs_generator;
     pub mod static_pages;
-    pub mod typescript;
 }
 
+use build::assets;
 use build::docs_generator;
 use build::static_pages;
-use build::typescript;
 
 /// Auto-detect and register files with given extension for recompilation tracking
 fn register_files_for_recompilation(dir_path: &str, extension: &str) -> Result<()> {
@@ -52,7 +52,7 @@ fn main() -> Result<()> {
     println!("cargo:rerun-if-changed=../wasm/Cargo.toml");
 
     let start = std::time::Instant::now();
-    typescript::compile()?;
+    assets::build()?;
     docs_generator::generate()?;
     static_pages::generate_html_files()?;
     println!("cargo:warning=Build completed in {:?}", start.elapsed());

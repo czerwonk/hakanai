@@ -5,8 +5,7 @@ RUN apt-get update && apt-get install -y \
     rm -rf /var/lib/apt/lists/*
 WORKDIR /src
 COPY . .
-ENV SKIP_TYPESCRIPT_BUILD=1
-ENV SKIP_WASM_BUILD=1
+ENV SKIP_ASSET_BUILD=1
 RUN cargo build --release --package hakanai-server
 
 FROM gcr.io/distroless/cc-debian12

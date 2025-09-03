@@ -2395,7 +2395,7 @@ input[type="number"] {
 
 /* Separator for retrieve another section */
 .section-separator {
-  margin: var(--spacing-lg) 0 var(--spacing-md) 0;
+  margin: var(--spacing-lg) 0;
   border: none;
   border-top: 1px solid var(--color-border);
   opacity: 0.5;
@@ -2404,7 +2404,7 @@ input[type="number"] {
 /* Container for retrieve another button */
 .retrieve-another-container {
   text-align: center;
-  margin-top: var(--spacing-md);
+  margin-top: var(--spacing-lg);
 }
 
 /* Binary message styling */

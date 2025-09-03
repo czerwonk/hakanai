@@ -87,10 +87,20 @@ function clearInputs(): void {
   secureInputClear(passphraseInput);
 }
 
-function showLoadingState(): void {
+function clearResult(): void {
   const { resultDiv } = getElements();
+  if (!resultDiv) return;
+
   resultDiv.innerHTML = "";
+  hideElement(resultDiv);
+}
+
+function resetView() {
+  clearResult();
   document.body.classList.remove("expanded-view");
+}
+
+function showLoadingState(): void {
   setElementsState(true);
 }
 
@@ -141,6 +151,7 @@ async function performRetrieval(
 ): Promise<void> {
   const progressBar = new ProgressBar();
   progressBar.show(window.i18n.t(I18nKeys.Msg.Retrieving));
+  resetView();
   showLoadingState();
 
   try {
@@ -212,16 +223,12 @@ function hideForm(): void {
   hideElement(form);
 }
 
-function showForm(): void {
+function resetForm(): void {
   const form = document.getElementById("secretForm");
   if (!form) return;
 
+  resetView();
   showElement(form);
-
-  // Clear the result div
-  const { resultDiv } = getElements();
-  resultDiv.innerHTML = "";
-  resultDiv.className = "";
 
   // Reset focus to URL input
   const { urlInput } = getElements();
@@ -427,12 +434,12 @@ function createNoteElement(): HTMLElement {
   // Add "Retrieve Another Secret" button with proper spacing and centering
   const buttonContainer = document.createElement("div");
   buttonContainer.className = "retrieve-another-container";
-  
+
   const retrieveAnotherButton = createButton(
-    "btn primary-btn",
+    "btn secondary",
     window.i18n.t(I18nKeys.Button.RetrieveAnother),
     "Show the form again to retrieve another secret",
-    () => showForm(),
+    () => resetForm(),
   );
   buttonContainer.appendChild(retrieveAnotherButton);
   container.appendChild(buttonContainer);
@@ -441,10 +448,10 @@ function createNoteElement(): HTMLElement {
 }
 
 function showSuccess(payload: PayloadData): void {
-  const { resultDiv } = getElements();
+  clearResult();
 
+  const { resultDiv } = getElements();
   resultDiv.className = "result success";
-  resultDiv.innerHTML = "";
 
   const title = document.createElement("h3");
   title.textContent = window.i18n.t(I18nKeys.Msg.SuccessTitle);

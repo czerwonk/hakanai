@@ -51,8 +51,7 @@ jobs:
 
       - name: Set skip build flags
         run: |
-          echo "SKIP_TYPESCRIPT_BUILD=1" >> $GITHUB_ENV
-          echo "SKIP_WASM_BUILD=1" >> $GITHUB_ENV
+          echo "SKIP_ASSET_BUILD=1" >> $GITHUB_ENV
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable

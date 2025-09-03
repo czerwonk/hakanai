@@ -7,20 +7,21 @@ use anyhow::{Context, Result};
 
 use super::cache_buster;
 
-// Compile TypeScript files using Rollup
-pub fn compile() -> Result<()> {
-    println!("cargo:warning=Bundling TypeScript files with Rollup...");
+// Build asset files (WASM, JS)
+pub fn build() -> Result<()> {
+    println!("cargo:warning=Building assets...");
 
-    if std::env::var("SKIP_TYPESCRIPT_BUILD").is_ok() {
-        println!("cargo:warning=Skipping TypeScript bundling (SKIP_TYPESCRIPT_BUILD set)");
+    if std::env::var("SKIP_ASSET_BUILD").is_ok() {
+        println!("cargo:warning=Skipping asset build (SKIP_ASSET_BUILD set)");
         return Ok(());
     }
 
     // Bundle TypeScript files with Rollup
     let output = Command::new("make")
         .args(["build-ts"])
-        .current_dir("..")
+        .current_dir("../")
         .output()?;
+    println!("cargo:warning=Output: {:?}", output);
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
@@ -31,13 +32,13 @@ pub fn compile() -> Result<()> {
         panic!("Rollup bundling failed: {stderr}");
     }
 
-    add_cache_busters_to_js_files()?;
+    add_cache_busters_to_asset_files()?;
 
     println!("cargo:warning=TypeScript bundling successful");
     Ok(())
 }
 
-fn add_cache_busters_to_js_files() -> Result<()> {
+fn add_cache_busters_to_asset_files() -> Result<()> {
     println!("cargo:warning=Adding cache busters to JavaScript imports and JSON URLs...");
 
     let cache_buster = cache_buster::generate();

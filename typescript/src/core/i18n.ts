@@ -337,7 +337,7 @@ const translations: Translations = {
 
     [I18nKeys.Button.Create]: "🛡️ Create Secret",
     [I18nKeys.Button.Retrieve]: "📖 Retrieve Secret",
-    [I18nKeys.Button.RetrieveAnother]: "📖 Retrieve Another Secret",
+    [I18nKeys.Button.RetrieveAnother]: "📖 Retrieve Another",
     [I18nKeys.Button.Copy]: "📋 Copy",
     [I18nKeys.Button.Copied]: "Copied!",
     [I18nKeys.Button.Close]: "Close",
@@ -615,7 +615,7 @@ const translations: Translations = {
 
     [I18nKeys.Button.Create]: "🛡️ Secret erstellen",
     [I18nKeys.Button.Retrieve]: "📖 Secret abrufen",
-    [I18nKeys.Button.RetrieveAnother]: "📖 Weiteres Secret abrufen",
+    [I18nKeys.Button.RetrieveAnother]: "📖 Weiteres abrufen",
     [I18nKeys.Button.Copy]: "📋 Kopieren",
     [I18nKeys.Button.Copied]: "Kopiert!",
     [I18nKeys.Button.Close]: "Schließen",

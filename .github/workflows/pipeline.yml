@@ -80,8 +80,7 @@ jobs:
 
       - name: Run Clippy
         env:
-          SKIP_TYPESCRIPT_BUILD: 1
-          SKIP_WASM_BUILD: 1
+          SKIP_ASSET_BUILD: 1
         run: cargo clippy --workspace
 
   # Run Rust tests in parallel with assets
@@ -104,8 +103,7 @@ jobs:
 
       - name: Run Rust tests
         env:
-          SKIP_TYPESCRIPT_BUILD: 1
-          SKIP_WASM_BUILD: 1
+          SKIP_ASSET_BUILD: 1
         run: cargo test --verbose --workspace
 
   # Run TypeScript tests in parallel
