@@ -36,14 +36,14 @@
 
         <div id="result" class="hidden"></div>
 
-        <div id="permission-prompt" class="hidden">
-          <div class="result">
-            <h3 data-i18n="msg.clipboardRequired">Clipboard Access Required</h3>
-            <p data-i18n="msg.clipboardRequiredDetail">
-              Click the button below to read the shared content from your
-              clipboard.
-            </p>
-            <div class="button-spacing">
+        <div id="permission-prompt" class="clipboard-permission-prompt hidden">
+          <h3 data-i18n="msg.clipboardRequired">Clipboard Access Required</h3>
+          <p data-i18n="msg.clipboardRequiredDetail">
+            Click the button below to read the shared content from your
+            clipboard.
+          </p>
+          <p>
+            <div>
               <button
                 id="read-clipboard"
                 class="btn"
@@ -52,7 +52,7 @@
                 Read Clipboard
               </button>
             </div>
-          </div>
+          </p>
         </div>
 
         <div id="loading" class="loading hidden">

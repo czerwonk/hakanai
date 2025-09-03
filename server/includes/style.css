@@ -2810,3 +2810,7 @@ input[type="number"] {
     min-height: 80px;
   }
 }
+
+.clipboard-permission-prompt {
+  text-align: center;
+}

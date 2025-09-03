@@ -377,7 +377,7 @@ const translations: Translations = {
     [I18nKeys.Msg.ClipboardError]: "Clipboard Error",
     [I18nKeys.Msg.ClipboardRequired]: "Clipboard Access Required",
     [I18nKeys.Msg.ClipboardRequiredDetail]:
-      "Click the button below to read the shared content from your clipboard.",
+      "Click the button below to read from clipboard.",
     [I18nKeys.Msg.ClipboardPermissionDenied]:
       "Clipboard access denied. Please grant permission and try again.",
     [I18nKeys.Msg.ClipboardInvalidJson]:
@@ -656,7 +656,7 @@ const translations: Translations = {
     [I18nKeys.Msg.ClipboardError]: "Zwischenablage-Fehler",
     [I18nKeys.Msg.ClipboardRequired]: "Zwischenablage-Zugriff erforderlich",
     [I18nKeys.Msg.ClipboardRequiredDetail]:
-      "Bitte den Button klicken, um den geteilten Inhalt aus der Zwischenablage zu lesen.",
+      "Bitte den Button klicken, um aus der Zwischenablage zu lesen.",
     [I18nKeys.Msg.ClipboardPermissionDenied]:
       "Zwischenablage-Zugriff verweigert. Bitte Berechtigung erteilen und erneut versuchen.",
     [I18nKeys.Msg.ClipboardInvalidJson]:
