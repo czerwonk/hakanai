@@ -228,7 +228,6 @@ body[data-theme="light"] {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
-
 .btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
