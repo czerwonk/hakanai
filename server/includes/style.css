@@ -95,7 +95,7 @@
   --border-radius-sm: 0.125rem;
   --border-radius: 0.25rem;
   --border-radius-lg: 0.5rem;
-  --language-selector-width: 3.5rem;
+  --language-selector-width: 4rem;
 
   /* Transitions */
   --transition-fast: 200ms ease-out;
