@@ -100,7 +100,6 @@ const I18nKeys = {
     CopyFailed: "msg.copyFailed",
     CreateFailed: "msg.createFailed",
     CreateNote: "msg.createNote",
-    CreateNoteText: "msg.createNoteText",
     Creating: "msg.creating",
     CreatingSecret: "msg.creatingSecret",
     Downloaded: "msg.downloaded",
@@ -118,7 +117,7 @@ const I18nKeys = {
     ReadingClipboard: "msg.readingClipboard",
     RetrieveFailed: "msg.retrieveFailed",
     RetrieveNote: "msg.retrieveNote",
-    RetrieveNoteText: "msg.retrieveNoteText",
+    RetrieveCTA: "msg.retrieveCTA",
     Retrieving: "msg.retrieving",
     ShareInstructions: "msg.shareInstructions",
     ShareSuccess: "msg.shareSuccess",
@@ -370,11 +369,9 @@ const translations: Translations = {
     [I18nKeys.Msg.CopyFailed]:
       "Failed to copy. Please select and copy manually.",
     [I18nKeys.Msg.CreateNote]:
-      "Note: Share this URL carefully. The secret will be deleted after the first access or when it expires.",
-    [I18nKeys.Msg.CreateNoteText]:
-      "Share this URL carefully. The secret will be deleted after the first access or when it expires.",
+      "The secret will be deleted after the first access or when it expires.",
     [I18nKeys.Msg.ShareInstructions]:
-      "Share this URL with the intended recipient. The secret is encrypted and can only be accessed once.",
+      "Share this URL with the intended recipient.\nThe secret is encrypted and can only be accessed once.",
     [I18nKeys.Msg.ClipboardError]: "Clipboard Error",
     [I18nKeys.Msg.ClipboardRequired]: "Clipboard Access Required",
     [I18nKeys.Msg.ClipboardRequiredDetail]:
@@ -390,9 +387,9 @@ const translations: Translations = {
       "Your secret has been created and the URL copied to clipboard:",
     [I18nKeys.Msg.ExpectedJsonFormat]: "Expected JSON format:",
     [I18nKeys.Msg.RetrieveNote]:
-      "Note: This secret has been deleted from the server and cannot be accessed again.",
-    [I18nKeys.Msg.RetrieveNoteText]:
       "This secret has been deleted from the server and cannot be accessed again.",
+    [I18nKeys.Msg.RetrieveCTA]:
+      "Learn more and share your own secrets securely",
     [I18nKeys.Msg.Downloaded]: "Secret downloaded as text file",
     [I18nKeys.Msg.BinaryDetected]: "Use download button to save the file.",
 
@@ -650,11 +647,9 @@ const translations: Translations = {
     [I18nKeys.Msg.CopyFailed]:
       "Kopieren fehlgeschlagen. Bitte manuell auswählen und kopieren.",
     [I18nKeys.Msg.CreateNote]:
-      "Hinweis: Das Secret wird nach dem ersten Zugriff oder bei Ablauf gelöscht.",
-    [I18nKeys.Msg.CreateNoteText]:
-      "Bitte Vorsicht beim Teilen der URL. Das Secret wird nach dem ersten Zugriff oder bei Ablauf gelöscht.",
+      "Das Secret wird nach dem ersten Zugriff oder bei Ablauf gelöscht.",
     [I18nKeys.Msg.ShareInstructions]:
-      "Diese URL kann nun mit dem vorgesehenen Empfänger geteilt werden. Das Secret ist verschlüsselt und kann nur einmal abgerufen werden.",
+      "Diese URL kann nun mit dem vorgesehenen Empfänger geteilt werden.\nDas Secret ist verschlüsselt und kann nur einmal abgerufen werden.",
     [I18nKeys.Msg.ClipboardError]: "Zwischenablage-Fehler",
     [I18nKeys.Msg.ClipboardRequired]: "Zwischenablage-Zugriff erforderlich",
     [I18nKeys.Msg.ClipboardRequiredDetail]:
@@ -670,9 +665,9 @@ const translations: Translations = {
       "Das Secret wurde erstellt und die URL in die Zwischenablage kopiert:",
     [I18nKeys.Msg.ExpectedJsonFormat]: "Erwartetes JSON-Format:",
     [I18nKeys.Msg.RetrieveNote]:
-      "Hinweis: Dieses Secret wurde vom Server gelöscht und kann nicht erneut abgerufen werden.",
-    [I18nKeys.Msg.RetrieveNoteText]:
       "Dieses Secret wurde vom Server gelöscht und kann nicht erneut abgerufen werden.",
+    [I18nKeys.Msg.RetrieveCTA]:
+      "Mehr erfahren und eigene Secrets sicher teilen",
     [I18nKeys.Msg.Downloaded]: "Secret als Textdatei heruntergeladen",
     [I18nKeys.Msg.BinaryDetected]:
       "Bitte Download-Button verwenden, um die Datei zu speichern.",

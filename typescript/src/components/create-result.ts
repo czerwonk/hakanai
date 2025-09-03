@@ -89,23 +89,9 @@ function createUrlSection(
 function createNoteSection(container: HTMLElement): void {
   const note = document.createElement("p");
   note.className = "secret-note";
-
-  const noteText = window.i18n.t(I18nKeys.Msg.CreateNote);
-  const colonIndex = noteText.indexOf(":");
-
-  if (colonIndex > 0) {
-    const strong = document.createElement("strong");
-    strong.textContent = noteText.substring(0, colonIndex + 1);
-    note.appendChild(strong);
-
-    const remaining = document.createTextNode(
-      noteText.substring(colonIndex + 1),
-    );
-    note.appendChild(remaining);
-  } else {
-    note.textContent = noteText;
-  }
-
+  note.appendChild(
+    document.createTextNode("⚠️ " + window.i18n.t(I18nKeys.Msg.CreateNote)),
+  );
   container.appendChild(note);
 }
 

@@ -1227,6 +1227,7 @@ button.loading::after {
   margin-top: var(--spacing-sm);
   font-size: 0.875rem;
   color: var(--color-text-muted);
+  white-space: pre-wrap;
 }
 
 .secret-display {
@@ -1693,6 +1694,7 @@ button.loading::after {
 
 .result.success .share-instructions {
   margin-bottom: var(--spacing-lg);
+  white-space: pre-wrap;
 }
 
 .url-container {
@@ -2502,6 +2504,36 @@ input[type="number"] {
   margin-top: var(--spacing-sm, 0.75rem);
   font-size: 0.875rem;
   color: var(--color-text-muted, #888888);
+}
+
+/* Note container for destruction note and CTA */
+.note-container {
+  margin-top: var(--spacing-sm, 0.75rem);
+}
+
+/* Retrieve CTA styling */
+.retrieve-cta {
+  margin-top: var(--spacing-xs, 0.5rem);
+  font-size: 0.875rem;
+}
+
+.retrieve-cta a {
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+  border-bottom: 1px dotted var(--color-primary);
+}
+
+.retrieve-cta a:hover {
+  color: var(--color-primary);
+  border-bottom-style: solid;
+  opacity: 0.8;
+}
+
+.retrieve-cta a:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--border-radius-sm);
 }
 
 /* Binary message styling */

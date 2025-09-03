@@ -368,18 +368,32 @@ function createFilenameInfo(filename: string, size: number): HTMLElement {
 }
 
 function createNoteElement(): HTMLElement {
+  const container = document.createElement("div");
+  container.className = "note-container";
+
   const note = document.createElement("p");
   note.className = "note-element";
-
-  const strong = document.createElement("strong");
-  strong.textContent =
-    window.i18n.t(I18nKeys.Msg.RetrieveNote).split(":")[0] + ":";
-  note.appendChild(strong);
   note.appendChild(
-    document.createTextNode(" " + window.i18n.t(I18nKeys.Msg.RetrieveNoteText)),
+    document.createTextNode("⚠️ " + window.i18n.t(I18nKeys.Msg.RetrieveNote)),
   );
+  container.appendChild(note);
 
-  return note;
+  // Add CTA below the destruction note
+  const cta = document.createElement("p");
+  cta.className = "retrieve-cta";
+
+  const ctaLink = document.createElement("a");
+  ctaLink.href = "/";
+  ctaLink.textContent = window.i18n.t(I18nKeys.Msg.RetrieveCTA) + " →";
+  ctaLink.setAttribute(
+    "aria-label",
+    "Learn more about Hakanai and create your own secrets",
+  );
+  cta.appendChild(ctaLink);
+
+  container.appendChild(cta);
+
+  return container;
 }
 
 function showSuccess(payload: PayloadData): void {
