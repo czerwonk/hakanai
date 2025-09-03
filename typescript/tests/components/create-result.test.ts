@@ -148,7 +148,7 @@ describe("Success Display Component", () => {
       expect(copyButton?.textContent).toBe("button.copy");
 
       const note = container.querySelector(".secret-note");
-      expect(note?.textContent).toBe("msg.createNote");
+      expect(note?.textContent).toBe("⚠️ msg.createNote");
     });
 
     test("should allow QR code download", async () => {
