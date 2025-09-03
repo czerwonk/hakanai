@@ -328,7 +328,7 @@ function createBinarySecret(
 
 function createCopyButton(secretId: string): HTMLButtonElement {
   return createButton(
-    "copy-button",
+    "btn copy-btn",
     window.i18n.t(I18nKeys.Button.Copy),
     window.i18n.t(I18nKeys.Aria.CopySecret),
     function (this: HTMLButtonElement) {
@@ -343,7 +343,7 @@ function createDownloadButton(
   isBinary: boolean = false,
 ): HTMLButtonElement {
   return createButton(
-    "download-button",
+    "btn download-btn",
     window.i18n.t(I18nKeys.Button.Download),
     window.i18n.t(I18nKeys.Aria.DownloadSecret),
     () => downloadSecret(payload, decodedBytes, isBinary),

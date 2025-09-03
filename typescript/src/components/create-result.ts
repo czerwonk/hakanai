@@ -185,7 +185,7 @@ function createLabeledInputWithCopy(
   inputContainer.appendChild(input);
 
   const copyButton = createButton(
-    "copy-button",
+    "btn copy-btn",
     window.i18n.t(I18nKeys.Button.Copy),
     ariaLabel,
     () => copyToClipboardByElementId(inputId, copyButton as HTMLButtonElement),
@@ -203,7 +203,7 @@ function createLabeledInputWithCopy(
  */
 function createQrButton(url: string): HTMLButtonElement {
   return createButton(
-    "secondary-button",
+    "btn secondary-btn",
     "▦ QR",
     window.i18n.t(I18nKeys.Button.ShowQrCode),
     async () => {
@@ -339,7 +339,7 @@ function showQRFullscreen(qrSvg: string): void {
 
   // Add close button
   const closeButton = createButton(
-    "qr-close-button",
+    "btn qr-close-btn",
     "✕",
     window.i18n.t(I18nKeys.Button.Close) || "Close",
     (e: Event) => {
@@ -356,7 +356,7 @@ function showQRFullscreen(qrSvg: string): void {
 
   // Add download button
   const downloadButton = createButton(
-    "primary-button qr-download-button",
+    "btn qr-download-btn",
     window.i18n.t(I18nKeys.Button.Download) || "Download",
     window.i18n.t(I18nKeys.Aria.DownloadQRCode),
     (e: Event) => {
@@ -426,7 +426,7 @@ function createPassphraseRestrictionItem(passphrase: string): HTMLElement {
 
   let isVisible = false;
   const showButton = createButton(
-    "secondary-button",
+    "btn secondary-btn",
     "👁",
     "Show/hide passphrase",
     () => {
@@ -438,7 +438,7 @@ function createPassphraseRestrictionItem(passphrase: string): HTMLElement {
   passphraseContainer.appendChild(showButton);
 
   const copyButton = createButton(
-    "copy-button",
+    "btn copy-btn",
     window.i18n.t(I18nKeys.Button.Copy),
     "Copy passphrase to clipboard",
     () => {

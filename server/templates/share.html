@@ -28,7 +28,7 @@
 
           [[TTL_SELECTOR]]
           <div class="input-group">
-            <button id="share-button" class="button primary">
+            <button id="share-button" class="btn primary">
               <span data-i18n="button.create">Create Secret</span>
             </button>
           </div>
@@ -46,7 +46,7 @@
             <div class="button-spacing">
               <button
                 id="read-clipboard"
-                class="button"
+                class="btn"
                 data-i18n="button.readClipboard"
               >
                 Read Clipboard
@@ -59,20 +59,7 @@
           <span id="loading-text">Reading clipboard...</span>
         </div>
 
-        <div id="result-success" class="result success hidden">
-          <h3 data-i18n="msg.successTitle">Success!</h3>
-          <div class="share-instructions">
-            <p data-i18n="msg.shareSuccess">
-              Your secret has been created and the URL copied to clipboard:
-            </p>
-          </div>
-          <div class="url-display" id="secret-url"></div>
-          <div class="buttons-container">
-            <button class="copy-button" id="copy-url" data-i18n="button.copy">
-              📋 Copy
-            </button>
-          </div>
-        </div>
+        <div id="result-success" class="result success hidden"></div>
       </div>
       [[FOOTER]]
     </main>
