@@ -60,7 +60,7 @@ describe("Success Display Component", () => {
       expect(urlInput?.readOnly).toBe(true);
 
       // Check for copy button exists
-      const copyButton = container.querySelector(".copy-button");
+      const copyButton = container.querySelector(".copy-btn");
       expect(copyButton).toBeTruthy();
 
       // Check for security note exists
@@ -98,7 +98,7 @@ describe("Success Display Component", () => {
       expect(urlInput.id).not.toMatch(/-key$/);
 
       // Should have two copy buttons
-      const copyButtons = container.querySelectorAll(".copy-button");
+      const copyButtons = container.querySelectorAll(".copy-btn");
       expect(copyButtons).toHaveLength(2);
 
       // Should have labels with correct i18n keys
@@ -144,7 +144,7 @@ describe("Success Display Component", () => {
       const urlLabel = container.querySelector("label");
       expect(urlLabel?.textContent).toBe("label.url");
 
-      const copyButton = container.querySelector(".copy-button");
+      const copyButton = container.querySelector(".copy-btn");
       expect(copyButton?.textContent).toBe("button.copy");
 
       const note = container.querySelector(".secret-note");
@@ -173,7 +173,7 @@ describe("Success Display Component", () => {
 
       // Find download button in modal
       const downloadButton = overlay!.querySelector(
-        ".qr-download-button",
+        ".qr-download-btn",
       ) as HTMLButtonElement;
       expect(downloadButton).toBeTruthy();
       expect(downloadButton.textContent).toContain("button.download");
