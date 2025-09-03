@@ -147,8 +147,9 @@ async function performRetrieval(
     const payload = await client.receivePayload(url, progressBar, passphrase);
     showSuccess(payload);
     clearInputs();
-    toggleKeyInputVisibility();
+    updateKeyInputVisibility();
     hidePassphraseInput();
+    hideForm();
   } catch (error: unknown) {
     handleRetrieveError(error, url);
   } finally {
@@ -204,6 +205,31 @@ function hidePassphraseInput(): void {
   passphraseInput.required = false;
 }
 
+function hideForm(): void {
+  const form = document.getElementById("secretForm");
+  if (!form) return;
+
+  hideElement(form);
+}
+
+function showForm(): void {
+  const form = document.getElementById("secretForm");
+  if (!form) return;
+
+  showElement(form);
+
+  // Clear the result div
+  const { resultDiv } = getElements();
+  resultDiv.innerHTML = "";
+  resultDiv.className = "";
+
+  // Reset focus to URL input
+  const { urlInput } = getElements();
+  setTimeout(() => {
+    urlInput.focus();
+  }, 100);
+}
+
 const retrieveSecretDebounced = debounce(
   processRetrieveRequest,
   TIMEOUTS.DEBOUNCE,
@@ -213,7 +239,7 @@ function retrieveSecret(): void {
   retrieveSecretDebounced();
 }
 
-function toggleKeyInputVisibility(): void {
+function updateKeyInputVisibility(): void {
   const { urlInput, keyInputGroup, keyInput } = getElements();
 
   const url = urlInput.value.trim();
@@ -393,6 +419,24 @@ function createNoteElement(): HTMLElement {
 
   container.appendChild(cta);
 
+  // Add separator line
+  const separator = document.createElement("hr");
+  separator.className = "section-separator";
+  container.appendChild(separator);
+
+  // Add "Retrieve Another Secret" button with proper spacing and centering
+  const buttonContainer = document.createElement("div");
+  buttonContainer.className = "retrieve-another-container";
+  
+  const retrieveAnotherButton = createButton(
+    "btn primary-btn",
+    window.i18n.t(I18nKeys.Button.RetrieveAnother),
+    "Show the form again to retrieve another secret",
+    () => showForm(),
+  );
+  buttonContainer.appendChild(retrieveAnotherButton);
+  container.appendChild(buttonContainer);
+
   return container;
 }
 
@@ -488,10 +532,10 @@ function setupUrlInput(): void {
     urlInput.value = window.location.href;
   }
 
-  urlInput.addEventListener("input", toggleKeyInputVisibility);
+  urlInput.addEventListener("input", updateKeyInputVisibility);
   urlInput.addEventListener("paste", () =>
     setTimeout(() => {
-      toggleKeyInputVisibility();
+      updateKeyInputVisibility();
       focusNextLogicalElement();
     }, 0),
   );
@@ -506,7 +550,7 @@ function setupUrlInput(): void {
     keyInput.value = keyInput.value.trim();
   });
 
-  toggleKeyInputVisibility();
+  updateKeyInputVisibility();
 }
 
 function setupForm(): void {

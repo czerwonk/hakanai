@@ -3,7 +3,7 @@
 use std::fs;
 use std::process::Command;
 
-use anyhow::{Context, Result, anyhow};
+use anyhow::{Context, Result};
 
 use super::cache_buster;
 
@@ -16,12 +16,10 @@ pub fn compile() -> Result<()> {
         return Ok(());
     }
 
-    ensure_rollup_is_installed()?;
-
     // Bundle TypeScript files with Rollup
-    let output = Command::new("npx")
-        .args(["rollup", "-c"])
-        .current_dir("../typescript") // Run from typescript directory where rollup.config.js is located
+    let output = Command::new("make")
+        .args(["build-ts"])
+        .current_dir("..")
         .output()?;
 
     if !output.status.success() {
@@ -37,23 +35,6 @@ pub fn compile() -> Result<()> {
 
     println!("cargo:warning=TypeScript bundling successful");
     Ok(())
-}
-
-fn ensure_rollup_is_installed() -> Result<()> {
-    let is_installed = Command::new("npx")
-        .args(["rollup", "--version"])
-        .output()?
-        .status
-        .success();
-
-    if is_installed {
-        println!("cargo:warning=Rollup bundler is available");
-        Ok(())
-    } else {
-        Err(anyhow!(
-            "Rollup bundler not available. Run 'npm install' first or set SKIP_TYPESCRIPT_BUILD=1"
-        ))
-    }
 }
 
 fn add_cache_busters_to_js_files() -> Result<()> {

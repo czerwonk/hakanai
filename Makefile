@@ -12,11 +12,24 @@ build:
 	$(CARGO) build --workspace --verbose
 
 .PHONY: build-wasm
-build-wasm: clean-wasm
+build-wasm: check-wasm-pack clean-wasm
 	cd wasm && ./build.sh
 
+.PHONY: check-npm
+check-npm:
+	@which npm > /dev/null 2>&1 || (echo "Error: npm is not installed" && exit 1)
+	@which npx > /dev/null 2>&1 || (echo "Error: npx is not installed" && exit 1)
+
+.PHONY: check-rollup
+check-rollup: check-npm
+	@npx rollup --version > /dev/null 2>&1 || (echo "Error: Rollup is not installed. Run 'npm install --prefix typescript' first" && exit 1)
+
+.PHONY: check-wasm-pack
+check-wasm-pack:
+	@which wasm-pack > /dev/null 2>&1 || (echo "Warning: wasm-pack not installed. Install with: cargo install wasm-pack" && echo "Continuing without WASM support...")
+
 .PHONY: build-ts
-build-ts: clean-ts build-wasm
+build-ts: check-rollup clean-ts build-wasm
 	cd typescript && npm run build
 
 .PHONY: release

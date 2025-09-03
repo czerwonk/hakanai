@@ -9,13 +9,11 @@ mod build {
     pub mod docs_generator;
     pub mod static_pages;
     pub mod typescript;
-    pub mod wasm;
 }
 
 use build::docs_generator;
 use build::static_pages;
 use build::typescript;
-use build::wasm;
 
 /// Auto-detect and register files with given extension for recompilation tracking
 fn register_files_for_recompilation(dir_path: &str, extension: &str) -> Result<()> {
@@ -55,7 +53,6 @@ fn main() -> Result<()> {
 
     let start = std::time::Instant::now();
     typescript::compile()?;
-    wasm::compile()?;
     docs_generator::generate()?;
     static_pages::generate_html_files()?;
     println!("cargo:warning=Build completed in {:?}", start.elapsed());

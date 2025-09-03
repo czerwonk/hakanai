@@ -2393,6 +2393,20 @@ input[type="number"] {
   border-radius: var(--border-radius-sm);
 }
 
+/* Separator for retrieve another section */
+.section-separator {
+  margin: var(--spacing-lg) 0 var(--spacing-md) 0;
+  border: none;
+  border-top: 1px solid var(--color-border);
+  opacity: 0.5;
+}
+
+/* Container for retrieve another button */
+.retrieve-another-container {
+  text-align: center;
+  margin-top: var(--spacing-md);
+}
+
 /* Binary message styling */
 .binary-message {
   margin-bottom: var(--spacing-md);
