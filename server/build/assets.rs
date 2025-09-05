@@ -21,7 +21,6 @@ pub fn build() -> Result<()> {
         .args(["build-ts"])
         .current_dir("../")
         .output()?;
-    println!("cargo:warning=Output: {:?}", output);
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);

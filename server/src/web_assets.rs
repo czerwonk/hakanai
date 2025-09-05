@@ -2,7 +2,8 @@
 
 use std::collections::HashMap;
 use std::path::PathBuf;
-use std::sync::Mutex;
+
+use tokio::sync::RwLock;
 
 use thiserror::Error;
 
@@ -10,13 +11,11 @@ use thiserror::Error;
 pub enum AssetError {
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
-    #[error("Cache lock poisoned")]
-    MutexPoisoned,
 }
 
 pub struct AssetManager {
     custom_dir: Option<PathBuf>,
-    cache: Mutex<HashMap<String, Vec<u8>>>,
+    cache: RwLock<HashMap<String, Vec<u8>>>,
 }
 
 impl AssetManager {
@@ -24,7 +23,7 @@ impl AssetManager {
     pub fn new(custom_dir: Option<PathBuf>) -> Self {
         AssetManager {
             custom_dir,
-            cache: Mutex::new(HashMap::new()),
+            cache: RwLock::new(HashMap::new()),
         }
     }
 
@@ -68,12 +67,12 @@ impl AssetManager {
     }
 
     async fn asset_from_cache(&self, name: &str) -> Result<Option<Vec<u8>>, AssetError> {
-        let cache = self.cache.lock().map_err(|_| AssetError::MutexPoisoned)?;
+        let cache = self.cache.read().await;
         Ok(cache.get(name).cloned())
     }
 
     async fn insert_into_cache(&self, name: &str, content: Vec<u8>) -> Result<(), AssetError> {
-        let mut cache = self.cache.lock().map_err(|_| AssetError::MutexPoisoned)?;
+        let mut cache = self.cache.write().await;
         cache.insert(name.to_string(), content);
         Ok(())
     }
