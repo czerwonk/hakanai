@@ -38,8 +38,7 @@ impl AssetManager {
             return Ok(cached.clone());
         }
 
-        let override_content = self.get_custom(name).await?;
-        if let Some(content) = override_content {
+        if let Some(content) = self.get_custom(name).await? {
             self.insert_into_cache(name, content.clone()).await?;
             return Ok(content);
         }
@@ -59,8 +58,7 @@ impl AssetManager {
 
         let mut result_content = original_content.to_vec();
 
-        let override_content = self.get_custom(name).await?;
-        if let Some(content) = override_content {
+        if let Some(content) = self.get_custom(name).await? {
             result_content.push(b'\n');
             result_content.extend_from_slice(&content);
             self.insert_into_cache(name, result_content.clone()).await?;
