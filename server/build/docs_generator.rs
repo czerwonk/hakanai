@@ -82,11 +82,6 @@ fn register_partials(hb: &mut Handlebars) -> Result<()> {
         ),
         ("footer", "templates/partials/footer.html"),
         ("header", "templates/partials/header.html"),
-        ("ttl_selector", "templates/partials/ttl-selector.html"),
-        (
-            "restrictions_tabs",
-            "templates/partials/restrictions-tabs.html",
-        ),
     ];
 
     for (name, path) in partials {
@@ -230,10 +225,11 @@ fn generate_response_examples(response: &Value, hb: &Handlebars) -> String {
         if content.len() == 1 {
             // Single example
             if let Some((content_type, media)) = content.iter().next()
-                && let Some(example) = media.get("example") {
-                    let formatted = serde_json::to_string_pretty(example).unwrap_or_default();
-                    return format_single_example(content_type, &formatted, hb);
-                }
+                && let Some(example) = media.get("example")
+            {
+                let formatted = serde_json::to_string_pretty(example).unwrap_or_default();
+                return format_single_example(content_type, &formatted, hb);
+            }
         } else if content.len() > 1 {
             // Multiple examples
             return format_multiple_examples(content, hb);
@@ -302,50 +298,46 @@ fn generate_request_body_section(operation: &Value, _openapi: &Value, hb: &Handl
 fn generate_schema_reference(request_body: &Value, hb: &Handlebars) -> String {
     if let Some(content) = request_body.get("content").and_then(|c| c.as_object())
         && let Some(json_content) = content.get("application/json")
-            && let Some(schema_ref) = json_content
-                .get("schema")
-                .and_then(|s| s.get("$ref"))
-                .and_then(|r| r.as_str())
-            {
-                let schema_name = schema_ref.split('/').next_back().unwrap_or("");
-                let context = json!({
-                    "schema_name": schema_name,
-                });
-                return hb.render("schema_reference", &context).unwrap_or_default();
-            }
+        && let Some(schema_ref) = json_content
+            .get("schema")
+            .and_then(|s| s.get("$ref"))
+            .and_then(|r| r.as_str())
+    {
+        let schema_name = schema_ref.split('/').next_back().unwrap_or("");
+        let context = json!({
+            "schema_name": schema_name,
+        });
+        return hb.render("schema_reference", &context).unwrap_or_default();
+    }
     String::new()
 }
 
 fn generate_request_examples(request_body: &Value, hb: &Handlebars) -> String {
     if let Some(content) = request_body.get("content").and_then(|c| c.as_object())
-        && let Some(json_content) = content.get("application/json") {
-            if let Some(example) = json_content.get("example") {
-                let formatted = serde_json::to_string_pretty(example).unwrap_or_default();
-                let context = json!({});
-                let header = hb.render("examples_header", &context).unwrap_or_default();
-                let example_html = format_single_example("application/json", &formatted, hb);
-                return format!("{}{}", header, example_html);
-            } else if let Some(examples) = json_content.get("examples").and_then(|e| e.as_object())
-            {
-                let mut items_html = String::new();
-                for (name, example_obj) in examples {
-                    if let Some(value) = example_obj.get("value") {
-                        let formatted = serde_json::to_string_pretty(value).unwrap_or_default();
-                        items_html.push_str(&format!("<h5>{}</h5>", name));
-                        items_html.push_str(&format_single_example(
-                            "application/json",
-                            &formatted,
-                            hb,
-                        ));
-                    }
-                }
-                if !items_html.is_empty() {
-                    let context = json!({});
-                    let header = hb.render("examples_header", &context).unwrap_or_default();
-                    return format!("{}{}", header, items_html);
+        && let Some(json_content) = content.get("application/json")
+    {
+        if let Some(example) = json_content.get("example") {
+            let formatted = serde_json::to_string_pretty(example).unwrap_or_default();
+            let context = json!({});
+            let header = hb.render("examples_header", &context).unwrap_or_default();
+            let example_html = format_single_example("application/json", &formatted, hb);
+            return format!("{}{}", header, example_html);
+        } else if let Some(examples) = json_content.get("examples").and_then(|e| e.as_object()) {
+            let mut items_html = String::new();
+            for (name, example_obj) in examples {
+                if let Some(value) = example_obj.get("value") {
+                    let formatted = serde_json::to_string_pretty(value).unwrap_or_default();
+                    items_html.push_str(&format!("<h5>{}</h5>", name));
+                    items_html.push_str(&format_single_example("application/json", &formatted, hb));
                 }
             }
+            if !items_html.is_empty() {
+                let context = json!({});
+                let header = hb.render("examples_header", &context).unwrap_or_default();
+                return format!("{}{}", header, items_html);
+            }
         }
+    }
     String::new()
 }
 
@@ -506,15 +498,20 @@ fn determine_property_type(prop_schema: &Value) -> String {
             }
             return "array".to_string();
         } else if type_val == "object"
-            && let Some(additional_props) = prop_schema.get("additionalProperties") {
-                let value_type = determine_property_type(additional_props);
-                return format!("object (map of {})", value_type);
-            }
+            && let Some(additional_props) = prop_schema.get("additionalProperties")
+        {
+            let value_type = determine_property_type(additional_props);
+            return format!("object (map of {})", value_type);
+        }
         return type_val.to_string();
     }
 
     if let Some(schema_ref) = prop_schema.get("$ref").and_then(|v| v.as_str()) {
-        return schema_ref.split('/').next_back().unwrap_or("object").to_string();
+        return schema_ref
+            .split('/')
+            .next_back()
+            .unwrap_or("object")
+            .to_string();
     }
 
     "unknown".to_string()
