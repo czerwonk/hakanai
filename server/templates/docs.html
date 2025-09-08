@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    {{> head}}
+    <meta name="description" content="Hakanai API Documentation - OpenAPI specification and SDK information" />
+    <title>Hakanai - API Documentation</title>
+  </head>
+  <body class="expanded-view">
+    {{> language_selector}} {{> theme_switcher}}
+    <main class="container">
+      {{> header}}
+
+      <section aria-labelledby="main-heading">
+        <h1 id="main-heading">API Documentation</h1>
+
+        <div class="info-section">
+          <h2>Available SDKs</h2>
+          <p>Hakanai provides official SDKs for easy integration:</p>
+
+          <div class="action-cards">
+            <div class="action-card">
+              <a
+                href="https://crates.io/crates/hakanai-lib"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="btn primary"
+              >
+                📦 Rust Library
+              </a>
+              <p>hakanai-lib on crates.io</p>
+            </div>
+
+            <div class="action-card">
+              <a
+                href="https://www.npmjs.com/package/@hakanai/client"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="btn primary"
+              >
+                📦 JavaScript/TypeScript
+              </a>
+              <p>@hakanai/client on npm</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-section">
+          <h2>OpenAPI Specification</h2>
+          <p>The complete API specification is available in OpenAPI 3.0 format:</p>
+
+          <div class="action-cards">
+            <div class="action-card">
+              <a href="/openapi.yaml" class="btn primary" download> 📄 Download OpenAPI Spec </a>
+              <p>Download the specification for use with code generators and API tools</p>
+            </div>
+
+            <div class="action-card">
+              <a href="https://editor.swagger.io/" target="_blank" rel="noopener noreferrer" class="btn secondary">
+                🔗 Open Swagger Editor
+              </a>
+              <p>View and edit the specification in Swagger Editor (paste the YAML after opening)</p>
+            </div>
+          </div>
+
+          <p class="input-helper">
+            <strong>To view in Swagger Editor:</strong> Download the OpenAPI spec above, then open Swagger Editor and
+            paste the YAML content.
+          </p>
+        </div>
+      </section>
+      {{> footer}}
+    </main>
+
+    <script type="module" src="/common.js?v={{cache_buster}}"></script>
+  </body>
+</html>

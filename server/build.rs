@@ -7,12 +7,10 @@ use anyhow::{Context, Result};
 mod build {
     pub mod assets;
     pub mod cache_buster;
-    pub mod docs_generator;
     pub mod static_pages;
 }
 
 use build::assets;
-use build::docs_generator;
 use build::static_pages;
 
 /// Auto-detect and register files with given extension for recompilation tracking
@@ -42,7 +40,6 @@ fn main() -> Result<()> {
     println!("cargo:rerun-if-changed=includes/openapi.json");
 
     register_files_for_recompilation("templates", "html")?;
-    register_files_for_recompilation("templates/docs", "html")?;
     register_files_for_recompilation("templates/partials", "html")?;
     register_files_for_recompilation("../typescript", "ts")?;
     println!("cargo:rerun-if-changed=../typescript/tsconfig.json");
@@ -53,7 +50,6 @@ fn main() -> Result<()> {
 
     let start = std::time::Instant::now();
     assets::build()?;
-    docs_generator::generate()?;
     static_pages::generate_html_files()?;
     println!("cargo:warning=Build completed in {:?}", start.elapsed());
 

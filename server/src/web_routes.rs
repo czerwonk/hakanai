@@ -30,7 +30,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
         .route("/impressum", web::get().to(serve_impressum))
         .route("/logo.svg", web::get().to(serve_logo))
         .route("/manifest.json", web::get().to(serve_manifest))
-        .route("/openapi.json", web::get().to(serve_openapi_json))
+        .route("/openapi.yaml", web::get().to(serve_openapi_yaml))
         .route("/privacy", web::get().to(serve_privacy))
         .route("/robots.txt", web::get().to(serve_robots_txt))
         .route("/share", web::get().to(serve_share_html))
@@ -150,16 +150,16 @@ async fn serve_create_secret_js() -> impl Responder {
 
 async fn serve_docs_html() -> impl Responder {
     serve_with_caching_header(
-        include_str!("../includes/docs_generated.html").as_bytes(),
+        include_str!("../includes/docs.html").as_bytes(),
         "text/html",
         VOLATILE_CACHE_MAX_AGE,
     )
 }
 
-async fn serve_openapi_json() -> impl Responder {
+async fn serve_openapi_yaml() -> impl Responder {
     serve_with_caching_header(
-        include_str!("../includes/openapi.json").as_bytes(),
-        "application/json",
+        include_str!("../includes/openapi.yaml").as_bytes(),
+        "application/yaml",
         DEFAULT_CACHE_MAX_AGE,
     )
 }
