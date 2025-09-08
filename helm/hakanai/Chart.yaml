@@ -3,7 +3,7 @@ name: hakanai
 description: A minimalist one-time secret sharing service implementing zero-knowledge principles
 type: application
 version: 0.8.0
-appVersion: "v2.13.4"
+appVersion: "v2.14.0"
 keywords:
   - secret-sharing
   - zero-knowledge
