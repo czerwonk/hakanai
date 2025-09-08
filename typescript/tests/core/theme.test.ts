@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
+import { I18n } from "../../src/core/i18n";
 import { initTheme } from "../../src/core/theme";
 
 describe("Theme Management", () => {

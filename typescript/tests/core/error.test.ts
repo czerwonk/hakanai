@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
+import { I18n } from "../../src/core/i18n";
 import { handleAPIError, ErrorHandler, isHakanaiError, isStandardError, isErrorLike } from "../../src/core/error";
 import { HakanaiErrorCodes } from "../../src/hakanai-client";
 
