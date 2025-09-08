@@ -4,6 +4,7 @@ import { showElement, hideElement } from "./dom-utils";
 
 export interface AppConfig {
   showTokenInput: boolean;
+  secretSizeLimit?: number;
   features: {
     impressum: boolean;
     privacy: boolean;
@@ -50,10 +51,7 @@ export async function fetchAppConfig(): Promise<AppConfig | null> {
   }
 }
 
-async function initializeOptionalFeature(
-  elementId: string,
-  enabled: boolean,
-): Promise<void> {
+async function initializeOptionalFeature(elementId: string, enabled: boolean): Promise<void> {
   const element = document.getElementById(elementId);
   if (!element) {
     return;
@@ -76,12 +74,6 @@ export async function initFeatures(): Promise<void> {
     return;
   }
 
-  await initializeOptionalFeature(
-    "impressum-link",
-    config.features?.impressum ?? false,
-  );
-  await initializeOptionalFeature(
-    "privacy-link",
-    config.features?.privacy ?? false,
-  );
+  await initializeOptionalFeature("impressum-link", config.features?.impressum ?? false);
+  await initializeOptionalFeature("privacy-link", config.features?.privacy ?? false);
 }

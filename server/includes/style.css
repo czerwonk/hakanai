@@ -79,8 +79,7 @@
   --spacing-xl: 2rem;
 
   /* Typography */
-  --font-system: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    sans-serif;
+  --font-system: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: "SF Mono", "Monaco", "Inconsolata", "Fira Code", monospace;
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
@@ -220,8 +219,7 @@ body[data-theme="light"] {
 .btn:hover:not(.copied):not(.copy-failed) {
   background: var(--theme-primary-hover);
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px
-    color-mix(in srgb, var(--theme-primary) 12%, transparent);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--theme-primary) 12%, transparent);
 }
 
 .btn:focus-visible {
@@ -417,24 +415,10 @@ body::before {
   left: 0;
   right: 0;
   bottom: 0;
-  background: radial-gradient(
-      circle at 20% 80%,
-      rgba(127, 180, 202, 0.02) 0%,
-      rgba(107, 165, 212, 0.015) 30%,
-      transparent 60%
-    ),
-    radial-gradient(
-      circle at 80% 20%,
-      rgba(107, 165, 212, 0.015) 0%,
-      rgba(122, 168, 159, 0.01) 30%,
-      transparent 60%
-    ),
-    radial-gradient(
-      circle at 40% 40%,
-      rgba(122, 168, 159, 0.015) 0%,
-      rgba(127, 180, 202, 0.01) 30%,
-      transparent 60%
-    );
+  background:
+    radial-gradient(circle at 20% 80%, rgba(127, 180, 202, 0.02) 0%, rgba(107, 165, 212, 0.015) 30%, transparent 60%),
+    radial-gradient(circle at 80% 20%, rgba(107, 165, 212, 0.015) 0%, rgba(122, 168, 159, 0.01) 30%, transparent 60%),
+    radial-gradient(circle at 40% 40%, rgba(122, 168, 159, 0.015) 0%, rgba(127, 180, 202, 0.01) 30%, transparent 60%);
   animation: gentle-float 40s ease-in-out infinite;
   z-index: -1;
   pointer-events: none;
@@ -618,11 +602,7 @@ body[data-theme="light"] #language-switcher {
   left: 50%;
   width: 0;
   height: 0;
-  background: radial-gradient(
-    circle,
-    color-mix(in srgb, var(--theme-primary) 4%, transparent) 0%,
-    transparent 70%
-  );
+  background: radial-gradient(circle, color-mix(in srgb, var(--theme-primary) 4%, transparent) 0%, transparent 70%);
   transition: all 0.8s ease-out;
   border-radius: 50%;
   transform: translate(-50%, -50%);
@@ -751,8 +731,7 @@ body[data-theme="light"] .action-card {
     color-mix(in srgb, var(--theme-accent) 15%, transparent) 100%
   );
   border-color: var(--theme-primary);
-  text-shadow: 0 0 10px
-    color-mix(in srgb, var(--theme-primary) 50%, transparent);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--theme-primary) 50%, transparent);
   box-shadow: 0 0 15px color-mix(in srgb, var(--theme-primary) 20%, transparent);
 }
 
@@ -805,11 +784,7 @@ body[data-theme="light"] .action-card {
 
 .file-input-button:hover {
   border-color: var(--theme-primary);
-  background: color-mix(
-    in srgb,
-    var(--theme-bg-input) 95%,
-    var(--theme-primary) 5%
-  );
+  background: color-mix(in srgb, var(--theme-bg-input) 95%, var(--theme-primary) 5%);
 }
 
 .file-input-button:focus {
@@ -862,10 +837,8 @@ body[data-theme="light"] #theme-toggle {
 
 .header {
   text-align: center;
-  margin: calc(-1 * var(--spacing-xl)) calc(-1 * var(--spacing-xl))
-    var(--spacing-xl) calc(-1 * var(--spacing-xl));
-  padding: var(--spacing-xl) var(--spacing-lg) var(--spacing-lg)
-    var(--spacing-lg);
+  margin: calc(-1 * var(--spacing-xl)) calc(-1 * var(--spacing-xl)) var(--spacing-xl) calc(-1 * var(--spacing-xl));
+  padding: var(--spacing-xl) var(--spacing-lg) var(--spacing-lg) var(--spacing-lg);
   border-bottom: 1px solid var(--color-border);
   position: relative;
   background-image: url("/banner.svg");
@@ -906,8 +879,7 @@ body[data-theme="light"] #theme-toggle {
 }
 
 .homepage-container .header {
-  margin: calc(-1 * var(--spacing-lg)) calc(-1 * var(--spacing-lg))
-    var(--spacing-lg) calc(-1 * var(--spacing-lg));
+  margin: calc(-1 * var(--spacing-lg)) calc(-1 * var(--spacing-lg)) var(--spacing-lg) calc(-1 * var(--spacing-lg));
 }
 
 .header::after {
@@ -1074,15 +1046,13 @@ button {
   position: relative;
   overflow: hidden;
   text-shadow: 0 1px 2px var(--button-shadow);
-  box-shadow: 0 2px 8px
-    color-mix(in srgb, var(--theme-primary) 10%, transparent);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--theme-primary) 10%, transparent);
 }
 
 button:hover:not(:disabled) {
   background: var(--theme-primary-hover);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px
-    color-mix(in srgb, var(--theme-primary) 15%, transparent);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--theme-primary) 15%, transparent);
 }
 
 button:active:not(:disabled) {
@@ -1552,8 +1522,7 @@ button.loading::after {
   }
 
   .container:not(.homepage-container) .header {
-    margin: calc(-1 * var(--spacing-lg)) calc(-1 * var(--spacing-lg))
-      var(--spacing-lg) calc(-1 * var(--spacing-lg));
+    margin: calc(-1 * var(--spacing-lg)) calc(-1 * var(--spacing-lg)) var(--spacing-lg) calc(-1 * var(--spacing-lg));
   }
 }
 
@@ -1844,11 +1813,7 @@ legend {
 
 .radio-group label:has(input[type="radio"]:checked) {
   background: var(--color-primary);
-  background-image: linear-gradient(
-    to bottom,
-    var(--button-gradient),
-    transparent
-  );
+  background-image: linear-gradient(to bottom, var(--button-gradient), transparent);
   color: var(--button-text);
   box-shadow: 0 1px 2px var(--button-shadow);
 }
@@ -1918,11 +1883,7 @@ legend {
 
 .checkbox-label input[type="checkbox"]:hover {
   border-color: var(--theme-primary);
-  background: color-mix(
-    in srgb,
-    var(--theme-primary) 5%,
-    var(--theme-bg-input)
-  );
+  background: color-mix(in srgb, var(--theme-primary) 5%, var(--theme-bg-input));
 }
 
 .checkbox-label input[type="checkbox"]:checked {
@@ -2012,8 +1973,7 @@ body:has(.privacy-content) {
   margin-top: var(--spacing-xl);
   margin-bottom: var(--spacing-md);
   padding-bottom: var(--spacing-xs);
-  border-bottom: 1px solid
-    color-mix(in srgb, var(--theme-accent) 20%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--theme-accent) 20%, transparent);
 }
 
 .docs-content h4 {
@@ -2035,8 +1995,7 @@ body:has(.privacy-content) {
   align-items: flex-start;
   gap: var(--spacing-md);
   flex-wrap: wrap;
-  border-bottom: 1px solid
-    color-mix(in srgb, var(--theme-border) 30%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--theme-border) 30%, transparent);
 }
 
 .docs-content .property-item:last-child {
@@ -2063,11 +2022,7 @@ body:has(.privacy-content) {
   font-family: var(--font-mono);
   font-size: var(--font-size-xs);
   padding: 2px 6px;
-  background: color-mix(
-    in srgb,
-    var(--theme-heading-secondary) 20%,
-    transparent
-  );
+  background: color-mix(in srgb, var(--theme-heading-secondary) 20%, transparent);
   color: var(--theme-heading-secondary);
   border-radius: var(--border-radius-sm);
   font-weight: 500;
@@ -2207,8 +2162,7 @@ body:has(.privacy-content) {
   color: var(--theme-primary);
   text-decoration: none;
   transition: all var(--transition-fast);
-  border-bottom: 1px solid
-    color-mix(in srgb, var(--theme-primary) 30%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--theme-primary) 30%, transparent);
   padding-bottom: 1px;
 }
 
@@ -2529,20 +2483,12 @@ input[type="number"] {
 
 .file-dropzone--active {
   border-color: var(--color-primary);
-  background: color-mix(
-    in srgb,
-    var(--theme-primary) 3%,
-    var(--color-bg-input)
-  );
+  background: color-mix(in srgb, var(--theme-primary) 3%, var(--color-bg-input));
 }
 
 .file-dropzone--dragover {
   border-color: var(--theme-primary);
-  background: color-mix(
-    in srgb,
-    var(--theme-primary) 8%,
-    var(--color-bg-input)
-  );
+  background: color-mix(in srgb, var(--theme-primary) 8%, var(--color-bg-input));
   border-style: solid;
   transform: scale(1.02);
   box-shadow:
@@ -2560,22 +2506,13 @@ input[type="number"] {
 .file-dropzone-fallback {
   border-style: solid;
   border-color: var(--color-primary);
-  background: color-mix(
-    in srgb,
-    var(--theme-primary) 5%,
-    var(--color-bg-input)
-  );
+  background: color-mix(in srgb, var(--theme-primary) 5%, var(--color-bg-input));
 }
 
 .file-dropzone-fallback:hover:not(.file-dropzone--disabled) {
-  background: color-mix(
-    in srgb,
-    var(--theme-primary) 8%,
-    var(--color-bg-input)
-  );
+  background: color-mix(in srgb, var(--theme-primary) 8%, var(--color-bg-input));
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px
-    color-mix(in srgb, var(--theme-primary) 10%, transparent);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--theme-primary) 10%, transparent);
 }
 
 .file-dropzone:focus-visible {
@@ -2726,8 +2663,7 @@ input[type="number"] {
 .restrictions-tab-contents .tab-content textarea:focus {
   outline: none;
   border-color: var(--theme-primary);
-  box-shadow: 0 0 0 2px
-    color-mix(in srgb, var(--theme-primary) 20%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--theme-primary) 20%, transparent);
 }
 
 .restrictions-tab-contents .tab-content textarea:disabled {
@@ -2813,4 +2749,39 @@ input[type="number"] {
 
 .clipboard-permission-prompt {
   text-align: center;
+}
+
+/* Textarea container for absolute positioning */
+.textarea-container {
+  position: relative;
+  width: 100%;
+}
+
+/* Size limit indicator */
+.size-limit-indicator {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.limit-text {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  display: block;
+  transition: color 0.3s ease;
+  background: var(--color-bg-input);
+  padding: 2px 6px;
+  border-radius: 4px;
+  opacity: 0.9;
+}
+
+.limit-text.warning {
+  color: var(--color-warning);
+}
+
+.limit-text.danger {
+  color: var(--color-error);
+  font-weight: 500;
 }

@@ -2,18 +2,9 @@
 
 import { HakanaiClient, type PayloadData } from "./hakanai-client";
 import { initI18n, I18nKeys } from "./core/i18n";
-import {
-  announceToScreenReader,
-  secureInputClear,
-  showElement,
-  hideElement,
-} from "./core/dom-utils";
+import { announceToScreenReader, secureInputClear, showElement, hideElement } from "./core/dom-utils";
 import { initTheme } from "./core/theme";
-import {
-  saveAuthTokenToStorage,
-  getAuthTokenFromStorage,
-  clearAuthTokenStorage,
-} from "./core/auth-storage";
+import { saveAuthTokenToStorage, getAuthTokenFromStorage, clearAuthTokenStorage } from "./core/auth-storage";
 import { formatFileSize, sanitizeFileName } from "./core/formatters";
 import { displaySuccessResult } from "./components/create-result";
 import { displayErrorMessage } from "./components/error-display";
@@ -25,10 +16,12 @@ import { KeyboardShortcuts } from "./core/keyboard-shortcuts";
 import { FileDropzone } from "./components/file-dropzone";
 import { RestrictionsTabs } from "./components/restrictions-tabs";
 import { RestrictionData, toSecretRestrictions } from "./core/restriction-data";
+import { SizeLimitIndicator } from "./components/size-limit";
 
 let ttlSelector: TTLSelector | null = null;
 let fileDropzone: FileDropzone | null = null;
 let restrictionsTabs: RestrictionsTabs | null = null;
+let sizeLimitIndicator: SizeLimitIndicator | null = null;
 
 interface Elements {
   button: HTMLButtonElement;
@@ -59,9 +52,7 @@ interface FormValues {
   restrictionData?: RestrictionData;
 }
 
-const baseUrl = window.location.origin.includes("file://")
-  ? "http://localhost:8080"
-  : window.location.origin;
+const baseUrl = window.location.origin.includes("file://") ? "http://localhost:8080" : window.location.origin;
 
 const client = new HakanaiClient(baseUrl);
 
@@ -69,22 +60,12 @@ function getElements(): Elements | null {
   const button = document.getElementById("createBtn") as HTMLButtonElement;
   const secretInput = document.getElementById("secretText") as HTMLInputElement;
   const fileInput = document.getElementById("secretFile") as HTMLInputElement;
-  const authTokenInput = document.getElementById(
-    "authToken",
-  ) as HTMLInputElement;
+  const authTokenInput = document.getElementById("authToken") as HTMLInputElement;
   const textRadio = document.getElementById("textRadio") as HTMLInputElement;
   const fileRadio = document.getElementById("fileRadio") as HTMLInputElement;
   const resultDiv = document.getElementById("result");
 
-  if (
-    !button ||
-    !secretInput ||
-    !fileInput ||
-    !authTokenInput ||
-    !textRadio ||
-    !fileRadio ||
-    !resultDiv
-  ) {
+  if (!button || !secretInput || !fileInput || !authTokenInput || !textRadio || !fileRadio || !resultDiv) {
     return null;
   }
 
@@ -120,9 +101,7 @@ function validateFilename(fileName: string): boolean {
   return sanitizeFileName(fileName) !== null;
 }
 
-async function validateAndProcessFileInput(
-  fileInput: HTMLInputElement,
-): Promise<PayloadData | null> {
+async function validateAndProcessFileInput(fileInput: HTMLInputElement): Promise<PayloadData | null> {
   const file = fileInput.files?.[0];
   if (!file) {
     showError(window.i18n.t(I18nKeys.Msg.EmptyFile));
@@ -157,9 +136,7 @@ function validateTextInput(secretInput: HTMLInputElement): PayloadData | null {
   }
 
   if (typeof TextEncoder === "undefined") {
-    showError(
-      "Your browser doesn't support text encoding. Please use a modern browser.",
-    );
+    showError("Your browser doesn't support text encoding. Please use a modern browser.");
     return null;
   }
 
@@ -171,22 +148,10 @@ function validateTextInput(secretInput: HTMLInputElement): PayloadData | null {
 }
 
 function setElementsState(elements: Elements, disabled: boolean): void {
-  const {
-    button,
-    secretInput,
-    fileInput,
-    authTokenInput,
-    textRadio,
-    fileRadio,
-    resultDiv,
-  } = elements;
+  const { button, secretInput, fileInput, authTokenInput, textRadio, fileRadio, resultDiv } = elements;
 
-  const fileInputButton = document.getElementById(
-    "fileInputButton",
-  ) as HTMLButtonElement;
-  const saveTokenCheckbox = document.getElementById(
-    "saveTokenCookie",
-  ) as HTMLInputElement;
+  const fileInputButton = document.getElementById("fileInputButton") as HTMLButtonElement;
+  const saveTokenCheckbox = document.getElementById("saveTokenCookie") as HTMLInputElement;
 
   button.disabled = disabled;
   secretInput.disabled = disabled;
@@ -207,26 +172,19 @@ function setElementsState(elements: Elements, disabled: boolean): void {
   }
 }
 
-function clearInputs(
-  secretInput: HTMLInputElement,
-  fileInput: HTMLInputElement,
-): void {
+function clearInputs(secretInput: HTMLInputElement, fileInput: HTMLInputElement): void {
   secureInputClear(secretInput);
   fileInput.value = "";
   updateFileInfo();
 }
 
 function areRestrictionsEnabled(): boolean {
-  const restrictAccessCheckbox = document.getElementById(
-    "restrictAccess",
-  ) as HTMLInputElement;
+  const restrictAccessCheckbox = document.getElementById("restrictAccess") as HTMLInputElement;
   return restrictAccessCheckbox?.checked ?? false;
 }
 
 function getFormValues(elements: Elements): FormValues {
-  const restrictionData = areRestrictionsEnabled()
-    ? restrictionsTabs?.getRestrictions()
-    : undefined;
+  const restrictionData = areRestrictionsEnabled() ? restrictionsTabs?.getRestrictions() : undefined;
 
   return {
     authToken: elements.authTokenInput.value.trim(),
@@ -254,9 +212,7 @@ class CreateSecretErrorHandler implements ErrorHandler {
   }
 
   onAuthenticationError(): void {
-    const authTokenInput = document.getElementById(
-      "authToken",
-    ) as HTMLInputElement;
+    const authTokenInput = document.getElementById("authToken") as HTMLInputElement;
     if (authTokenInput) {
       authTokenInput.focus();
       authTokenInput.select();
@@ -282,8 +238,7 @@ async function createSecret(): Promise<void> {
     return;
   }
 
-  const { authToken, ttl, isFileMode, restrictionData } =
-    getFormValues(elements);
+  const { authToken, ttl, isFileMode, restrictionData } = getFormValues(elements);
 
   const payload = isFileMode
     ? await validateAndProcessFileInput(elements.fileInput)
@@ -301,23 +256,13 @@ async function createSecret(): Promise<void> {
 
   try {
     // Convert restrictionData to API format
-    const restrictions = restrictionData
-      ? await toSecretRestrictions(restrictionData)
-      : undefined;
+    const restrictions = restrictionData ? await toSecretRestrictions(restrictionData) : undefined;
 
     // Pass the ProgressBar directly as it implements DataTransferObserver
-    const secretUrl = await client.sendPayload(
-      payload,
-      ttl,
-      authToken,
-      progressBar,
-      restrictions,
-    );
+    const secretUrl = await client.sendPayload(payload, ttl, authToken, progressBar, restrictions);
 
     // Handle auth token cookie saving
-    const saveTokenCookie = document.getElementById(
-      "saveTokenCookie",
-    ) as HTMLInputElement;
+    const saveTokenCookie = document.getElementById("saveTokenCookie") as HTMLInputElement;
     if (saveTokenCookie) {
       handleAuthTokenSave(authToken, saveTokenCookie.checked);
     }
@@ -330,9 +275,7 @@ async function createSecret(): Promise<void> {
     progressBar.hide();
     setElementsState(elements, false);
     // Clear auth token from memory for security (unless saving to cookie)
-    const saveTokenCookie = document.getElementById(
-      "saveTokenCookie",
-    ) as HTMLInputElement;
+    const saveTokenCookie = document.getElementById("saveTokenCookie") as HTMLInputElement;
     if (elements.authTokenInput.value && !saveTokenCookie?.checked) {
       secureInputClear(elements.authTokenInput);
     }
@@ -346,10 +289,7 @@ function hideForm(): void {
   }
 }
 
-function showSuccess(
-  secretUrl: string,
-  restrictionData?: RestrictionData,
-): void {
+function showSuccess(secretUrl: string, restrictionData?: RestrictionData): void {
   const resultContainer = document.getElementById("result");
   if (!resultContainer) {
     console.error("Result container not found");
@@ -370,9 +310,7 @@ function getFileElements(): FileElements {
     fileInfoDiv: document.getElementById("fileInfo") as HTMLElement,
     fileNameSpan: document.getElementById("fileName") as HTMLElement,
     fileSizeSpan: document.getElementById("fileSize") as HTMLElement,
-    radioGroup: document.querySelector(
-      ".input-group:first-child",
-    ) as HTMLElement,
+    radioGroup: document.querySelector(".input-group:first-child") as HTMLElement,
     textInputGroup: document.getElementById("textInputGroup") as HTMLElement,
     fileInputGroup: document.getElementById("fileInputGroup") as HTMLElement,
     fileRadio: document.getElementById("fileRadio") as HTMLInputElement,
@@ -489,9 +427,7 @@ function setupRadioHandlers(): void {
 
 function setupFileInputHandler(): void {
   const fileInput = document.getElementById("secretFile") as HTMLInputElement;
-  const fileInputButton = document.getElementById(
-    "fileInputButton",
-  ) as HTMLButtonElement;
+  const fileInputButton = document.getElementById("fileInputButton") as HTMLButtonElement;
   const dropzoneContainer = document.getElementById("fileDropzone");
 
   if (!fileInput || !fileInputButton || !dropzoneContainer) {
@@ -514,10 +450,7 @@ function setupFileInputHandler(): void {
   }
 }
 
-function showFileInputButton(
-  fileInputButton: HTMLButtonElement,
-  fileInput: HTMLInputElement,
-): void {
+function showFileInputButton(fileInputButton: HTMLButtonElement, fileInput: HTMLInputElement): void {
   showElement(fileInputButton);
   fileInputButton.addEventListener("click", () => {
     fileInput.click();
@@ -527,12 +460,8 @@ function showFileInputButton(
 function initializeAuthToken(): void {
   const savedToken = getAuthTokenFromStorage();
   if (savedToken) {
-    const authTokenInput = document.getElementById(
-      "authToken",
-    ) as HTMLInputElement;
-    const saveTokenCheckbox = document.getElementById(
-      "saveTokenCookie",
-    ) as HTMLInputElement;
+    const authTokenInput = document.getElementById("authToken") as HTMLInputElement;
+    const saveTokenCheckbox = document.getElementById("saveTokenCookie") as HTMLInputElement;
 
     if (authTokenInput) {
       authTokenInput.value = savedToken;
@@ -588,19 +517,24 @@ function initKeyboardShortcuts(): void {
 }
 
 async function initTokenInputVisibility(): Promise<void> {
-  const tokenInputGroup = document.querySelector(
-    ".input-group:has(#authToken)",
-  ) as HTMLElement;
+  const tokenInputGroup = document.querySelector(".input-group:has(#authToken)") as HTMLElement;
 
   if (!tokenInputGroup) {
     return;
   }
 
   const showTokenInput = await shouldShowTokenInput();
-  if (showTokenInput) {
-    showElement(tokenInputGroup);
-  } else {
+  if (!showTokenInput) {
     hideElement(tokenInputGroup);
+    return;
+  }
+
+  showElement(tokenInputGroup);
+
+  // add listener to update size limit visibility on token input changes
+  const authTokenInput = document.getElementById("authToken") as HTMLInputElement;
+  if (authTokenInput) {
+    authTokenInput.addEventListener("input", updateSizeLimitVisibility);
   }
 }
 
@@ -616,6 +550,48 @@ async function shouldShowTokenInput(): Promise<boolean> {
   return config?.showTokenInput ?? false;
 }
 
+async function initSizeLimitIndicator(): Promise<void> {
+  try {
+    const config = await fetchAppConfig();
+    const limit = config?.secretSizeLimit || 0;
+
+    sizeLimitIndicator = new SizeLimitIndicator();
+    sizeLimitIndicator.initialize(limit);
+
+    if (limit > 0) {
+      sizeLimitIndicator.show();
+    }
+
+    const secretInput = document.getElementById("secretText") as HTMLInputElement;
+    if (secretInput) {
+      secretInput.addEventListener("input", () => {
+        if (sizeLimitIndicator) {
+          sizeLimitIndicator.update(secretInput.value);
+        }
+      });
+    }
+  } catch (error) {
+    console.warn("Failed to initialize size limit indicator:", error);
+  }
+}
+
+function updateSizeLimitVisibility(): void {
+  if (!sizeLimitIndicator) return;
+
+  const authTokenInput = document.getElementById("authToken") as HTMLInputElement;
+  const hasToken = authTokenInput?.value?.trim();
+
+  if (hasToken) {
+    sizeLimitIndicator.hide();
+    return;
+  }
+
+  sizeLimitIndicator.show();
+
+  const secretInput = document.getElementById("secretText") as HTMLInputElement;
+  sizeLimitIndicator.update(secretInput?.value);
+}
+
 function initRestrictionsComponent(): void {
   const restrictionsTabsContainer = document.getElementById("restrictionsTabs");
   if (restrictionsTabsContainer) {
@@ -626,12 +602,8 @@ function initRestrictionsComponent(): void {
 }
 
 function initRestrictionsCheckbox(): void {
-  const restrictAccessCheckbox = document.getElementById(
-    "restrictAccess",
-  ) as HTMLInputElement;
-  const restrictionsInputGroup = document.getElementById(
-    "restrictionsInputGroup",
-  ) as HTMLElement;
+  const restrictAccessCheckbox = document.getElementById("restrictAccess") as HTMLInputElement;
+  const restrictionsInputGroup = document.getElementById("restrictionsInputGroup") as HTMLElement;
 
   if (!restrictAccessCheckbox || !restrictionsInputGroup) {
     return;
@@ -665,6 +637,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   initializeAuthToken();
   await initFeatures();
   await initTokenInputVisibility();
+  await initSizeLimitIndicator();
   initRestrictionsCheckbox();
   initKeyboardShortcuts();
 });

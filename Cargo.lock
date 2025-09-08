@@ -1086,7 +1086,7 @@ dependencies = [
 
 [[package]]
 name = "hakanai"
-version = "2.13.3"
+version = "2.13.4"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1108,7 +1108,7 @@ dependencies = [
 
 [[package]]
 name = "hakanai-lib"
-version = "2.13.3"
+version = "2.13.4"
 dependencies = [
  "aes-gcm",
  "async-stream",
@@ -1132,7 +1132,7 @@ dependencies = [
 
 [[package]]
 name = "hakanai-server"
-version = "2.13.3"
+version = "2.13.4"
 dependencies = [
  "actix-cors",
  "actix-web",
@@ -1169,7 +1169,7 @@ dependencies = [
 
 [[package]]
 name = "hakanai-wasm"
-version = "2.13.3"
+version = "2.13.4"
 dependencies = [
  "qrcode",
  "wasm-bindgen",
@@ -2579,9 +2579,9 @@ dependencies = [
 
 [[package]]
 name = "security-framework-sys"
-version = "2.14.0"
+version = "2.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "49db231d56a190491cb4aeda9527f1ad45345af50b0851622a7adb8c03b01c32"
+checksum = "cc1f0cbffaac4852523ce30d8bd3c5cdc873501d96ff467ca09b6767bb8cd5c0"
 dependencies = [
  "core-foundation-sys",
  "libc",

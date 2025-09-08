@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use actix_web::http::header;
-use actix_web::{HttpResponse, Responder, web};
+use actix_web::{HttpRequest, HttpResponse, Responder, web};
 use tracing::error;
 
+use crate::filters;
 use crate::web_assets::AssetManager;
 
 const DEFAULT_CACHE_MAX_AGE: u64 = 604800; // 7 days
@@ -221,7 +222,19 @@ async fn serve_privacy(app_data: web::Data<crate::app_data::AppData>) -> impl Re
     }
 }
 
-async fn serve_config(app_data: web::Data<crate::app_data::AppData>) -> impl Responder {
+async fn serve_config(
+    app_data: web::Data<crate::app_data::AppData>,
+    req: HttpRequest,
+) -> impl Responder {
+    let whitelisted = filters::is_request_from_whitelisted_ip(&req, &app_data);
+    let size_limit = if whitelisted {
+        app_data.upload_size_limit
+    } else if app_data.anonymous_usage.allowed {
+        app_data.anonymous_usage.upload_size_limit
+    } else {
+        0
+    };
+
     let config = serde_json::json!({
         "showTokenInput": app_data.show_token_input || !app_data.anonymous_usage.allowed,
         "features": {
@@ -231,7 +244,8 @@ async fn serve_config(app_data: web::Data<crate::app_data::AppData>) -> impl Res
               "country": app_data.country_header.is_some(),
               "asn": app_data.asn_header.is_some(),
             }
-        }
+        },
+        "secretSizeLimit": size_limit,
     });
 
     HttpResponse::Ok()
@@ -294,6 +308,7 @@ mod tests {
     use super::*;
     use crate::app_data::{AnonymousOptions, AppData};
     use actix_web::{App, test, web};
+    use std::str::FromStr;
 
     fn create_test_app_data() -> AppData {
         AppData::default()
@@ -512,5 +527,54 @@ mod tests {
         let resp = test::call_service(&app, req).await;
         let body: serde_json::Value = test::read_body_json(resp).await;
         assert_eq!(body["showTokenInput"], true);
+    }
+
+    #[actix_web::test]
+    async fn test_serve_config_secret_size_limit_anonymous() {
+        let expected = 1024 as usize;
+        let app_data = create_test_app_data().with_anonymous_usage(AnonymousOptions {
+            allowed: true,
+            upload_size_limit: expected,
+        });
+
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(app_data))
+                .route("/config.json", web::get().to(serve_config)),
+        )
+        .await;
+
+        let req = test::TestRequest::get().uri("/config.json").to_request();
+        let resp = test::call_service(&app, req).await;
+        let body: serde_json::Value = test::read_body_json(resp).await;
+        assert_eq!(body["secretSizeLimit"], expected);
+    }
+
+    #[actix_web::test]
+    async fn test_serve_config_secret_size_limit_whitelisted() {
+        let limit = 1024 as usize;
+        let mut app_data = create_test_app_data()
+            .with_anonymous_usage(AnonymousOptions {
+                allowed: true,
+                upload_size_limit: limit,
+            })
+            .with_trusted_ip_header("x-real-ip".to_string())
+            .with_trusted_ip_ranges(Some(vec![ipnet::IpNet::from_str("127.0.0.1/32").unwrap()]));
+        app_data.upload_size_limit = 2048;
+
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(app_data))
+                .route("/config.json", web::get().to(serve_config)),
+        )
+        .await;
+
+        let req = test::TestRequest::get()
+            .uri("/config.json")
+            .insert_header(("x-real-ip", "127.0.0.1"))
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        let body: serde_json::Value = test::read_body_json(resp).await;
+        assert_eq!(body["secretSizeLimit"], 2048);
     }
 }

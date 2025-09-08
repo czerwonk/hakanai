@@ -2,7 +2,7 @@
 
 [package]
 name = "hakanai-wasm"
-version = "2.13.3"
+version = "2.13.4"
 edition = "2024"
 license = "Apache-2.0"
 description = "WASM module for Hakanai QR code generation"
@@ -14,4 +14,3 @@ crate-type = ["cdylib"]
 [dependencies]
 wasm-bindgen = "0.2"
 qrcode = "0.14"
-

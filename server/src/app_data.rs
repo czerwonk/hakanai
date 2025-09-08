@@ -10,7 +10,7 @@ use crate::token::{TokenCreator, TokenValidator};
 pub struct AnonymousOptions {
     pub allowed: bool,
 
-    /// The maximum size of uploads allowed for anonymous users, in bytes.
+    /// The maximum upload size allowed for anonymous users, in bytes.
     pub upload_size_limit: usize,
 }
 
@@ -54,6 +54,9 @@ pub struct AppData {
 
     /// HTTP header to check for client ASN (for geo-restrictions)
     pub asn_header: Option<String>,
+
+    /// The maximum upload size allowed for the server, in bytes.
+    pub upload_size_limit: usize,
 }
 
 #[cfg(test)]
@@ -78,6 +81,7 @@ impl Default for AppData {
             trusted_ip_header: "x-forwarded-for".to_string(),
             country_header: None,
             asn_header: None,
+            upload_size_limit: 10 * 1024 * 1024, // 10MB
         }
     }
 }
