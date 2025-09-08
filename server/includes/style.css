@@ -1681,11 +1681,11 @@ button.loading::after {
   letter-spacing: 0.05em;
 }
 
-.method.get {
+.method-get {
   background: var(--color-primary);
   color: var(--button-text);
 }
-.method.post {
+.method-post {
   background: var(--color-error);
   color: var(--button-text);
 }
@@ -2028,22 +2028,30 @@ body:has(.privacy-content) {
   font-weight: 500;
 }
 
-.docs-content .property-required {
-  font-size: var(--font-size-xs);
-  padding: 2px 6px;
-  background: color-mix(in srgb, var(--theme-error) 15%, transparent);
-  color: var(--theme-error);
-  border-radius: var(--border-radius-sm);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-}
-
 .docs-content .property-description {
   color: var(--theme-text);
   font-size: var(--font-size-sm);
   line-height: 1.5;
   flex: 1;
+}
+
+.docs-content .property-constraints {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  margin-left: var(--spacing-xs);
+}
+
+.docs-content .property-constraints .constraint {
+  padding: 2px 4px;
+  background: var(--color-background-secondary);
+  border-radius: var(--border-radius-sm);
+  margin: 0 2px;
+}
+
+.docs-content .property-constraints .constraint-required {
+  background: color-mix(in srgb, var(--color-error) 10%, transparent);
+  color: var(--color-error);
+  font-weight: 600;
 }
 .docs-content ul:has(.property-item) {
   padding: 0;

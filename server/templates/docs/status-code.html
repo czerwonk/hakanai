@@ -1,8 +1,7 @@
 <li class="status-code-item">
   <div class="status-code-header">
-    <span class="status-code code-{code}">{code}</span>
-    <span class="status-text">{status_text}</span>
+    <span class="status-code code-{{status_code}}">{{status_code}}</span>
+    <span class="status-text">{{description}}</span>
   </div>
-  <div class="status-description">{description}</div>
-  {examples | unescaped}
+  {{{examples}}}
 </li>

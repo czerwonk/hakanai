@@ -1,9 +1,11 @@
 <li class="property-item">
   <div class="property-header">
-    <span class="property-name">{property_name}</span>
-    <span class="property-type">{property_type}</span>
-    {required_marker | unescaped}
+    <span class="property-name">{{name}}</span>
+    <span class="property-type">{{type}}</span>
+    {{#if constraints}}
+    <span class="property-constraints"> {{{constraints}}} </span>
+    {{/if}}
   </div>
-  <div class="property-description">{description}</div>
-  {example | unescaped}
+  <div class="property-description">{{description}}</div>
+  {{{example}}}
 </li>

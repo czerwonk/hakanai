@@ -1,19 +1,21 @@
 <!doctype html>
 <html lang="en">
   <head>
-    [[HEAD]]
+    {{> head}}
   </head>
   <body>
-    [[THEME_SWITCHER]]
+    {{> theme_switcher}}
 
     <main class="container">
-      [[HEADER]]
+      {{> header}}
       <div class="content-wrapper">
         <h2>Impressum</h2>
-        <div class="impressum-content">[[IMPRESSUM_CONTENT]]</div>
+        <div class="impressum-content">
+          <div id="impressum-content-placeholder"></div>
+        </div>
       </div>
-      [[FOOTER]]
+      {{> footer}}
     </main>
-    <script type="module" src="/common.js?v={cache_buster}"></script>
+    <script type="module" src="/common.js?v={{cache_buster}}"></script>
   </body>
 </html>

@@ -1,16 +1,16 @@
 <div class="endpoint">
-  <h3>{summary}</h3>
+  <h3>{{summary}}</h3>
   <div class="method-url">
-    <span class="method {method_class}">{method_upper}</span>
-    <span class="url">{path}</span>
+    <span class="method method-{{method_class}}">{{method}}</span>
+    <span class="url">{{path}}</span>
   </div>
 
-  <p>{description}</p>
+  <p>{{description}}</p>
 
-  {request_body | unescaped}
+  {{{request_body}}}
 
   <h4>Status Codes</h4>
   <ul>
-    {status_codes | unescaped}
+    {{{status_codes}}}
   </ul>
 </div>

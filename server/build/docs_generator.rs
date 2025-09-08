@@ -1,623 +1,544 @@
 // SPDX-License-Identifier: Apache-2.0
 
-use std::collections::HashMap;
 use std::fs;
 
 use anyhow::{Context, Result};
-use serde_json::Value;
-use tinytemplate::TinyTemplate;
+use handlebars::Handlebars;
+use serde_json::{Value, json};
 
 use super::cache_buster;
 
 // Main function to generate documentation
 pub fn generate() -> Result<()> {
     println!("cargo:warning=Generate docs...");
-    let openapi = load_openapi()?;
 
+    let openapi = load_openapi()?;
     let html = generate_docs_html(&openapi).context("failed to generate docs HTML")?;
 
     fs::write("includes/docs_generated.html", html)
         .context("failed to write docs_generated.html")?;
+
     Ok(())
 }
 
 fn load_openapi() -> Result<Value> {
     let content =
         fs::read_to_string("includes/openapi.json").context("failed to read openapi.json")?;
-
     serde_json::from_str(&content).context("failed to parse openapi.json")
 }
 
 fn generate_docs_html(openapi: &Value) -> Result<String> {
-    let docs_template = load_template("templates/docs/docs.html", "docs template")?;
-    let endpoint_template = load_template("templates/docs/endpoint.html", "endpoint template")?;
+    let mut hb = Handlebars::new();
 
-    // Load component templates
-    let schema_section_template = load_template(
-        "templates/docs/schema-section.html",
-        "schema section template",
-    )?;
-    let schema_definition_template = load_template(
-        "templates/docs/schema-definition.html",
-        "schema definition template",
-    )?;
-    let schema_property_template = load_template(
-        "templates/docs/schema-property.html",
-        "schema property template",
-    )?;
-    let example_single_template = load_template(
-        "templates/docs/example-single.html",
-        "single example template",
-    )?;
-    let example_multiple_template = load_template(
-        "templates/docs/example-multiple.html",
-        "multiple example template",
-    )?;
-    let example_item_template =
-        load_template("templates/docs/example-item.html", "example item template")?;
-    let status_code_template =
-        load_template("templates/docs/status-code.html", "status code template")?;
-    let property_example_template = load_template(
-        "templates/docs/property-example.html",
-        "property example template",
-    )?;
-    let schema_reference_template = load_template(
-        "templates/docs/schema-reference.html",
-        "schema reference template",
-    )?;
-    let schema_description_template = load_template(
-        "templates/docs/schema-description.html",
-        "schema description template",
-    )?;
-    let schema_properties_header_template = load_template(
-        "templates/docs/schema-properties-header.html",
-        "schema properties header template",
-    )?;
-    let request_body_header_template = load_template(
-        "templates/docs/request-body-header.html",
-        "request body header template",
-    )?;
-    let examples_header_template = load_template(
-        "templates/docs/examples-header.html",
-        "examples header template",
-    )?;
+    // Register partials (needed for head, footer, theme_switcher)
+    register_partials(&mut hb)?;
 
-    let mut tt = TinyTemplate::new();
-    tt.add_template("docs", &docs_template)?;
-    tt.add_template("endpoint", &endpoint_template)?;
-    tt.add_template("schema_section", &schema_section_template)?;
-    tt.add_template("schema_definition", &schema_definition_template)?;
-    tt.add_template("schema_property", &schema_property_template)?;
-    tt.add_template("example_single", &example_single_template)?;
-    tt.add_template("example_multiple", &example_multiple_template)?;
-    tt.add_template("example_item", &example_item_template)?;
-    tt.add_template("status_code", &status_code_template)?;
-    tt.add_template("property_example", &property_example_template)?;
-    tt.add_template("schema_reference", &schema_reference_template)?;
-    tt.add_template("schema_description", &schema_description_template)?;
-    tt.add_template(
-        "schema_properties_header",
-        &schema_properties_header_template,
-    )?;
-    tt.add_template("request_body_header", &request_body_header_template)?;
-    tt.add_template("examples_header", &examples_header_template)?;
+    // Register all docs templates
+    register_templates(&mut hb)?;
 
-    let endpoints_html = generate_all_endpoints(&tt, openapi)?;
-    let schemas_html = generate_schemas_section(openapi, &tt);
-    let context = create_docs_context(openapi, &endpoints_html, &schemas_html);
+    // Generate the documentation
+    let endpoints_html = generate_all_endpoints(&hb, openapi)?;
+    let schemas_html = generate_schemas_section(openapi, &hb);
 
-    tt.render("docs", &context)
-        .context("Failed to render main docs template")
+    // Get API info from OpenAPI spec
+    let title = openapi
+        .get("info")
+        .and_then(|i| i.get("title"))
+        .and_then(|t| t.as_str())
+        .unwrap_or("API Documentation");
+
+    let version = openapi
+        .get("info")
+        .and_then(|i| i.get("version"))
+        .and_then(|v| v.as_str())
+        .unwrap_or("1.0.0");
+
+    let description = openapi
+        .get("info")
+        .and_then(|i| i.get("description"))
+        .and_then(|d| d.as_str())
+        .unwrap_or("API Documentation");
+
+    let context = json!({
+        "title": title,
+        "version": version,
+        "description": description,
+        "endpoints": endpoints_html,
+        "schemas": schemas_html,
+        "cache_buster": cache_buster::generate(),
+    });
+
+    hb.render("docs", &context)
+        .context("failed to render docs template")
 }
 
-/// Load and prepare a template file with partials applied
-fn load_template(path: &str, description: &str) -> Result<String> {
-    let mut template =
-        fs::read_to_string(path).with_context(|| format!("Failed to read {}", description))?;
+fn register_partials(hb: &mut Handlebars) -> Result<()> {
+    let partials = [
+        ("head", "templates/partials/head.html"),
+        ("theme_switcher", "templates/partials/theme-switcher.html"),
+        (
+            "language_selector",
+            "templates/partials/language-selector.html",
+        ),
+        ("footer", "templates/partials/footer.html"),
+        ("header", "templates/partials/header.html"),
+        ("ttl_selector", "templates/partials/ttl-selector.html"),
+        (
+            "restrictions_tabs",
+            "templates/partials/restrictions-tabs.html",
+        ),
+    ];
 
-    let partials = load_partials()?;
-    template = apply_partials(template, &partials);
+    for (name, path) in partials {
+        let content =
+            fs::read_to_string(path).context(format!("failed to read partial {}", path))?;
+        hb.register_partial(name, content)
+            .context(format!("failed to register partial {}", name))?;
+    }
 
-    Ok(template)
+    Ok(())
 }
 
-/// Generate HTML for all API endpoints
-fn generate_all_endpoints(tt: &TinyTemplate, openapi: &Value) -> Result<String> {
-    let mut endpoints_html = String::new();
+fn register_templates(hb: &mut Handlebars) -> Result<()> {
+    let templates = [
+        ("docs", "templates/docs/docs.html"),
+        ("endpoint", "templates/docs/endpoint.html"),
+        ("schema_section", "templates/docs/schema-section.html"),
+        ("schema_definition", "templates/docs/schema-definition.html"),
+        ("schema_property", "templates/docs/schema-property.html"),
+        ("example_single", "templates/docs/example-single.html"),
+        ("example_multiple", "templates/docs/example-multiple.html"),
+        ("example_item", "templates/docs/example-item.html"),
+        ("status_code", "templates/docs/status-code.html"),
+        ("property_example", "templates/docs/property-example.html"),
+        ("schema_reference", "templates/docs/schema-reference.html"),
+        (
+            "schema_description",
+            "templates/docs/schema-description.html",
+        ),
+        (
+            "schema_properties_header",
+            "templates/docs/schema-properties-header.html",
+        ),
+        (
+            "request_body_header",
+            "templates/docs/request-body-header.html",
+        ),
+        ("examples_header", "templates/docs/examples-header.html"),
+    ];
 
-    if let Some(paths) = openapi["paths"].as_object() {
-        for (path, methods) in paths {
-            if let Some(methods_obj) = methods.as_object() {
-                for (method, operation) in methods_obj {
-                    let endpoint_html =
-                        generate_single_endpoint(tt, path, method, operation, openapi)?;
-                    endpoints_html.push_str(&endpoint_html);
+    for (name, path) in templates {
+        let content = load_template(path, name)?;
+        hb.register_template_string(name, content)
+            .context(format!("failed to register template {}", name))?;
+    }
+
+    Ok(())
+}
+
+fn load_template(path: &str, name: &str) -> Result<String> {
+    fs::read_to_string(path).context(format!("failed to load {}", name))
+}
+
+fn generate_all_endpoints(hb: &Handlebars, openapi: &Value) -> Result<String> {
+    let mut all_endpoints = String::new();
+
+    if let Some(paths) = openapi.get("paths").and_then(|p| p.as_object()) {
+        for (path, path_item) in paths {
+            if let Some(obj) = path_item.as_object() {
+                for (method, operation) in obj {
+                    if let Some(_op) = operation.as_object() {
+                        let endpoint_html =
+                            generate_single_endpoint(hb, path, method, operation, openapi)?;
+                        all_endpoints.push_str(&endpoint_html);
+                    }
                 }
             }
         }
     }
 
-    Ok(endpoints_html)
+    Ok(all_endpoints)
 }
 
-/// Generate HTML for a single API endpoint
 fn generate_single_endpoint(
-    tt: &TinyTemplate,
+    hb: &Handlebars,
     path: &str,
     method: &str,
     operation: &Value,
     openapi: &Value,
 ) -> Result<String> {
-    let status_codes_html = generate_status_codes_section(operation, tt);
-    let request_body_html = generate_request_body_section(operation, openapi, tt);
+    let operation_id = operation
+        .get("operationId")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+    let summary = operation
+        .get("summary")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+    let description = operation
+        .get("description")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
 
-    let context = create_endpoint_context(
-        path,
-        method,
-        operation,
-        &status_codes_html,
-        &request_body_html,
-    );
+    let request_body_html = generate_request_body_section(operation, openapi, hb);
+    let status_codes_html = generate_status_codes_section(operation, hb);
 
-    tt.render("endpoint", &context)
-        .with_context(|| format!("Failed to render endpoint template for {} {}", method, path))
+    let context = json!({
+        "method": method.to_uppercase(),
+        "method_class": method.to_lowercase(),
+        "path": path,
+        "operation_id": operation_id,
+        "summary": summary,
+        "description": description,
+        "request_body": request_body_html,
+        "status_codes": status_codes_html,
+    });
+
+    hb.render("endpoint", &context)
+        .context("failed to render endpoint template")
 }
 
-/// Generate the status codes section for an endpoint
-fn generate_status_codes_section(operation: &Value, tt: &TinyTemplate) -> String {
-    let mut html = String::new();
+fn generate_status_codes_section(operation: &Value, hb: &Handlebars) -> String {
+    let mut status_codes_html = String::new();
 
-    if let Some(responses) = operation["responses"].as_object() {
-        for (code, response) in responses {
-            let desc = response["description"].as_str().unwrap_or("");
-            let examples_html = generate_response_examples(response, tt);
+    if let Some(responses) = operation.get("responses").and_then(|r| r.as_object()) {
+        for (status_code, response) in responses {
+            let description = response
+                .get("description")
+                .and_then(|v| v.as_str())
+                .unwrap_or("");
 
-            let mut context = HashMap::new();
-            context.insert("code".to_string(), code.to_string());
-            context.insert(
-                "status_text".to_string(),
-                get_http_status_text(code).to_string(),
-            );
-            context.insert("description".to_string(), desc.to_string());
-            context.insert("examples".to_string(), examples_html);
+            let examples = generate_response_examples(response, hb);
 
-            if let Ok(rendered) = tt.render("status_code", &context) {
-                html.push_str(&rendered);
+            let context = json!({
+                "status_code": status_code,
+                "description": description,
+                "examples": examples,
+            });
+
+            if let Ok(rendered) = hb.render("status_code", &context) {
+                status_codes_html.push_str(&rendered);
             }
         }
     }
 
-    html
+    status_codes_html
 }
 
-/// Generate examples for a response
-fn generate_response_examples(response: &Value, tt: &TinyTemplate) -> String {
-    let mut examples_html = String::new();
-
-    if let Some(content) = response["content"].as_object() {
-        for (content_type, content_data) in content {
-            if let Some(example) = content_data["example"].as_str() {
-                examples_html.push_str(&format_single_example(content_type, example, tt));
-            } else if let Some(examples) = content_data["examples"].as_object() {
-                examples_html.push_str(&format_multiple_examples(content_type, examples, tt));
+fn generate_response_examples(response: &Value, hb: &Handlebars) -> String {
+    if let Some(content) = response.get("content").and_then(|c| c.as_object()) {
+        if content.len() == 1 {
+            // Single example
+            if let Some((content_type, media)) = content.iter().next() {
+                if let Some(example) = media.get("example") {
+                    let formatted = serde_json::to_string_pretty(example).unwrap_or_default();
+                    return format_single_example(content_type, &formatted, hb);
+                }
             }
+        } else if content.len() > 1 {
+            // Multiple examples
+            return format_multiple_examples(content, hb);
         }
-    }
-
-    examples_html
-}
-
-/// Format a single example
-fn format_single_example(content_type: &str, example: &str, tt: &TinyTemplate) -> String {
-    let mut context = HashMap::new();
-    context.insert("content_type".to_string(), content_type.to_string());
-    context.insert("example".to_string(), html_escape(example));
-
-    tt.render("example_single", &context).unwrap_or_default()
-}
-
-/// Format multiple examples
-fn format_multiple_examples(
-    content_type: &str,
-    examples: &serde_json::Map<String, Value>,
-    tt: &TinyTemplate,
-) -> String {
-    let mut example_items = String::new();
-
-    for (example_name, example_data) in examples {
-        let summary = example_data["summary"].as_str().unwrap_or(example_name);
-        let value = example_data["value"].as_str().unwrap_or("");
-
-        let mut item_context = HashMap::new();
-        item_context.insert("summary".to_string(), html_escape(summary));
-        item_context.insert("value".to_string(), html_escape(value));
-
-        if let Ok(rendered) = tt.render("example_item", &item_context) {
-            example_items.push_str(&rendered);
-        }
-    }
-
-    let mut context = HashMap::new();
-    context.insert("content_type".to_string(), content_type.to_string());
-    context.insert("examples".to_string(), example_items);
-
-    tt.render("example_multiple", &context).unwrap_or_default()
-}
-
-/// Generate the request body section for an endpoint
-fn generate_request_body_section(operation: &Value, _openapi: &Value, tt: &TinyTemplate) -> String {
-    let mut html = String::new();
-
-    if let Some(request_body) = operation["requestBody"].as_object() {
-        html.push_str(
-            &tt.render("request_body_header", &HashMap::<String, String>::new())
-                .unwrap_or_default(),
-        );
-
-        // Add schema reference link
-        let request_body_value = Value::Object(request_body.clone());
-        html.push_str(&generate_schema_reference(&request_body_value, tt));
-
-        // Add examples
-        html.push_str(&generate_request_examples(&request_body_value, tt));
-    }
-
-    html
-}
-
-/// Generate schema reference link for request body
-fn generate_schema_reference(request_body: &Value, tt: &TinyTemplate) -> String {
-    if let Some(content) = request_body["content"]["application/json"].as_object()
-        && let Some(schema) = content["schema"].as_object()
-        && let Some(ref_str) = schema["$ref"].as_str()
-    {
-        let schema_name = extract_schema_name(ref_str);
-        let mut context = HashMap::new();
-        context.insert("schema_id".to_string(), schema_name.to_lowercase());
-        context.insert("schema_name".to_string(), schema_name.to_string());
-        return tt.render("schema_reference", &context).unwrap_or_default();
     }
     String::new()
 }
 
-/// Generate examples for request body
-fn generate_request_examples(request_body: &Value, tt: &TinyTemplate) -> String {
-    let mut html = String::new();
+fn format_single_example(content_type: &str, example: &str, hb: &Handlebars) -> String {
+    let context = json!({
+        "content_type": content_type,
+        "example": example,
+    });
 
-    if let Some(content) = request_body["content"]["application/json"].as_object()
-        && let Some(examples) = content.get("examples").and_then(|v| v.as_object())
-    {
-        if examples.len() == 1 {
-            // Single example - use existing template
-            if let Some(first_example) = examples.values().next()
-                && let Some(example_value) = first_example.get("value")
-            {
-                let mut context = HashMap::new();
-                context.insert("example".to_string(), format_json_pretty(example_value));
-                html.push_str(&tt.render("example_single", &context).unwrap_or_default());
+    hb.render("example_single", &context).unwrap_or_default()
+}
+
+fn format_multiple_examples(content: &serde_json::Map<String, Value>, hb: &Handlebars) -> String {
+    let mut items_html = String::new();
+
+    for (content_type, media) in content {
+        if let Some(example) = media.get("example") {
+            let formatted = serde_json::to_string_pretty(example).unwrap_or_default();
+            let item_context = json!({
+                "content_type": content_type,
+                "example": formatted,
+            });
+
+            if let Ok(rendered) = hb.render("example_item", &item_context) {
+                items_html.push_str(&rendered);
             }
-        } else {
-            // Multiple examples
-            html.push_str(
-                &tt.render("examples_header", &HashMap::<String, String>::new())
-                    .unwrap_or_default(),
-            );
-            for (example_name, example_data) in examples {
-                let summary = example_data["summary"].as_str().unwrap_or(example_name);
-                if let Some(example_value) = example_data.get("value") {
-                    let mut context = HashMap::new();
-                    context.insert("summary".to_string(), html_escape(summary));
-                    context.insert("value".to_string(), format_json_pretty(example_value));
-                    html.push_str(&tt.render("example_item", &context).unwrap_or_default());
+        }
+    }
+
+    let context = json!({
+        "items": items_html,
+    });
+
+    hb.render("example_multiple", &context).unwrap_or_default()
+}
+
+fn generate_request_body_section(operation: &Value, _openapi: &Value, hb: &Handlebars) -> String {
+    if let Some(request_body) = operation.get("requestBody") {
+        let description = request_body
+            .get("description")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
+
+        let schema_ref = generate_schema_reference(request_body, hb);
+        let examples = generate_request_examples(request_body, hb);
+
+        let context = json!({
+            "description": description,
+        });
+
+        let header = hb
+            .render("request_body_header", &context)
+            .unwrap_or_default();
+
+        format!("{}{}{}", header, schema_ref, examples)
+    } else {
+        String::new()
+    }
+}
+
+fn generate_schema_reference(request_body: &Value, hb: &Handlebars) -> String {
+    if let Some(content) = request_body.get("content").and_then(|c| c.as_object()) {
+        if let Some(json_content) = content.get("application/json") {
+            if let Some(schema_ref) = json_content
+                .get("schema")
+                .and_then(|s| s.get("$ref"))
+                .and_then(|r| r.as_str())
+            {
+                let schema_name = schema_ref.split('/').last().unwrap_or("");
+                let context = json!({
+                    "schema_name": schema_name,
+                });
+                return hb.render("schema_reference", &context).unwrap_or_default();
+            }
+        }
+    }
+    String::new()
+}
+
+fn generate_request_examples(request_body: &Value, hb: &Handlebars) -> String {
+    if let Some(content) = request_body.get("content").and_then(|c| c.as_object()) {
+        if let Some(json_content) = content.get("application/json") {
+            if let Some(example) = json_content.get("example") {
+                let formatted = serde_json::to_string_pretty(example).unwrap_or_default();
+                let context = json!({});
+                let header = hb.render("examples_header", &context).unwrap_or_default();
+                let example_html = format_single_example("application/json", &formatted, hb);
+                return format!("{}{}", header, example_html);
+            } else if let Some(examples) = json_content.get("examples").and_then(|e| e.as_object())
+            {
+                let mut items_html = String::new();
+                for (name, example_obj) in examples {
+                    if let Some(value) = example_obj.get("value") {
+                        let formatted = serde_json::to_string_pretty(value).unwrap_or_default();
+                        items_html.push_str(&format!("<h5>{}</h5>", name));
+                        items_html.push_str(&format_single_example(
+                            "application/json",
+                            &formatted,
+                            hb,
+                        ));
+                    }
+                }
+                if !items_html.is_empty() {
+                    let context = json!({});
+                    let header = hb.render("examples_header", &context).unwrap_or_default();
+                    return format!("{}{}", header, items_html);
                 }
             }
         }
     }
-
-    html
-}
-
-/// Generate the schemas section
-fn generate_schemas_section(openapi: &Value, tt: &TinyTemplate) -> String {
-    if let Some(components) = openapi["components"].as_object()
-        && let Some(schemas) = components["schemas"].as_object()
-    {
-        let mut schemas_html = String::new();
-
-        for (schema_name, schema) in schemas {
-            schemas_html.push_str(&generate_single_schema(schema_name, schema, tt));
-        }
-
-        let mut context = HashMap::new();
-        context.insert("schemas".to_string(), schemas_html);
-
-        return tt.render("schema_section", &context).unwrap_or_default();
-    }
-
     String::new()
 }
 
-/// Generate HTML for a single schema definition
-fn generate_single_schema(name: &str, schema: &Value, tt: &TinyTemplate) -> String {
-    let mut context = HashMap::new();
-    context.insert("schema_id".to_string(), name.to_lowercase());
-    context.insert("schema_name".to_string(), name.to_string());
+fn generate_schemas_section(openapi: &Value, hb: &Handlebars) -> String {
+    let mut schemas_html = String::new();
 
-    // Add description if available
-    let description = if let Some(desc) = schema["description"].as_str() {
-        let mut desc_context = HashMap::new();
-        desc_context.insert("description".to_string(), html_escape(desc));
-        tt.render("schema_description", &desc_context)
+    if let Some(schemas) = openapi
+        .get("components")
+        .and_then(|c| c.get("schemas"))
+        .and_then(|s| s.as_object())
+    {
+        for (name, schema) in schemas {
+            let single_schema = generate_single_schema(name, schema, hb);
+            schemas_html.push_str(&single_schema);
+        }
+    }
+
+    let context = json!({
+        "schemas": schemas_html,
+    });
+
+    hb.render("schema_section", &context).unwrap_or_default()
+}
+
+fn generate_single_schema(name: &str, schema: &Value, hb: &Handlebars) -> String {
+    let description = schema
+        .get("description")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+
+    let desc_context = json!({
+        "description": description,
+    });
+    let description_html = if !description.is_empty() {
+        hb.render("schema_description", &desc_context)
             .unwrap_or_default()
     } else {
         String::new()
     };
-    context.insert("description".to_string(), description);
 
-    // Add properties
-    context.insert(
-        "properties".to_string(),
-        generate_schema_properties(schema, tt),
-    );
+    let properties_html = generate_schema_properties(schema, hb);
 
-    tt.render("schema_definition", &context).unwrap_or_default()
+    let context = json!({
+        "schema_name": name,
+        "description": description_html,
+        "properties": properties_html,
+    });
+
+    hb.render("schema_definition", &context).unwrap_or_default()
 }
 
-/// Generate properties section for a schema
-fn generate_schema_properties(schema: &Value, tt: &TinyTemplate) -> String {
-    if let Some(properties) = schema["properties"].as_object() {
-        let mut properties_html = String::new();
-        let required_fields = get_required_fields(schema);
+fn generate_schema_properties(schema: &Value, hb: &Handlebars) -> String {
+    let mut properties_html = String::new();
+
+    if let Some(properties) = schema.get("properties").and_then(|p| p.as_object()) {
+        let required = schema
+            .get("required")
+            .and_then(|r| r.as_array())
+            .map(|arr| arr.iter().filter_map(|v| v.as_str()).collect::<Vec<_>>())
+            .unwrap_or_default();
+
+        let context = json!({});
+        let header = hb
+            .render("schema_properties_header", &context)
+            .unwrap_or_default();
+        properties_html.push_str(&header);
 
         for (prop_name, prop_schema) in properties {
-            properties_html.push_str(&generate_single_property(
+            let prop_html = generate_single_property(
                 prop_name,
                 prop_schema,
-                &required_fields,
-                tt,
-            ));
+                required.contains(&prop_name.as_str()),
+                hb,
+            );
+            properties_html.push_str(&prop_html);
         }
-
-        let mut props_context = HashMap::new();
-        props_context.insert("properties".to_string(), properties_html);
-        tt.render("schema_properties_header", &props_context)
-            .unwrap_or_default()
-    } else {
-        String::new()
     }
+
+    properties_html
 }
 
-/// Generate HTML for a single property
 fn generate_single_property(
     name: &str,
     prop_schema: &Value,
-    required_fields: &[&str],
-    tt: &TinyTemplate,
+    is_required: bool,
+    hb: &Handlebars,
 ) -> String {
-    let is_required = required_fields.contains(&name);
-    let type_str = get_property_type_string(prop_schema);
-    let description = prop_schema["description"].as_str().unwrap_or("");
-    let example_html = generate_property_example(prop_schema, tt);
+    let prop_type = determine_property_type(prop_schema);
+    let description = prop_schema
+        .get("description")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
 
-    let mut context = HashMap::new();
-    context.insert("property_name".to_string(), name.to_string());
-    context.insert(
-        "required_marker".to_string(),
-        if is_required {
-            r#"<span class="property-required">required</span>"#.to_string()
-        } else {
-            String::new()
-        },
-    );
-    context.insert("property_type".to_string(), type_str);
-    context.insert("description".to_string(), html_escape(description));
-    context.insert("example".to_string(), example_html);
+    let mut constraints = Vec::new();
 
-    tt.render("schema_property", &context).unwrap_or_default()
-}
-
-/// Get required fields list from schema
-fn get_required_fields(schema: &Value) -> Vec<&str> {
-    schema["required"]
-        .as_array()
-        .map(|arr| arr.iter().filter_map(|v| v.as_str()).collect())
-        .unwrap_or_default()
-}
-
-/// Get property type as string
-fn get_property_type_string(prop_schema: &Value) -> String {
-    if let Some(type_str) = prop_schema["type"].as_str() {
-        match type_str {
-            "array" => format_array_type(prop_schema),
-            _ => type_str.to_string(),
-        }
-    } else if let Some(ref_str) = prop_schema["$ref"].as_str() {
-        extract_schema_name(ref_str)
-    } else {
-        "unknown".to_string()
+    if is_required {
+        constraints.push("required".to_string());
     }
-}
 
-/// Format array type string
-fn format_array_type(prop_schema: &Value) -> String {
-    if let Some(items) = prop_schema["items"].as_object() {
-        if let Some(item_type) = items["type"].as_str() {
-            format!("array of {}", item_type)
-        } else if items["$ref"].is_string() {
-            "array of objects".to_string()
-        } else {
-            "array".to_string()
-        }
-    } else {
-        "array".to_string()
+    if let Some(min_len) = prop_schema.get("minLength").and_then(|v| v.as_u64()) {
+        constraints.push(format!("min length: {}", min_len));
     }
-}
 
-/// Generate example HTML for a property
-fn generate_property_example(prop_schema: &Value, tt: &TinyTemplate) -> String {
-    if let Some(example) = prop_schema["example"].as_str() {
-        let mut context = HashMap::new();
-        context.insert("example".to_string(), html_escape(example));
-        tt.render("property_example", &context).unwrap_or_default()
-    } else if let Some(example_array) = prop_schema["example"].as_array() {
-        let examples_str = example_array
+    if let Some(max_len) = prop_schema.get("maxLength").and_then(|v| v.as_u64()) {
+        constraints.push(format!("max length: {}", max_len));
+    }
+
+    if let Some(pattern) = prop_schema.get("pattern").and_then(|v| v.as_str()) {
+        constraints.push(format!("pattern: {}", pattern));
+    }
+
+    if let Some(min) = prop_schema.get("minimum").and_then(|v| v.as_u64()) {
+        constraints.push(format!("min: {}", min));
+    }
+
+    if let Some(max) = prop_schema.get("maximum").and_then(|v| v.as_u64()) {
+        constraints.push(format!("max: {}", max));
+    }
+
+    let constraints_html = if !constraints.is_empty() {
+        constraints
             .iter()
-            .filter_map(|v| v.as_str())
+            .map(|c| {
+                if c == "required" {
+                    format!(
+                        "<span class=\"constraint constraint-required\">{}</span>",
+                        c
+                    )
+                } else {
+                    format!("<span class=\"constraint\">{}</span>", c)
+                }
+            })
             .collect::<Vec<_>>()
-            .join(", ");
-        let mut context = HashMap::new();
-        context.insert(
-            "example".to_string(),
-            format!("[{}]", html_escape(&examples_str)),
-        );
-        tt.render("property_example", &context).unwrap_or_default()
+            .join(" ")
+    } else {
+        String::new()
+    };
+
+    let example_html = generate_property_example(prop_schema, hb);
+
+    let context = json!({
+        "name": name,
+        "type": prop_type,
+        "constraints": constraints_html,
+        "description": description,
+        "example": example_html,
+    });
+
+    hb.render("schema_property", &context).unwrap_or_default()
+}
+
+fn determine_property_type(prop_schema: &Value) -> String {
+    if let Some(type_val) = prop_schema.get("type").and_then(|v| v.as_str()) {
+        if type_val == "array" {
+            if let Some(items) = prop_schema.get("items") {
+                let item_type = determine_property_type(items);
+                return format!("array of {}", item_type);
+            }
+            return "array".to_string();
+        } else if type_val == "object" {
+            if let Some(additional_props) = prop_schema.get("additionalProperties") {
+                let value_type = determine_property_type(additional_props);
+                return format!("object (map of {})", value_type);
+            }
+        }
+        return type_val.to_string();
+    }
+
+    if let Some(schema_ref) = prop_schema.get("$ref").and_then(|v| v.as_str()) {
+        return schema_ref.split('/').last().unwrap_or("object").to_string();
+    }
+
+    "unknown".to_string()
+}
+
+fn generate_property_example(prop_schema: &Value, hb: &Handlebars) -> String {
+    if let Some(example) = prop_schema.get("example") {
+        let formatted = if example.is_string() {
+            format!("\"{}\"", example.as_str().unwrap_or(""))
+        } else {
+            serde_json::to_string(example).unwrap_or_default()
+        };
+
+        let context = json!({
+            "example": formatted,
+        });
+
+        hb.render("property_example", &context).unwrap_or_default()
     } else {
         String::new()
     }
-}
-
-// Context creation functions
-
-/// Create the main documentation context
-fn create_docs_context(
-    openapi: &Value,
-    endpoints_html: &str,
-    schemas_html: &str,
-) -> HashMap<String, String> {
-    let info = &openapi["info"];
-    let mut context = HashMap::new();
-
-    context.insert("title".to_string(), get_api_title(info));
-    context.insert("version".to_string(), env!("CARGO_PKG_VERSION").to_string());
-    context.insert("description".to_string(), get_api_description(info));
-    context.insert("endpoints".to_string(), endpoints_html.to_string());
-    context.insert("schemas".to_string(), schemas_html.to_string());
-    context.insert("cache_buster".to_string(), cache_buster::generate());
-
-    context
-}
-
-/// Create context for a single endpoint
-fn create_endpoint_context(
-    path: &str,
-    method: &str,
-    operation: &Value,
-    status_codes_html: &str,
-    request_body_html: &str,
-) -> HashMap<String, String> {
-    let mut context = HashMap::new();
-
-    context.insert(
-        "summary".to_string(),
-        html_escape_value(&operation["summary"]),
-    );
-    context.insert("method_class".to_string(), method.to_lowercase());
-    context.insert("method_upper".to_string(), method.to_uppercase());
-    context.insert("path".to_string(), path.to_string());
-    context.insert(
-        "description".to_string(),
-        html_escape_value(&operation["description"]),
-    );
-    context.insert("request_body".to_string(), request_body_html.to_string());
-    context.insert("status_codes".to_string(), status_codes_html.to_string());
-
-    context
-}
-
-// Utility functions
-
-/// Extract schema name from $ref string
-fn extract_schema_name(ref_str: &str) -> String {
-    ref_str
-        .split('/')
-        .next_back()
-        .unwrap_or("Schema")
-        .to_string()
-}
-
-/// Get API title from info section
-fn get_api_title(info: &Value) -> String {
-    info["title"]
-        .as_str()
-        .unwrap_or("API Documentation")
-        .to_string()
-}
-
-/// Get API description from info section
-fn get_api_description(info: &Value) -> String {
-    info["description"].as_str().unwrap_or("").to_string()
-}
-
-/// Format JSON value as pretty-printed string
-fn format_json_pretty(value: &Value) -> String {
-    serde_json::to_string_pretty(value).unwrap_or_default()
-}
-
-/// Get HTTP status text for a status code
-fn get_http_status_text(code: &str) -> &'static str {
-    match code {
-        "200" => "OK",
-        "400" => "Bad Request",
-        "401" => "Unauthorized",
-        "403" => "Forbidden",
-        "404" => "Not Found",
-        "410" => "Gone",
-        "501" => "Not Implemented",
-        _ => "",
-    }
-}
-
-/// HTML escape a string
-fn html_escape(input: &str) -> String {
-    input
-        .replace('&', "&amp;")
-        .replace('<', "&lt;")
-        .replace('>', "&gt;")
-        .replace('"', "&quot;")
-        .replace('\'', "&#x27;")
-}
-
-/// HTML escape a JSON value (string only)
-fn html_escape_value(input: &Value) -> String {
-    input.as_str().unwrap_or("").to_string()
-}
-
-// Template partials handling
-
-struct TemplatePartials {
-    head: String,
-    theme_switcher: String,
-    language_selector: String,
-    footer: String,
-    header: String,
-    ttl_selector: String,
-}
-
-/// Load all template partials
-fn load_partials() -> Result<TemplatePartials> {
-    Ok(TemplatePartials {
-        head: fs::read_to_string("templates/partials/head.html")
-            .context("Failed to read head partial")?,
-        theme_switcher: fs::read_to_string("templates/partials/theme-switcher.html")
-            .context("Failed to read theme-switcher partial")?,
-        language_selector: fs::read_to_string("templates/partials/language-selector.html")
-            .context("Failed to read language-selector partial")?,
-        footer: fs::read_to_string("templates/partials/footer.html")
-            .context("Failed to read footer partial")?,
-        header: fs::read_to_string("templates/partials/header.html")
-            .context("Failed to read header partial")?,
-        ttl_selector: fs::read_to_string("templates/partials/ttl-selector.html")
-            .context("Failed to read ttl-selector partial")?,
-    })
-}
-
-/// Apply partials to template content
-fn apply_partials(template_content: String, partials: &TemplatePartials) -> String {
-    template_content
-        .replace("[[HEAD]]", &partials.head)
-        .replace("[[THEME_SWITCHER]]", &partials.theme_switcher)
-        .replace("[[LANGUAGE_SELECTOR]]", &partials.language_selector)
-        .replace("[[FOOTER]]", &partials.footer)
-        .replace("[[HEADER]]", &partials.header)
-        .replace("[[TTL_SELECTOR]]", &partials.ttl_selector)
 }

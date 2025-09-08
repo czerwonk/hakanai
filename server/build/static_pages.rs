@@ -1,56 +1,60 @@
 // SPDX-License-Identifier: Apache-2.0
 
-use std::collections::HashMap;
 use std::fs;
 
 use anyhow::{Context, Result};
-use tinytemplate::TinyTemplate;
+use handlebars::Handlebars;
+use serde_json::json;
 
 use super::cache_buster;
 
 pub fn generate_html_files() -> Result<()> {
     println!("cargo:warning=Generate static HTML pages...");
 
-    let partials = load_partials()?;
-    let mut tt = TinyTemplate::new();
-    let context = create_version_context();
+    let mut handlebars = Handlebars::new();
+    register_partials(&mut handlebars)?;
 
-    discover_and_generate_templates(&mut tt, &context, &partials)?;
+    let context = json!({
+        "version": env!("CARGO_PKG_VERSION"),
+        "cache_buster": cache_buster::generate(),
+    });
+
+    discover_and_generate_templates(&mut handlebars, &context)?;
 
     Ok(())
 }
 
-fn load_partials() -> Result<TemplatePartials> {
-    let head = fs::read_to_string("templates/partials/head.html")
-        .context("failed to read head partial")?;
-    let theme_switcher = fs::read_to_string("templates/partials/theme-switcher.html")
-        .context("failed to read theme-switcher partial")?;
-    let language_selector = fs::read_to_string("templates/partials/language-selector.html")
-        .context("failed to read language-selector partial")?;
-    let footer = fs::read_to_string("templates/partials/footer.html")
-        .context("failed to read footer partial")?;
-    let header = fs::read_to_string("templates/partials/header.html")
-        .context("failed to read header partial")?;
-    let ttl_selector = fs::read_to_string("templates/partials/ttl-selector.html")
-        .context("failed to read ttl-selector partial")?;
-    let restrictions_tabs = fs::read_to_string("templates/partials/restrictions-tabs.html")
-        .context("failed to read restrictions-tabs partial")?;
+fn register_partials(handlebars: &mut Handlebars) -> Result<()> {
+    let partials = [
+        ("head", "templates/partials/head.html"),
+        ("theme_switcher", "templates/partials/theme-switcher.html"),
+        (
+            "language_selector",
+            "templates/partials/language-selector.html",
+        ),
+        ("footer", "templates/partials/footer.html"),
+        ("header", "templates/partials/header.html"),
+        ("ttl_selector", "templates/partials/ttl-selector.html"),
+        (
+            "restrictions_tabs",
+            "templates/partials/restrictions-tabs.html",
+        ),
+    ];
 
-    Ok(TemplatePartials {
-        head,
-        footer,
-        header,
-        theme_switcher,
-        language_selector,
-        ttl_selector,
-        restrictions_tabs,
-    })
+    for (name, path) in partials {
+        let content =
+            fs::read_to_string(path).context(format!("failed to read partial {}", path))?;
+        handlebars
+            .register_partial(name, content)
+            .context(format!("failed to register partial {}", name))?;
+    }
+
+    Ok(())
 }
 
 fn discover_and_generate_templates(
-    _tt: &mut TinyTemplate,
-    context: &HashMap<&'static str, String>,
-    partials: &TemplatePartials,
+    handlebars: &mut Handlebars,
+    context: &serde_json::Value,
 ) -> Result<()> {
     let templates_dir = std::path::Path::new("templates");
 
@@ -60,7 +64,7 @@ fn discover_and_generate_templates(
 
             if should_process_template(&path)? {
                 let template_name = get_template_name(&path)?;
-                process_single_template(context, partials, &template_name, &path)?;
+                process_single_template(handlebars, context, &template_name, &path)?;
             }
         }
     }
@@ -85,76 +89,25 @@ fn get_template_name(path: &std::path::Path) -> Result<String> {
 }
 
 fn process_single_template(
-    context: &HashMap<&'static str, String>,
-    partials: &TemplatePartials,
+    handlebars: &mut Handlebars,
+    context: &serde_json::Value,
     template_name: &str,
     template_path: &std::path::Path,
 ) -> Result<()> {
     println!("cargo:warning=Processing template: {template_name}");
 
-    let mut template_content = fs::read_to_string(template_path)
+    let template_content = fs::read_to_string(template_path)
         .context(format!("failed to read template {template_name}"))?;
 
-    template_content = apply_partials(template_content, partials);
-
-    if template_name == "impressum" {
-        template_content = apply_impressum_content(template_content);
-    } else if template_name == "privacy" {
-        template_content = apply_privacy_content(template_content);
-    }
-
-    let mut tt = TinyTemplate::new();
-    tt.add_template(template_name, &template_content)?;
+    // Register and render the template
+    handlebars
+        .register_template_string(template_name, &template_content)
+        .context(format!("failed to register template {}", template_name))?;
 
     let output_path = format!("includes/{template_name}.html");
-    let html = tt
+    let html = handlebars
         .render(template_name, context)
         .context(format!("failed to render template {template_name}"))?;
 
     fs::write(output_path, html).context(format!("failed to write {template_name}.html"))
-}
-
-fn apply_partials(template_content: String, partials: &TemplatePartials) -> String {
-    template_content
-        .replace("[[HEAD]]", &partials.head)
-        .replace("[[THEME_SWITCHER]]", &partials.theme_switcher)
-        .replace("[[LANGUAGE_SELECTOR]]", &partials.language_selector)
-        .replace("[[FOOTER]]", &partials.footer)
-        .replace("[[HEADER]]", &partials.header)
-        .replace("[[TTL_SELECTOR]]", &partials.ttl_selector)
-        .replace("[[RESTRICTIONS_TABS]]", &partials.restrictions_tabs)
-}
-
-fn apply_impressum_content(template_content: String) -> String {
-    // Remove build-time impressum content injection - will be handled at runtime
-    template_content.replace(
-        "[[IMPRESSUM_CONTENT]]",
-        "<div id=\"impressum-content-placeholder\"></div>",
-    )
-}
-
-fn apply_privacy_content(template_content: String) -> String {
-    // Remove build-time privacy content injection - will be handled at runtime
-    template_content.replace(
-        "[[PRIVACY_CONTENT]]",
-        "<div id=\"privacy-content-placeholder\"></div>",
-    )
-}
-
-struct TemplatePartials {
-    head: String,
-    theme_switcher: String,
-    language_selector: String,
-    footer: String,
-    header: String,
-    ttl_selector: String,
-    restrictions_tabs: String,
-}
-
-fn create_version_context() -> HashMap<&'static str, String> {
-    let mut context = HashMap::new();
-    context.insert("version", env!("CARGO_PKG_VERSION").to_string());
-    context.insert("cache_buster", cache_buster::generate());
-
-    context
 }

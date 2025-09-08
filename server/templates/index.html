@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
   <head>
-    [[HEAD]]
+    {{> head}}
     <meta
       name="description"
       content="Hakanai - Zero-knowledge one-time secret sharing service"
@@ -10,7 +10,7 @@
     <title data-i18n-title="page.homepage.title">Hakanai - One-Time Secret Sharing</title>
   </head>
   <body>
-    [[LANGUAGE_SELECTOR]] [[THEME_SWITCHER]]
+    {{> language_selector}} {{> theme_switcher}}
     <main class="container homepage-container">
       <header class="header">
         <div class="homepage-banner-container"></div>
@@ -59,7 +59,7 @@
           <a href="/docs" data-i18n="homepage.docs.link"> View API Documentation </a>
         </div>
       </section>
-      [[FOOTER]]
+      {{> footer}}
     </main>
     <noscript>
       <div class="container">
@@ -72,6 +72,6 @@
       </div>
     </noscript>
 
-    <script type="module" src="/common.js?v={cache_buster}"></script>
+    <script type="module" src="/common.js?v={{cache_buster}}"></script>
   </body>
 </html>

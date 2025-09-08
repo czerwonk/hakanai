@@ -1,12 +1,12 @@
 <!doctype html>
 <html lang="en">
   <head>
-    [[HEAD]]
-    <meta name="description" content="{description}" />
-    <title>{title}</title>
+    {{> head}}
+    <meta name="description" content="{{description}}" />
+    <title>{{title}}</title>
   </head>
   <body class="expanded-view">
-    [[THEME_SWITCHER]]
+    {{> theme_switcher}}
     <div class="container docs-content">
       <header class="header">
         <a href="/" class="header-link" aria-label="Go to homepage">
@@ -14,8 +14,8 @@
         </a>
       </header>
 
-      <h1>{title}</h1>
-      <p><strong>Version:</strong> {version}</p>
+      <h1>{{title}}</h1>
+      <p><strong>Version:</strong> {{version}}</p>
 
       <div
         style="
@@ -48,12 +48,12 @@
 
       <section>
         <h2>API Endpoints</h2>
-        {endpoints | unescaped}
+        {{{endpoints}}}
       </section>
 
-      {schemas | unescaped} [[FOOTER]]
+      {{{schemas}}} {{> footer}}
     </div>
 
-    <script type="module" src="/common.js?v={cache_buster}"></script>
+    <script type="module" src="/common.js?v={{cache_buster}}"></script>
   </body>
 </html>
