@@ -93,10 +93,7 @@ function createScreenReaderAnnouncement(message: string): HTMLDivElement {
  * @param wait - Milliseconds to wait before calling
  * @returns Debounced function
  */
-export function debounce<T extends (...args: any[]) => void>(
-  func: T,
-  wait: number,
-): (...args: Parameters<T>) => void {
+export function debounce<T extends (...args: any[]) => void>(func: T, wait: number): (...args: Parameters<T>) => void {
   let timeout: ReturnType<typeof setTimeout> | null = null;
 
   return function executedFunction(...args: Parameters<T>): void {
@@ -109,9 +106,7 @@ export function debounce<T extends (...args: any[]) => void>(
  * Generate a unique ID to be used for dynamic elements like URL inputs
  */
 export function generateRandomId(): string {
-  return crypto?.randomUUID?.()
-    ? `url-${crypto.randomUUID()}`
-    : `url-${Date.now()}-${Math.random()}`;
+  return crypto?.randomUUID?.() ? `url-${crypto.randomUUID()}` : `url-${Date.now()}-${Math.random()}`;
 }
 
 export function showElement(element: HTMLElement): void {

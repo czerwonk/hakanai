@@ -14,9 +14,7 @@
 </div>
 <div class="restrictions-tab-contents">
   <div class="tab-content active" data-content="passphrase">
-    <label for="passphraseRestriction" data-i18n="label.passphrase">
-      Passphrase Protection (Optional):
-    </label>
+    <label for="passphraseRestriction" data-i18n="label.passphrase"> Passphrase Protection (Optional): </label>
     <input
       type="text"
       id="passphraseRestriction"
@@ -27,17 +25,15 @@
       spellcheck="false"
     />
     <span data-i18n="helper.passphrase" class="input-helper">
-      Require a passphrase to access this secret. The passphrase can be shared
-      through a different channel (e.g., phone call) for enhanced security.
+      Require a passphrase to access this secret. The passphrase can be shared through a different channel (e.g., phone
+      call) for enhanced security.
     </span>
     <span id="passphrase-help" class="sr-only" data-i18n="aria.passphrase">
       Enter a passphrase that will be required to access this secret
     </span>
   </div>
   <div class="tab-content" data-content="ip">
-    <label for="allowedIPs" data-i18n="label.allowedIPs">
-      IP Address Restrictions (Optional):
-    </label>
+    <label for="allowedIPs" data-i18n="label.allowedIPs"> IP Address Restrictions (Optional): </label>
     <textarea
       id="allowedIPs"
       placeholder="192.168.1.1&#10;10.0.0.0/8&#10;2001:db8::/32"
@@ -47,18 +43,15 @@
       rows="4"
     ></textarea>
     <span data-i18n="helper.allowedIPs" class="input-helper">
-      Enter IP addresses or CIDR ranges (one per line) that can access this
-      secret. Leave empty to allow access from any IP address.
+      Enter IP addresses or CIDR ranges (one per line) that can access this secret. Leave empty to allow access from any
+      IP address.
     </span>
     <span id="ips-help" class="sr-only" data-i18n="aria.allowedIPs">
-      Enter IP addresses or CIDR ranges, one per line, to restrict access to
-      this secret
+      Enter IP addresses or CIDR ranges, one per line, to restrict access to this secret
     </span>
   </div>
   <div class="tab-content" data-content="country">
-    <label for="allowedCountries" data-i18n="label.allowedCountries">
-      Country Restrictions (Optional):
-    </label>
+    <label for="allowedCountries" data-i18n="label.allowedCountries"> Country Restrictions (Optional): </label>
     <textarea
       id="allowedCountries"
       placeholder="US&#10;DE&#10;CA"
@@ -68,18 +61,15 @@
       rows="4"
     ></textarea>
     <span data-i18n="helper.allowedCountries" class="input-helper">
-      Enter ISO 3166-1 alpha-2 country codes (one per line) that can access this
-      secret. Leave empty to allow access from any country.
+      Enter ISO 3166-1 alpha-2 country codes (one per line) that can access this secret. Leave empty to allow access
+      from any country.
     </span>
     <span id="countries-help" class="sr-only" data-i18n="aria.allowedCountries">
-      Enter 2-letter country codes, one per line, to restrict access to this
-      secret by geographic location
+      Enter 2-letter country codes, one per line, to restrict access to this secret by geographic location
     </span>
   </div>
   <div class="tab-content" data-content="asn">
-    <label for="allowedASNs" data-i18n="label.allowedASNs">
-      Network (ASN) Restrictions (Optional):
-    </label>
+    <label for="allowedASNs" data-i18n="label.allowedASNs"> Network (ASN) Restrictions (Optional): </label>
     <textarea
       id="allowedASNs"
       placeholder="13335&#10;15169&#10;16509"
@@ -89,13 +79,11 @@
       rows="4"
     ></textarea>
     <span data-i18n="helper.allowedASNs" class="input-helper">
-      Enter Autonomous System Numbers (ASNs) (one per line) that can access this
-      secret. Common examples: Cloudflare (13335), Google (15169), Amazon
-      (16509).
+      Enter Autonomous System Numbers (ASNs) (one per line) that can access this secret. Common examples: Cloudflare
+      (13335), Google (15169), Amazon (16509).
     </span>
     <span id="asns-help" class="sr-only" data-i18n="aria.allowedASNs">
-      Enter ASN numbers, one per line, to restrict access to this secret by
-      network provider
+      Enter ASN numbers, one per line, to restrict access to this secret by network provider
     </span>
   </div>
 </div>

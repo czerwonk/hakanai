@@ -13,10 +13,7 @@
 export { HakanaiError, HakanaiErrorCodes } from "./client/errors";
 export { InputValidation } from "./client/validation";
 export { UrlParser } from "./client/url-parser";
-export {
-  type CompatibilityCheck,
-  BrowserCompatibility,
-} from "./client/browser-compat";
+export { type CompatibilityCheck, BrowserCompatibility } from "./client/browser-compat";
 export { Base64UrlSafe } from "./client/base64-utils";
 export { ContentAnalysis } from "./client/content-analysis";
 export { HashUtils } from "./client/hash-utils";
@@ -24,9 +21,4 @@ export { CryptoContext } from "./client/crypto-operations";
 export { SecureMemory } from "./client/secure-memory";
 export { type PayloadData, PayloadDataImpl } from "./client/payload";
 export { type DataTransferObserver } from "./client/progress-observer";
-export {
-  HakanaiClient,
-  SecretRequest,
-  SecretResponse,
-  SecretRestrictions,
-} from "./client/client";
+export { HakanaiClient, SecretRequest, SecretResponse, SecretRestrictions } from "./client/client";

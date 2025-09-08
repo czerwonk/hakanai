@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import {
-  HakanaiClient,
-  ContentAnalysis,
-  type PayloadData,
-} from "./hakanai-client";
+import { HakanaiClient, ContentAnalysis, type PayloadData } from "./hakanai-client";
 import { initI18n, I18nKeys } from "./core/i18n";
 import { KeyboardShortcuts } from "./core/keyboard-shortcuts";
 import {
@@ -33,9 +29,7 @@ const TIMEOUTS = {
   CLEANUP_DELAY: 100,
 } as const;
 
-const baseUrl = window.location.origin.includes("file://")
-  ? "http://localhost:8080"
-  : window.location.origin;
+const baseUrl = window.location.origin.includes("file://") ? "http://localhost:8080" : window.location.origin;
 
 const client = new HakanaiClient(baseUrl);
 
@@ -44,12 +38,8 @@ function getElements() {
     urlInput: document.getElementById("secretUrl") as HTMLInputElement,
     keyInput: document.getElementById("secretKey") as HTMLInputElement,
     keyInputGroup: document.getElementById("keyInputGroup") as HTMLElement,
-    passphraseInput: document.getElementById(
-      "passphraseInput",
-    ) as HTMLInputElement,
-    passphraseInputGroup: document.getElementById(
-      "passphraseInputGroup",
-    ) as HTMLElement,
+    passphraseInput: document.getElementById("passphraseInput") as HTMLInputElement,
+    passphraseInputGroup: document.getElementById("passphraseInputGroup") as HTMLElement,
     resultDiv: document.getElementById("result") as HTMLElement,
     button: document.getElementById("retrieveBtn") as HTMLButtonElement,
   };
@@ -64,11 +54,7 @@ function hasUrlFragment(url: string): boolean {
   }
 }
 
-function validateInputs(
-  url: string,
-  key: string,
-  hasFragment: boolean,
-): string | null {
+function validateInputs(url: string, key: string, hasFragment: boolean): string | null {
   if (!url) return window.i18n.t(I18nKeys.Msg.EmptyUrl);
   if (!hasFragment && !key) return window.i18n.t(I18nKeys.Msg.MissingKey);
   return null;
@@ -147,10 +133,7 @@ function normalizeUrl(url: string): string {
   return url;
 }
 
-async function performRetrieval(
-  url: string,
-  passphrase?: string,
-): Promise<void> {
+async function performRetrieval(url: string, passphrase?: string): Promise<void> {
   const progressBar = new ProgressBar();
   progressBar.show(window.i18n.t(I18nKeys.Msg.Retrieving));
   resetView();
@@ -187,20 +170,12 @@ class GetSecretErrorHandler implements ErrorHandler {
 const errorHandler = new GetSecretErrorHandler();
 
 function handleRetrieveError(error: unknown, url?: string): void {
-  if (
-    url &&
-    isHakanaiError(error) &&
-    error.code === HakanaiErrorCodes.PASSPHRASE_REQUIRED
-  ) {
+  if (url && isHakanaiError(error) && error.code === HakanaiErrorCodes.PASSPHRASE_REQUIRED) {
     showPassphraseInput();
     return;
   }
 
-  handleAPIError(
-    error,
-    window.i18n.t(I18nKeys.Msg.RetrieveFailed),
-    errorHandler,
-  );
+  handleAPIError(error, window.i18n.t(I18nKeys.Msg.RetrieveFailed), errorHandler);
 }
 
 function showPassphraseInput(): void {
@@ -240,10 +215,7 @@ function resetForm(): void {
   }, 100);
 }
 
-const retrieveSecretDebounced = debounce(
-  processRetrieveRequest,
-  TIMEOUTS.DEBOUNCE,
-);
+const retrieveSecretDebounced = debounce(processRetrieveRequest, TIMEOUTS.DEBOUNCE);
 
 function retrieveSecret(): void {
   retrieveSecretDebounced();
@@ -269,27 +241,18 @@ function updateKeyInputVisibility(): void {
   }
 }
 
-function hideKeyInput(
-  keyInputGroup: HTMLElement,
-  keyInput: HTMLInputElement,
-): void {
+function hideKeyInput(keyInputGroup: HTMLElement, keyInput: HTMLInputElement): void {
   hideElement(keyInputGroup);
   keyInput.required = false;
   secureInputClear(keyInput);
 }
 
-function showKeyInput(
-  keyInputGroup: HTMLElement,
-  keyInput: HTMLInputElement,
-): void {
+function showKeyInput(keyInputGroup: HTMLElement, keyInput: HTMLInputElement): void {
   showElement(keyInputGroup);
   keyInput.required = true;
 }
 
-function createTextSecret(
-  payload: PayloadData,
-  decodedBytes: Uint8Array,
-): HTMLElement {
+function createTextSecret(payload: PayloadData, decodedBytes: Uint8Array): HTMLElement {
   const secretId = "secret-" + generateRandomId();
   const container = document.createElement("div");
   container.className = "secret-container";
@@ -310,10 +273,7 @@ function createTextSecret(
   return container;
 }
 
-function createSecretTextarea(
-  secretId: string,
-  decodedBytes: Uint8Array,
-): HTMLTextAreaElement {
+function createSecretTextarea(secretId: string, decodedBytes: Uint8Array): HTMLTextAreaElement {
   const textarea = document.createElement("textarea");
   textarea.id = secretId;
   textarea.className = "secret-display";
@@ -341,10 +301,7 @@ function resizeTextarea(textarea: HTMLTextAreaElement): void {
   textarea.classList.add("auto-height");
 }
 
-function createBinarySecret(
-  payload: PayloadData,
-  decodedBytes: Uint8Array,
-): HTMLElement {
+function createBinarySecret(payload: PayloadData, decodedBytes: Uint8Array): HTMLElement {
   const container = document.createElement("div");
   container.className = "secret-container";
 
@@ -354,9 +311,7 @@ function createBinarySecret(
   container.appendChild(message);
 
   const buttonsContainer = createButtonContainer();
-  buttonsContainer.appendChild(
-    createDownloadButton(payload, decodedBytes, true),
-  );
+  buttonsContainer.appendChild(createDownloadButton(payload, decodedBytes, true));
   container.appendChild(buttonsContainer);
 
   return container;
@@ -409,9 +364,7 @@ function createNoteElement(): HTMLElement {
 
   const note = document.createElement("p");
   note.className = "note-element";
-  note.appendChild(
-    document.createTextNode("⚠️ " + window.i18n.t(I18nKeys.Msg.RetrieveNote)),
-  );
+  note.appendChild(document.createTextNode("⚠️ " + window.i18n.t(I18nKeys.Msg.RetrieveNote)));
   container.appendChild(note);
 
   // Add CTA below the destruction note
@@ -421,10 +374,7 @@ function createNoteElement(): HTMLElement {
   const ctaLink = document.createElement("a");
   ctaLink.href = "/";
   ctaLink.textContent = window.i18n.t(I18nKeys.Msg.RetrieveCTA) + " →";
-  ctaLink.setAttribute(
-    "aria-label",
-    "Learn more about Hakanai and create your own secrets",
-  );
+  ctaLink.setAttribute("aria-label", "Learn more about Hakanai and create your own secrets");
   cta.appendChild(ctaLink);
 
   container.appendChild(cta);
@@ -461,18 +411,13 @@ function showSuccess(payload: PayloadData): void {
   resultDiv.appendChild(title);
 
   const decodedBytes = payload.decodeBytes();
-  const isBinaryFile =
-    payload.filename != null || ContentAnalysis.isBinary(decodedBytes);
+  const isBinaryFile = payload.filename != null || ContentAnalysis.isBinary(decodedBytes);
 
-  const container = isBinaryFile
-    ? createBinarySecret(payload, decodedBytes)
-    : createTextSecret(payload, decodedBytes);
+  const container = isBinaryFile ? createBinarySecret(payload, decodedBytes) : createTextSecret(payload, decodedBytes);
   resultDiv.appendChild(container);
 
   if (payload.filename) {
-    resultDiv.appendChild(
-      createFilenameInfo(payload.filename, decodedBytes.length),
-    );
+    resultDiv.appendChild(createFilenameInfo(payload.filename, decodedBytes.length));
   }
 
   resultDiv.appendChild(createNoteElement());
@@ -480,9 +425,7 @@ function showSuccess(payload: PayloadData): void {
 }
 
 function copySecret(secretId: string, button: HTMLButtonElement): void {
-  const secretElement = document.getElementById(
-    secretId,
-  ) as HTMLTextAreaElement;
+  const secretElement = document.getElementById(secretId) as HTMLTextAreaElement;
   if (!secretElement) {
     showError(window.i18n.t(I18nKeys.Msg.CopyFailed));
     return;
@@ -503,15 +446,9 @@ function generateFilename(payload: PayloadData, isBinary: boolean): string {
   return `hakanai-secret-${timestamp}${extension}`;
 }
 
-function downloadSecret(
-  payload: PayloadData,
-  decodedBytes: Uint8Array,
-  isBinary: boolean,
-): void {
+function downloadSecret(payload: PayloadData, decodedBytes: Uint8Array, isBinary: boolean): void {
   const filename = generateFilename(payload, isBinary);
-  const mimeType = payload.filename
-    ? "application/octet-stream"
-    : "text/plain;charset=utf-8";
+  const mimeType = payload.filename ? "application/octet-stream" : "text/plain;charset=utf-8";
 
   const blob = new Blob([decodedBytes], { type: mimeType });
   const url = window.URL.createObjectURL(blob);
@@ -553,9 +490,7 @@ function setupUrlInput(): void {
     urlInput.value = urlInput.value.trim();
   });
 
-  keyInput.addEventListener("paste", () =>
-    setTimeout(focusNextLogicalElement, 0),
-  );
+  keyInput.addEventListener("paste", () => setTimeout(focusNextLogicalElement, 0));
   keyInput.addEventListener("blur", () => {
     keyInput.value = keyInput.value.trim();
   });

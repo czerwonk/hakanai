@@ -17,19 +17,14 @@ export interface RestrictionData {
  * Convert RestrictionData to API SecretRestrictions format
  * Handles passphrase hashing and property filtering
  */
-export async function toSecretRestrictions(
-  restrictions: RestrictionData,
-): Promise<SecretRestrictions> {
+export async function toSecretRestrictions(restrictions: RestrictionData): Promise<SecretRestrictions> {
   const apiRestrictions: SecretRestrictions = {};
 
   if (restrictions.allowed_ips && restrictions.allowed_ips.length > 0) {
     apiRestrictions.allowed_ips = restrictions.allowed_ips;
   }
 
-  if (
-    restrictions.allowed_countries &&
-    restrictions.allowed_countries.length > 0
-  ) {
+  if (restrictions.allowed_countries && restrictions.allowed_countries.length > 0) {
     apiRestrictions.allowed_countries = restrictions.allowed_countries;
   }
 
@@ -38,9 +33,7 @@ export async function toSecretRestrictions(
   }
 
   if (restrictions.passphrase && restrictions.passphrase.trim()) {
-    const passphraseHash = await HashUtils.hashPassphrase(
-      restrictions.passphrase.trim(),
-    );
+    const passphraseHash = await HashUtils.hashPassphrase(restrictions.passphrase.trim());
     apiRestrictions.passphrase_hash = passphraseHash;
   }
 

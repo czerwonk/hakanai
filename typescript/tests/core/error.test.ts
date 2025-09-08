@@ -1,22 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import {
-  handleAPIError,
-  ErrorHandler,
-  isHakanaiError,
-  isStandardError,
-  isErrorLike,
-} from "../../src/core/error";
+import { handleAPIError, ErrorHandler, isHakanaiError, isStandardError, isErrorLike } from "../../src/core/error";
 import { HakanaiErrorCodes } from "../../src/hakanai-client";
-
-// Type declaration for window.i18n used in tests
-declare global {
-  interface Window {
-    i18n: {
-      t: (key: string) => string;
-    };
-  }
-}
 
 describe("Error Module", () => {
   beforeEach(() => {
@@ -79,9 +64,7 @@ describe("Error Module", () => {
       test("should identify error-like objects", () => {
         expect(isErrorLike({ message: "error" })).toBe(true);
         expect(isErrorLike({ name: "CustomError" })).toBe(true);
-        expect(isErrorLike({ message: "error", name: "CustomError" })).toBe(
-          true,
-        );
+        expect(isErrorLike({ message: "error", name: "CustomError" })).toBe(true);
       });
 
       test("should reject invalid objects", () => {
@@ -113,9 +96,7 @@ describe("Error Module", () => {
 
       handleAPIError(hakanaiError, "Fallback message", mockHandler);
 
-      expect(mockHandler.displayError).toHaveBeenCalledWith(
-        "Translated: SEND_FAILED",
-      );
+      expect(mockHandler.displayError).toHaveBeenCalledWith("Translated: SEND_FAILED");
       expect(mockHandler.onAuthenticationError).not.toHaveBeenCalled();
     });
 
@@ -128,9 +109,7 @@ describe("Error Module", () => {
 
       handleAPIError(authError, "Fallback", mockHandler);
 
-      expect(mockHandler.displayError).toHaveBeenCalledWith(
-        "Translated: AUTHENTICATION_REQUIRED",
-      );
+      expect(mockHandler.displayError).toHaveBeenCalledWith("Translated: AUTHENTICATION_REQUIRED");
       expect(mockHandler.onAuthenticationError).toHaveBeenCalled();
     });
 
@@ -143,9 +122,7 @@ describe("Error Module", () => {
 
       handleAPIError(tokenError, "Fallback", mockHandler);
 
-      expect(mockHandler.displayError).toHaveBeenCalledWith(
-        "Translated: INVALID_TOKEN",
-      );
+      expect(mockHandler.displayError).toHaveBeenCalledWith("Translated: INVALID_TOKEN");
       expect(mockHandler.onAuthenticationError).toHaveBeenCalled();
     });
 
@@ -154,9 +131,7 @@ describe("Error Module", () => {
 
       handleAPIError(standardError, "Fallback", mockHandler);
 
-      expect(mockHandler.displayError).toHaveBeenCalledWith(
-        "Standard error message",
-      );
+      expect(mockHandler.displayError).toHaveBeenCalledWith("Standard error message");
       expect(mockHandler.onAuthenticationError).not.toHaveBeenCalled();
     });
 
@@ -165,9 +140,7 @@ describe("Error Module", () => {
 
       handleAPIError(errorLike, "Fallback", mockHandler);
 
-      expect(mockHandler.displayError).toHaveBeenCalledWith(
-        "Error-like message",
-      );
+      expect(mockHandler.displayError).toHaveBeenCalledWith("Error-like message");
     });
 
     test("should handle error-like objects without message", () => {
@@ -225,9 +198,7 @@ describe("Error Module", () => {
 
       handleAPIError(hakanaiError, "Fallback", mockHandler);
 
-      expect(mockHandler.displayError).toHaveBeenCalledWith(
-        "Original error message",
-      );
+      expect(mockHandler.displayError).toHaveBeenCalledWith("Original error message");
     });
   });
 });

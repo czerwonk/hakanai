@@ -10,10 +10,7 @@
 import { HakanaiError, HakanaiErrorCodes } from "./errors";
 import { InputValidation } from "./validation";
 import { UrlParser } from "./url-parser";
-import {
-  type CompatibilityCheck,
-  BrowserCompatibility,
-} from "./browser-compat";
+import { type CompatibilityCheck, BrowserCompatibility } from "./browser-compat";
 import { Base64UrlSafe } from "./base64-utils";
 import { ContentAnalysis } from "./content-analysis";
 import { CryptoContext } from "./crypto-operations";
@@ -112,10 +109,7 @@ class HakanaiClient {
    */
   constructor(baseUrl: string) {
     if (typeof baseUrl !== "string" || !baseUrl.trim()) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.EXPECTED_STRING,
-        "Base URL must be a non-empty string",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.EXPECTED_STRING, "Base URL must be a non-empty string");
     }
 
     this.baseUrl = baseUrl.replace(/\/$/, ""); // Remove trailing slash
@@ -156,21 +150,11 @@ class HakanaiClient {
     restrictions?: SecretRestrictions,
   ): void {
     if (!payload || typeof payload !== "object") {
-      throw new HakanaiError(
-        HakanaiErrorCodes.INVALID_PAYLOAD,
-        "Payload must be an object",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.INVALID_PAYLOAD, "Payload must be an object");
     }
 
-    if (
-      !payload.data ||
-      typeof payload.data !== "string" ||
-      payload.data.length === 0
-    ) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.INVALID_PAYLOAD,
-        "Payload data cannot be empty",
-      );
+    if (!payload.data || typeof payload.data !== "string" || payload.data.length === 0) {
+      throw new HakanaiError(HakanaiErrorCodes.INVALID_PAYLOAD, "Payload data cannot be empty");
     }
 
     // Use validation namespace for consistent TTL validation
@@ -281,35 +265,23 @@ class HakanaiClient {
    * Process response stream with chunking and optional progress tracking
    * @private
    */
-  private async processResponseStream(
-    response: Response,
-    progressObserver?: DataTransferObserver,
-  ): Promise<string> {
+  private async processResponseStream(response: Response, progressObserver?: DataTransferObserver): Promise<string> {
     if (!response.body) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.INVALID_SERVER_RESPONSE,
-        "Response body is empty",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.INVALID_SERVER_RESPONSE, "Response body is empty");
     }
 
     const contentLength = response.headers.get("content-length");
 
     // If no content-length header, use dynamic buffering
     if (!contentLength) {
-      return this.processResponseStreamWithoutContentLength(
-        response,
-        progressObserver,
-      );
+      return this.processResponseStreamWithoutContentLength(response, progressObserver);
     }
 
     const totalBytes = parseInt(contentLength, 10);
 
     // Error if content-length is zero
     if (totalBytes === 0) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.INVALID_SERVER_RESPONSE,
-        "Response body is empty",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.INVALID_SERVER_RESPONSE, "Response body is empty");
     }
 
     // Pre-allocate result array for efficiency, like Rust client
@@ -389,24 +361,15 @@ class HakanaiClient {
 
       xhr.onerror = () => {
         // Network-level error (connection failed, etc.)
-        promiseManager.reject(
-          new HakanaiError(
-            HakanaiErrorCodes.SEND_FAILED,
-            "Network error during request",
-          ),
-        );
+        promiseManager.reject(new HakanaiError(HakanaiErrorCodes.SEND_FAILED, "Network error during request"));
       };
 
       xhr.onabort = () => {
-        promiseManager.reject(
-          new HakanaiError(HakanaiErrorCodes.SEND_FAILED, "Request aborted"),
-        );
+        promiseManager.reject(new HakanaiError(HakanaiErrorCodes.SEND_FAILED, "Request aborted"));
       };
 
       xhr.ontimeout = () => {
-        promiseManager.reject(
-          new HakanaiError(HakanaiErrorCodes.SEND_FAILED, "Request timed out"),
-        );
+        promiseManager.reject(new HakanaiError(HakanaiErrorCodes.SEND_FAILED, "Request timed out"));
       };
 
       xhr.open("POST", `${this.baseUrl}/api/v1/secret`);
@@ -453,11 +416,7 @@ class HakanaiClient {
     }
 
     // Use XMLHttpRequest for real upload progress tracking
-    const response = await this.sendWithXHR(
-      bodyData,
-      headers,
-      progressObserver,
-    );
+    const response = await this.sendWithXHR(bodyData, headers, progressObserver);
 
     if (!response.ok) {
       throw this.createSendPayloadError(response);
@@ -465,10 +424,7 @@ class HakanaiClient {
 
     const responseData: SecretResponse = await response.json();
     if (!responseData.id || typeof responseData.id !== "string") {
-      throw new HakanaiError(
-        HakanaiErrorCodes.INVALID_SERVER_RESPONSE,
-        "Invalid response: missing secret ID",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.INVALID_SERVER_RESPONSE, "Invalid response: missing secret ID");
     }
 
     return responseData.id;
@@ -505,10 +461,7 @@ class HakanaiClient {
       };
       const payloadJson = JSON.stringify(secretPayload);
       const encodedBytes = new TextEncoder().encode(payloadJson);
-      const payloadBytes =
-        encodedBytes instanceof Uint8Array
-          ? encodedBytes
-          : new Uint8Array(encodedBytes);
+      const payloadBytes = encodedBytes instanceof Uint8Array ? encodedBytes : new Uint8Array(encodedBytes);
 
       const encryptedData = await cryptoContext.encrypt(payloadBytes);
       const hash = await HashUtils.hashContent(payloadBytes);
@@ -516,13 +469,7 @@ class HakanaiClient {
       // Clear payload bytes after encryption
       SecureMemory.clearUint8Array(payloadBytes);
 
-      const secretId = await this.sendEncryptedData(
-        encryptedData,
-        ttl,
-        authToken,
-        progressObserver,
-        restrictions,
-      );
+      const secretId = await this.sendEncryptedData(encryptedData, ttl, authToken, progressObserver, restrictions);
 
       return `${this.baseUrl}/s/${secretId}#${cryptoContext.getKeyBase64()}:${hash}`;
     } finally {
@@ -547,10 +494,7 @@ class HakanaiClient {
     try {
       key = Base64UrlSafe.decode(secretKey);
     } catch (error) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.BASE64_ERROR,
-        "Invalid decryption key in URL",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.BASE64_ERROR, "Invalid decryption key in URL");
     }
 
     return { secretId, key, hash };
@@ -569,18 +513,10 @@ class HakanaiClient {
       );
     }
     if (response.status === 403) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.ACCESS_DENIED,
-        "Client is not authorized to access this secret",
-        403,
-      );
+      throw new HakanaiError(HakanaiErrorCodes.ACCESS_DENIED, "Client is not authorized to access this secret", 403);
     }
     if (response.status === 404) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.SECRET_NOT_FOUND,
-        "Secret not found or has expired",
-        404,
-      );
+      throw new HakanaiError(HakanaiErrorCodes.SECRET_NOT_FOUND, "Secret not found or has expired", 404);
     }
     if (response.status === 410) {
       throw new HakanaiError(
@@ -596,16 +532,10 @@ class HakanaiClient {
     );
   }
 
-  private async verifyHash(
-    plaintext: Uint8Array,
-    expectedHash: string,
-  ): Promise<void> {
+  private async verifyHash(plaintext: Uint8Array, expectedHash: string): Promise<void> {
     const actualHash = await HashUtils.hashContent(plaintext);
     if (actualHash !== expectedHash) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.HASH_MISMATCH,
-        "Hash verification failed",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.HASH_MISMATCH, "Hash verification failed");
     }
   }
 
@@ -649,10 +579,7 @@ class HakanaiClient {
       this.handleReceivePayloadError(response);
     }
 
-    const encryptedData = await this.processResponseStream(
-      response,
-      progressObserver,
-    );
+    const encryptedData = await this.processResponseStream(response, progressObserver);
 
     // Validate encrypted data format
     InputValidation.validateEncryptedData(encryptedData);
@@ -674,22 +601,12 @@ class HakanaiClient {
       try {
         payload = JSON.parse(decryptedJson);
       } catch (error) {
-        throw new HakanaiError(
-          HakanaiErrorCodes.INVALID_PAYLOAD,
-          "Failed to parse decrypted payload",
-        );
+        throw new HakanaiError(HakanaiErrorCodes.INVALID_PAYLOAD, "Failed to parse decrypted payload");
       }
 
       // Validate payload structure
-      if (
-        !payload ||
-        typeof payload !== "object" ||
-        typeof payload.data !== "string"
-      ) {
-        throw new HakanaiError(
-          HakanaiErrorCodes.INVALID_PAYLOAD,
-          "Invalid payload structure",
-        );
+      if (!payload || typeof payload !== "object" || typeof payload.data !== "string") {
+        throw new HakanaiError(HakanaiErrorCodes.INVALID_PAYLOAD, "Invalid payload structure");
       }
 
       return new PayloadDataImpl(payload.data, payload.filename ?? undefined);

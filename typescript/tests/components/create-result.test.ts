@@ -53,9 +53,7 @@ describe("Success Display Component", () => {
       expect(instructions).toBeTruthy();
 
       // Check for URL input with correct value
-      const urlInput = container.querySelector(
-        'input[type="text"]',
-      ) as HTMLInputElement;
+      const urlInput = container.querySelector('input[type="text"]') as HTMLInputElement;
       expect(urlInput?.value).toBe(testUrl);
       expect(urlInput?.readOnly).toBe(true);
 
@@ -68,9 +66,7 @@ describe("Success Display Component", () => {
       expect(note).toBeTruthy();
 
       // QR button should be present
-      const qrButton = container.querySelector(
-        'button[aria-label="button.showQrCode"]',
-      );
+      const qrButton = container.querySelector('button[aria-label="button.showQrCode"]');
       expect(qrButton).toBeTruthy();
       expect(qrButton?.textContent).toBe("▦ QR");
     });
@@ -112,9 +108,7 @@ describe("Success Display Component", () => {
       expect(mockI18n.t).toHaveBeenCalledWith("label.key");
 
       // QR button should be present
-      const qrButton = container.querySelector(
-        'button[aria-label="button.showQrCode"]',
-      );
+      const qrButton = container.querySelector('button[aria-label="button.showQrCode"]');
       expect(qrButton).toBeTruthy();
       expect(qrButton?.textContent).toBe("▦ QR");
     });
@@ -159,9 +153,7 @@ describe("Success Display Component", () => {
       });
 
       // Find and click the QR button
-      const qrButton = container.querySelector(
-        '[aria-label="button.showQrCode"]',
-      ) as HTMLButtonElement;
+      const qrButton = container.querySelector('[aria-label="button.showQrCode"]') as HTMLButtonElement;
       expect(qrButton).toBeTruthy();
 
       // Click QR button to open modal
@@ -172,9 +164,7 @@ describe("Success Display Component", () => {
       expect(overlay).toBeTruthy();
 
       // Find download button in modal
-      const downloadButton = overlay!.querySelector(
-        ".qr-download-btn",
-      ) as HTMLButtonElement;
+      const downloadButton = overlay!.querySelector(".qr-download-btn") as HTMLButtonElement;
       expect(downloadButton).toBeTruthy();
       expect(downloadButton.textContent).toContain("button.download");
 

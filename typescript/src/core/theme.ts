@@ -6,14 +6,6 @@ const THEME_KEY = "hakanai-theme";
 
 type Theme = "light" | "dark";
 
-declare global {
-  interface Window {
-    i18n: {
-      t(key: string): string;
-    };
-  }
-}
-
 function isValidTheme(theme: unknown): theme is Theme {
   return theme === "light" || theme === "dark";
 }
@@ -79,9 +71,7 @@ function getThemeToggleButton(): HTMLButtonElement | null {
 }
 
 function getThemeToggleLabel(isDark: boolean): string {
-  return isDark
-    ? window.i18n.t(I18nKeys.Aria.SwitchToLight)
-    : window.i18n.t(I18nKeys.Aria.SwitchToDark);
+  return isDark ? window.i18n.t(I18nKeys.Aria.SwitchToLight) : window.i18n.t(I18nKeys.Aria.SwitchToDark);
 }
 
 function updateThemeToggleButton(): void {
@@ -123,17 +113,15 @@ function setupThemeToggleButton(): void {
 }
 
 function setupSystemThemeListener(): void {
-  window
-    .matchMedia("(prefers-color-scheme: dark)")
-    .addEventListener("change", () => {
-      try {
-        if (getTheme() === null) {
-          updateThemeToggleButton();
-        }
-      } catch {
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+    try {
+      if (getTheme() === null) {
         updateThemeToggleButton();
       }
-    });
+    } catch {
+      updateThemeToggleButton();
+    }
+  });
 }
 
 /**

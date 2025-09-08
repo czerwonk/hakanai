@@ -19,11 +19,7 @@ class CryptoContext {
   private isDisposed = false;
   private isUsed = false;
 
-  private constructor(
-    keyBytes: Uint8Array,
-    cryptoKey: CryptoKey,
-    nonce: Uint8Array,
-  ) {
+  private constructor(keyBytes: Uint8Array, cryptoKey: CryptoKey, nonce: Uint8Array) {
     this.keyBytes = keyBytes;
     this.cryptoKey = cryptoKey;
     this.nonce = nonce;
@@ -36,10 +32,7 @@ class CryptoContext {
   private static getCrypto(): Crypto {
     const cryptoInstance = window?.crypto ?? crypto;
     if (!cryptoInstance) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.CRYPTO_API_UNAVAILABLE,
-        "Crypto API not available",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.CRYPTO_API_UNAVAILABLE, "Crypto API not available");
     }
 
     return cryptoInstance;
@@ -76,17 +69,11 @@ class CryptoContext {
    */
   static async fromKey(keyBytes: Uint8Array): Promise<CryptoContext> {
     if (!(keyBytes instanceof Uint8Array)) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.EXPECTED_UINT8_ARRAY,
-        "Key must be a Uint8Array",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.EXPECTED_UINT8_ARRAY, "Key must be a Uint8Array");
     }
 
     if (keyBytes.length !== KEY_LENGTH) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.INVALID_KEY,
-        `Invalid key length: must be ${KEY_LENGTH} bytes`,
-      );
+      throw new HakanaiError(HakanaiErrorCodes.INVALID_KEY, `Invalid key length: must be ${KEY_LENGTH} bytes`);
     }
 
     // Create a copy to avoid external modification
@@ -123,10 +110,7 @@ class CryptoContext {
     }
 
     if (!(plaintextBytes instanceof Uint8Array)) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.EXPECTED_UINT8_ARRAY,
-        "Plaintext must be a Uint8Array",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.EXPECTED_UINT8_ARRAY, "Plaintext must be a Uint8Array");
     }
 
     // Mark context as used to prevent nonce reuse
@@ -165,10 +149,7 @@ class CryptoContext {
     this.checkDisposed();
 
     if (typeof encryptedData !== "string") {
-      throw new HakanaiError(
-        HakanaiErrorCodes.EXPECTED_STRING,
-        "Encrypted data must be a string",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.EXPECTED_STRING, "Encrypted data must be a string");
     }
 
     // Decode from standard base64
@@ -180,10 +161,7 @@ class CryptoContext {
     }
 
     if (combined.length < NONCE_LENGTH + 1) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.INVALID_ENCRYPTED_DATA,
-        "Invalid encrypted data: too short",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.INVALID_ENCRYPTED_DATA, "Invalid encrypted data: too short");
     }
 
     // Extract nonce and update context nonce
@@ -199,10 +177,7 @@ class CryptoContext {
 
       return new Uint8Array(plaintextBytes);
     } catch (error) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.DECRYPTION_FAILED,
-        "Decryption failed: invalid key or corrupted data",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.DECRYPTION_FAILED, "Decryption failed: invalid key or corrupted data");
     }
   }
 

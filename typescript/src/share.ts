@@ -47,14 +47,7 @@ function hideLoading(): void {
  * Hide all sections except the specified one
  */
 function hideOtherSections(except: string): void {
-  const sections = [
-    "clipboard-content",
-    "ttl-selector",
-    "result",
-    "permission-prompt",
-    "loading",
-    "result-success",
-  ];
+  const sections = ["clipboard-content", "ttl-selector", "result", "permission-prompt", "loading", "result-success"];
   sections.forEach((section) => {
     if (section !== except) {
       const element = document.getElementById(section)!;
@@ -78,16 +71,13 @@ function showShareContent(payload: ShareData): void {
   sharePayload = payload;
 
   // Update UI
-  document.getElementById("content-size")!.textContent = formatFileSize(
-    payload.getContentSize(),
-  );
+  document.getElementById("content-size")!.textContent = formatFileSize(payload.getContentSize());
 
   // Show filename if present (sanitized for security)
   const filenameRow = document.getElementById("filename-row")!;
   if (payload.filename) {
     const sanitizedFilename = sanitizeFileName(payload.filename);
-    document.getElementById("content-filename")!.textContent =
-      sanitizedFilename ?? "Invalid filename";
+    document.getElementById("content-filename")!.textContent = sanitizedFilename ?? "Invalid filename";
     showElement(filenameRow);
   } else {
     hideElement(filenameRow);
@@ -151,10 +141,7 @@ function handleShareError(error: unknown, context: string): void {
     const translationKey = `validation.${error.code}`;
     const translatedMessage = window.i18n.t(translationKey);
     showError(translatedMessage || error.message);
-  } else if (
-    error instanceof Error &&
-    error.message === "Invalid JSON format"
-  ) {
+  } else if (error instanceof Error && error.message === "Invalid JSON format") {
     showError(window.i18n.t(I18nKeys.Msg.ClipboardInvalidJson));
   } else {
     // For all other errors, use the generic handler
@@ -204,9 +191,7 @@ async function createSecret(): Promise<void> {
   try {
     const client = new HakanaiClient(window.location.origin);
 
-    const sanitizedFilename = sharePayload.filename
-      ? sanitizeFileName(sharePayload.filename)
-      : undefined;
+    const sanitizedFilename = sharePayload.filename ? sanitizeFileName(sharePayload.filename) : undefined;
     const hakanaiPayload = client.createPayload(sanitizedFilename || undefined);
     hakanaiPayload.setFromBase64(sharePayload.data);
 
@@ -216,17 +201,9 @@ async function createSecret(): Promise<void> {
     const ttl = ttlSelector.getValue();
 
     // Convert RestrictionData to SecretRestrictions if present
-    const restrictions = sharePayload.restrictions
-      ? await toSecretRestrictions(sharePayload.restrictions)
-      : undefined;
+    const restrictions = sharePayload.restrictions ? await toSecretRestrictions(sharePayload.restrictions) : undefined;
 
-    const url = await client.sendPayload(
-      hakanaiPayload,
-      ttl,
-      sharePayload.token,
-      progressBar,
-      restrictions,
-    );
+    const url = await client.sendPayload(hakanaiPayload, ttl, sharePayload.token, progressBar, restrictions);
 
     try {
       await navigator.clipboard.writeText(url);
@@ -238,9 +215,7 @@ async function createSecret(): Promise<void> {
     showSuccess(url, sharePayload.restrictions);
   } catch (error) {
     progressBar.hide();
-    showError(
-      `Failed to create secret: ${error instanceof Error ? error.message : "Unknown error"}`,
-    );
+    showError(`Failed to create secret: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 }
 
@@ -254,9 +229,7 @@ function initShareData() {
         return;
       }
     } catch (error) {
-      showError(
-        `Invalid share data: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+      showError(`Invalid share data: ${error instanceof Error ? error.message : "Unknown error"}`);
       return;
     }
   }
@@ -296,12 +269,8 @@ document.addEventListener("DOMContentLoaded", () => {
   initFeatures();
   initKeyboardShortcuts();
 
-  document
-    .getElementById("read-clipboard")
-    ?.addEventListener("click", readClipboard);
-  document
-    .getElementById("share-button")
-    ?.addEventListener("click", createSecret);
+  document.getElementById("read-clipboard")?.addEventListener("click", readClipboard);
+  document.getElementById("share-button")?.addEventListener("click", createSecret);
 
   initShareData();
 });

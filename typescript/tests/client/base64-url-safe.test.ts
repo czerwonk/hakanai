@@ -13,8 +13,7 @@ describe("Base64UrlSafe", () => {
     const bytes = encoder.encode(original);
 
     // Convert to Uint8Array if needed (Node.js TextEncoder returns different type)
-    const uint8Array =
-      bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+    const uint8Array = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
 
     const encoded = Base64UrlSafe.encode(uint8Array);
     const decoded = Base64UrlSafe.decode(encoded);

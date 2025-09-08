@@ -35,10 +35,7 @@ export class ProgressBar implements DataTransferObserver {
    * @param text - Text to display
    * @param delayMs - Delay in milliseconds before showing (default 500ms)
    */
-  private showDelayed(
-    text: string = "Processing...",
-    delayMs: number = 500,
-  ): void {
+  private showDelayed(text: string = "Processing...", delayMs: number = 500): void {
     this.cancelDelayedShow();
     this.pendingText = text;
     this.currentBytes = 0;
@@ -112,17 +109,11 @@ export class ProgressBar implements DataTransferObserver {
   private updateProgressDisplay(): void {
     if (!this.progressCircle) return;
 
-    const isTotalSizeKnown =
-      this.totalBytes !== undefined && this.totalBytes > 0;
-    const percentage = isTotalSizeKnown
-      ? Math.min((this.currentBytes / this.totalBytes!) * 100, 100)
-      : 0;
+    const isTotalSizeKnown = this.totalBytes !== undefined && this.totalBytes > 0;
+    const percentage = isTotalSizeKnown ? Math.min((this.currentBytes / this.totalBytes!) * 100, 100) : 0;
 
     // On first real progress, stop the pulse animation
-    if (
-      this.hasReceivedProgress &&
-      this.progressCircle.classList.contains("progress-logo-pulsing")
-    ) {
+    if (this.hasReceivedProgress && this.progressCircle.classList.contains("progress-logo-pulsing")) {
       this.progressCircle.classList.remove("progress-logo-pulsing");
       this.progressCircle.classList.add("progress-logo-loading");
     }
@@ -130,16 +121,11 @@ export class ProgressBar implements DataTransferObserver {
     // If we have progress, show it; otherwise keep pulsing
     if (this.hasReceivedProgress && isTotalSizeKnown) {
       // Update opacity based on progress using CSS custom property
-      this.progressCircle.style.setProperty(
-        "--progress-opacity",
-        (percentage / 100).toString(),
-      );
+      this.progressCircle.style.setProperty("--progress-opacity", (percentage / 100).toString());
     }
 
     if (this.percentageElement) {
-      this.percentageElement.textContent = isTotalSizeKnown
-        ? `${Math.round(percentage)}%`
-        : "";
+      this.percentageElement.textContent = isTotalSizeKnown ? `${Math.round(percentage)}%` : "";
     }
 
     if (this.sizeElement) {
@@ -198,10 +184,7 @@ export class ProgressBar implements DataTransferObserver {
    * Implementation of DataTransferObserver interface
    * Called when data transfer progress is made
    */
-  async onProgress(
-    bytesTransferred: number,
-    totalBytes?: number,
-  ): Promise<void> {
+  async onProgress(bytesTransferred: number, totalBytes?: number): Promise<void> {
     // Just update the progress values, display will be handled when/if overlay shows
     this.updateProgress(bytesTransferred, totalBytes);
   }

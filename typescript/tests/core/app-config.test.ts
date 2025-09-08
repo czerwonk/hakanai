@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import {
-  initFeatures,
-  resetCache,
-  fetchAppConfig,
-} from "../../src/core/app-config";
+import { initFeatures, resetCache, fetchAppConfig } from "../../src/core/app-config";
+import { I18n } from "../../src/core/i18n";
 
 describe("app-config", () => {
   let fetchMock: jest.Mock;
@@ -106,10 +103,7 @@ describe("app-config", () => {
 
       expect(impressumLink?.classList.contains("hidden")).toBe(true);
       expect(privacyLink?.classList.contains("hidden")).toBe(true);
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        "Failed to fetch app config:",
-        404,
-      );
+      expect(consoleWarnSpy).toHaveBeenCalledWith("Failed to fetch app config:", 404);
     });
 
     it("should hide all links when fetch throws an error", async () => {
@@ -123,10 +117,7 @@ describe("app-config", () => {
 
       expect(impressumLink?.classList.contains("hidden")).toBe(true);
       expect(privacyLink?.classList.contains("hidden")).toBe(true);
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        "Failed to fetch app config:",
-        error,
-      );
+      expect(consoleWarnSpy).toHaveBeenCalledWith("Failed to fetch app config:", error);
     });
 
     it("should hide all links when config has missing features", async () => {

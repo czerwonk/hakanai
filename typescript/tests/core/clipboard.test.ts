@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import {
-  copyToClipboard,
-  copyToClipboardByElementId,
-} from "../../src/core/clipboard";
+import { copyToClipboard, copyToClipboardByElementId } from "../../src/core/clipboard";
 
 describe("Clipboard Operations", () => {
   let mockButton: HTMLButtonElement;

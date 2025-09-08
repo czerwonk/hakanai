@@ -12,10 +12,7 @@ import { announceToScreenReader } from "../core/dom-utils";
  * @param message - The error message to display
  * @param container - The HTML element to display the error in
  */
-export function displayErrorMessage(
-  message: string,
-  container: HTMLElement,
-): void {
+export function displayErrorMessage(message: string, container: HTMLElement): void {
   container.className = "result error";
   container.innerHTML = "";
 
@@ -34,7 +31,5 @@ export function displayErrorMessage(
   container.scrollIntoView({ behavior: "smooth", block: "center" });
   container.focus();
 
-  announceToScreenReader(
-    `${(window as any).i18n.t(I18nKeys.Msg.ErrorTitle)}: ${message}`,
-  );
+  announceToScreenReader(`${(window as any).i18n.t(I18nKeys.Msg.ErrorTitle)}: ${message}`);
 }

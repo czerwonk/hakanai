@@ -48,9 +48,7 @@ describe("UrlParser", () => {
           UrlParser.parseSecretUrl(url);
         } catch (error: any) {
           expect(error.code).toBe(HakanaiErrorCodes.MISSING_HASH);
-          expect(error.message).toBe(
-            "URL fragment must contain a hash for content integrity verification",
-          );
+          expect(error.message).toBe("URL fragment must contain a hash for content integrity verification");
         }
       }
     });
@@ -76,9 +74,7 @@ describe("UrlParser", () => {
         UrlParser.parseSecretUrl(url);
       } catch (error: any) {
         expect(error.code).toBe(HakanaiErrorCodes.MISSING_HASH);
-        expect(error.message).toBe(
-          "URL fragment must contain a hash for content integrity verification",
-        );
+        expect(error.message).toBe("URL fragment must contain a hash for content integrity verification");
       }
     });
 
@@ -89,9 +85,7 @@ describe("UrlParser", () => {
       const result = UrlParser.parseSecretUrl(url);
 
       // Key should not include the '#' prefix
-      expect(result.secretKey).toBe(
-        "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-      );
+      expect(result.secretKey).toBe("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
       expect(result.secretKey).not.toMatch(/^#/);
 
       // Hash should be valid
@@ -107,9 +101,7 @@ describe("UrlParser", () => {
         UrlParser.parseSecretUrl(url);
       } catch (error: any) {
         expect(error.code).toBe(HakanaiErrorCodes.MISSING_HASH);
-        expect(error.message).toBe(
-          "URL fragment must contain a hash for content integrity verification",
-        );
+        expect(error.message).toBe("URL fragment must contain a hash for content integrity verification");
       }
     });
 
@@ -128,9 +120,7 @@ describe("UrlParser", () => {
           UrlParser.parseSecretUrl(url);
         } catch (error: any) {
           expect(error.code).toBe(HakanaiErrorCodes.INVALID_HASH);
-          expect(error.message).toBe(
-            "Hash must be a 22-character base64url string (truncated SHA-256)",
-          );
+          expect(error.message).toBe("Hash must be a 22-character base64url string (truncated SHA-256)");
         }
       }
     });
@@ -180,10 +170,7 @@ describe("UrlParser", () => {
         try {
           UrlParser.parseSecretUrl(url);
         } catch (error: any) {
-          expect([
-            HakanaiErrorCodes.INVALID_URL_FORMAT,
-            HakanaiErrorCodes.MISSING_SECRET_ID,
-          ]).toContain(error.code);
+          expect([HakanaiErrorCodes.INVALID_URL_FORMAT, HakanaiErrorCodes.MISSING_SECRET_ID]).toContain(error.code);
         }
       }
     });
@@ -196,9 +183,7 @@ describe("UrlParser", () => {
         UrlParser.parseSecretUrl(url);
       } catch (error: any) {
         expect(error.code).toBe(HakanaiErrorCodes.INVALID_URL_FORMAT);
-        expect(error.message).toBe(
-          "URL must contain decryption key and hash in fragment",
-        );
+        expect(error.message).toBe("URL must contain decryption key and hash in fragment");
       }
     });
 
@@ -212,9 +197,7 @@ describe("UrlParser", () => {
 
       // This should actually succeed because fragmentParts[1] is just the valid hash
       const result = UrlParser.parseSecretUrl(url);
-      expect(result.secretKey).toBe(
-        "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-      );
+      expect(result.secretKey).toBe("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
       expect(result.hash).toBe("47DEQpj8HBSa-_TImW-5JA");
 
       // The extra parts after the second colon are ignored
@@ -226,9 +209,7 @@ describe("UrlParser", () => {
           "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:invalid",
         );
       } catch (error: any) {
-        expect(error.message).toBe(
-          "Hash must be a 22-character base64url string (truncated SHA-256)",
-        );
+        expect(error.message).toBe("Hash must be a 22-character base64url string (truncated SHA-256)");
       }
 
       try {
@@ -236,9 +217,7 @@ describe("UrlParser", () => {
           "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#invalid:47DEQpj8HBSa-_TImW-5JA",
         );
       } catch (error: any) {
-        expect(error.message).toBe(
-          "Secret key must be a 43-character base64url string (32 bytes)",
-        );
+        expect(error.message).toBe("Secret key must be a 43-character base64url string (32 bytes)");
       }
 
       try {

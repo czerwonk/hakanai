@@ -5,11 +5,7 @@
  * Tests real crypto operations with minimal mocking
  */
 
-import {
-  HakanaiClient,
-  HakanaiErrorCodes,
-  Base64UrlSafe,
-} from "../../src/hakanai-client";
+import { HakanaiClient, HakanaiErrorCodes, Base64UrlSafe } from "../../src/hakanai-client";
 
 // Helper function to ensure we get proper Uint8Array in tests
 function encodeText(text: string): Uint8Array {
@@ -36,10 +32,7 @@ if (typeof global.Response === "undefined") {
     public headers: any;
     public ok: boolean;
 
-    constructor(
-      body: string,
-      init?: { status?: number; statusText?: string; headers?: any },
-    ) {
+    constructor(body: string, init?: { status?: number; statusText?: string; headers?: any }) {
       this._text = body;
       this.status = init?.status || 200;
       this.statusText = init?.statusText || "OK";
@@ -117,8 +110,7 @@ const createMockServices = () => {
       return Promise.resolve({
         ok: true,
         headers: {
-          get: (name: string) =>
-            name === "content-length" ? encryptedData.length.toString() : null,
+          get: (name: string) => (name === "content-length" ? encryptedData.length.toString() : null),
         },
         body: new ReadableStream({
           start(controller) {
@@ -158,8 +150,7 @@ describe("HakanaiClient Integration", () => {
   });
 
   test("complete roundtrip: send and receive text secret", async () => {
-    const originalText =
-      "This is a secret message that should roundtrip correctly! 🔐";
+    const originalText = "This is a secret message that should roundtrip correctly! 🔐";
     const textBytes = encodeText(originalText);
 
     const originalPayload = client.createPayload();
@@ -168,9 +159,7 @@ describe("HakanaiClient Integration", () => {
     // Send the secret
     const secretUrl = await client.sendPayload(originalPayload, 3600);
 
-    expect(secretUrl).toMatch(
-      /^http:\/\/localhost:8080\/s\/[0-9a-f-]+#[A-Za-z0-9_-]+:[A-Za-z0-9_-]{22}$/i,
-    );
+    expect(secretUrl).toMatch(/^http:\/\/localhost:8080\/s\/[0-9a-f-]+#[A-Za-z0-9_-]+:[A-Za-z0-9_-]{22}$/i);
 
     // Receive the secret
     const retrievedPayload = await client.receivePayload(secretUrl);
@@ -190,9 +179,7 @@ describe("HakanaiClient Integration", () => {
     // Send the secret
     const secretUrl = await client.sendPayload(originalPayload, 1800);
 
-    expect(secretUrl).toMatch(
-      /^http:\/\/localhost:8080\/s\/[0-9a-f-]+#[A-Za-z0-9_-]+:[A-Za-z0-9_-]{22}$/i,
-    );
+    expect(secretUrl).toMatch(/^http:\/\/localhost:8080\/s\/[0-9a-f-]+#[A-Za-z0-9_-]+:[A-Za-z0-9_-]{22}$/i);
 
     // Receive the secret
     const retrievedPayload = await client.receivePayload(secretUrl);
@@ -377,8 +364,7 @@ describe("HakanaiClient Integration", () => {
     const originalHash = fragmentParts[1];
 
     // Create a tampered hash (flip the last character)
-    const tamperedHash =
-      originalHash.slice(0, -1) + (originalHash.slice(-1) === "a" ? "b" : "a");
+    const tamperedHash = originalHash.slice(0, -1) + (originalHash.slice(-1) === "a" ? "b" : "a");
     const tamperedUrl = `${urlObj.origin}${urlObj.pathname}#${key}:${tamperedHash}`;
 
     // Attempt to retrieve with tampered hash should fail

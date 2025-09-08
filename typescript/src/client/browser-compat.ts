@@ -30,10 +30,7 @@ class BrowserCompatibility {
     }
 
     // Check for crypto.getRandomValues
-    if (
-      !cryptoInstance ||
-      typeof cryptoInstance.getRandomValues !== "function"
-    ) {
+    if (!cryptoInstance || typeof cryptoInstance.getRandomValues !== "function") {
       missingFeatures.push("crypto.getRandomValues");
     }
 
@@ -67,4 +64,3 @@ class BrowserCompatibility {
 }
 
 export { type CompatibilityCheck, BrowserCompatibility };
-

@@ -43,9 +43,7 @@ describe("InputValidation", () => {
           InputValidation.validateHash(hash);
         } catch (error: any) {
           expect(error.code).toBe(HakanaiErrorCodes.INVALID_HASH);
-          expect(error.message).toBe(
-            "Hash must be a 22-character base64url string (truncated SHA-256)",
-          );
+          expect(error.message).toBe("Hash must be a 22-character base64url string (truncated SHA-256)");
         }
       }
     });
@@ -110,9 +108,7 @@ describe("InputValidation", () => {
           InputValidation.validateSecretKey(key);
         } catch (error: any) {
           expect(error.code).toBe(HakanaiErrorCodes.INVALID_KEY);
-          expect(error.message).toBe(
-            "Secret key must be a 43-character base64url string (32 bytes)",
-          );
+          expect(error.message).toBe("Secret key must be a 43-character base64url string (32 bytes)");
         }
       }
     });
@@ -210,9 +206,7 @@ describe("InputValidation", () => {
           InputValidation.validateAuthToken(token);
         } catch (error: any) {
           expect(error.code).toBe(HakanaiErrorCodes.INVALID_AUTH_TOKEN);
-          expect(error.message).toBe(
-            "Auth token must be a 43-character base64url string (server-generated format)",
-          );
+          expect(error.message).toBe("Auth token must be a 43-character base64url string (server-generated format)");
         }
       }
     });
@@ -257,23 +251,10 @@ describe("InputValidation", () => {
 
   describe("validateCountryCode", () => {
     test("accepts valid ISO 3166-1 alpha-2 country codes", () => {
-      const validCountries = [
-        "US",
-        "DE",
-        "CA",
-        "GB",
-        "FR",
-        "JP",
-        "AU",
-        "BR",
-        "CN",
-        "IN",
-      ];
+      const validCountries = ["US", "DE", "CA", "GB", "FR", "JP", "AU", "BR", "CN", "IN"];
 
       for (const country of validCountries) {
-        expect(() =>
-          InputValidation.validateCountryCode(country),
-        ).not.toThrow();
+        expect(() => InputValidation.validateCountryCode(country)).not.toThrow();
       }
     });
 
@@ -318,9 +299,7 @@ describe("InputValidation", () => {
       const invalidInputs = [null, undefined, 123, {}, [], true, false];
 
       for (const input of invalidInputs) {
-        expect(() =>
-          InputValidation.validateCountryCode(input as any),
-        ).toThrow();
+        expect(() => InputValidation.validateCountryCode(input as any)).toThrow();
         try {
           InputValidation.validateCountryCode(input as any);
         } catch (error: any) {
@@ -377,12 +356,7 @@ describe("InputValidation", () => {
     });
 
     test("rejects ASN numbers above maximum (2^32)", () => {
-      const oversizedASNs = [
-        4294967296,
-        4294967297,
-        5000000000,
-        Number.MAX_SAFE_INTEGER,
-      ];
+      const oversizedASNs = [4294967296, 4294967297, 5000000000, Number.MAX_SAFE_INTEGER];
 
       for (const asn of oversizedASNs) {
         expect(() => InputValidation.validateASN(asn)).toThrow();
@@ -453,9 +427,7 @@ describe("InputValidation", () => {
       ];
 
       for (const restrictions of validRestrictions) {
-        expect(() =>
-          InputValidation.validateRestrictions(restrictions),
-        ).not.toThrow();
+        expect(() => InputValidation.validateRestrictions(restrictions)).not.toThrow();
       }
     });
 
@@ -468,9 +440,7 @@ describe("InputValidation", () => {
       ];
 
       for (const restrictions of validRestrictions) {
-        expect(() =>
-          InputValidation.validateRestrictions(restrictions),
-        ).not.toThrow();
+        expect(() => InputValidation.validateRestrictions(restrictions)).not.toThrow();
       }
     });
 
@@ -483,9 +453,7 @@ describe("InputValidation", () => {
       ];
 
       for (const restrictions of validRestrictions) {
-        expect(() =>
-          InputValidation.validateRestrictions(restrictions),
-        ).not.toThrow();
+        expect(() => InputValidation.validateRestrictions(restrictions)).not.toThrow();
       }
     });
 
@@ -509,9 +477,7 @@ describe("InputValidation", () => {
       ];
 
       for (const restrictions of validRestrictions) {
-        expect(() =>
-          InputValidation.validateRestrictions(restrictions),
-        ).not.toThrow();
+        expect(() => InputValidation.validateRestrictions(restrictions)).not.toThrow();
       }
     });
 
@@ -524,9 +490,7 @@ describe("InputValidation", () => {
       ];
 
       for (const restrictions of invalidRestrictions) {
-        expect(() =>
-          InputValidation.validateRestrictions(restrictions),
-        ).toThrow();
+        expect(() => InputValidation.validateRestrictions(restrictions)).toThrow();
         try {
           InputValidation.validateRestrictions(restrictions);
         } catch (error: any) {
@@ -544,9 +508,7 @@ describe("InputValidation", () => {
       ];
 
       for (const restrictions of invalidRestrictions) {
-        expect(() =>
-          InputValidation.validateRestrictions(restrictions),
-        ).toThrow();
+        expect(() => InputValidation.validateRestrictions(restrictions)).toThrow();
         try {
           InputValidation.validateRestrictions(restrictions);
         } catch (error: any) {
@@ -569,9 +531,7 @@ describe("InputValidation", () => {
       ];
 
       for (const restrictions of invalidRestrictions) {
-        expect(() =>
-          InputValidation.validateRestrictions(restrictions),
-        ).toThrow();
+        expect(() => InputValidation.validateRestrictions(restrictions)).toThrow();
         try {
           InputValidation.validateRestrictions(restrictions);
         } catch (error: any) {
@@ -592,9 +552,7 @@ describe("InputValidation", () => {
       ];
 
       for (const restrictions of invalidRestrictions) {
-        expect(() =>
-          InputValidation.validateRestrictions(restrictions),
-        ).toThrow();
+        expect(() => InputValidation.validateRestrictions(restrictions)).toThrow();
         try {
           InputValidation.validateRestrictions(restrictions);
         } catch (error: any) {
@@ -609,9 +567,7 @@ describe("InputValidation", () => {
       for (const input of invalidInputs) {
         try {
           InputValidation.validateRestrictions(input);
-          fail(
-            `Expected input ${JSON.stringify(input)} to throw, but it didn't`,
-          );
+          fail(`Expected input ${JSON.stringify(input)} to throw, but it didn't`);
         } catch (error: any) {
           expect(error.code).toBe(HakanaiErrorCodes.INVALID_RESTRICTIONS);
         }
@@ -627,9 +583,7 @@ describe("InputValidation", () => {
       ];
 
       for (const restrictions of invalidRestrictions) {
-        expect(() =>
-          InputValidation.validateRestrictions(restrictions),
-        ).toThrow();
+        expect(() => InputValidation.validateRestrictions(restrictions)).toThrow();
         try {
           InputValidation.validateRestrictions(restrictions);
         } catch (error: any) {
@@ -650,9 +604,7 @@ describe("InputValidation", () => {
       ];
 
       for (const restrictions of invalidRestrictions) {
-        expect(() =>
-          InputValidation.validateRestrictions(restrictions),
-        ).toThrow();
+        expect(() => InputValidation.validateRestrictions(restrictions)).toThrow();
         try {
           InputValidation.validateRestrictions(restrictions);
         } catch (error: any) {
@@ -675,9 +627,7 @@ describe("InputValidation", () => {
 
       for (const ip of validIps) {
         const restrictions = { allowed_ips: [ip] };
-        expect(() =>
-          InputValidation.validateRestrictions(restrictions),
-        ).not.toThrow();
+        expect(() => InputValidation.validateRestrictions(restrictions)).not.toThrow();
       }
     });
   });

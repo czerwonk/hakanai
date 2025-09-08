@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import {
-  formatFileSize,
-  formatTTL,
-  sanitizeFileName,
-} from "../../src/core/formatters";
+import { formatFileSize, formatTTL, sanitizeFileName } from "../../src/core/formatters";
 
 describe("formatFileSize", () => {
   test("returns correct formatted sizes", () => {
@@ -63,9 +59,7 @@ describe("formatTTL", () => {
 
 describe("sanitizeFileName", () => {
   test("removes dangerous characters", () => {
-    expect(sanitizeFileName('test<>:"/\\|?*file.txt')).toBe(
-      "test_________file.txt",
-    );
+    expect(sanitizeFileName('test<>:"/\\|?*file.txt')).toBe("test_________file.txt");
   });
 
   test("removes leading dots", () => {
@@ -93,8 +87,6 @@ describe("sanitizeFileName", () => {
   });
 
   test("handles control characters", () => {
-    expect(sanitizeFileName("test\x00\x01\x1ffile.txt")).toBe(
-      "test___file.txt",
-    );
+    expect(sanitizeFileName("test\x00\x01\x1ffile.txt")).toBe("test___file.txt");
   });
 });

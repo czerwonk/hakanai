@@ -18,18 +18,10 @@ describe("get-secret.ts", () => {
     test("normalizeUrl adds protocol when missing", () => {
       const { normalizeUrl } = getSecretModule;
 
-      expect(normalizeUrl("example.com/s/test-id#key")).toBe(
-        "https://example.com/s/test-id#key",
-      );
-      expect(normalizeUrl("localhost:8080/s/test-id")).toBe(
-        "https://localhost:8080/s/test-id",
-      );
-      expect(normalizeUrl("https://example.com/s/test-id#key")).toBe(
-        "https://example.com/s/test-id#key",
-      );
-      expect(normalizeUrl("http://example.com/s/test-id")).toBe(
-        "http://example.com/s/test-id",
-      );
+      expect(normalizeUrl("example.com/s/test-id#key")).toBe("https://example.com/s/test-id#key");
+      expect(normalizeUrl("localhost:8080/s/test-id")).toBe("https://localhost:8080/s/test-id");
+      expect(normalizeUrl("https://example.com/s/test-id#key")).toBe("https://example.com/s/test-id#key");
+      expect(normalizeUrl("http://example.com/s/test-id")).toBe("http://example.com/s/test-id");
     });
 
     test("hasUrlFragment detects URL fragments correctly", () => {
@@ -50,11 +42,7 @@ describe("get-secret.ts", () => {
       expect(typeof emptyUrlError).toBe("string");
 
       // URL without fragment and no key should return an error
-      const missingKeyError = validateInputs(
-        "https://example.com/s/test-id",
-        "",
-        false,
-      );
+      const missingKeyError = validateInputs("https://example.com/s/test-id", "", false);
       expect(missingKeyError).toBeTruthy();
       expect(typeof missingKeyError).toBe("string");
 
@@ -62,14 +50,10 @@ describe("get-secret.ts", () => {
       expect(emptyUrlError).not.toBe(missingKeyError);
 
       // URL with fragment (should pass)
-      expect(
-        validateInputs("https://example.com/s/test-id#key", "", true),
-      ).toBe(null);
+      expect(validateInputs("https://example.com/s/test-id#key", "", true)).toBe(null);
 
       // URL without fragment but with key (should pass)
-      expect(
-        validateInputs("https://example.com/s/test-id", "key123", false),
-      ).toBe(null);
+      expect(validateInputs("https://example.com/s/test-id", "key123", false)).toBe(null);
     });
   });
 
@@ -87,9 +71,7 @@ describe("get-secret.ts", () => {
       const payloadWithoutFilename = { filename: undefined };
       const result = generateFilename(payloadWithoutFilename, false);
 
-      expect(result).toMatch(
-        /^hakanai-secret-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}.*\.txt$/,
-      );
+      expect(result).toMatch(/^hakanai-secret-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}.*\.txt$/);
     });
 
     test("generateFilename handles null filename", () => {
@@ -98,9 +80,7 @@ describe("get-secret.ts", () => {
       const payloadWithNullFilename = { filename: null };
       const result = generateFilename(payloadWithNullFilename, false);
 
-      expect(result).toMatch(
-        /^hakanai-secret-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}.*\.txt$/,
-      );
+      expect(result).toMatch(/^hakanai-secret-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}.*\.txt$/);
     });
 
     test("generateFilename uses .bin extension for binary content", () => {
@@ -109,9 +89,7 @@ describe("get-secret.ts", () => {
       const payloadWithoutFilename = { filename: undefined };
       const result = generateFilename(payloadWithoutFilename, true);
 
-      expect(result).toMatch(
-        /^hakanai-secret-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}.*\.bin$/,
-      );
+      expect(result).toMatch(/^hakanai-secret-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}.*\.bin$/);
     });
 
     test("generateFilename uses .txt extension for text content", () => {
@@ -120,9 +98,7 @@ describe("get-secret.ts", () => {
       const payloadWithoutFilename = { filename: undefined };
       const result = generateFilename(payloadWithoutFilename, false);
 
-      expect(result).toMatch(
-        /^hakanai-secret-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}.*\.txt$/,
-      );
+      expect(result).toMatch(/^hakanai-secret-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}.*\.txt$/);
     });
 
     test("generateFilename prefers payload filename over binary detection", () => {
@@ -140,12 +116,8 @@ describe("get-secret.ts", () => {
       const { normalizeUrl } = getSecretModule;
 
       // Test with realistic protocols only
-      expect(normalizeUrl("http://example.com/test")).toBe(
-        "http://example.com/test",
-      );
-      expect(normalizeUrl("https://example.com/test")).toBe(
-        "https://example.com/test",
-      );
+      expect(normalizeUrl("http://example.com/test")).toBe("http://example.com/test");
+      expect(normalizeUrl("https://example.com/test")).toBe("https://example.com/test");
 
       // Test empty and malformed inputs
       expect(normalizeUrl("")).toBe("https://");
@@ -173,20 +145,12 @@ describe("get-secret.ts", () => {
       expect(emptyUrlError2).toBeTruthy();
 
       // Test missing key (after trimming) - should return error
-      const missingKeyError = validateInputs(
-        "https://example.com/s/test",
-        "",
-        false,
-      );
+      const missingKeyError = validateInputs("https://example.com/s/test", "", false);
       expect(missingKeyError).toBeTruthy();
 
       // Test valid combinations - should return null
-      expect(
-        validateInputs("https://example.com/s/test#key", "ignored", true),
-      ).toBe(null);
-      expect(
-        validateInputs("https://example.com/s/test", "valid-key", false),
-      ).toBe(null);
+      expect(validateInputs("https://example.com/s/test#key", "ignored", true)).toBe(null);
+      expect(validateInputs("https://example.com/s/test", "valid-key", false)).toBe(null);
     });
   });
 
@@ -207,8 +171,7 @@ describe("get-secret.ts", () => {
     test("URL normalization doesn't break valid URLs", () => {
       const { normalizeUrl } = getSecretModule;
 
-      const secureUrl =
-        "https://secure.example.com/s/secret-id#very-long-crypto-key-123456789";
+      const secureUrl = "https://secure.example.com/s/secret-id#very-long-crypto-key-123456789";
       expect(normalizeUrl(secureUrl)).toBe(secureUrl);
 
       const localhostUrl = "http://localhost:8080/s/test#key";
@@ -219,14 +182,8 @@ describe("get-secret.ts", () => {
       const { hasUrlFragment } = getSecretModule;
 
       // Real-world crypto key patterns
-      expect(
-        hasUrlFragment(
-          "https://example.com/s/uuid#AbCdEfGhIjKlMnOpQrStUvWxYz123456",
-        ),
-      ).toBe(true);
-      expect(
-        hasUrlFragment("https://example.com/s/uuid#base64-url-safe_key"),
-      ).toBe(true);
+      expect(hasUrlFragment("https://example.com/s/uuid#AbCdEfGhIjKlMnOpQrStUvWxYz123456")).toBe(true);
+      expect(hasUrlFragment("https://example.com/s/uuid#base64-url-safe_key")).toBe(true);
 
       // Should not false positive on empty fragments
       expect(hasUrlFragment("https://example.com/s/uuid#")).toBe(false);

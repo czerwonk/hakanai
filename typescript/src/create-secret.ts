@@ -350,12 +350,48 @@ function switchToTextMode(elements: FileElements): void {
   toggleSecretType();
 }
 
-function updateFileInfo(): void {
+async function validateFileSize(file: File): Promise<boolean> {
+  const authTokenInput = document.getElementById("authToken") as HTMLInputElement;
+  const hasToken = authTokenInput?.value?.trim();
+
+  // for authenticated users we rely on server-side validation, client side validation is just a UX feature
+  if (hasToken) {
+    return true;
+  }
+
+  const config = await fetchAppConfig();
+  const limit = config?.secretSizeLimit || 0;
+
+  if (limit > 0 && file.size > limit) {
+    const limitInKB = Math.round(limit / 1024);
+    const fileSizeInKB = Math.round(file.size / 1024);
+    showError(
+      window.i18n.t(I18nKeys.Msg.FileSizeExceeded, {
+        fileSize: fileSizeInKB,
+        limit: limitInKB,
+      }),
+    );
+    return false;
+  }
+
+  return true;
+}
+
+async function updateFileInfo(): Promise<void> {
   const elements = getFileElements();
   const { fileInput } = elements;
 
   if (fileInput.files?.length) {
     const file = fileInput.files[0];
+
+    // Validate file size
+    const isValid = await validateFileSize(file);
+    if (!isValid) {
+      fileInput.value = "";
+      hideFileInfo(elements);
+      return;
+    }
+
     showFileInfo(file, elements);
     switchToFileMode(elements);
   } else {

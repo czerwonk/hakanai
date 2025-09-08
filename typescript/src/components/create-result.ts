@@ -16,10 +16,7 @@ interface SuccessDisplayOptions {
   initialSeparateKeyModeState?: boolean;
 }
 
-export function displaySuccessResult(
-  url: string,
-  options: SuccessDisplayOptions,
-): void {
+export function displaySuccessResult(url: string, options: SuccessDisplayOptions): void {
   const { container } = options;
 
   container.className = "result success";
@@ -55,11 +52,7 @@ function createSuccessHeader(container: HTMLElement): void {
 /**
  * Create URL display section with copy functionality
  */
-function createUrlSection(
-  container: HTMLElement,
-  url: string,
-  options: SuccessDisplayOptions,
-): void {
+function createUrlSection(container: HTMLElement, url: string, options: SuccessDisplayOptions): void {
   const urlContainer = document.createElement("div");
   urlContainer.className = "url-container";
 
@@ -68,10 +61,7 @@ function createUrlSection(
   urlDisplayContainer.id = "urlDisplayContainer";
 
   // Initial display with saved preference
-  const savedPreference =
-    PreferenceStorage.getSeparateKeyMode() ??
-    options?.initialSeparateKeyModeState ??
-    false;
+  const savedPreference = PreferenceStorage.getSeparateKeyMode() ?? options?.initialSeparateKeyModeState ?? false;
   updateUrlDisplay(urlDisplayContainer, url, savedPreference);
 
   urlContainer.appendChild(urlDisplayContainer);
@@ -91,19 +81,14 @@ function createUrlSection(
 function createNoteSection(container: HTMLElement): void {
   const note = document.createElement("p");
   note.className = "secret-note";
-  note.appendChild(
-    document.createTextNode("⚠️ " + window.i18n.t(I18nKeys.Msg.CreateNote)),
-  );
+  note.appendChild(document.createTextNode("⚠️ " + window.i18n.t(I18nKeys.Msg.CreateNote)));
   container.appendChild(note);
 }
 
 /**
  * Create access restrictions section
  */
-function createRestrictionsSection(
-  container: HTMLElement,
-  restrictionData: RestrictionData,
-): void {
+function createRestrictionsSection(container: HTMLElement, restrictionData: RestrictionData): void {
   const restrictionsDiv = document.createElement("div");
   restrictionsDiv.className = "restrictions-info";
 
@@ -119,23 +104,16 @@ function createRestrictionsSection(
     const strong = document.createElement("strong");
     strong.textContent = "IP Addresses: ";
     ipItem.appendChild(strong);
-    ipItem.appendChild(
-      document.createTextNode(restrictionData.allowed_ips.join(", ")),
-    );
+    ipItem.appendChild(document.createTextNode(restrictionData.allowed_ips.join(", ")));
     restrictionsList.appendChild(ipItem);
   }
 
-  if (
-    restrictionData.allowed_countries &&
-    restrictionData.allowed_countries.length > 0
-  ) {
+  if (restrictionData.allowed_countries && restrictionData.allowed_countries.length > 0) {
     const countryItem = document.createElement("li");
     const strong = document.createElement("strong");
     strong.textContent = "Countries: ";
     countryItem.appendChild(strong);
-    countryItem.appendChild(
-      document.createTextNode(restrictionData.allowed_countries.join(", ")),
-    );
+    countryItem.appendChild(document.createTextNode(restrictionData.allowed_countries.join(", ")));
     restrictionsList.appendChild(countryItem);
   }
 
@@ -144,16 +122,12 @@ function createRestrictionsSection(
     const strong = document.createElement("strong");
     strong.textContent = "Networks (ASN): ";
     asnItem.appendChild(strong);
-    asnItem.appendChild(
-      document.createTextNode(restrictionData.allowed_asns.join(", ")),
-    );
+    asnItem.appendChild(document.createTextNode(restrictionData.allowed_asns.join(", ")));
     restrictionsList.appendChild(asnItem);
   }
 
   if (restrictionData.passphrase && restrictionData.passphrase.trim()) {
-    restrictionsList.appendChild(
-      createPassphraseRestrictionItem(restrictionData.passphrase.trim()),
-    );
+    restrictionsList.appendChild(createPassphraseRestrictionItem(restrictionData.passphrase.trim()));
   }
 
   restrictionsDiv.appendChild(restrictionsList);
@@ -186,11 +160,8 @@ function createLabeledInputWithCopy(
   input.className = "url-input";
   inputContainer.appendChild(input);
 
-  const copyButton = createButton(
-    "btn copy-btn",
-    window.i18n.t(I18nKeys.Button.Copy),
-    ariaLabel,
-    () => copyToClipboardByElementId(inputId, copyButton as HTMLButtonElement),
+  const copyButton = createButton("btn copy-btn", window.i18n.t(I18nKeys.Button.Copy), ariaLabel, () =>
+    copyToClipboardByElementId(inputId, copyButton as HTMLButtonElement),
   );
   inputContainer.appendChild(copyButton);
 
@@ -204,32 +175,23 @@ function createLabeledInputWithCopy(
  * Create a QR code button
  */
 function createQrButton(url: string): HTMLButtonElement {
-  return createButton(
-    "btn secondary-btn",
-    "▦ QR",
-    window.i18n.t(I18nKeys.Button.ShowQrCode),
-    async () => {
-      try {
-        await QRCodeGenerator.ensureWasmLoaded();
-        const qrSvg = QRCodeGenerator.generateQRCode(url);
-        if (qrSvg) {
-          showQRFullscreen(qrSvg);
-        }
-      } catch (error) {
-        console.error("Failed to generate QR code:", error);
+  return createButton("btn secondary-btn", "▦ QR", window.i18n.t(I18nKeys.Button.ShowQrCode), async () => {
+    try {
+      await QRCodeGenerator.ensureWasmLoaded();
+      const qrSvg = QRCodeGenerator.generateQRCode(url);
+      if (qrSvg) {
+        showQRFullscreen(qrSvg);
       }
-    },
-  );
+    } catch (error) {
+      console.error("Failed to generate QR code:", error);
+    }
+  });
 }
 
 /**
  * Update URL display based on separate key mode
  */
-function updateUrlDisplay(
-  container: HTMLElement,
-  url: string,
-  separateMode: boolean,
-): void {
+function updateUrlDisplay(container: HTMLElement, url: string, separateMode: boolean): void {
   container.innerHTML = "";
   if (separateMode) {
     createSeparateUrlDisplay(container, url);
@@ -241,10 +203,7 @@ function updateUrlDisplay(
 /**
  * Create checkbox for separate key mode
  */
-function createSeparateKeyCheckbox(
-  onChangeCallback: (checked: boolean) => void,
-  initialState: boolean,
-): HTMLElement {
+function createSeparateKeyCheckbox(onChangeCallback: (checked: boolean) => void, initialState: boolean): HTMLElement {
   const inputGroup = document.createElement("div");
   inputGroup.className = "input-group";
 
@@ -283,42 +242,21 @@ function createSeparateKeyCheckbox(
  */
 function createCombinedUrlDisplay(container: HTMLElement, url: string): void {
   const urlId = generateRandomId();
-  createLabeledInputWithCopy(
-    container,
-    I18nKeys.Label.Url,
-    urlId,
-    url,
-    "Copy secret URL to clipboard",
-  );
+  createLabeledInputWithCopy(container, I18nKeys.Label.Url, urlId, url, "Copy secret URL to clipboard");
 }
 
 /**
  * Create separate URL and key display (enhanced security mode)
  */
-function createSeparateUrlDisplay(
-  container: HTMLElement,
-  fullUrl: string,
-): void {
+function createSeparateUrlDisplay(container: HTMLElement, fullUrl: string): void {
   const [url, key] = fullUrl.split("#");
   const baseId = generateRandomId();
 
   // URL section (with QR button for the full URL)
-  createLabeledInputWithCopy(
-    container,
-    I18nKeys.Label.Url,
-    baseId,
-    url,
-    "Copy secret URL to clipboard",
-  );
+  createLabeledInputWithCopy(container, I18nKeys.Label.Url, baseId, url, "Copy secret URL to clipboard");
 
   // Key section
-  createLabeledInputWithCopy(
-    container,
-    I18nKeys.Label.Key,
-    baseId + "-key",
-    key,
-    "Copy decryption key to clipboard",
-  );
+  createLabeledInputWithCopy(container, I18nKeys.Label.Key, baseId + "-key", key, "Copy decryption key to clipboard");
 }
 
 /**
@@ -427,16 +365,11 @@ function createPassphraseRestrictionItem(passphrase: string): HTMLElement {
   passphraseContainer.appendChild(passphraseText);
 
   let isVisible = false;
-  const showButton = createButton(
-    "btn secondary-btn",
-    "👁",
-    "Show/hide passphrase",
-    () => {
-      isVisible = !isVisible;
-      passphraseText.textContent = isVisible ? passphrase : "••••••";
-      showButton.textContent = isVisible ? "🙈" : "👁";
-    },
-  );
+  const showButton = createButton("btn secondary-btn", "👁", "Show/hide passphrase", () => {
+    isVisible = !isVisible;
+    passphraseText.textContent = isVisible ? passphrase : "••••••";
+    showButton.textContent = isVisible ? "🙈" : "👁";
+  });
   passphraseContainer.appendChild(showButton);
 
   const copyButton = createButton(

@@ -17,12 +17,7 @@ describe("DOM Utilities", () => {
   describe("createButton", () => {
     test("should create button with correct properties", () => {
       const clickHandler = jest.fn();
-      const button = createButton(
-        "test-class",
-        "Test Button",
-        "Test aria label",
-        clickHandler,
-      );
+      const button = createButton("test-class", "Test Button", "Test aria label", clickHandler);
 
       expect(button.tagName).toBe("BUTTON");
       expect(button.className).toBe("test-class");
@@ -34,11 +29,7 @@ describe("DOM Utilities", () => {
     });
 
     test("should create button without click handler", () => {
-      const button = createButton(
-        "test-class",
-        "Test Button",
-        "Test aria label",
-      );
+      const button = createButton("test-class", "Test Button", "Test aria label");
 
       expect(button.tagName).toBe("BUTTON");
       expect(button.className).toBe("test-class");
@@ -71,9 +62,7 @@ describe("DOM Utilities", () => {
       jest.advanceTimersByTime(1000);
 
       // Check that element was removed
-      const removedAnnouncement = document.querySelector(
-        '[aria-live="polite"]',
-      );
+      const removedAnnouncement = document.querySelector('[aria-live="polite"]');
       expect(removedAnnouncement).toBeFalsy();
 
       jest.useRealTimers();

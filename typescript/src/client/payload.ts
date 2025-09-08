@@ -49,10 +49,7 @@ class PayloadDataImpl implements PayloadData {
 
   setFromBytes(bytes: Uint8Array): void {
     if (!(bytes instanceof Uint8Array)) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.EXPECTED_UINT8_ARRAY,
-        "Data must be a Uint8Array",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.EXPECTED_UINT8_ARRAY, "Data must be a Uint8Array");
     }
 
     // Convert bytes to base64 for storage
@@ -69,18 +66,12 @@ class PayloadDataImpl implements PayloadData {
 
   setFromBase64(base64Data: string): void {
     if (typeof base64Data !== "string") {
-      throw new HakanaiError(
-        HakanaiErrorCodes.EXPECTED_STRING,
-        "Base64 data must be a string",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.EXPECTED_STRING, "Base64 data must be a string");
     }
 
     // Validate base64 format (basic check)
     if (!/^[A-Za-z0-9+/]*={0,2}$/.test(base64Data)) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.INVALID_INPUT_FORMAT,
-        "Invalid base64 format",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.INVALID_INPUT_FORMAT, "Invalid base64 format");
     }
 
     this._data = base64Data;
@@ -102,4 +93,3 @@ class PayloadDataImpl implements PayloadData {
 }
 
 export { type PayloadData, PayloadDataImpl };
-

@@ -21,29 +21,20 @@ class UrlParser {
   } {
     // Basic URL validation
     if (typeof url !== "string" || !url.trim()) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.INVALID_URL_FORMAT,
-        "URL cannot be empty",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.INVALID_URL_FORMAT, "URL cannot be empty");
     }
 
     let urlObj: URL;
     try {
       urlObj = new URL(url);
     } catch {
-      throw new HakanaiError(
-        HakanaiErrorCodes.INVALID_URL_FORMAT,
-        "Invalid URL format",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.INVALID_URL_FORMAT, "Invalid URL format");
     }
 
     // Parse and validate URL structure first
     const pathParts = urlObj.pathname.split("/");
     if (pathParts.length !== 3 || pathParts[1] !== "s" || !pathParts[2]) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.MISSING_SECRET_ID,
-        "URL must contain secret ID in format /s/{id}",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.MISSING_SECRET_ID, "URL must contain secret ID in format /s/{id}");
     }
 
     // Check if hash fragment is missing from URL
@@ -61,10 +52,7 @@ class UrlParser {
 
     const secretKey = fragmentParts[0];
     if (!secretKey) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.MISSING_DECRYPTION_KEY,
-        "URL fragment must contain decryption key",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.MISSING_DECRYPTION_KEY, "URL fragment must contain decryption key");
     }
     InputValidation.validateSecretKey(secretKey);
 

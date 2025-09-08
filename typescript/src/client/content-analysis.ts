@@ -28,10 +28,7 @@ class ContentAnalysis {
    */
   static isBinary(bytes: Uint8Array): boolean {
     if (!(bytes instanceof Uint8Array)) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.EXPECTED_UINT8_ARRAY,
-        "Input must be a Uint8Array",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.EXPECTED_UINT8_ARRAY, "Input must be a Uint8Array");
     }
 
     // Check for null bytes, which are common in binary files

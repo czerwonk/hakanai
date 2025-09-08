@@ -17,10 +17,7 @@ class Base64UrlSafe {
    */
   static encode(data: Uint8Array): string {
     if (!(data instanceof Uint8Array)) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.EXPECTED_UINT8_ARRAY,
-        "Input must be a Uint8Array",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.EXPECTED_UINT8_ARRAY, "Input must be a Uint8Array");
     }
 
     // Handle empty arrays
@@ -40,10 +37,7 @@ class Base64UrlSafe {
     const binaryString = chunks.join("");
 
     // Encode to standard base64 then convert to URL-safe
-    return btoa(binaryString)
-      .replace(/\+/g, "-")
-      .replace(/\//g, "_")
-      .replace(/=/g, "");
+    return btoa(binaryString).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
   }
 
   /**
@@ -54,10 +48,7 @@ class Base64UrlSafe {
    */
   static decode(encoded: string): Uint8Array {
     if (typeof encoded !== "string") {
-      throw new HakanaiError(
-        HakanaiErrorCodes.EXPECTED_STRING,
-        "Input must be a string",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.EXPECTED_STRING, "Input must be a string");
     }
 
     if (encoded.length === 0) {
@@ -65,10 +56,7 @@ class Base64UrlSafe {
     }
 
     if (!/^[A-Za-z0-9_-]*$/.test(encoded)) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.INVALID_INPUT_FORMAT,
-        "Invalid base64url characters",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.INVALID_INPUT_FORMAT, "Invalid base64url characters");
     }
 
     // Add proper padding
@@ -89,10 +77,7 @@ class Base64UrlSafe {
 
       return bytes;
     } catch (error) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.BASE64_ERROR,
-        "Failed to decode base64url string: invalid encoding",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.BASE64_ERROR, "Failed to decode base64url string: invalid encoding");
     }
   }
 
@@ -102,18 +87,14 @@ class Base64UrlSafe {
    */
   static encodeText(text: string): string {
     if (typeof text !== "string") {
-      throw new HakanaiError(
-        HakanaiErrorCodes.EXPECTED_STRING,
-        "Input must be a string",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.EXPECTED_STRING, "Input must be a string");
     }
 
     const encoder = new TextEncoder();
     const bytes = encoder.encode(text);
 
     // Convert to Uint8Array if needed (Node.js TextEncoder returns different type)
-    const uint8Array =
-      bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+    const uint8Array = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
     return Base64UrlSafe.encode(uint8Array);
   }
 

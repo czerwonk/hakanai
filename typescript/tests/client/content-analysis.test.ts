@@ -53,31 +53,19 @@ describe("ContentAnalysis", () => {
 
   test("isBinary handles typical binary file headers", () => {
     // PNG file signature
-    const pngHeader = new Uint8Array([
-      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
-    ]);
+    const pngHeader = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
     expect(ContentAnalysis.isBinary(pngHeader)).toBe(false); // PNG header doesn't contain null bytes
 
     // Add null byte to simulate binary content
-    const binaryWithNull = new Uint8Array([
-      0x89, 0x50, 0x4e, 0x47, 0x00, 0x0a, 0x1a, 0x0a,
-    ]);
+    const binaryWithNull = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x00, 0x0a, 0x1a, 0x0a]);
     expect(ContentAnalysis.isBinary(binaryWithNull)).toBe(true);
   });
 
   test("isBinary validates input type", () => {
-    expect(() => ContentAnalysis.isBinary("not a uint8array" as any)).toThrow(
-      "Input must be a Uint8Array",
-    );
-    expect(() => ContentAnalysis.isBinary(null as any)).toThrow(
-      "Input must be a Uint8Array",
-    );
-    expect(() => ContentAnalysis.isBinary(undefined as any)).toThrow(
-      "Input must be a Uint8Array",
-    );
-    expect(() => ContentAnalysis.isBinary([1, 2, 3] as any)).toThrow(
-      "Input must be a Uint8Array",
-    );
+    expect(() => ContentAnalysis.isBinary("not a uint8array" as any)).toThrow("Input must be a Uint8Array");
+    expect(() => ContentAnalysis.isBinary(null as any)).toThrow("Input must be a Uint8Array");
+    expect(() => ContentAnalysis.isBinary(undefined as any)).toThrow("Input must be a Uint8Array");
+    expect(() => ContentAnalysis.isBinary([1, 2, 3] as any)).toThrow("Input must be a Uint8Array");
   });
 
   test("isBinary handles large arrays efficiently", () => {

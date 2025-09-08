@@ -91,9 +91,7 @@ export class RestrictionsTabs {
    * Add IP restrictions to the restrictions object
    */
   private addIPRestrictions(data: RestrictionData): boolean {
-    const ipInput = this.container.querySelector(
-      "#allowedIPs",
-    ) as HTMLTextAreaElement;
+    const ipInput = this.container.querySelector("#allowedIPs") as HTMLTextAreaElement;
     if (!ipInput?.value.trim()) {
       return false;
     }
@@ -115,9 +113,7 @@ export class RestrictionsTabs {
    * Add country restrictions to the restrictions object
    */
   private addCountryRestrictions(data: RestrictionData): boolean {
-    const countryInput = this.container.querySelector(
-      "#allowedCountries",
-    ) as HTMLTextAreaElement;
+    const countryInput = this.container.querySelector("#allowedCountries") as HTMLTextAreaElement;
     if (!countryInput?.value.trim()) {
       return false;
     }
@@ -139,9 +135,7 @@ export class RestrictionsTabs {
    * Add ASN restrictions to the restrictions object
    */
   private addASNRestrictions(data: RestrictionData): boolean {
-    const asnInput = this.container.querySelector(
-      "#allowedASNs",
-    ) as HTMLTextAreaElement;
+    const asnInput = this.container.querySelector("#allowedASNs") as HTMLTextAreaElement;
     if (!asnInput?.value.trim()) {
       return false;
     }
@@ -170,9 +164,7 @@ export class RestrictionsTabs {
    * Add passphrase restrictions to the restrictions object
    */
   private addPassphraseRestrictions(data: RestrictionData): boolean {
-    const passphraseInput = this.container.querySelector(
-      "#passphraseRestriction",
-    ) as HTMLInputElement;
+    const passphraseInput = this.container.querySelector("#passphraseRestriction") as HTMLInputElement;
     const passphrase = passphraseInput?.value.trim();
     if (!passphrase) {
       return false; // empty passphrase means no restriction
@@ -186,18 +178,11 @@ export class RestrictionsTabs {
    * Validates all user inputs across tabs
    */
   public validateUserInput(): boolean {
-    return (
-      this.validatePassphrase() &&
-      this.validateIPs() &&
-      this.validateCountries() &&
-      this.validateASNs()
-    );
+    return this.validatePassphrase() && this.validateIPs() && this.validateCountries() && this.validateASNs();
   }
 
   private validatePassphrase(): boolean {
-    const passphraseInput = this.container.querySelector(
-      "#passphraseRestriction",
-    ) as HTMLInputElement;
+    const passphraseInput = this.container.querySelector("#passphraseRestriction") as HTMLInputElement;
     const passphrase = passphraseInput?.value.trim();
     if (!passphrase) {
       return true; // empty passphrase is allowed (no restriction)
@@ -214,9 +199,7 @@ export class RestrictionsTabs {
   }
 
   private validateIPs(): boolean {
-    const ipInput = this.container.querySelector(
-      "#allowedIPs",
-    ) as HTMLTextAreaElement;
+    const ipInput = this.container.querySelector("#allowedIPs") as HTMLTextAreaElement;
     if (!ipInput?.value.trim()) {
       return true; // empty is allowed
     }
@@ -240,9 +223,7 @@ export class RestrictionsTabs {
   }
 
   private validateCountries(): boolean {
-    const countryInput = this.container.querySelector(
-      "#allowedCountries",
-    ) as HTMLTextAreaElement;
+    const countryInput = this.container.querySelector("#allowedCountries") as HTMLTextAreaElement;
     if (!countryInput?.value.trim()) {
       return true; // empty is allowed
     }
@@ -257,9 +238,7 @@ export class RestrictionsTabs {
         InputValidation.validateCountryCode(country);
       } catch {
         this.setActiveTab("country");
-        const message = (window as any).i18n.t(
-          I18nKeys.Error.InvalidCountryCode,
-        );
+        const message = (window as any).i18n.t(I18nKeys.Error.InvalidCountryCode);
         this.showValidationError(countryInput, `${message}: ${country}`);
         return false;
       }
@@ -268,9 +247,7 @@ export class RestrictionsTabs {
   }
 
   private validateASNs(): boolean {
-    const asnInput = this.container.querySelector(
-      "#allowedASNs",
-    ) as HTMLTextAreaElement;
+    const asnInput = this.container.querySelector("#allowedASNs") as HTMLTextAreaElement;
     if (!asnInput?.value.trim()) {
       return true; // empty is allowed
     }
@@ -304,10 +281,7 @@ export class RestrictionsTabs {
   /**
    * Show validation error message for any input element
    */
-  private showValidationError(
-    input: HTMLInputElement | HTMLTextAreaElement,
-    message: string,
-  ): void {
+  private showValidationError(input: HTMLInputElement | HTMLTextAreaElement, message: string): void {
     if (!input) {
       return;
     }
@@ -368,9 +342,7 @@ export class RestrictionsTabs {
       return;
     }
 
-    const inputField = activeContent.querySelector("input, textarea") as
-      | HTMLInputElement
-      | HTMLTextAreaElement;
+    const inputField = activeContent.querySelector("input, textarea") as HTMLInputElement | HTMLTextAreaElement;
     if (inputField) {
       inputField.focus();
     }

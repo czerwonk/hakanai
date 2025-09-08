@@ -17,10 +17,7 @@ class InputValidation {
    */
   static validateAuthToken(token: string): void {
     if (typeof token !== "string") {
-      throw new HakanaiError(
-        HakanaiErrorCodes.INVALID_AUTH_TOKEN,
-        "Auth token must be a string",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.INVALID_AUTH_TOKEN, "Auth token must be a string");
     }
 
     // Empty token is valid (represents no authentication)
@@ -44,17 +41,11 @@ class InputValidation {
    */
   static validateSecretKey(key: string): void {
     if (typeof key !== "string") {
-      throw new HakanaiError(
-        HakanaiErrorCodes.INVALID_KEY,
-        "Secret key must be a string",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.INVALID_KEY, "Secret key must be a string");
     }
 
     if (!key.trim()) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.MISSING_KEY,
-        "Secret key cannot be empty",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.MISSING_KEY, "Secret key cannot be empty");
     }
 
     // Validate base64url format and length (32 bytes = 43 chars in base64url without padding)
@@ -73,10 +64,7 @@ class InputValidation {
    */
   static validateHash(hash: string): void {
     if (typeof hash !== "string") {
-      throw new HakanaiError(
-        HakanaiErrorCodes.INVALID_HASH,
-        "Hash must be a string",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.INVALID_HASH, "Hash must be a string");
     }
 
     // Validate base64url format and length (32 bytes = 43 chars in base64url without padding)
@@ -95,29 +83,16 @@ class InputValidation {
    */
   static validateSecretId(id: string): void {
     if (typeof id !== "string") {
-      throw new HakanaiError(
-        HakanaiErrorCodes.INVALID_SECRET_ID,
-        "Secret ID must be a string",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.INVALID_SECRET_ID, "Secret ID must be a string");
     }
 
     if (!id.trim()) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.MISSING_SECRET_ID,
-        "Secret ID cannot be empty",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.MISSING_SECRET_ID, "Secret ID cannot be empty");
     }
 
     // Validate UUID format (flexible - supports v1-v8)
-    if (
-      !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-        id,
-      )
-    ) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.INVALID_SECRET_ID,
-        "Secret ID must be a valid UUID",
-      );
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
+      throw new HakanaiError(HakanaiErrorCodes.INVALID_SECRET_ID, "Secret ID must be a valid UUID");
     }
   }
 
@@ -128,33 +103,21 @@ class InputValidation {
    */
   static validateEncryptedData(data: string): void {
     if (typeof data !== "string") {
-      throw new HakanaiError(
-        HakanaiErrorCodes.INVALID_ENCRYPTED_DATA,
-        "Encrypted data must be a string",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.INVALID_ENCRYPTED_DATA, "Encrypted data must be a string");
     }
 
     if (!data.trim()) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.INVALID_ENCRYPTED_DATA,
-        "Encrypted data cannot be empty",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.INVALID_ENCRYPTED_DATA, "Encrypted data cannot be empty");
     }
 
     // Validate base64 format (with optional padding)
     if (!/^[A-Za-z0-9+/]*={0,2}$/.test(data)) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.INVALID_ENCRYPTED_DATA,
-        "Encrypted data must be valid base64",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.INVALID_ENCRYPTED_DATA, "Encrypted data must be valid base64");
     }
 
     // Check minimum length (AES-GCM nonce + some encrypted content)
     if (data.length < 16) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.INVALID_ENCRYPTED_DATA,
-        "Encrypted data appears too short to be valid",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.INVALID_ENCRYPTED_DATA, "Encrypted data appears too short to be valid");
     }
   }
 
@@ -165,24 +128,15 @@ class InputValidation {
    */
   static validateTTL(ttl: number): void {
     if (typeof ttl !== "number") {
-      throw new HakanaiError(
-        HakanaiErrorCodes.INVALID_TTL,
-        "TTL must be a number",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.INVALID_TTL, "TTL must be a number");
     }
 
     if (!Number.isInteger(ttl)) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.INVALID_TTL,
-        "TTL must be an integer",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.INVALID_TTL, "TTL must be an integer");
     }
 
     if (ttl <= 0) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.INVALID_TTL,
-        "TTL must be a positive number",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.INVALID_TTL, "TTL must be a positive number");
     }
   }
 
@@ -193,20 +147,13 @@ class InputValidation {
    */
   static validateIPAddress(ip: string): void {
     if (typeof ip !== "string" || ip.trim().length === 0) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.INVALID_RESTRICTIONS,
-        "IP address must be a non-empty string",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.INVALID_RESTRICTIONS, "IP address must be a non-empty string");
     }
 
     // Basic CIDR/IP format validation
-    const ipPattern =
-      /^(?:(?:\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?|(?:[0-9a-f:]+(?:\/\d{1,3})?))$/i;
+    const ipPattern = /^(?:(?:\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?|(?:[0-9a-f:]+(?:\/\d{1,3})?))$/i;
     if (!ipPattern.test(ip.trim())) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.INVALID_RESTRICTIONS,
-        `Invalid IP address or CIDR notation: ${ip}`,
-      );
+      throw new HakanaiError(HakanaiErrorCodes.INVALID_RESTRICTIONS, `Invalid IP address or CIDR notation: ${ip}`);
     }
   }
 
@@ -217,10 +164,7 @@ class InputValidation {
    */
   static validateCountryCode(country: string): void {
     if (typeof country !== "string" || country.trim().length === 0) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.INVALID_RESTRICTIONS,
-        "Country code must be a non-empty string",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.INVALID_RESTRICTIONS, "Country code must be a non-empty string");
     }
 
     // Validate ISO 3166-1 alpha-2 format (exactly 2 uppercase letters)
@@ -239,25 +183,16 @@ class InputValidation {
    */
   static validateASN(asn: number): void {
     if (typeof asn !== "number") {
-      throw new HakanaiError(
-        HakanaiErrorCodes.INVALID_RESTRICTIONS,
-        "ASN must be a number",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.INVALID_RESTRICTIONS, "ASN must be a number");
     }
 
     if (!Number.isInteger(asn)) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.INVALID_RESTRICTIONS,
-        "ASN must be an integer",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.INVALID_RESTRICTIONS, "ASN must be an integer");
     }
 
     // Warn about special/reserved ASN ranges
     if (asn === 0) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.INVALID_RESTRICTIONS,
-        "ASN 0 is reserved and cannot be used",
-      );
+      throw new HakanaiError(HakanaiErrorCodes.INVALID_RESTRICTIONS, "ASN 0 is reserved and cannot be used");
     }
 
     // ASN range: 1 to 4294967295 (2^32 - 1)
@@ -276,23 +211,13 @@ class InputValidation {
    * @throws {HakanaiError} If restrictions format is invalid
    */
   static validateRestrictions(restrictions: SecretRestrictions): void {
-    if (
-      restrictions === null ||
-      typeof restrictions !== "object" ||
-      Array.isArray(restrictions)
-    ) {
-      throw new HakanaiError(
-        HakanaiErrorCodes.INVALID_RESTRICTIONS,
-        "Restrictions must be an object",
-      );
+    if (restrictions === null || typeof restrictions !== "object" || Array.isArray(restrictions)) {
+      throw new HakanaiError(HakanaiErrorCodes.INVALID_RESTRICTIONS, "Restrictions must be an object");
     }
 
     if (restrictions.allowed_ips !== undefined) {
       if (!Array.isArray(restrictions.allowed_ips)) {
-        throw new HakanaiError(
-          HakanaiErrorCodes.INVALID_RESTRICTIONS,
-          "allowed_ips must be an array",
-        );
+        throw new HakanaiError(HakanaiErrorCodes.INVALID_RESTRICTIONS, "allowed_ips must be an array");
       }
       for (const ip of restrictions.allowed_ips) {
         this.validateIPAddress(ip);
@@ -301,10 +226,7 @@ class InputValidation {
 
     if (restrictions.allowed_countries !== undefined) {
       if (!Array.isArray(restrictions.allowed_countries)) {
-        throw new HakanaiError(
-          HakanaiErrorCodes.INVALID_RESTRICTIONS,
-          "allowed_countries must be an array",
-        );
+        throw new HakanaiError(HakanaiErrorCodes.INVALID_RESTRICTIONS, "allowed_countries must be an array");
       }
       for (const country of restrictions.allowed_countries) {
         this.validateCountryCode(country);
@@ -313,10 +235,7 @@ class InputValidation {
 
     if (restrictions.allowed_asns !== undefined) {
       if (!Array.isArray(restrictions.allowed_asns)) {
-        throw new HakanaiError(
-          HakanaiErrorCodes.INVALID_RESTRICTIONS,
-          "allowed_asns must be an array",
-        );
+        throw new HakanaiError(HakanaiErrorCodes.INVALID_RESTRICTIONS, "allowed_asns must be an array");
       }
       for (const asn of restrictions.allowed_asns) {
         this.validateASN(asn);
@@ -325,10 +244,7 @@ class InputValidation {
 
     if (restrictions.passphrase_hash !== undefined) {
       if (typeof restrictions.passphrase_hash !== "string") {
-        throw new HakanaiError(
-          HakanaiErrorCodes.INVALID_RESTRICTIONS,
-          "passphrase_hash must be a string",
-        );
+        throw new HakanaiError(HakanaiErrorCodes.INVALID_RESTRICTIONS, "passphrase_hash must be a string");
       }
 
       // Validate SHA-256 hex format (64 hex characters)

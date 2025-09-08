@@ -1,12 +1,6 @@
 <div id="ttl-selector" class="input-group ttl-selector-container">
-  <label for="ttl-selector-select" data-i18n="label.expires"
-    >Expires after:</label
-  >
-  <select
-    id="ttl-selector-select"
-    class="ttl-select"
-    aria-describedby="ttl-selector-help"
-  >
+  <label for="ttl-selector-select" data-i18n="label.expires">Expires after:</label>
+  <select id="ttl-selector-select" class="ttl-select" aria-describedby="ttl-selector-help">
     <option value="300" data-i18n="time.5min">5 minutes</option>
     <option value="1800" data-i18n="time.30min">30 minutes</option>
     <option value="3600" selected data-i18n="time.1hour">1 hour</option>
@@ -18,13 +12,7 @@
   </select>
 
   <div id="ttl-custom" class="hidden">
-    <input
-      type="number"
-      class="ttl-custom-value"
-      min="1"
-      value="1"
-      aria-label="Custom time value"
-    />
+    <input type="number" class="ttl-custom-value" min="1" value="1" aria-label="Custom time value" />
     <select class="ttl-custom-unit" aria-label="Time unit">
       <option value="60" data-i18n="time.minutes">minutes</option>
       <option value="3600" data-i18n="time.hours">hours</option>
@@ -33,9 +21,7 @@
     </select>
   </div>
 
-  <span data-i18n="helper.expires" class="input-helper">
-    Secret will self-destruct after this time or first view
-  </span>
+  <span data-i18n="helper.expires" class="input-helper"> Secret will self-destruct after this time or first view </span>
   <span id="ttl-selector-help" class="sr-only" data-i18n="aria.expiresSelect">
     Select how long the secret should be available before it expires
   </span>

@@ -43,10 +43,7 @@ export class PreferenceStorage {
    */
   static saveSeparateKeyMode(enabled: boolean): void {
     try {
-      localStorage.setItem(
-        STORAGE_KEYS.SEPARATE_KEY_MODE,
-        enabled ? "true" : "false",
-      );
+      localStorage.setItem(STORAGE_KEYS.SEPARATE_KEY_MODE, enabled ? "true" : "false");
     } catch (error) {
       console.warn("Failed to save separate key mode preference:", error);
     }

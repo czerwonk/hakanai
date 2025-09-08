@@ -98,9 +98,7 @@ describe("Error Display Component", () => {
       const consoleSpy = jest.spyOn(console, "error").mockImplementation();
       const nullContainer = null as any;
 
-      expect(() =>
-        displayErrorMessage("Test message", nullContainer),
-      ).toThrow();
+      expect(() => displayErrorMessage("Test message", nullContainer)).toThrow();
 
       consoleSpy.mockRestore();
     });
@@ -111,9 +109,7 @@ describe("Error Display Component", () => {
 
       displayErrorMessage(testMessage, container);
 
-      expect(announceToScreenReader).toHaveBeenCalledWith(
-        "msg.errorTitle: " + testMessage,
-      );
+      expect(announceToScreenReader).toHaveBeenCalledWith("msg.errorTitle: " + testMessage);
     });
 
     test("should handle empty message", () => {
@@ -124,8 +120,7 @@ describe("Error Display Component", () => {
     });
 
     test("should handle special characters in message", () => {
-      const specialMessage =
-        "Error with <script>alert('xss')</script> & symbols";
+      const specialMessage = "Error with <script>alert('xss')</script> & symbols";
 
       displayErrorMessage(specialMessage, container);
 

@@ -17,12 +17,7 @@ describe("ShareData", () => {
     });
 
     test("creates valid ShareData with all fields", () => {
-      const shareData = new ShareData(
-        "SGVsbG8gV29ybGQ=",
-        "test.txt",
-        "token123",
-        3600,
-      );
+      const shareData = new ShareData("SGVsbG8gV29ybGQ=", "test.txt", "token123", 3600);
       expect(shareData.data).toBe("SGVsbG8gV29ybGQ=");
       expect(shareData.filename).toBe("test.txt");
       expect(shareData.token).toBe("token123");
@@ -30,33 +25,23 @@ describe("ShareData", () => {
     });
 
     test("throws error for missing data", () => {
-      expect(() => new ShareData("")).toThrow(
-        'Missing or invalid "data" field',
-      );
-      expect(() => new ShareData(null as any)).toThrow(
-        'Missing or invalid "data" field',
-      );
-      expect(() => new ShareData(123 as any)).toThrow(
-        'Missing or invalid "data" field',
-      );
+      expect(() => new ShareData("")).toThrow('Missing or invalid "data" field');
+      expect(() => new ShareData(null as any)).toThrow('Missing or invalid "data" field');
+      expect(() => new ShareData(123 as any)).toThrow('Missing or invalid "data" field');
     });
 
     test("throws error for invalid filename type", () => {
-      expect(() => new ShareData("data", 123 as any)).toThrow(
-        'Invalid "filename" field - must be string',
-      );
+      expect(() => new ShareData("data", 123 as any)).toThrow('Invalid "filename" field - must be string');
     });
 
     test("throws error for invalid token type", () => {
-      expect(() => new ShareData("data", undefined, 123 as any)).toThrow(
-        'Invalid "token" field - must be string',
-      );
+      expect(() => new ShareData("data", undefined, 123 as any)).toThrow('Invalid "token" field - must be string');
     });
 
     test("throws error for invalid ttl", () => {
-      expect(
-        () => new ShareData("data", undefined, undefined, "invalid" as any),
-      ).toThrow('Invalid "ttl" field - must be positive number');
+      expect(() => new ShareData("data", undefined, undefined, "invalid" as any)).toThrow(
+        'Invalid "ttl" field - must be positive number',
+      );
       expect(() => new ShareData("data", undefined, undefined, -1)).toThrow(
         'Invalid "ttl" field - must be positive number',
       );
@@ -98,26 +83,19 @@ describe("ShareData", () => {
     });
 
     test("throws error for invalid JSON", () => {
-      expect(() => ShareData.fromJSON("invalid json")).toThrow(
-        "Invalid JSON format",
-      );
-      expect(() => ShareData.fromJSON("{incomplete")).toThrow(
-        "Invalid JSON format",
-      );
+      expect(() => ShareData.fromJSON("invalid json")).toThrow("Invalid JSON format");
+      expect(() => ShareData.fromJSON("{incomplete")).toThrow("Invalid JSON format");
     });
 
     test("throws validation error for invalid data", () => {
       const invalidJson = JSON.stringify({ filename: "test.txt" }); // missing data
-      expect(() => ShareData.fromJSON(invalidJson)).toThrow(
-        'Missing or invalid "data" field',
-      );
+      expect(() => ShareData.fromJSON(invalidJson)).toThrow('Missing or invalid "data" field');
     });
   });
 
   describe("fromFragment", () => {
     test("parses valid fragment with all parameters", () => {
-      const fragment =
-        "data=SGVsbG8gV29ybGQ%3D&filename=test.txt&token=token123&ttl=3600";
+      const fragment = "data=SGVsbG8gV29ybGQ%3D&filename=test.txt&token=token123&ttl=3600";
 
       const shareData = ShareData.fromFragment(fragment);
       expect(shareData).not.toBeNull();
@@ -155,9 +133,7 @@ describe("ShareData", () => {
       const fragment = "data=test&ttl=invalid";
 
       // Should throw during ShareData construction due to NaN TTL
-      expect(() => ShareData.fromFragment(fragment)).toThrow(
-        'Invalid "ttl" field - must be positive number',
-      );
+      expect(() => ShareData.fromFragment(fragment)).toThrow('Invalid "ttl" field - must be positive number');
     });
   });
 

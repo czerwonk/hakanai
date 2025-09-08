@@ -22,18 +22,14 @@ function supportsDragAndDrop(): boolean {
   }
 
   // Basic mobile detection - mobile devices typically don't support drag and drop
-  const isMobile =
-    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-      navigator.userAgent,
-    );
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
   if (isMobile) {
     return false;
   }
 
   // Check for touch-only devices (no mouse/trackpad)
-  const isTouchDevice =
-    "ontouchstart" in window || navigator.maxTouchPoints > 0;
+  const isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0;
 
   // If it's touch-only and mobile-like, assume no drag and drop support
   if (isTouchDevice && window.innerWidth < 768) {
@@ -69,10 +65,7 @@ export class FileDropzone {
   private init(): void {
     this.container.classList.add(FileDropzone.CSS_CLASSES.DROPZONE);
 
-    this.fileInput.addEventListener(
-      "change",
-      this.handleFileInputChange.bind(this),
-    );
+    this.fileInput.addEventListener("change", this.handleFileInputChange.bind(this));
 
     this.setupDragAndDrop();
     this.container.classList.add(FileDropzone.CSS_CLASSES.DROPZONE_ACTIVE);
@@ -87,24 +80,15 @@ export class FileDropzone {
     document.addEventListener("drop", this.preventDefaults.bind(this));
 
     // Container-specific drag events
-    this.container.addEventListener(
-      "dragenter",
-      this.handleDragEnter.bind(this),
-    );
+    this.container.addEventListener("dragenter", this.handleDragEnter.bind(this));
     this.container.addEventListener("dragover", this.handleDragOver.bind(this));
-    this.container.addEventListener(
-      "dragleave",
-      this.handleDragLeave.bind(this),
-    );
+    this.container.addEventListener("dragleave", this.handleDragLeave.bind(this));
     this.container.addEventListener("drop", this.handleDrop.bind(this));
 
     // Add accessibility attributes
     this.container.setAttribute("role", "button");
     this.container.setAttribute("tabindex", "0");
-    this.container.setAttribute(
-      "aria-label",
-      "Drop files here or click to select",
-    );
+    this.container.setAttribute("aria-label", "Drop files here or click to select");
 
     // Keyboard support for accessibility
     this.container.addEventListener("keydown", this.handleKeyDown.bind(this));
@@ -155,9 +139,7 @@ export class FileDropzone {
     if (this.dragCounter <= 0) {
       this.dragCounter = 0;
       this.isDragging = false;
-      this.container.classList.remove(
-        FileDropzone.CSS_CLASSES.DROPZONE_DRAGOVER,
-      );
+      this.container.classList.remove(FileDropzone.CSS_CLASSES.DROPZONE_DRAGOVER);
     }
   }
 
@@ -251,9 +233,7 @@ export class FileDropzone {
     this.isEnabled = enabled;
 
     if (enabled) {
-      this.container.classList.remove(
-        FileDropzone.CSS_CLASSES.DROPZONE_DISABLED,
-      );
+      this.container.classList.remove(FileDropzone.CSS_CLASSES.DROPZONE_DISABLED);
       this.container.removeAttribute("aria-disabled");
       this.fileInput.disabled = false;
     } else {
@@ -265,9 +245,7 @@ export class FileDropzone {
       if (this.isDragging) {
         this.isDragging = false;
         this.dragCounter = 0;
-        this.container.classList.remove(
-          FileDropzone.CSS_CLASSES.DROPZONE_DRAGOVER,
-        );
+        this.container.classList.remove(FileDropzone.CSS_CLASSES.DROPZONE_DRAGOVER);
       }
     }
   }

@@ -77,8 +77,7 @@ const HakanaiErrorCodes = {
 } as const;
 
 // Type for error codes
-type HakanaiErrorCode =
-  (typeof HakanaiErrorCodes)[keyof typeof HakanaiErrorCodes];
+type HakanaiErrorCode = (typeof HakanaiErrorCodes)[keyof typeof HakanaiErrorCodes];
 
 /**
  * Custom error class for Hakanai operations with error codes for internationalization

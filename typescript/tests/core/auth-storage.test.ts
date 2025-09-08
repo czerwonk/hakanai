@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import {
-  saveAuthTokenToStorage,
-  getAuthTokenFromStorage,
-  clearAuthTokenStorage,
-} from "../../src/core/auth-storage";
+import { saveAuthTokenToStorage, getAuthTokenFromStorage, clearAuthTokenStorage } from "../../src/core/auth-storage";
 
 describe("SessionStorage Auth Token Management", () => {
   beforeEach(() => {

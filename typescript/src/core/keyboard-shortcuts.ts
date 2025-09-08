@@ -56,10 +56,7 @@ export class KeyboardShortcuts {
     });
   }
 
-  private matchesShortcut(
-    event: KeyboardEvent,
-    shortcut: ShortcutHandler,
-  ): boolean {
+  private matchesShortcut(event: KeyboardEvent, shortcut: ShortcutHandler): boolean {
     return (
       event.key.toLowerCase() === shortcut.key.toLowerCase() &&
       (shortcut.ctrl === undefined || shortcut.ctrl === event.ctrlKey)

@@ -61,11 +61,7 @@ function isStandardError(error: unknown): error is StandardError {
  * @returns True if object has message or name properties
  */
 function isErrorLike(error: unknown): error is UnknownError {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    ("message" in error || "name" in error)
-  );
+  return typeof error === "object" && error !== null && ("message" in error || "name" in error);
 }
 
 /**
@@ -85,20 +81,13 @@ function getHakanaiErrorMessage(error: HakanaiError): string {
  * @param fallbackMessage - Message to show for unknown errors
  * @param handler - The UI handler that will display the error
  */
-export function handleAPIError(
-  error: unknown,
-  fallbackMessage: string,
-  handler: ErrorHandler,
-): void {
+export function handleAPIError(error: unknown, fallbackMessage: string, handler: ErrorHandler): void {
   let message: string;
 
   if (isHakanaiError(error)) {
     message = getHakanaiErrorMessage(error);
 
-    if (
-      error.code === HakanaiErrorCodes.AUTHENTICATION_REQUIRED ||
-      error.code === HakanaiErrorCodes.INVALID_TOKEN
-    ) {
+    if (error.code === HakanaiErrorCodes.AUTHENTICATION_REQUIRED || error.code === HakanaiErrorCodes.INVALID_TOKEN) {
       handler.displayError(message);
       handler.onAuthenticationError?.();
       return;
@@ -116,4 +105,3 @@ export function handleAPIError(
 
 // Export for testing only
 export { isHakanaiError, isStandardError, isErrorLike };
-

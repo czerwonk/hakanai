@@ -16,28 +16,12 @@ export class TTLSelector {
   private currentValue: number = 0;
 
   constructor(container: HTMLElement) {
-    this.selectElement = container.querySelector(
-      "#ttl-selector-select",
-    ) as HTMLSelectElement;
+    this.selectElement = container.querySelector("#ttl-selector-select") as HTMLSelectElement;
+    this.customContainer = container.querySelector("#ttl-custom") as HTMLElement;
+    this.customValueInput = container.querySelector(".ttl-custom-value") as HTMLInputElement;
+    this.customUnitSelect = container.querySelector(".ttl-custom-unit") as HTMLSelectElement;
 
-    this.customContainer = container.querySelector(
-      "#ttl-custom",
-    ) as HTMLElement;
-
-    this.customValueInput = container.querySelector(
-      ".ttl-custom-value",
-    ) as HTMLInputElement;
-
-    this.customUnitSelect = container.querySelector(
-      ".ttl-custom-unit",
-    ) as HTMLSelectElement;
-
-    if (
-      !this.selectElement ||
-      !this.customContainer ||
-      !this.customValueInput ||
-      !this.customUnitSelect
-    ) {
+    if (!this.selectElement || !this.customContainer || !this.customValueInput || !this.customUnitSelect) {
       throw new Error("TTL selector elements not found");
     }
 
@@ -99,9 +83,7 @@ export class TTLSelector {
 
   isCustomValue(ttl: number): boolean {
     const options = Array.from(this.selectElement.options);
-    const matchingOption = options.find(
-      (opt) => opt.value === ttl.toString() && opt.value !== "custom",
-    );
+    const matchingOption = options.find((opt) => opt.value === ttl.toString() && opt.value !== "custom");
 
     return !matchingOption;
   }
