@@ -9,7 +9,7 @@ info:
     name: Apache 2.0
     url: https://github.com/czerwonk/hakanai/blob/main/LICENSE
 servers:
-  - url: "{protocol}://{host}"
+  - url: "https://hakanai.link/api/v1"
     description: Hakanai server
     variables:
       protocol:
