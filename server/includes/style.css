@@ -1681,11 +1681,11 @@ button.loading::after {
   letter-spacing: 0.05em;
 }
 
-.method-get {
+.method.get {
   background: var(--color-primary);
   color: var(--button-text);
 }
-.method-post {
+.method.post {
   background: var(--color-error);
   color: var(--button-text);
 }
