@@ -58,6 +58,10 @@ impl SecretObserver for WebhookObserver {
             );
         }
 
+        if let Some(size) = context.size {
+            details.insert("size".to_string(), format!("{size}"));
+        }
+
         let payload = WebhookPayload {
             secret_id,
             action: WebhookAction::Created,

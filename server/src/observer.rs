@@ -21,6 +21,8 @@ pub struct SecretEventContext {
     pub user_type: Option<UserType>,
     /// Restrictions associated with the secret event, if any.
     pub restrictions: Option<SecretRestrictions>,
+    /// Size of the secret, if known.
+    pub size: Option<usize>,
 }
 
 impl SecretEventContext {
@@ -30,6 +32,7 @@ impl SecretEventContext {
             user_type: None,
             restrictions: None,
             ttl: None,
+            size: None,
         }
     }
 
@@ -45,6 +48,11 @@ impl SecretEventContext {
 
     pub fn with_ttl(mut self, ttl: Duration) -> Self {
         self.ttl = Some(ttl);
+        self
+    }
+
+    pub fn with_size(mut self, size: usize) -> Self {
+        self.size = Some(size);
         self
     }
 }
