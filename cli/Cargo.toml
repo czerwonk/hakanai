@@ -10,7 +10,7 @@ readme = "../README.md"
 repository = "https://github.com/czerwonk/hakanai"
 homepage = "https://github.com/czerwonk/hakanai"
 keywords = ["encryption", "secret", "sharing", "zero-knowledge", "privacy"]
-categories = ["cryptography", "web-programming", "command-line-utilities"]
+categories = ["cryptography", "security", "command-line-utilities"]
 
 [dependencies]
 anyhow = "1.0.98"

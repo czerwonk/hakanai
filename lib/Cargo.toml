@@ -11,7 +11,7 @@ repository = "https://github.com/czerwonk/hakanai"
 homepage = "https://github.com/czerwonk/hakanai"
 documentation = "https://docs.rs/hakanai-lib"
 keywords = ["encryption", "secret", "sharing", "zero-knowledge", "privacy"]
-categories = ["cryptography", "web-programming", "command-line-utilities"]
+categories = ["cryptography", "security", "command-line-utilities"]
 
 [dependencies]
 aes-gcm = "0.10.3"
