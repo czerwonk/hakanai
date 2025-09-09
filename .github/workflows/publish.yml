@@ -41,3 +41,8 @@ jobs:
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: cargo publish -p hakanai-lib --token $CARGO_REGISTRY_TOKEN
+
+      - name: Publish hakanai-cli to crates.io
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: cargo publish -p hakanai --token $CARGO_REGISTRY_TOKEN
