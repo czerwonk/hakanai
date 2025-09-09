@@ -25,6 +25,9 @@ rustPlatform.buildRustPackage {
       "lib",
       "server"
     ]
+
+    [workspace.dependencies]
+    hakanai-lib = { path = "lib", version = "${workspace.version}" }
     EOF
   '';
 
@@ -37,14 +40,13 @@ rustPlatform.buildRustPackage {
     typescript
   ];
 
-  buildInputs =
-    [
-      openssl
-    ]
-    ++ lib.optionals stdenv.isDarwin [
-      darwin.apple_sdk.frameworks.Security
-      darwin.apple_sdk.frameworks.SystemConfiguration
-    ];
+  buildInputs = [
+    openssl
+  ]
+  ++ lib.optionals stdenv.isDarwin [
+    darwin.apple_sdk.frameworks.Security
+    darwin.apple_sdk.frameworks.SystemConfiguration
+  ];
 
   meta = with lib; {
     description = "A minimalist one-time secret sharing service. Share sensitive data through ephemeral links that self-destruct after a single view. No accounts, no tracking, just a simple way to transmit secrets that vanish like morning mist.";
