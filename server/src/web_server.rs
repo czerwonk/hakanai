@@ -10,24 +10,46 @@ use opentelemetry_instrumentation_actix_web::{RequestMetrics, RequestTracing};
 
 use tracing::{error, info, instrument};
 
+use crate::admin_api;
 use crate::app_data::{AnonymousOptions, AppData};
 use crate::data_store::DataStore;
+use crate::metrics::EventMetrics;
+use crate::metrics_observer::MetricsObserver;
 use crate::observer::ObserverManager;
-use crate::options::Args;
+use crate::options::{Args, WebhookArgs};
 use crate::size_limit;
 use crate::token::{TokenCreator, TokenValidator};
 use crate::web_api;
 use crate::web_assets::AssetManager;
 use crate::web_routes;
 use crate::webhook_observer::WebhookObserver;
-use crate::{admin_api, observer};
+
+pub struct WebServerOptions {
+    args: Args,
+    event_metrics: Option<EventMetrics>,
+}
+
+impl WebServerOptions {
+    pub fn new(args: Args) -> Self {
+        Self {
+            args,
+            event_metrics: None,
+        }
+    }
+
+    pub fn with_event_metrics(mut self, metrics: EventMetrics) -> Self {
+        self.event_metrics = Some(metrics);
+        self
+    }
+}
 
 /// Starts the web server with the provided data store and tokens.
-pub async fn run<D, T>(data_store: D, token_manager: T, args: Args) -> Result<()>
+pub async fn run<D, T>(data_store: D, token_manager: T, options: WebServerOptions) -> Result<()>
 where
     D: DataStore + Clone + 'static,
     T: TokenValidator + TokenCreator + Clone + 'static,
 {
+    let args = options.args;
     info!("Starting server on {}:{}", args.listen_address, args.port);
 
     let anonymous_usage = AnonymousOptions {
@@ -38,16 +60,18 @@ where
     let impressum_html = build_impressum_html(&args)?;
     let privacy_html = build_privacy_html(&args)?;
 
-    let webhook_url = args.webhook_url;
-    let webhook_token = args.webhook_token;
-    let webhook_headers = args.webhook_headers;
+    let webhook_args_opt = args.webhook_args().clone();
 
     HttpServer::new(move || {
-        let observer_manager = init_observers(
-            webhook_url.clone(),
-            webhook_token.clone(),
-            webhook_headers.clone(),
-        );
+        let mut observer_manager = ObserverManager::new();
+        if let Some(ref webhook_args) = webhook_args_opt {
+            add_webhook_observer(&mut observer_manager, webhook_args);
+        }
+        if let Some(event_metrics) = &options.event_metrics {
+            let metrics_observer = MetricsObserver::new(event_metrics.clone());
+            observer_manager.register_observer(Box::new(metrics_observer));
+        }
+
         let asset_manager = AssetManager::new(args.custom_assets_dir.clone());
         let app_data = AppData {
             data_store: Box::new(data_store.clone()),
@@ -99,25 +123,20 @@ where
     .await
 }
 
-fn init_observers(
-    webhook_url: Option<String>,
-    webhook_token: Option<String>,
-    webhook_headers: Vec<String>,
-) -> ObserverManager {
-    let mut observer_manager = observer::ObserverManager::new();
-
-    if let Some(ref url) = webhook_url {
-        match WebhookObserver::new(url.clone(), webhook_token.clone(), webhook_headers.clone()) {
-            Ok(obs) => {
-                observer_manager.register_observer(Box::new(obs));
-            }
-            Err(e) => {
-                error!("Failed to initialize webhook observer: {e}");
-            }
+fn add_webhook_observer(observer_manager: &mut ObserverManager, webhook_args: &WebhookArgs) {
+    let res = WebhookObserver::new(
+        webhook_args.url.clone(),
+        webhook_args.token.clone(),
+        webhook_args.headers.clone(),
+    );
+    match res {
+        Ok(observer) => {
+            observer_manager.register_observer(Box::new(observer));
+        }
+        Err(e) => {
+            error!("Failed to initialize webhook observer: {e}");
         }
     }
-
-    observer_manager
 }
 
 fn build_impressum_html(args: &Args) -> Result<Option<String>> {

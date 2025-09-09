@@ -6,6 +6,7 @@ mod app_data;
 mod data_store;
 mod filters;
 mod metrics;
+mod metrics_observer;
 mod observer;
 mod options;
 mod otel;
@@ -27,9 +28,11 @@ use std::time::Duration;
 use clap::Parser;
 use tracing::{info, warn};
 
+use crate::metrics::EventMetrics;
 use crate::options::Args;
 use crate::redis_client::RedisClient;
 use crate::token::TokenManager;
+use crate::web_server::WebServerOptions;
 
 #[cfg(test)]
 mod test_utils;
@@ -86,11 +89,14 @@ async fn main() -> Result<()> {
         return Err(std::io::Error::other(e));
     }
 
+    let mut options = WebServerOptions::new(args);
+
     if otel_handler.is_some() {
         initialize_metrics(&redis_client);
+        options = options.with_event_metrics(EventMetrics::new());
     }
 
-    let res = web_server::run(redis_client, token_manager, args).await;
+    let res = web_server::run(redis_client, token_manager, options).await;
 
     if let Some(handler) = otel_handler {
         handler.shutdown()

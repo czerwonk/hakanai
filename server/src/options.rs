@@ -13,6 +13,19 @@ fn parse_size_limit_bytes(s: &str) -> Result<usize, String> {
     Ok(bytes.max(1) as usize)
 }
 
+/// Arguments for configuring the webhook.
+#[derive(Clone, Debug)]
+pub struct WebhookArgs {
+    /// Webhook URL to send events to
+    pub url: String,
+
+    /// Bearer token for webhook authentication
+    pub token: Option<String>,
+
+    /// Comma-separated list of HTTP headers to include
+    pub headers: Vec<String>,
+}
+
 /// Represents the command-line arguments for the server.
 #[derive(Parser, Clone)]
 #[command(
@@ -232,6 +245,14 @@ impl Args {
             Some(path) => std::fs::read_to_string(path).map(Some),
             None => Ok(None),
         }
+    }
+
+    pub fn webhook_args(&self) -> Option<WebhookArgs> {
+        self.webhook_url.as_ref().map(|url| WebhookArgs {
+                url: url.clone(),
+                token: self.webhook_token.clone(),
+                headers: self.webhook_headers.clone(),
+            })
     }
 }
 
