@@ -2,7 +2,7 @@
 
 [package]
 name = "hakanai"
-version = "2.14.0"
+version = "2.14.1"
 edition = "2024"
 license = "Apache-2.0"
 
@@ -11,7 +11,7 @@ anyhow = "1.0.98"
 async-trait = "0.1.88"
 clap = { version = "4.5.42", features = ["derive", "env"] }
 colored = "3.0.0"
-hakanai-lib = { path = "../lib", features = ["testing"] }
+hakanai-lib = { workspace = true, features = ["testing"] }
 humantime = "2.2.0"
 indicatif = "0.18.0"
 ipnet = { version = "2.11.0", features = ["serde"] }
@@ -21,7 +21,7 @@ rpassword = "7.3.1"
 tokio = { version = "1.45.1", features = ["full"] }
 url = "2.5.4"
 zeroize = "1.8.1"
-zip = "4.3.0"
+zip = "5.0.0"
 
 [dev-dependencies]
 tempfile = "3.15.0"

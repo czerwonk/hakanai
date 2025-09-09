@@ -2,7 +2,7 @@
 
 [package]
 name = "hakanai-server"
-version = "2.14.0"
+version = "2.14.1"
 edition = "2024"
 license = "Apache-2.0"
 
@@ -14,7 +14,7 @@ async-trait = "0.1.88"
 base64 = "0.22.1"
 clap = { version = "4.5.42", features = ["derive", "env"] }
 futures-util = "0.3"
-hakanai-lib = { path = "../lib", features = ["minimal"] }
+hakanai-lib = { workspace = true, features = ["minimal"] }
 humantime = "2.2.0"
 ipnet = "2.11.0"
 opentelemetry = "0.30.0"
