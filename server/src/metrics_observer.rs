@@ -69,7 +69,6 @@ impl SecretObserver for MetricsObserver {
 
     #[instrument(skip(self, _context))]
     async fn on_secret_retrieved(&self, _secret_id: Uuid, _context: &SecretEventContext) {
-        // No user_type available during retrieval - it's anonymous by design
         self.metrics.secrets_retrieved_counter.add(1, &[]);
     }
 }
