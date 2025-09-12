@@ -15,18 +15,19 @@ use crate::app_data::{AnonymousOptions, AppData};
 use crate::data_store::DataStore;
 use crate::metrics::EventMetrics;
 use crate::metrics_observer::MetricsObserver;
-use crate::observer::ObserverManager;
+use crate::observer::{ObserverManager, WebhookObserver};
 use crate::options::{Args, WebhookArgs};
 use crate::size_limit;
+use crate::stats::{StatsObserver, StatsStore};
 use crate::token::{TokenCreator, TokenValidator};
 use crate::web_api;
 use crate::web_assets::AssetManager;
 use crate::web_routes;
-use crate::webhook_observer::WebhookObserver;
 
 pub struct WebServerOptions {
     args: Args,
     event_metrics: Option<EventMetrics>,
+    stats_store: Option<StatsStore>,
 }
 
 impl WebServerOptions {
@@ -34,11 +35,17 @@ impl WebServerOptions {
         Self {
             args,
             event_metrics: None,
+            stats_store: None,
         }
     }
 
     pub fn with_event_metrics(mut self, metrics: EventMetrics) -> Self {
         self.event_metrics = Some(metrics);
+        self
+    }
+
+    pub fn with_stats_store(mut self, stats_store: StatsStore) -> Self {
+        self.stats_store = Some(stats_store);
         self
     }
 }
@@ -70,6 +77,10 @@ where
         if let Some(event_metrics) = &options.event_metrics {
             let metrics_observer = MetricsObserver::new(event_metrics.clone());
             observer_manager.register_observer(Box::new(metrics_observer));
+        }
+        if let Some(stats_store) = &options.stats_store {
+            let stats_observer = StatsObserver::new(stats_store.clone());
+            observer_manager.register_observer(Box::new(stats_observer));
         }
 
         let asset_manager = AssetManager::new(args.custom_assets_dir.clone());

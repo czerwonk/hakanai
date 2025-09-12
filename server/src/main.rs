@@ -20,23 +20,28 @@ mod web_api;
 mod web_assets;
 mod web_routes;
 mod web_server;
-mod webhook_observer;
 
 use std::io::Result;
 use std::sync::Arc;
 use std::time::Duration;
 
 use clap::Parser;
+use redis::aio::ConnectionManager;
+use tokio::time::timeout;
 use tracing::{info, warn};
 
 use crate::metrics::EventMetrics;
 use crate::options::Args;
 use crate::redis_client::RedisClient;
+use crate::stats::StatsStore;
 use crate::token::TokenManager;
 use crate::web_server::WebServerOptions;
 
 #[cfg(test)]
 mod test_utils;
+
+/// Connection timeout for Redis operations during startup
+const REDIS_CONNECTION_TIMEOUT: Duration = Duration::from_secs(10);
 
 #[actix_web::main]
 async fn main() -> Result<()> {
@@ -56,15 +61,16 @@ async fn main() -> Result<()> {
 
     info!("Hakanai Server (v{})", env!("CARGO_PKG_VERSION"));
 
-    info!("Connecting to Redis");
-    let redis_client = match RedisClient::new(&args.redis_dsn, args.max_ttl).await {
-        Ok(store) => store,
+    let redis_con = match connect_to_redis(&args.redis_dsn).await {
+        Ok(con) => con,
         Err(e) => {
             eprintln!("Failed to connect to Redis: {e}");
             eprintln!("Please ensure Redis is running and accessible",);
             return Err(std::io::Error::other(e));
         }
     };
+
+    let redis_client = RedisClient::new(redis_con.clone(), args.max_ttl);
 
     let token_manager = token::TokenManager::new(redis_client.clone());
     if args.reset_admin_token
@@ -90,11 +96,18 @@ async fn main() -> Result<()> {
         return Err(std::io::Error::other(e));
     }
 
+    let stats_enabled = args.stats_enabled;
+    let stats_ttl = args.stats_ttl;
     let mut options = WebServerOptions::new(args);
 
     if otel_handler.is_some() {
         initialize_metrics(&redis_client);
         options = options.with_event_metrics(EventMetrics::new());
+    }
+
+    if stats_enabled {
+        let stats_store = StatsStore::new(redis_con.clone(), stats_ttl);
+        options = options.with_stats_store(stats_store);
     }
 
     let res = web_server::run(redis_client, token_manager, options).await;
@@ -104,6 +117,20 @@ async fn main() -> Result<()> {
     }
 
     res
+}
+
+async fn connect_to_redis(dsn: &str) -> anyhow::Result<ConnectionManager> {
+    info!("Connecting to Redis");
+
+    let client = redis::Client::open(dsn)?;
+    let con = timeout(
+        REDIS_CONNECTION_TIMEOUT,
+        redis::aio::ConnectionManager::new(client),
+    )
+    .await
+    .map_err(|_| anyhow::anyhow!("Timed out connecting to Redis"))??;
+
+    Ok(con)
 }
 
 async fn reset_user_tokens(token_manager: &TokenManager<RedisClient>) -> anyhow::Result<()> {

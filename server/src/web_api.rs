@@ -264,7 +264,8 @@ mod tests {
 
     use crate::app_data::AnonymousOptions;
     use crate::data_store::DataStore;
-    use crate::test_utils::{MockDataStore, MockObserver, MockTokenManager};
+    use crate::observer::MockObserver;
+    use crate::test_utils::{MockDataStore, MockTokenManager};
     use crate::token::TokenData;
 
     use hakanai_lib::models::SecretRestrictions;

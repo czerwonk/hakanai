@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
-use std::io;
 use std::time::Duration;
 
 use async_trait::async_trait;
 use redis::AsyncCommands;
 use redis::aio::ConnectionManager;
-use tokio::time::timeout;
 use tracing::instrument;
 use uuid::Uuid;
 
@@ -22,9 +20,6 @@ const TOKEN_PREFIX: &str = "token:";
 const ACCESSED_PREFIX: &str = "accessed:";
 const RESTRICTIONS_PREFIX: &str = "restrictions:";
 
-/// Connection timeout for Redis operations during startup
-const CONNECTION_TIMEOUT: Duration = Duration::from_secs(10);
-
 /// An implementation of the `DataStore` trait that uses Redis as its backend.
 /// This struct holds a `ConnectionManager` for interacting with the Redis
 /// server. It is designed to be cloneable and thread-safe.
@@ -35,16 +30,8 @@ pub struct RedisClient {
 }
 
 impl RedisClient {
-    pub async fn new(redis_url: &str, max_ttl: Duration) -> redis::RedisResult<Self> {
-        let client = redis::Client::open(redis_url)?;
-
-        // The Redis crate doesn't provide built-in connection timeouts,
-        // so we use tokio::time::timeout to prevent hanging indefinitely
-        let con = timeout(CONNECTION_TIMEOUT, ConnectionManager::new(client))
-            .await
-            .map_err(|_| redis::RedisError::from(io::Error::from(io::ErrorKind::TimedOut)))??;
-
-        Ok(Self { con, max_ttl })
+    pub fn new(con: ConnectionManager, max_ttl: Duration) -> Self {
+        Self { con, max_ttl }
     }
 }
 

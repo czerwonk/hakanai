@@ -1,3 +1,9 @@
+mod stats_observer;
+mod stats_store;
+
+pub use stats_observer::StatsObserver;
+pub use stats_store::StatsStore;
+
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde::{Deserialize, Serialize};
@@ -5,8 +11,11 @@ use serde::{Deserialize, Serialize};
 /// Represents statistics related to a single secret
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SecretStats {
+    /// Timestamp of when the secret was created (in seconds since UNIX epoch)
     pub created_at: u64,
+    /// Time-to-live (TTL) of the secret in seconds
     pub ttl: u64,
+    /// Timestamp of when the secret was retrieved, if it has been retrieved
     pub retrieved_at: Option<u64>,
 }
 
@@ -35,9 +44,9 @@ impl SecretStats {
     }
 }
 
+#[cfg(test)]
 mod tests {
     use super::*;
-    use std::time::{SystemTime, UNIX_EPOCH};
 
     #[test]
     fn test_secret_stats_lifetime_after_retrieved() {
