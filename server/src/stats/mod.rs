@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 mod redis_stats_store;
 mod secret_stats;
 mod stats_observer;
