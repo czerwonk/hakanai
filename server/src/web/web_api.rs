@@ -12,9 +12,9 @@ use hakanai_lib::models::{
 };
 
 use crate::app_data::AppData;
-use crate::data_store::DataStorePopResult;
 use crate::filters;
 use crate::observer::SecretEventContext;
+use crate::secret::SecretStorePopResult;
 use crate::size_limited_json::SizeLimitedJson;
 use crate::user::User;
 
@@ -69,9 +69,9 @@ pub async fn get_secret_from_request(
 
     verify_restrictions_for_secret(id, &http_req, &app_data).await?;
 
-    match app_data.data_store.pop(id).await {
+    match app_data.secret_store.pop(id).await {
         Ok(res) => match res {
-            DataStorePopResult::Found(secret) => {
+            SecretStorePopResult::Found(secret) => {
                 app_data
                     .observer_manager
                     .notify_secret_retrieved(
@@ -81,8 +81,8 @@ pub async fn get_secret_from_request(
                     .await;
                 Ok(secret)
             }
-            DataStorePopResult::NotFound => Err(error::ErrorNotFound("Secret not found")),
-            DataStorePopResult::AlreadyAccessed => {
+            SecretStorePopResult::NotFound => Err(error::ErrorNotFound("Secret not found")),
+            SecretStorePopResult::AlreadyAccessed => {
                 Err(error::ErrorGone("Secret was already accessed"))
             }
         },
@@ -100,7 +100,7 @@ async fn verify_restrictions_for_secret(
     app_data: &AppData,
 ) -> Result<()> {
     let restrictions = app_data
-        .data_store
+        .secret_store
         .get_restrictions(id)
         .await
         .map_err(|e| {
@@ -186,7 +186,7 @@ async fn post_secret(
 
     if let Some(ref restrictions) = req.restrictions {
         app_data
-            .data_store
+            .secret_store
             .set_restrictions(id, restrictions, req.expires_in)
             .await
             .map_err(|e| {
@@ -197,7 +197,7 @@ async fn post_secret(
     }
 
     app_data
-        .data_store
+        .secret_store
         .put(id, req.data.clone(), req.expires_in)
         .await
         .map_err(|e| {
@@ -263,21 +263,20 @@ mod tests {
     use actix_web::{App, test};
 
     use crate::app_data::AnonymousOptions;
-    use crate::data_store::DataStore;
     use crate::observer::MockObserver;
-    use crate::test_utils::MockDataStore;
+    use crate::secret::{MockSecretStore, SecretStore};
     use crate::token::{MockTokenManager, TokenData};
 
     use hakanai_lib::models::SecretRestrictions;
 
     // Helper function to create test AppData with default values
     fn create_test_app_data(
-        data_store: Box<dyn DataStore>,
+        secret_store: Box<dyn SecretStore>,
         token_manager: MockTokenManager,
         allow_anonymous: bool,
     ) -> AppData {
         AppData::default()
-            .with_data_store(data_store)
+            .with_secret_store(secret_store)
             .with_token_validator(Box::new(token_manager.clone()))
             .with_token_creator(Box::new(token_manager))
             .with_max_ttl(Duration::from_secs(7200))
@@ -289,8 +288,8 @@ mod tests {
 
     #[actix_web::test]
     async fn test_get_secret_found() {
-        let mock_store = MockDataStore::new()
-            .with_pop_result(DataStorePopResult::Found("test_secret".to_string()));
+        let mock_store = MockSecretStore::new()
+            .with_pop_result(SecretStorePopResult::Found("test_secret".to_string()));
         let app_data = create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
 
         let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
@@ -313,7 +312,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_get_secret_not_found() {
-        let mock_store = MockDataStore::new().with_pop_result(DataStorePopResult::NotFound);
+        let mock_store = MockSecretStore::new().with_pop_result(SecretStorePopResult::NotFound);
         let app_data = create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
 
         let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
@@ -333,7 +332,8 @@ mod tests {
 
     #[actix_web::test]
     async fn test_get_secret_already_accessed() {
-        let mock_store = MockDataStore::new().with_pop_result(DataStorePopResult::AlreadyAccessed);
+        let mock_store =
+            MockSecretStore::new().with_pop_result(SecretStorePopResult::AlreadyAccessed);
         let app_data = create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
 
         let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
@@ -353,7 +353,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_get_secret_error() {
-        let mock_store = MockDataStore::new().with_get_error();
+        let mock_store = MockSecretStore::new().with_get_error();
         let app_data = create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
 
         let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
@@ -373,7 +373,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_post_secret_success() {
-        let mock_store = MockDataStore::new();
+        let mock_store = MockSecretStore::new();
         let app_data = create_test_app_data(
             Box::new(mock_store.clone()),
             MockTokenManager::new(),
@@ -408,7 +408,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_post_secret_error() {
-        let mock_store = MockDataStore::new().with_put_error();
+        let mock_store = MockSecretStore::new().with_put_error();
         let app_data = create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
 
         let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
@@ -431,7 +431,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_post_secret_with_valid_token() {
-        let mock_store = MockDataStore::new();
+        let mock_store = MockSecretStore::new();
         let token_manager = MockTokenManager::new().with_user_token(
             "valid_token_123",
             TokenData {
@@ -467,7 +467,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_post_secret_missing_auth_header() {
-        let mock_store = MockDataStore::new();
+        let mock_store = MockSecretStore::new();
         let app_data = create_test_app_data(
             Box::new(mock_store),
             MockTokenManager::new(),
@@ -494,7 +494,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_post_secret_invalid_token() {
-        let mock_store = MockDataStore::new();
+        let mock_store = MockSecretStore::new();
         let app_data = create_test_app_data(
             Box::new(mock_store),
             MockTokenManager::new(), // No valid tokens
@@ -522,7 +522,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_post_secret_invalid_ttl() {
-        let mock_store = MockDataStore::new();
+        let mock_store = MockSecretStore::new();
         let max_ttl = Duration::from_secs(30);
         let mut app_data =
             create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
@@ -551,7 +551,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_post_secret_anonymous_size_limit_exceeded() {
-        let mock_store = MockDataStore::new();
+        let mock_store = MockSecretStore::new();
         let app_data = create_test_app_data(
             Box::new(mock_store),
             MockTokenManager::new(),
@@ -580,7 +580,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_post_secret_token_size_limit_exceeded() {
-        let mock_store = MockDataStore::new();
+        let mock_store = MockSecretStore::new();
         let token_manager = MockTokenManager::new().with_user_token(
             "limited_token",
             TokenData {
@@ -612,7 +612,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_post_secret_anonymous_access_denied() {
-        let mock_store = MockDataStore::new();
+        let mock_store = MockSecretStore::new();
         let app_data = create_test_app_data(
             Box::new(mock_store),
             MockTokenManager::new(),
@@ -639,7 +639,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_observer_notification_on_secret_creation() {
-        let mock_store = MockDataStore::new();
+        let mock_store = MockSecretStore::new();
         let mock_observer = MockObserver::new();
         let observer_clone = mock_observer.clone();
 
@@ -687,8 +687,8 @@ mod tests {
     #[actix_web::test]
     async fn test_observer_notification_on_secret_retrieval() {
         let secret_id = Uuid::new_v4();
-        let mock_store = MockDataStore::new()
-            .with_pop_result(DataStorePopResult::Found("test_secret".to_string()));
+        let mock_store = MockSecretStore::new()
+            .with_pop_result(SecretStorePopResult::Found("test_secret".to_string()));
         let mock_observer = MockObserver::new();
         let observer_clone = mock_observer.clone();
 
@@ -726,7 +726,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_observer_notification_with_token() {
-        let mock_store = MockDataStore::new();
+        let mock_store = MockSecretStore::new();
         let mock_observer = MockObserver::new();
         let observer_clone = mock_observer.clone();
         let token_manager = MockTokenManager::new().with_user_token(
@@ -781,8 +781,8 @@ mod tests {
             "10.0.0.0/8".parse::<ipnet::IpNet>().unwrap(),
         ];
 
-        let mock_store = MockDataStore::new()
-            .with_pop_result(DataStorePopResult::Found("test_secret".to_string()))
+        let mock_store = MockSecretStore::new()
+            .with_pop_result(SecretStorePopResult::Found("test_secret".to_string()))
             .with_restrictions(
                 secret_id,
                 SecretRestrictions::default().with_allowed_ips(allowed_ips),
@@ -815,8 +815,8 @@ mod tests {
         let secret_id = Uuid::new_v4();
         let allowed_ips = vec!["192.168.1.0/24".parse::<ipnet::IpNet>().unwrap()];
 
-        let mock_store = MockDataStore::new()
-            .with_pop_result(DataStorePopResult::Found("test_secret".to_string()))
+        let mock_store = MockSecretStore::new()
+            .with_pop_result(SecretStorePopResult::Found("test_secret".to_string()))
             .with_restrictions(
                 secret_id,
                 SecretRestrictions::default().with_allowed_ips(allowed_ips),
@@ -846,8 +846,8 @@ mod tests {
         // Create a secret without IP restrictions - should be accessible from any IP
         let secret_id = Uuid::new_v4();
 
-        let mock_store = MockDataStore::new()
-            .with_pop_result(DataStorePopResult::Found("test_secret".to_string()));
+        let mock_store = MockSecretStore::new()
+            .with_pop_result(SecretStorePopResult::Found("test_secret".to_string()));
         // No IP restrictions set
 
         let app_data = create_test_app_data(Box::new(mock_store), MockTokenManager::new(), true);
@@ -877,8 +877,8 @@ mod tests {
         let secret_id = Uuid::new_v4();
         let allowed_ips = vec!["2001:db8::/32".parse::<ipnet::IpNet>().unwrap()];
 
-        let mock_store = MockDataStore::new()
-            .with_pop_result(DataStorePopResult::Found("test_secret".to_string()))
+        let mock_store = MockSecretStore::new()
+            .with_pop_result(SecretStorePopResult::Found("test_secret".to_string()))
             .with_restrictions(
                 secret_id,
                 SecretRestrictions::default().with_allowed_ips(allowed_ips),
@@ -913,8 +913,8 @@ mod tests {
             "172.16.0.0/12".parse::<ipnet::IpNet>().unwrap(),
         ];
 
-        let mock_store = MockDataStore::new()
-            .with_pop_result(DataStorePopResult::Found("test_secret".to_string()))
+        let mock_store = MockSecretStore::new()
+            .with_pop_result(SecretStorePopResult::Found("test_secret".to_string()))
             .with_restrictions(
                 secret_id,
                 SecretRestrictions::default().with_allowed_ips(allowed_ips),
@@ -945,8 +945,8 @@ mod tests {
         let secret_id = Uuid::new_v4();
         let allowed_ips = vec!["192.168.1.100/32".parse::<ipnet::IpNet>().unwrap()];
 
-        let mock_store = MockDataStore::new()
-            .with_pop_result(DataStorePopResult::Found("test_secret".to_string()))
+        let mock_store = MockSecretStore::new()
+            .with_pop_result(SecretStorePopResult::Found("test_secret".to_string()))
             .with_restrictions(
                 secret_id,
                 SecretRestrictions::default().with_allowed_ips(allowed_ips),
@@ -983,7 +983,7 @@ mod tests {
     #[actix_web::test]
     async fn test_post_secret_with_ip_restrictions() {
         // Test that POST endpoint properly stores IP restrictions
-        let mock_store = MockDataStore::new();
+        let mock_store = MockSecretStore::new();
         let app_data =
             create_test_app_data(Box::new(mock_store.clone()), MockTokenManager::new(), true);
 
@@ -1025,7 +1025,7 @@ mod tests {
     #[actix_web::test]
     async fn test_post_secret_without_ip_restrictions() {
         // Test that POST endpoint works without IP restrictions
-        let mock_store = MockDataStore::new();
+        let mock_store = MockSecretStore::new();
         let app_data =
             create_test_app_data(Box::new(mock_store.clone()), MockTokenManager::new(), true);
 
@@ -1061,8 +1061,8 @@ mod tests {
         let secret_id = Uuid::new_v4();
         let allowed_ips = vec!["192.168.1.0/24".parse::<ipnet::IpNet>().unwrap()];
 
-        let mock_store = MockDataStore::new()
-            .with_pop_result(DataStorePopResult::Found("test_secret".to_string()))
+        let mock_store = MockSecretStore::new()
+            .with_pop_result(SecretStorePopResult::Found("test_secret".to_string()))
             .with_restrictions(
                 secret_id,
                 SecretRestrictions::default().with_allowed_ips(allowed_ips),
@@ -1093,8 +1093,8 @@ mod tests {
         let secret_id = Uuid::new_v4();
         let allowed_ips = vec![]; // Empty restrictions
 
-        let mock_store = MockDataStore::new()
-            .with_pop_result(DataStorePopResult::Found("test_secret".to_string()))
+        let mock_store = MockSecretStore::new()
+            .with_pop_result(SecretStorePopResult::Found("test_secret".to_string()))
             .with_restrictions(
                 secret_id,
                 SecretRestrictions::default().with_allowed_ips(allowed_ips),
@@ -1122,7 +1122,7 @@ mod tests {
     #[actix_web::test]
     async fn test_post_secret_with_country_restriction_support_enabled() {
         // Test that country restrictions work when country header is configured
-        let mock_store = MockDataStore::new();
+        let mock_store = MockSecretStore::new();
         let token_manager = MockTokenManager::new().with_unlimited_user_tokens(&["valid-token"]);
 
         // Create app data with country header configured (support enabled)
@@ -1156,7 +1156,7 @@ mod tests {
     #[actix_web::test]
     async fn test_post_secret_with_country_restriction_support_disabled() {
         // Test that country restrictions return 501 when country header is not configured
-        let mock_store = MockDataStore::new();
+        let mock_store = MockSecretStore::new();
         let token_manager = MockTokenManager::new().with_unlimited_user_tokens(&["valid-token"]);
 
         // Create app data WITHOUT country header configured (support disabled)
@@ -1195,7 +1195,7 @@ mod tests {
     #[actix_web::test]
     async fn test_post_secret_with_combined_restrictions_support_disabled() {
         // Test that combined IP + country restrictions fail when country support is disabled
-        let mock_store = MockDataStore::new();
+        let mock_store = MockSecretStore::new();
         let token_manager = MockTokenManager::new().with_unlimited_user_tokens(&["valid-token"]);
 
         let app_data = create_test_app_data(Box::new(mock_store), token_manager, false);
@@ -1229,7 +1229,7 @@ mod tests {
     #[actix_web::test]
     async fn test_post_secret_with_combined_restrictions_support_enabled() {
         // Test that combined IP + country restrictions work when country support is enabled
-        let mock_store = MockDataStore::new();
+        let mock_store = MockSecretStore::new();
         let token_manager = MockTokenManager::new().with_unlimited_user_tokens(&["valid-token"]);
 
         let mut app_data = create_test_app_data(Box::new(mock_store), token_manager, false);
@@ -1263,7 +1263,7 @@ mod tests {
     #[actix_web::test]
     async fn test_post_secret_with_only_ip_restrictions_no_country_support() {
         // Test that IP-only restrictions work even when country support is disabled
-        let mock_store = MockDataStore::new();
+        let mock_store = MockSecretStore::new();
         let token_manager = MockTokenManager::new().with_unlimited_user_tokens(&["valid-token"]);
 
         let app_data = create_test_app_data(Box::new(mock_store), token_manager, false);
@@ -1296,7 +1296,7 @@ mod tests {
     #[actix_web::test]
     async fn test_post_secret_without_restrictions() {
         // Test that secrets without restrictions work regardless of country support configuration
-        let mock_store = MockDataStore::new();
+        let mock_store = MockSecretStore::new();
         let token_manager = MockTokenManager::new().with_unlimited_user_tokens(&["valid-token"]);
 
         let app_data = create_test_app_data(Box::new(mock_store), token_manager, false);
@@ -1326,7 +1326,7 @@ mod tests {
     #[actix_web::test]
     async fn test_post_secret_with_empty_country_restrictions() {
         // Test that empty country restrictions array doesn't trigger support check
-        let mock_store = MockDataStore::new();
+        let mock_store = MockSecretStore::new();
         let token_manager = MockTokenManager::new().with_unlimited_user_tokens(&["valid-token"]);
 
         let app_data = create_test_app_data(Box::new(mock_store), token_manager, false);
@@ -1359,7 +1359,7 @@ mod tests {
     #[actix_web::test]
     async fn test_post_secret_country_support_with_custom_header() {
         // Test that country restrictions work with custom country header configuration
-        let mock_store = MockDataStore::new();
+        let mock_store = MockSecretStore::new();
         let token_manager = MockTokenManager::new().with_unlimited_user_tokens(&["valid-token"]);
 
         let mut app_data = create_test_app_data(Box::new(mock_store), token_manager, false);
@@ -1392,7 +1392,7 @@ mod tests {
     #[actix_web::test]
     async fn test_post_secret_multiple_country_restrictions_support_enabled() {
         // Test that multiple country restrictions work when support is enabled
-        let mock_store = MockDataStore::new();
+        let mock_store = MockSecretStore::new();
         let token_manager = MockTokenManager::new().with_unlimited_user_tokens(&["valid-token"]);
 
         let mut app_data = create_test_app_data(Box::new(mock_store), token_manager, false);
@@ -1431,8 +1431,8 @@ mod tests {
         let mut restrictions = SecretRestrictions::default();
         restrictions.passphrase_hash = Some(passphrase_hash.to_string());
 
-        let mock_store = MockDataStore::new()
-            .with_pop_result(DataStorePopResult::Found(
+        let mock_store = MockSecretStore::new()
+            .with_pop_result(SecretStorePopResult::Found(
                 "passphrase_protected_secret".to_string(),
             ))
             .with_restrictions(secret_id, restrictions);
@@ -1467,8 +1467,8 @@ mod tests {
         let mut restrictions = SecretRestrictions::default();
         restrictions.passphrase_hash = Some(correct_hash.to_string());
 
-        let mock_store = MockDataStore::new()
-            .with_pop_result(DataStorePopResult::Found(
+        let mock_store = MockSecretStore::new()
+            .with_pop_result(SecretStorePopResult::Found(
                 "passphrase_protected_secret".to_string(),
             ))
             .with_restrictions(secret_id, restrictions);
@@ -1499,8 +1499,8 @@ mod tests {
         let mut restrictions = SecretRestrictions::default();
         restrictions.passphrase_hash = Some(passphrase_hash.to_string());
 
-        let mock_store = MockDataStore::new()
-            .with_pop_result(DataStorePopResult::Found(
+        let mock_store = MockSecretStore::new()
+            .with_pop_result(SecretStorePopResult::Found(
                 "passphrase_protected_secret".to_string(),
             ))
             .with_restrictions(secret_id, restrictions);
@@ -1535,8 +1535,8 @@ mod tests {
         let mut restrictions = SecretRestrictions::default();
         restrictions.passphrase_hash = Some("".to_string());
 
-        let mock_store = MockDataStore::new()
-            .with_pop_result(DataStorePopResult::Found(
+        let mock_store = MockSecretStore::new()
+            .with_pop_result(SecretStorePopResult::Found(
                 "secret_with_empty_hash".to_string(),
             ))
             .with_restrictions(secret_id, restrictions);
@@ -1577,8 +1577,8 @@ mod tests {
         use std::str::FromStr;
         restrictions.allowed_ips = Some(vec![ipnet::IpNet::from_str("127.0.0.0/8").unwrap()]);
 
-        let mock_store = MockDataStore::new()
-            .with_pop_result(DataStorePopResult::Found(
+        let mock_store = MockSecretStore::new()
+            .with_pop_result(SecretStorePopResult::Found(
                 "multi_restricted_secret".to_string(),
             ))
             .with_restrictions(secret_id, restrictions);
@@ -1611,7 +1611,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_post_secret_with_passphrase_restriction() {
-        let mock_store = MockDataStore::new();
+        let mock_store = MockSecretStore::new();
         let app_data =
             create_test_app_data(Box::new(mock_store.clone()), MockTokenManager::new(), true);
 
@@ -1672,8 +1672,8 @@ mod tests {
         let mut restrictions = SecretRestrictions::default();
         restrictions.passphrase_hash = Some(unicode_hash.to_string());
 
-        let mock_store = MockDataStore::new()
-            .with_pop_result(DataStorePopResult::Found(
+        let mock_store = MockSecretStore::new()
+            .with_pop_result(SecretStorePopResult::Found(
                 "unicode_protected_secret".to_string(),
             ))
             .with_restrictions(secret_id, restrictions);
@@ -1712,8 +1712,8 @@ mod tests {
         let mut restrictions = SecretRestrictions::default();
         restrictions.passphrase_hash = Some(lowercase_hash.to_string());
 
-        let mock_store = MockDataStore::new()
-            .with_pop_result(DataStorePopResult::Found(
+        let mock_store = MockSecretStore::new()
+            .with_pop_result(SecretStorePopResult::Found(
                 "case_sensitive_secret".to_string(),
             ))
             .with_restrictions(secret_id, restrictions);

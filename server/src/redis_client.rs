@@ -11,13 +11,13 @@ use uuid::Uuid;
 use hakanai_lib::models::SecretRestrictions;
 use hakanai_lib::utils::timestamp;
 
-use crate::data_store::{DataStore, DataStoreError, DataStorePopResult};
+use crate::secret::{SecretStore, SecretStoreError, SecretStorePopResult};
 
 const SECRET_PREFIX: &str = "secret:";
 const ACCESSED_PREFIX: &str = "accessed:";
 const RESTRICTIONS_PREFIX: &str = "restrictions:";
 
-/// An implementation of the `DataStore` trait that uses Redis as its backend.
+/// An implementation of the `SecretStore` trait that uses Redis as its backend.
 /// This struct holds a `ConnectionManager` for interacting with the Redis
 /// server. It is designed to be cloneable and thread-safe.
 #[derive(Clone)]
@@ -46,14 +46,14 @@ impl RedisClient {
     }
 
     #[instrument(skip(self), err)]
-    async fn was_accessed(&self, id: Uuid) -> Result<bool, DataStoreError> {
+    async fn was_accessed(&self, id: Uuid) -> Result<bool, SecretStoreError> {
         let key = self.accessed_key(id);
         let exists: bool = self.con.clone().exists(key).await?;
         return Ok(exists);
     }
 
     #[instrument(skip(self), err)]
-    async fn mark_as_accessed(&self, id: Uuid) -> Result<(), DataStoreError> {
+    async fn mark_as_accessed(&self, id: Uuid) -> Result<(), SecretStoreError> {
         let key = self.accessed_key(id);
         let value = timestamp::now_string()?;
 
@@ -67,22 +67,22 @@ impl RedisClient {
 }
 
 #[async_trait]
-impl DataStore for RedisClient {
+impl SecretStore for RedisClient {
     #[instrument(skip(self), err)]
-    async fn pop(&self, id: Uuid) -> Result<DataStorePopResult, DataStoreError> {
+    async fn pop(&self, id: Uuid) -> Result<SecretStorePopResult, SecretStoreError> {
         let secret_key = self.secret_key(id);
         let value = self.con.clone().get_del(secret_key).await?;
 
         if let Some(secret) = value {
             self.mark_as_accessed(id).await?;
-            return Ok(DataStorePopResult::Found(secret));
+            return Ok(SecretStorePopResult::Found(secret));
         }
 
         if self.was_accessed(id).await? {
-            return Ok(DataStorePopResult::AlreadyAccessed);
+            return Ok(SecretStorePopResult::AlreadyAccessed);
         }
 
-        Ok(DataStorePopResult::NotFound)
+        Ok(SecretStorePopResult::NotFound)
     }
 
     #[instrument(skip(self, data), err)]
@@ -91,7 +91,7 @@ impl DataStore for RedisClient {
         id: Uuid,
         data: String,
         expires_in: Duration,
-    ) -> Result<(), DataStoreError> {
+    ) -> Result<(), SecretStoreError> {
         let secret_key = self.secret_key(id);
         let _: () = self
             .con
@@ -102,13 +102,13 @@ impl DataStore for RedisClient {
     }
 
     #[instrument(skip(self), err)]
-    async fn is_healthy(&self) -> Result<(), DataStoreError> {
+    async fn is_healthy(&self) -> Result<(), SecretStoreError> {
         let _: () = self.con.clone().ping().await?;
         Ok(())
     }
 
     #[instrument(skip(self), err)]
-    async fn active_secret_count(&self) -> Result<usize, DataStoreError> {
+    async fn active_secret_count(&self) -> Result<usize, SecretStoreError> {
         let pattern = format!("{SECRET_PREFIX}*");
         let keys: Vec<String> = self.con.clone().keys(pattern).await?;
         Ok(keys.len())
@@ -120,7 +120,7 @@ impl DataStore for RedisClient {
         id: Uuid,
         restrictions: &SecretRestrictions,
         expires_in: Duration,
-    ) -> Result<(), DataStoreError> {
+    ) -> Result<(), SecretStoreError> {
         let key = self.restrictions_key(id);
         let json = serde_json::to_string(restrictions)?;
 
@@ -136,7 +136,7 @@ impl DataStore for RedisClient {
     async fn get_restrictions(
         &self,
         id: Uuid,
-    ) -> Result<Option<SecretRestrictions>, DataStoreError> {
+    ) -> Result<Option<SecretRestrictions>, SecretStoreError> {
         let key = self.restrictions_key(id);
         let value: Option<String> = self.con.clone().get(key).await?;
 

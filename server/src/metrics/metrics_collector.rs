@@ -8,7 +8,7 @@ use opentelemetry::metrics::{Gauge, Meter};
 use tokio::time::interval;
 use tracing::{debug, error};
 
-use crate::data_store::{DataStore, DataStoreError};
+use crate::secret::{SecretStore, SecretStoreError};
 use crate::token::{TokenError, TokenStore};
 
 /// Metrics collector for the Hakanai server.
@@ -48,10 +48,10 @@ impl MetricsCollector {
     ///
     /// This method spawns a background task that periodically collects
     /// metrics from the token store and data store and updates the OpenTelemetry gauges.
-    pub fn start_collection<T: TokenStore + 'static, D: DataStore + 'static>(
+    pub fn start_collection<T: TokenStore + 'static, D: SecretStore + 'static>(
         &self,
         token_store: Arc<T>,
-        data_store: Arc<D>,
+        secret_store: Arc<D>,
         interval_duration: Duration,
     ) {
         let token_count_gauge = self.token_count_gauge.clone();
@@ -75,7 +75,7 @@ impl MetricsCollector {
                 }
 
                 // Collect secret metrics
-                match data_store.active_secret_count().await {
+                match secret_store.active_secret_count().await {
                     Ok(count) => {
                         secret_count_gauge.record(count as u64, &[]);
                         debug!("Updated secret count metric: {}", count);
@@ -108,11 +108,11 @@ impl MetricsCollector {
     /// This method can be used to immediately update the secret count
     /// without waiting for the periodic collection.
     #[allow(dead_code)]
-    pub async fn update_secret_count<D: DataStore>(
+    pub async fn update_secret_count<D: SecretStore>(
         &self,
-        data_store: &D,
-    ) -> Result<(), DataStoreError> {
-        let count = data_store.active_secret_count().await?;
+        secret_store: &D,
+    ) -> Result<(), SecretStoreError> {
+        let count = secret_store.active_secret_count().await?;
         self.secret_count_gauge.record(count as u64, &[]);
         debug!("Manually updated secret count metric: {}", count);
         Ok(())
@@ -128,7 +128,7 @@ impl Default for MetricsCollector {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_utils::MockDataStore;
+    use crate::secret::MockSecretStore;
     use crate::token::MockTokenStore;
 
     #[tokio::test]
@@ -167,7 +167,7 @@ mod tests {
     #[tokio::test]
     async fn test_update_secret_count() -> Result<(), Box<dyn std::error::Error>> {
         let collector = MetricsCollector::new();
-        let mock_store = MockDataStore::new().with_secret_count(15);
+        let mock_store = MockSecretStore::new().with_secret_count(15);
 
         // This should not panic and should complete successfully
         collector.update_secret_count(&mock_store).await?;
@@ -177,7 +177,7 @@ mod tests {
     #[tokio::test]
     async fn test_update_secret_count_with_failure() {
         let collector = MetricsCollector::new();
-        let mock_store = MockDataStore::new().with_failures();
+        let mock_store = MockSecretStore::new().with_failures();
 
         // This should return an error when the data store fails
         let result = collector.update_secret_count(&mock_store).await;

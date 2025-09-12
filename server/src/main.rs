@@ -2,13 +2,13 @@
 
 mod admin_user;
 mod app_data;
-mod data_store;
 mod filters;
 mod metrics;
 mod observer;
 mod options;
 mod otel;
 mod redis_client;
+mod secret;
 mod size_limit;
 mod size_limited_json;
 mod stats;
@@ -30,9 +30,6 @@ use crate::options::Args;
 use crate::redis_client::RedisClient;
 use crate::stats::RedisStatsStore;
 use crate::token::{RedisTokenStore, TokenManager, TokenStore};
-
-#[cfg(test)]
-mod test_utils;
 
 /// Connection timeout for Redis operations during startup
 const REDIS_CONNECTION_TIMEOUT: Duration = Duration::from_secs(10);
@@ -174,11 +171,11 @@ async fn initialize_admin_token<T: TokenStore>(
 fn initialize_metrics(redis_client: &RedisClient, redis_token_store: &RedisTokenStore) {
     info!("Initializing metrics collection with 30s interval");
     let token_store = Arc::new(redis_token_store.clone());
-    let data_store = Arc::new(redis_client.clone());
+    let secret_store = Arc::new(redis_client.clone());
     let collection_interval = Duration::from_secs(30); // Collect metrics every 30 seconds
 
     let collector = MetricsCollector::new();
-    collector.start_collection(token_store, data_store, collection_interval);
+    collector.start_collection(token_store, secret_store, collection_interval);
 
     debug!(
         "Started metrics collection with interval: {:?}",

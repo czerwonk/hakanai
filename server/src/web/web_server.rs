@@ -15,12 +15,12 @@ use super::web_api;
 use super::web_assets::AssetManager;
 use super::web_routes;
 use crate::app_data::{AnonymousOptions, AppData};
-use crate::data_store::DataStore;
 use crate::metrics::{EventMetrics, MetricsObserver};
 use crate::observer::{ObserverManager, WebhookObserver};
 use crate::options::{Args, WebhookArgs};
+use crate::secret::SecretStore;
 use crate::size_limit;
-use crate::stats::{StatsObserver, RedisStatsStore};
+use crate::stats::{RedisStatsStore, StatsObserver};
 use crate::token::{TokenCreator, TokenValidator};
 
 pub struct WebServerOptions {
@@ -51,12 +51,12 @@ impl WebServerOptions {
 
 /// Starts the web server with the provided data store and tokens.
 pub async fn run_server<D, T>(
-    data_store: D,
+    secret_store: D,
     token_manager: T,
     options: WebServerOptions,
 ) -> Result<()>
 where
-    D: DataStore + Clone + 'static,
+    D: SecretStore + Clone + 'static,
     T: TokenValidator + TokenCreator + Clone + 'static,
 {
     let args = options.args;
@@ -88,7 +88,7 @@ where
 
         let asset_manager = AssetManager::new(args.custom_assets_dir.clone());
         let app_data = AppData {
-            data_store: Box::new(data_store.clone()),
+            secret_store: Box::new(secret_store.clone()),
             token_validator: Box::new(token_manager.clone()),
             token_creator: Box::new(token_manager.clone()),
             max_ttl: args.max_ttl,
@@ -243,7 +243,7 @@ async fn get_secret_short(
 }
 
 async fn healthy(app_data: web::Data<AppData>) -> impl Responder {
-    let res = app_data.data_store.is_healthy().await;
+    let res = app_data.secret_store.is_healthy().await;
 
     match res {
         Ok(()) => HttpResponse::Ok().body("healthy"),

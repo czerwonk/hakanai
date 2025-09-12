@@ -14,16 +14,16 @@ use uuid::Uuid;
 
 use hakanai_lib::models::SecretRestrictions;
 
-use crate::data_store::{DataStore, DataStoreError, DataStorePopResult};
+use super::{SecretStore, SecretStoreError, SecretStorePopResult};
 
-/// Mock implementation of DataStore trait for testing.
+/// Mock implementation of SecretStore trait for testing.
 ///
 /// This mock allows configuring various test scenarios including:
 /// - Secret count responses
 /// - Store failures
 /// - Custom secret storage behavior
 #[derive(Clone)]
-pub struct MockDataStore {
+pub struct MockSecretStore {
     /// Secret count to return
     secret_count: Arc<Mutex<usize>>,
     /// Whether operations should fail
@@ -33,7 +33,7 @@ pub struct MockDataStore {
     /// Secrets marked as accessed
     accessed_secrets: Arc<Mutex<Vec<String>>>,
     /// Custom pop result to return (for testing different scenarios)
-    custom_pop_result: Arc<Mutex<Option<DataStorePopResult>>>,
+    custom_pop_result: Arc<Mutex<Option<SecretStorePopResult>>>,
     /// Track all put operations for testing verification
     put_operations: Arc<Mutex<Vec<(Uuid, String, Duration)>>>,
     /// Track all set_restrictions operations for testing verification
@@ -42,7 +42,7 @@ pub struct MockDataStore {
     restrictions: Arc<Mutex<HashMap<String, SecretRestrictions>>>,
 }
 
-impl MockDataStore {
+impl MockSecretStore {
     /// Create a new mock data store
     pub fn new() -> Self {
         Self {
@@ -93,7 +93,7 @@ impl MockDataStore {
     }
 
     /// Set a custom pop result for testing specific scenarios
-    pub fn with_pop_result(self, result: DataStorePopResult) -> Self {
+    pub fn with_pop_result(self, result: SecretStorePopResult) -> Self {
         *self.custom_pop_result.lock().unwrap() = Some(result);
         self
     }
@@ -142,17 +142,17 @@ impl MockDataStore {
     }
 }
 
-impl Default for MockDataStore {
+impl Default for MockSecretStore {
     fn default() -> Self {
         Self::new()
     }
 }
 
 #[async_trait]
-impl DataStore for MockDataStore {
-    async fn pop(&self, id: Uuid) -> Result<DataStorePopResult, DataStoreError> {
+impl SecretStore for MockSecretStore {
+    async fn pop(&self, id: Uuid) -> Result<SecretStorePopResult, SecretStoreError> {
         if *self.should_fail.lock().unwrap() {
-            return Err(DataStoreError::InternalError("Mock failure".to_string()));
+            return Err(SecretStoreError::InternalError("Mock failure".to_string()));
         }
 
         // Check if we have a custom pop result
@@ -166,15 +166,15 @@ impl DataStore for MockDataStore {
         if let Some(secret) = self.stored_secrets.lock().unwrap().remove(&id_str) {
             // Mark as accessed
             self.accessed_secrets.lock().unwrap().push(id_str);
-            return Ok(DataStorePopResult::Found(secret));
+            return Ok(SecretStorePopResult::Found(secret));
         }
 
         // Check if already accessed
         if self.accessed_secrets.lock().unwrap().contains(&id_str) {
-            return Ok(DataStorePopResult::AlreadyAccessed);
+            return Ok(SecretStorePopResult::AlreadyAccessed);
         }
 
-        Ok(DataStorePopResult::NotFound)
+        Ok(SecretStorePopResult::NotFound)
     }
 
     async fn put(
@@ -182,9 +182,9 @@ impl DataStore for MockDataStore {
         id: Uuid,
         data: String,
         expires_in: Duration,
-    ) -> Result<(), DataStoreError> {
+    ) -> Result<(), SecretStoreError> {
         if *self.should_fail.lock().unwrap() {
-            return Err(DataStoreError::InternalError("Mock failure".to_string()));
+            return Err(SecretStoreError::InternalError("Mock failure".to_string()));
         }
 
         // Record the put operation for testing verification
@@ -205,16 +205,16 @@ impl DataStore for MockDataStore {
         Ok(())
     }
 
-    async fn is_healthy(&self) -> Result<(), DataStoreError> {
+    async fn is_healthy(&self) -> Result<(), SecretStoreError> {
         if *self.should_fail.lock().unwrap() {
-            return Err(DataStoreError::InternalError("Mock failure".to_string()));
+            return Err(SecretStoreError::InternalError("Mock failure".to_string()));
         }
         Ok(())
     }
 
-    async fn active_secret_count(&self) -> Result<usize, DataStoreError> {
+    async fn active_secret_count(&self) -> Result<usize, SecretStoreError> {
         if *self.should_fail.lock().unwrap() {
-            return Err(DataStoreError::InternalError("Mock failure".to_string()));
+            return Err(SecretStoreError::InternalError("Mock failure".to_string()));
         }
         Ok(*self.secret_count.lock().unwrap())
     }
@@ -224,9 +224,9 @@ impl DataStore for MockDataStore {
         id: Uuid,
         restrictions: &SecretRestrictions,
         expires_in: Duration,
-    ) -> Result<(), DataStoreError> {
+    ) -> Result<(), SecretStoreError> {
         if *self.should_fail.lock().unwrap() {
-            return Err(DataStoreError::InternalError("Mock failure".to_string()));
+            return Err(SecretStoreError::InternalError("Mock failure".to_string()));
         }
 
         // Record the set_restrictions operation for testing verification
@@ -249,9 +249,9 @@ impl DataStore for MockDataStore {
     async fn get_restrictions(
         &self,
         id: Uuid,
-    ) -> Result<Option<SecretRestrictions>, DataStoreError> {
+    ) -> Result<Option<SecretRestrictions>, SecretStoreError> {
         if *self.should_fail.lock().unwrap() {
-            return Err(DataStoreError::InternalError("Mock failure".to_string()));
+            return Err(SecretStoreError::InternalError("Mock failure".to_string()));
         }
 
         // Retrieve the restrictions
