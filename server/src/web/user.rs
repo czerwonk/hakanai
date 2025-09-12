@@ -8,26 +8,9 @@ use actix_web::{Error, FromRequest, HttpRequest, error};
 use tracing::warn;
 
 use crate::token::TokenError;
+use crate::user_type::UserType;
 use crate::web::AppData;
 use crate::web::filters::is_request_from_whitelisted_ip;
-
-/// User type for authentication and tracing
-#[derive(Clone, Debug)]
-pub enum UserType {
-    Anonymous,
-    Authenticated,
-    Whitelisted,
-}
-
-impl std::fmt::Display for UserType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            UserType::Anonymous => write!(f, "anonymous"),
-            UserType::Authenticated => write!(f, "authenticated"),
-            UserType::Whitelisted => write!(f, "whitelisted"),
-        }
-    }
-}
 
 /// Represents a user in the system, either authenticated or anonymous
 #[derive(Clone, Debug)]

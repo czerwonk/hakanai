@@ -7,7 +7,7 @@ mod otel;
 mod secret;
 mod stats;
 mod token;
-mod user;
+mod user_type;
 mod web;
 
 use std::io::Result;

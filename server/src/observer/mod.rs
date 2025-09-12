@@ -14,7 +14,7 @@ use uuid::Uuid;
 
 use hakanai_lib::models::SecretRestrictions;
 
-use crate::user::UserType;
+use crate::user_type::UserType;
 
 pub use observer_manager::ObserverManager;
 pub use webhook_observer::WebhookObserver;

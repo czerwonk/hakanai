@@ -14,9 +14,9 @@ use hakanai_lib::models::{
 use super::app_data::AppData;
 use super::filters;
 use super::size_limited_json::SizeLimitedJson;
+use super::user::User;
 use crate::observer::SecretEventContext;
 use crate::secret::SecretStorePopResult;
-use crate::user::User;
 
 /// Configures the Actix Web services for the application.
 ///

@@ -4,6 +4,7 @@ mod app_data;
 pub mod filters;
 mod size_limit;
 mod size_limited_json;
+mod user;
 mod web_api;
 mod web_assets;
 mod web_routes;

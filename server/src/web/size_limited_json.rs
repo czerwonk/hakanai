@@ -9,7 +9,7 @@ use futures_util::StreamExt;
 use serde::de::DeserializeOwned;
 
 use super::size_limit;
-use crate::user::User;
+use super::user::User;
 
 /// Custom JSON extractor that enforces size limits based on user's upload limit
 ///
