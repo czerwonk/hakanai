@@ -7,7 +7,6 @@ mod metrics;
 mod observer;
 mod options;
 mod otel;
-mod redis_client;
 mod secret;
 mod size_limit;
 mod size_limited_json;
@@ -27,7 +26,7 @@ use tracing::{debug, info, warn};
 
 use crate::metrics::{EventMetrics, MetricsCollector};
 use crate::options::Args;
-use crate::redis_client::RedisClient;
+use crate::secret::RedisSecretStore;
 use crate::stats::RedisStatsStore;
 use crate::token::{RedisTokenStore, TokenManager, TokenStore};
 
@@ -61,7 +60,7 @@ async fn main() -> Result<()> {
         }
     };
 
-    let redis_client = RedisClient::new(redis_con.clone(), args.max_ttl);
+    let secret_store = RedisSecretStore::new(redis_con.clone(), args.max_ttl);
 
     let token_store = token::RedisTokenStore::new(redis_con.clone());
     let token_manager = token::TokenManager::new(token_store.clone());
@@ -93,7 +92,7 @@ async fn main() -> Result<()> {
     let mut options = web::WebServerOptions::new(args);
 
     if otel_handler.is_some() {
-        initialize_metrics(&redis_client, &token_store);
+        initialize_metrics(&secret_store, &token_store);
         options = options.with_event_metrics(EventMetrics::new());
     }
 
@@ -102,7 +101,7 @@ async fn main() -> Result<()> {
         options = options.with_stats_store(stats_store);
     }
 
-    let res = web::run_server(redis_client, token_manager, options).await;
+    let res = web::run_server(secret_store, token_manager, options).await;
 
     if let Some(handler) = otel_handler {
         handler.shutdown()
@@ -168,10 +167,10 @@ async fn initialize_admin_token<T: TokenStore>(
     Ok(())
 }
 
-fn initialize_metrics(redis_client: &RedisClient, redis_token_store: &RedisTokenStore) {
+fn initialize_metrics(redis_secret_store: &RedisSecretStore, redis_token_store: &RedisTokenStore) {
     info!("Initializing metrics collection with 30s interval");
     let token_store = Arc::new(redis_token_store.clone());
-    let secret_store = Arc::new(redis_client.clone());
+    let secret_store = Arc::new(redis_secret_store.clone());
     let collection_interval = Duration::from_secs(30); // Collect metrics every 30 seconds
 
     let collector = MetricsCollector::new();

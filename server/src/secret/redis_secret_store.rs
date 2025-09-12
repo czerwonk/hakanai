@@ -21,18 +21,18 @@ const RESTRICTIONS_PREFIX: &str = "restrictions:";
 /// This struct holds a `ConnectionManager` for interacting with the Redis
 /// server. It is designed to be cloneable and thread-safe.
 #[derive(Clone)]
-pub struct RedisClient {
+pub struct RedisSecretStore {
     con: ConnectionManager,
     max_ttl: Duration,
 }
 
-impl RedisClient {
+impl RedisSecretStore {
     pub fn new(con: ConnectionManager, max_ttl: Duration) -> Self {
         Self { con, max_ttl }
     }
 }
 
-impl RedisClient {
+impl RedisSecretStore {
     fn secret_key(&self, id: Uuid) -> String {
         format!("{SECRET_PREFIX}{id}")
     }
@@ -67,7 +67,7 @@ impl RedisClient {
 }
 
 #[async_trait]
-impl SecretStore for RedisClient {
+impl SecretStore for RedisSecretStore {
     #[instrument(skip(self), err)]
     async fn pop(&self, id: Uuid) -> Result<SecretStorePopResult, SecretStoreError> {
         let secret_key = self.secret_key(id);
