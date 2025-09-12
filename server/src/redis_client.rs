@@ -12,11 +12,8 @@ use hakanai_lib::models::SecretRestrictions;
 use hakanai_lib::utils::timestamp;
 
 use crate::data_store::{DataStore, DataStoreError, DataStorePopResult};
-use crate::token::{TokenData, TokenError, TokenStore};
 
-const ADMIN_TOKEN_KEY: &str = "admin_token";
 const SECRET_PREFIX: &str = "secret:";
-const TOKEN_PREFIX: &str = "token:";
 const ACCESSED_PREFIX: &str = "accessed:";
 const RESTRICTIONS_PREFIX: &str = "restrictions:";
 
@@ -42,10 +39,6 @@ impl RedisClient {
 
     fn accessed_key(&self, id: Uuid) -> String {
         format!("{ACCESSED_PREFIX}{id}")
-    }
-
-    fn token_key(&self, hash: &str) -> String {
-        format!("{TOKEN_PREFIX}{hash}")
     }
 
     fn restrictions_key(&self, id: Uuid) -> String {
@@ -154,67 +147,5 @@ impl DataStore for RedisClient {
             }
             None => Ok(None),
         }
-    }
-}
-
-#[async_trait]
-impl TokenStore for RedisClient {
-    #[instrument(skip(self), err)]
-    async fn get_token(&self, token_hash: &str) -> Result<Option<TokenData>, TokenError> {
-        let key = self.token_key(token_hash);
-        let value: Option<String> = self.con.clone().get(key).await?;
-
-        if let Some(data) = value {
-            let token_data = TokenData::deserialize(&data)?;
-            return Ok(Some(token_data));
-        }
-
-        Ok(None)
-    }
-
-    #[instrument(skip(self), err)]
-    async fn store_token(
-        &self,
-        token_hash: &str,
-        ttl: Duration,
-        token_data: TokenData,
-    ) -> Result<(), TokenError> {
-        let data = token_data.serialize()?;
-        let key = self.token_key(token_hash);
-        let _: () = self.con.clone().set_ex(key, data, ttl.as_secs()).await?;
-        Ok(())
-    }
-
-    #[instrument(skip(self), err)]
-    async fn clear_all_user_tokens(&self) -> Result<(), TokenError> {
-        let keys: Vec<String> = self.con.clone().keys(format!("{TOKEN_PREFIX}*")).await?;
-        if !keys.is_empty() {
-            let _: () = self.con.clone().del(keys).await?;
-        }
-        Ok(())
-    }
-
-    #[instrument(skip(self), err)]
-    async fn admin_token_exists(&self) -> Result<bool, TokenError> {
-        let exists: bool = self.con.clone().exists(ADMIN_TOKEN_KEY).await?;
-        Ok(exists)
-    }
-
-    #[instrument(skip(self), err)]
-    async fn get_admin_token(&self) -> Result<Option<String>, TokenError> {
-        let value: Option<String> = self.con.clone().get(ADMIN_TOKEN_KEY).await?;
-        Ok(value)
-    }
-
-    #[instrument(skip(self), err)]
-    async fn store_admin_token(&self, token_hash: &str) -> Result<(), TokenError> {
-        let _: () = self.con.clone().set(ADMIN_TOKEN_KEY, token_hash).await?;
-        Ok(())
-    }
-
-    #[instrument(skip(self), err)]
-    async fn user_token_count(&self) -> Result<usize, TokenError> {
-        let keys: Vec<String> = self.con.clone().keys(format!("{TOKEN_PREFIX}*")).await?;
-        Ok(keys.len())
     }
 }

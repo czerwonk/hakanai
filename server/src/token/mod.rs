@@ -18,7 +18,7 @@ mod mock_token_manager;
 #[cfg(test)]
 mod mock_token_store;
 
-//pub use redis_token_store::RedisTokenStore;
+pub use redis_token_store::RedisTokenStore;
 pub use token_creator::TokenCreator;
 pub use token_data::TokenData;
 pub use token_error::TokenError;
