@@ -12,8 +12,8 @@ use tracing::info;
 
 use hakanai_lib::models::{CreateTokenRequest, CreateTokenResponse};
 
-use crate::admin_user::AdminUser;
-use crate::app_data::AppData;
+use super::AppData;
+use super::admin_user::AdminUser;
 use crate::token::TokenData;
 
 /// Configure admin API routes
@@ -67,8 +67,8 @@ mod tests {
     use actix_web::{App, test, web};
     use std::time::Duration;
 
-    use crate::app_data::{AnonymousOptions, AppData};
-    use crate::test_utils::MockTokenManager;
+    use crate::token::MockTokenManager;
+    use crate::web::app_data::{AnonymousOptions, AppData};
 
     fn create_test_app_data(token_manager: MockTokenManager) -> AppData {
         // Configure with localhost trusted IP for tests

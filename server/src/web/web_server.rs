@@ -10,23 +10,23 @@ use opentelemetry_instrumentation_actix_web::{RequestMetrics, RequestTracing};
 
 use tracing::{error, info, instrument};
 
-use crate::admin_api;
-use crate::app_data::{AnonymousOptions, AppData};
-use crate::data_store::DataStore;
-use crate::metrics::EventMetrics;
-use crate::metrics_observer::MetricsObserver;
-use crate::observer::ObserverManager;
+use super::admin_api;
+use super::app_data::{AnonymousOptions, AppData};
+use super::size_limit;
+use super::web_api;
+use super::web_assets::AssetManager;
+use super::web_routes;
+use crate::metrics::{EventMetrics, MetricsObserver};
+use crate::observer::{ObserverManager, WebhookObserver};
 use crate::options::{Args, WebhookArgs};
-use crate::size_limit;
+use crate::secret::SecretStore;
+use crate::stats::{RedisStatsStore, StatsObserver};
 use crate::token::{TokenCreator, TokenValidator};
-use crate::web_api;
-use crate::web_assets::AssetManager;
-use crate::web_routes;
-use crate::webhook_observer::WebhookObserver;
 
 pub struct WebServerOptions {
     args: Args,
     event_metrics: Option<EventMetrics>,
+    stats_store: Option<RedisStatsStore>,
 }
 
 impl WebServerOptions {
@@ -34,6 +34,7 @@ impl WebServerOptions {
         Self {
             args,
             event_metrics: None,
+            stats_store: None,
         }
     }
 
@@ -41,12 +42,21 @@ impl WebServerOptions {
         self.event_metrics = Some(metrics);
         self
     }
+
+    pub fn with_stats_store(mut self, stats_store: RedisStatsStore) -> Self {
+        self.stats_store = Some(stats_store);
+        self
+    }
 }
 
 /// Starts the web server with the provided data store and tokens.
-pub async fn run<D, T>(data_store: D, token_manager: T, options: WebServerOptions) -> Result<()>
+pub async fn run_server<D, T>(
+    secret_store: D,
+    token_manager: T,
+    options: WebServerOptions,
+) -> Result<()>
 where
-    D: DataStore + Clone + 'static,
+    D: SecretStore + Clone + 'static,
     T: TokenValidator + TokenCreator + Clone + 'static,
 {
     let args = options.args;
@@ -71,10 +81,17 @@ where
             let metrics_observer = MetricsObserver::new(event_metrics.clone());
             observer_manager.register_observer(Box::new(metrics_observer));
         }
+        if let Some(stats_store) = &options.stats_store {
+            let mut stats_observer = StatsObserver::new(stats_store.clone());
+            if let Some(event_metrics) = options.event_metrics.clone() {
+                stats_observer = stats_observer.with_event_metrics(event_metrics);
+            }
+            observer_manager.register_observer(Box::new(stats_observer));
+        }
 
         let asset_manager = AssetManager::new(args.custom_assets_dir.clone());
         let app_data = AppData {
-            data_store: Box::new(data_store.clone()),
+            secret_store: Box::new(secret_store.clone()),
             token_validator: Box::new(token_manager.clone()),
             token_creator: Box::new(token_manager.clone()),
             max_ttl: args.max_ttl,
@@ -146,7 +163,7 @@ fn build_impressum_html(args: &Args) -> Result<Option<String>> {
                 "Building impressum HTML ({} bytes of content)",
                 content.len()
             );
-            let template = include_str!("../includes/impressum.html");
+            let template = include_str!("../../includes/impressum.html");
             Some(template.replace(
                 r#"<div id="impressum-content-placeholder"></div>"#,
                 &content,
@@ -163,7 +180,7 @@ fn build_privacy_html(args: &Args) -> Result<Option<String>> {
                 "Building privacy policy HTML ({} bytes of content)",
                 content.len()
             );
-            let template = include_str!("../includes/privacy.html");
+            let template = include_str!("../../includes/privacy.html");
             Some(template.replace(r#"<div id="privacy-content-placeholder"></div>"#, &content))
         }
         None => None,
@@ -229,7 +246,7 @@ async fn get_secret_short(
 }
 
 async fn healthy(app_data: web::Data<AppData>) -> impl Responder {
-    let res = app_data.data_store.is_healthy().await;
+    let res = app_data.secret_store.is_healthy().await;
 
     match res {
         Ok(()) => HttpResponse::Ok().body("healthy"),

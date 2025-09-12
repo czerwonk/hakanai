@@ -1,41 +1,32 @@
 // SPDX-License-Identifier: Apache-2.0
 
-mod admin_api;
-mod admin_user;
-mod app_data;
-mod data_store;
-mod filters;
 mod metrics;
-mod metrics_observer;
 mod observer;
 mod options;
 mod otel;
-mod redis_client;
-mod size_limit;
-mod size_limited_json;
+mod secret;
+mod stats;
 mod token;
-mod user;
-mod web_api;
-mod web_assets;
-mod web_routes;
-mod web_server;
-mod webhook_observer;
+mod user_type;
+mod web;
 
 use std::io::Result;
 use std::sync::Arc;
 use std::time::Duration;
 
 use clap::Parser;
-use tracing::{info, warn};
+use redis::aio::ConnectionManager;
+use tokio::time::timeout;
+use tracing::{debug, info, warn};
 
-use crate::metrics::EventMetrics;
+use crate::metrics::{EventMetrics, MetricsCollector};
 use crate::options::Args;
-use crate::redis_client::RedisClient;
-use crate::token::TokenManager;
-use crate::web_server::WebServerOptions;
+use crate::secret::RedisSecretStore;
+use crate::stats::RedisStatsStore;
+use crate::token::{RedisTokenStore, TokenManager, TokenStore};
 
-#[cfg(test)]
-mod test_utils;
+/// Connection timeout for Redis operations during startup
+const REDIS_CONNECTION_TIMEOUT: Duration = Duration::from_secs(10);
 
 #[actix_web::main]
 async fn main() -> Result<()> {
@@ -55,9 +46,8 @@ async fn main() -> Result<()> {
 
     info!("Hakanai Server (v{})", env!("CARGO_PKG_VERSION"));
 
-    info!("Connecting to Redis");
-    let redis_client = match RedisClient::new(&args.redis_dsn, args.max_ttl).await {
-        Ok(store) => store,
+    let redis_con = match connect_to_redis(&args.redis_dsn).await {
+        Ok(con) => con,
         Err(e) => {
             eprintln!("Failed to connect to Redis: {e}");
             eprintln!("Please ensure Redis is running and accessible",);
@@ -65,7 +55,10 @@ async fn main() -> Result<()> {
         }
     };
 
-    let token_manager = token::TokenManager::new(redis_client.clone());
+    let secret_store = RedisSecretStore::new(redis_con.clone(), args.max_ttl);
+
+    let token_store = token::RedisTokenStore::new(redis_con.clone());
+    let token_manager = token::TokenManager::new(token_store.clone());
     if args.reset_admin_token
         && let Err(e) = reset_admin_token(&token_manager).await
     {
@@ -89,14 +82,21 @@ async fn main() -> Result<()> {
         return Err(std::io::Error::other(e));
     }
 
-    let mut options = WebServerOptions::new(args);
+    let stats_enabled = args.stats_enabled;
+    let stats_ttl = args.stats_ttl;
+    let mut options = web::WebServerOptions::new(args);
 
     if otel_handler.is_some() {
-        initialize_metrics(&redis_client);
+        initialize_metrics(&secret_store, &token_store);
         options = options.with_event_metrics(EventMetrics::new());
     }
 
-    let res = web_server::run(redis_client, token_manager, options).await;
+    if stats_enabled {
+        let stats_store = RedisStatsStore::new(redis_con.clone(), stats_ttl);
+        options = options.with_stats_store(stats_store);
+    }
+
+    let res = web::run_server(secret_store, token_manager, options).await;
 
     if let Some(handler) = otel_handler {
         handler.shutdown()
@@ -105,20 +105,34 @@ async fn main() -> Result<()> {
     res
 }
 
-async fn reset_user_tokens(token_manager: &TokenManager<RedisClient>) -> anyhow::Result<()> {
+async fn connect_to_redis(dsn: &str) -> anyhow::Result<ConnectionManager> {
+    info!("Connecting to Redis");
+
+    let client = redis::Client::open(dsn)?;
+    let con = timeout(
+        REDIS_CONNECTION_TIMEOUT,
+        redis::aio::ConnectionManager::new(client),
+    )
+    .await
+    .map_err(|_| anyhow::anyhow!("Timed out connecting to Redis"))??;
+
+    Ok(con)
+}
+
+async fn reset_user_tokens<T: TokenStore>(token_manager: &TokenManager<T>) -> anyhow::Result<()> {
     let default_token = token_manager.reset_user_tokens().await?;
     info!("Default user token: {default_token}");
     Ok(())
 }
 
-async fn reset_admin_token(token_manager: &TokenManager<RedisClient>) -> anyhow::Result<()> {
+async fn reset_admin_token<T: TokenStore>(token_manager: &TokenManager<T>) -> anyhow::Result<()> {
     let admin_token = token_manager.create_admin_token().await?;
     info!("Admin token: {admin_token}");
     Ok(())
 }
 
-async fn initialize_tokens(
-    token_manager: &TokenManager<RedisClient>,
+async fn initialize_tokens<T: TokenStore>(
+    token_manager: &TokenManager<T>,
     args: &Args,
 ) -> anyhow::Result<()> {
     if args.enable_admin_token {
@@ -128,7 +142,9 @@ async fn initialize_tokens(
     initialize_user_tokens(token_manager).await
 }
 
-async fn initialize_user_tokens(token_manager: &TokenManager<RedisClient>) -> anyhow::Result<()> {
+async fn initialize_user_tokens<T: TokenStore>(
+    token_manager: &TokenManager<T>,
+) -> anyhow::Result<()> {
     if let Some(default_token) = token_manager.create_default_token_if_none().await? {
         info!("Default user token: {default_token}");
     }
@@ -136,7 +152,9 @@ async fn initialize_user_tokens(token_manager: &TokenManager<RedisClient>) -> an
     Ok(())
 }
 
-async fn initialize_admin_token(token_manager: &TokenManager<RedisClient>) -> anyhow::Result<()> {
+async fn initialize_admin_token<T: TokenStore>(
+    token_manager: &TokenManager<T>,
+) -> anyhow::Result<()> {
     if let Some(admin_token) = token_manager.create_admin_token_if_none().await? {
         info!("Admin token: {admin_token}");
     };
@@ -144,15 +162,17 @@ async fn initialize_admin_token(token_manager: &TokenManager<RedisClient>) -> an
     Ok(())
 }
 
-fn initialize_metrics(redis_client: &RedisClient) {
+fn initialize_metrics(redis_secret_store: &RedisSecretStore, redis_token_store: &RedisTokenStore) {
     info!("Initializing metrics collection with 30s interval");
-    let redis_token_store = Arc::new(redis_client.clone());
-    let redis_data_store = Arc::new(redis_client.clone());
+    let token_store = Arc::new(redis_token_store.clone());
+    let secret_store = Arc::new(redis_secret_store.clone());
     let collection_interval = Duration::from_secs(30); // Collect metrics every 30 seconds
 
-    crate::metrics::init_metrics_collection(
-        redis_token_store,
-        redis_data_store,
-        collection_interval,
+    let collector = MetricsCollector::new();
+    collector.start_collection(token_store, secret_store, collection_interval);
+
+    debug!(
+        "Started metrics collection with interval: {:?}",
+        collection_interval
     );
 }

@@ -6,12 +6,13 @@
 //! for secret creation and retrieval events
 
 use async_trait::async_trait;
-use hakanai_lib::models::SecretRestrictions;
 use opentelemetry::KeyValue;
 use tracing::instrument;
 use uuid::Uuid;
 
-use crate::metrics::EventMetrics;
+use hakanai_lib::models::SecretRestrictions;
+
+use super::event_metrics::EventMetrics;
 use crate::observer::{SecretEventContext, SecretObserver};
 
 /// Observer that records OpenTelemetry metrics for secret events.

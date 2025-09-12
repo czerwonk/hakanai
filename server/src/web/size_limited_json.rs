@@ -8,8 +8,8 @@ use actix_web::{Error, FromRequest, HttpRequest, error};
 use futures_util::StreamExt;
 use serde::de::DeserializeOwned;
 
-use crate::size_limit;
-use crate::user::User;
+use super::size_limit;
+use super::user::User;
 
 /// Custom JSON extractor that enforces size limits based on user's upload limit
 ///

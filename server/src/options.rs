@@ -67,6 +67,25 @@ pub struct Args {
     pub redis_dsn: String,
 
     #[arg(
+        long,
+        value_name = "STATS_ENABLED",
+        env = "HAKANAI_STATS_ENABLED",
+        help = "Enable or disable statistics collection. Defaults to true.",
+        default_value = "true"
+    )]
+    pub stats_enabled: bool,
+
+    #[arg(
+        long,
+        value_name = "STATS_TTL",
+        env = "HAKANAI_STATS_TTL",
+        default_value = "30d",
+        help = "Time to live for stats data in Redis (e.g., 30d, 720h, 2592000s). Defaults to 30 days.",
+        value_parser = humantime::parse_duration
+    )]
+    pub stats_ttl: Duration,
+
+    #[arg(
         short,
         long,
         value_name = "UPLOAD_SIZE_LIMIT",
@@ -249,10 +268,10 @@ impl Args {
 
     pub fn webhook_args(&self) -> Option<WebhookArgs> {
         self.webhook_url.as_ref().map(|url| WebhookArgs {
-                url: url.clone(),
-                token: self.webhook_token.clone(),
-                headers: self.webhook_headers.clone(),
-            })
+            url: url.clone(),
+            token: self.webhook_token.clone(),
+            headers: self.webhook_headers.clone(),
+        })
     }
 }
 
@@ -284,6 +303,8 @@ mod tests {
             country_header: None,
             asn_header: None,
             custom_assets_dir: None,
+            stats_enabled: true,
+            stats_ttl: Duration::from_secs(3600),
         }
     }
 

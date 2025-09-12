@@ -2,8 +2,8 @@
 
 use std::time;
 
-use crate::data_store::DataStore;
 use crate::observer::ObserverManager;
+use crate::secret::SecretStore;
 use crate::token::{TokenCreator, TokenValidator};
 
 #[derive(Clone, Debug)]
@@ -17,7 +17,7 @@ pub struct AnonymousOptions {
 /// AppData stores the application's shared state.
 pub struct AppData {
     /// The data store for persisting application data.
-    pub data_store: Box<dyn DataStore>,
+    pub secret_store: Box<dyn SecretStore>,
 
     /// The token validator for authentication.
     pub token_validator: Box<dyn TokenValidator>,
@@ -62,10 +62,11 @@ pub struct AppData {
 #[cfg(test)]
 impl Default for AppData {
     fn default() -> Self {
-        use crate::test_utils::{MockDataStore, MockTokenManager};
+        use crate::secret::MockSecretStore;
+        use crate::token::MockTokenManager;
 
         Self {
-            data_store: Box::new(MockDataStore::new()),
+            secret_store: Box::new(MockSecretStore::new()),
             token_validator: Box::new(MockTokenManager::new()),
             token_creator: Box::new(MockTokenManager::new()),
             max_ttl: time::Duration::from_secs(86400), // 24 hours
@@ -89,8 +90,8 @@ impl Default for AppData {
 impl AppData {
     /// Builder pattern functions for testing
     #[cfg(test)]
-    pub fn with_data_store(mut self, data_store: Box<dyn DataStore>) -> Self {
-        self.data_store = data_store;
+    pub fn with_secret_store(mut self, secret_store: Box<dyn SecretStore>) -> Self {
+        self.secret_store = secret_store;
         self
     }
 

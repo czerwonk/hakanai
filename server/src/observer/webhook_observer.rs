@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use tracing::{instrument, warn};
 use uuid::Uuid;
 
-use crate::observer::{SecretEventContext, SecretObserver};
+use super::{SecretEventContext, SecretObserver};
 
 /// Webhook action types.
 #[derive(Serialize, Deserialize, Debug)]
