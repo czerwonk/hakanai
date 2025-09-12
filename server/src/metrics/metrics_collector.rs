@@ -126,7 +126,8 @@ impl Default for MetricsCollector {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_utils::{MockDataStore, MockTokenStore};
+    use crate::test_utils::MockDataStore;
+    use crate::token::MockTokenStore;
 
     #[tokio::test]
     async fn test_metrics_collector_creation() {

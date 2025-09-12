@@ -62,7 +62,8 @@ pub struct AppData {
 #[cfg(test)]
 impl Default for AppData {
     fn default() -> Self {
-        use crate::test_utils::{MockDataStore, MockTokenManager};
+        use crate::test_utils::MockDataStore;
+        use crate::token::MockTokenManager;
 
         Self {
             data_store: Box::new(MockDataStore::new()),

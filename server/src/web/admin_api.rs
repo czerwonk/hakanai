@@ -68,7 +68,7 @@ mod tests {
     use std::time::Duration;
 
     use crate::app_data::{AnonymousOptions, AppData};
-    use crate::test_utils::MockTokenManager;
+    use crate::token::MockTokenManager;
 
     fn create_test_app_data(token_manager: MockTokenManager) -> AppData {
         // Configure with localhost trusted IP for tests
