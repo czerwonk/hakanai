@@ -8,8 +8,6 @@ mod observer;
 mod options;
 mod otel;
 mod secret;
-mod size_limit;
-mod size_limited_json;
 mod stats;
 mod token;
 mod user;

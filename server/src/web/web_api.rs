@@ -11,11 +11,11 @@ use hakanai_lib::models::{
     PostSecretRequest, PostSecretResponse, SecretRestrictions, restrictions,
 };
 
+use super::size_limited_json::SizeLimitedJson;
 use crate::app_data::AppData;
 use crate::filters;
 use crate::observer::SecretEventContext;
 use crate::secret::SecretStorePopResult;
-use crate::size_limited_json::SizeLimitedJson;
 use crate::user::User;
 
 /// Configures the Actix Web services for the application.

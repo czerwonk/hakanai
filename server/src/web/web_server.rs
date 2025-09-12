@@ -11,6 +11,7 @@ use opentelemetry_instrumentation_actix_web::{RequestMetrics, RequestTracing};
 use tracing::{error, info, instrument};
 
 use super::admin_api;
+use super::size_limit;
 use super::web_api;
 use super::web_assets::AssetManager;
 use super::web_routes;
@@ -19,7 +20,6 @@ use crate::metrics::{EventMetrics, MetricsObserver};
 use crate::observer::{ObserverManager, WebhookObserver};
 use crate::options::{Args, WebhookArgs};
 use crate::secret::SecretStore;
-use crate::size_limit;
 use crate::stats::{RedisStatsStore, StatsObserver};
 use crate::token::{TokenCreator, TokenValidator};
 
