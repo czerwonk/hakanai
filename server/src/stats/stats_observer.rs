@@ -56,9 +56,6 @@ impl SecretObserver for StatsObserver {
         let store = self.store.clone();
         let event_metrics_opt = self.event_metrics.clone();
         tokio::spawn(async move {
-            if let Err(e) = store.update_retrieved_at(secret_id).await {
-                error!("Failed to update stats with retrieved_at for secret {secret_id}: {e}");
-            }
             match store.update_retrieved_at(secret_id).await {
                 Ok(Some(stat)) => {
                     if let Some(metrics) = event_metrics_opt
