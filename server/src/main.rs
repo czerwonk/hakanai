@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 
-mod admin_api;
 mod admin_user;
 mod app_data;
 mod data_store;
@@ -16,10 +15,7 @@ mod size_limited_json;
 mod stats;
 mod token;
 mod user;
-mod web_api;
-mod web_assets;
-mod web_routes;
-mod web_server;
+mod web;
 
 use std::io::Result;
 use std::sync::Arc;
@@ -35,7 +31,6 @@ use crate::options::Args;
 use crate::redis_client::RedisClient;
 use crate::stats::StatsStore;
 use crate::token::TokenManager;
-use crate::web_server::WebServerOptions;
 
 #[cfg(test)]
 mod test_utils;
@@ -98,7 +93,7 @@ async fn main() -> Result<()> {
 
     let stats_enabled = args.stats_enabled;
     let stats_ttl = args.stats_ttl;
-    let mut options = WebServerOptions::new(args);
+    let mut options = web::WebServerOptions::new(args);
 
     if otel_handler.is_some() {
         initialize_metrics(&redis_client);
@@ -110,7 +105,7 @@ async fn main() -> Result<()> {
         options = options.with_stats_store(stats_store);
     }
 
-    let res = web_server::run(redis_client, token_manager, options).await;
+    let res = web::run_server(redis_client, token_manager, options).await;
 
     if let Some(handler) = otel_handler {
         handler.shutdown()

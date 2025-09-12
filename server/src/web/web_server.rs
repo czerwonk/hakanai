@@ -10,7 +10,10 @@ use opentelemetry_instrumentation_actix_web::{RequestMetrics, RequestTracing};
 
 use tracing::{error, info, instrument};
 
-use crate::admin_api;
+use super::admin_api;
+use super::web_api;
+use super::web_assets::AssetManager;
+use super::web_routes;
 use crate::app_data::{AnonymousOptions, AppData};
 use crate::data_store::DataStore;
 use crate::metrics::EventMetrics;
@@ -20,9 +23,6 @@ use crate::options::{Args, WebhookArgs};
 use crate::size_limit;
 use crate::stats::{StatsObserver, StatsStore};
 use crate::token::{TokenCreator, TokenValidator};
-use crate::web_api;
-use crate::web_assets::AssetManager;
-use crate::web_routes;
 
 pub struct WebServerOptions {
     args: Args,
@@ -51,7 +51,11 @@ impl WebServerOptions {
 }
 
 /// Starts the web server with the provided data store and tokens.
-pub async fn run<D, T>(data_store: D, token_manager: T, options: WebServerOptions) -> Result<()>
+pub async fn run_server<D, T>(
+    data_store: D,
+    token_manager: T,
+    options: WebServerOptions,
+) -> Result<()>
 where
     D: DataStore + Clone + 'static,
     T: TokenValidator + TokenCreator + Clone + 'static,
@@ -157,7 +161,7 @@ fn build_impressum_html(args: &Args) -> Result<Option<String>> {
                 "Building impressum HTML ({} bytes of content)",
                 content.len()
             );
-            let template = include_str!("../includes/impressum.html");
+            let template = include_str!("../../includes/impressum.html");
             Some(template.replace(
                 r#"<div id="impressum-content-placeholder"></div>"#,
                 &content,
@@ -174,7 +178,7 @@ fn build_privacy_html(args: &Args) -> Result<Option<String>> {
                 "Building privacy policy HTML ({} bytes of content)",
                 content.len()
             );
-            let template = include_str!("../includes/privacy.html");
+            let template = include_str!("../../includes/privacy.html");
             Some(template.replace(r#"<div id="privacy-content-placeholder"></div>"#, &content))
         }
         None => None,

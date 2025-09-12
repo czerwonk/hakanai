@@ -4,8 +4,8 @@ use actix_web::http::header;
 use actix_web::{HttpRequest, HttpResponse, Responder, web};
 use tracing::error;
 
+use super::web_assets::AssetManager;
 use crate::filters;
-use crate::web_assets::AssetManager;
 
 const DEFAULT_CACHE_MAX_AGE: u64 = 604800; // 7 days
 const VOLATILE_CACHE_MAX_AGE: u64 = 86400; // 1 day
@@ -54,7 +54,7 @@ fn serve_with_caching_header(content: &[u8], content_type: &str, max_age: u64) -
 /// Serves the HTML page for getting a secret
 pub async fn serve_get_secret_html() -> HttpResponse {
     serve_with_caching_header(
-        include_bytes!("../includes/get-secret.html"),
+        include_bytes!("../../includes/get-secret.html"),
         "text/html",
         HIGHLY_VOLATILE_CACHE_MAX_AGE,
     )
@@ -62,7 +62,7 @@ pub async fn serve_get_secret_html() -> HttpResponse {
 
 async fn serve_create_secret_html() -> HttpResponse {
     serve_with_caching_header(
-        include_bytes!("../includes/create-secret.html"),
+        include_bytes!("../../includes/create-secret.html"),
         "text/html",
         HIGHLY_VOLATILE_CACHE_MAX_AGE,
     )
@@ -70,7 +70,7 @@ async fn serve_create_secret_html() -> HttpResponse {
 
 async fn serve_js_client() -> impl Responder {
     serve_with_caching_header(
-        include_bytes!("../includes/hakanai-client.js"),
+        include_bytes!("../../includes/hakanai-client.js"),
         "application/javascript",
         VOLATILE_CACHE_MAX_AGE,
     )
@@ -78,7 +78,7 @@ async fn serve_js_client() -> impl Responder {
 
 async fn serve_css(asset_manager: web::Data<AssetManager>) -> impl Responder {
     let asset_res = asset_manager
-        .get_embedded_asset_append_custom("style.css", include_bytes!("../includes/style.css"))
+        .get_embedded_asset_append_custom("style.css", include_bytes!("../../includes/style.css"))
         .await;
 
     match asset_res {
@@ -92,7 +92,7 @@ async fn serve_css(asset_manager: web::Data<AssetManager>) -> impl Responder {
 
 async fn serve_banner(asset_manager: web::Data<AssetManager>) -> impl Responder {
     let asset_res = asset_manager
-        .get_embedded_asset_or_custom("banner.svg", include_bytes!("../../banner.svg"))
+        .get_embedded_asset_or_custom("banner.svg", include_bytes!("../../../banner.svg"))
         .await;
 
     match asset_res {
@@ -106,7 +106,7 @@ async fn serve_banner(asset_manager: web::Data<AssetManager>) -> impl Responder 
 
 async fn serve_logo(asset_manager: web::Data<AssetManager>) -> impl Responder {
     let asset_res = asset_manager
-        .get_embedded_asset_or_custom("logo.svg", include_bytes!("../../logo.svg"))
+        .get_embedded_asset_or_custom("logo.svg", include_bytes!("../../../logo.svg"))
         .await;
 
     match asset_res {
@@ -120,7 +120,7 @@ async fn serve_logo(asset_manager: web::Data<AssetManager>) -> impl Responder {
 
 async fn serve_icon(asset_manager: web::Data<AssetManager>) -> impl Responder {
     let asset_res = asset_manager
-        .get_embedded_asset_or_custom("icon.svg", include_bytes!("../../icon.svg"))
+        .get_embedded_asset_or_custom("icon.svg", include_bytes!("../../../icon.svg"))
         .await;
 
     match asset_res {
@@ -134,7 +134,7 @@ async fn serve_icon(asset_manager: web::Data<AssetManager>) -> impl Responder {
 
 async fn serve_get_secret_js() -> impl Responder {
     serve_with_caching_header(
-        include_bytes!("../includes/get-secret.js"),
+        include_bytes!("../../includes/get-secret.js"),
         "application/javascript",
         VOLATILE_CACHE_MAX_AGE,
     )
@@ -142,7 +142,7 @@ async fn serve_get_secret_js() -> impl Responder {
 
 async fn serve_create_secret_js() -> impl Responder {
     serve_with_caching_header(
-        include_bytes!("../includes/create-secret.js"),
+        include_bytes!("../../includes/create-secret.js"),
         "application/javascript",
         VOLATILE_CACHE_MAX_AGE,
     )
@@ -150,7 +150,7 @@ async fn serve_create_secret_js() -> impl Responder {
 
 async fn serve_docs_html() -> impl Responder {
     serve_with_caching_header(
-        include_str!("../includes/docs.html").as_bytes(),
+        include_str!("../../includes/docs.html").as_bytes(),
         "text/html",
         VOLATILE_CACHE_MAX_AGE,
     )
@@ -158,7 +158,7 @@ async fn serve_docs_html() -> impl Responder {
 
 async fn serve_openapi_yaml() -> impl Responder {
     serve_with_caching_header(
-        include_str!("../includes/openapi.yaml").as_bytes(),
+        include_str!("../../includes/openapi.yaml").as_bytes(),
         "application/yaml",
         DEFAULT_CACHE_MAX_AGE,
     )
@@ -166,7 +166,7 @@ async fn serve_openapi_yaml() -> impl Responder {
 
 async fn serve_index() -> HttpResponse {
     serve_with_caching_header(
-        include_bytes!("../includes/index.html"),
+        include_bytes!("../../includes/index.html"),
         "text/html",
         VOLATILE_CACHE_MAX_AGE,
     )
@@ -174,7 +174,7 @@ async fn serve_index() -> HttpResponse {
 
 async fn serve_manifest() -> impl Responder {
     serve_with_caching_header(
-        include_bytes!("../includes/manifest.json"),
+        include_bytes!("../../includes/manifest.json"),
         "application/manifest+json",
         DEFAULT_CACHE_MAX_AGE,
     )
@@ -182,7 +182,7 @@ async fn serve_manifest() -> impl Responder {
 
 async fn serve_robots_txt() -> impl Responder {
     serve_with_caching_header(
-        include_bytes!("../includes/robots.txt"),
+        include_bytes!("../../includes/robots.txt"),
         "text/plain",
         DEFAULT_CACHE_MAX_AGE,
     )
@@ -257,7 +257,7 @@ async fn serve_config(
 
 async fn serve_share_html() -> impl Responder {
     serve_with_caching_header(
-        include_bytes!("../includes/share.html"),
+        include_bytes!("../../includes/share.html"),
         "text/html",
         HIGHLY_VOLATILE_CACHE_MAX_AGE,
     )
@@ -265,7 +265,7 @@ async fn serve_share_html() -> impl Responder {
 
 async fn serve_share_js() -> impl Responder {
     serve_with_caching_header(
-        include_bytes!("../includes/share.js"),
+        include_bytes!("../../includes/share.js"),
         "application/javascript",
         VOLATILE_CACHE_MAX_AGE,
     )
@@ -273,7 +273,7 @@ async fn serve_share_js() -> impl Responder {
 
 async fn serve_shortcut() -> impl Responder {
     serve_with_caching_header(
-        include_bytes!("../../share.shortcut"),
+        include_bytes!("../../../share.shortcut"),
         "application/octet-stream",
         DEFAULT_CACHE_MAX_AGE,
     )
@@ -281,7 +281,7 @@ async fn serve_shortcut() -> impl Responder {
 
 async fn serve_common_js() -> impl Responder {
     serve_with_caching_header(
-        include_bytes!("../includes/common.js"),
+        include_bytes!("../../includes/common.js"),
         "application/javascript",
         VOLATILE_CACHE_MAX_AGE,
     )
@@ -289,7 +289,7 @@ async fn serve_common_js() -> impl Responder {
 
 async fn serve_wasm_js() -> impl Responder {
     serve_with_caching_header(
-        include_bytes!("../includes/hakanai_wasm.js"),
+        include_bytes!("../../includes/hakanai_wasm.js"),
         "application/javascript",
         HIGHLY_VOLATILE_CACHE_MAX_AGE,
     )
@@ -297,7 +297,7 @@ async fn serve_wasm_js() -> impl Responder {
 
 async fn serve_wasm_binary() -> impl Responder {
     serve_with_caching_header(
-        include_bytes!("../includes/hakanai_wasm_bg.wasm"),
+        include_bytes!("../../includes/hakanai_wasm_bg.wasm"),
         "application/wasm",
         HIGHLY_VOLATILE_CACHE_MAX_AGE,
     )
