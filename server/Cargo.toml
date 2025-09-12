@@ -21,7 +21,7 @@ base64 = "0.22.1"
 clap = { version = "4.5.42", features = ["derive", "env"] }
 futures-util = "0.3"
 hakanai-lib = { workspace = true, features = ["minimal"] }
-humantime = "2.2.0"
+humantime = "2.3.0"
 ipnet = "2.11.0"
 opentelemetry = "0.30.0"
 opentelemetry-appender-tracing = "0.30.1"
