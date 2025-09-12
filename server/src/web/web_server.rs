@@ -82,7 +82,10 @@ where
             observer_manager.register_observer(Box::new(metrics_observer));
         }
         if let Some(stats_store) = &options.stats_store {
-            let stats_observer = StatsObserver::new(stats_store.clone());
+            let mut stats_observer = StatsObserver::new(stats_store.clone());
+            if let Some(event_metrics) = options.event_metrics.clone() {
+                stats_observer = stats_observer.with_event_metrics(event_metrics);
+            }
             observer_manager.register_observer(Box::new(stats_observer));
         }
 

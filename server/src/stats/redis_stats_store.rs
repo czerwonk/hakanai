@@ -41,7 +41,7 @@ impl RedisStatsStore {
     }
 
     /// Update the `retrieved_at` field of the stats for the given secret ID.
-    pub async fn update_retrieved_at(&self, secret_id: Uuid) -> Result<()> {
+    pub async fn update_retrieved_at(&self, secret_id: Uuid) -> Result<Option<SecretStats>> {
         if let Some(mut stat) = self.retrieve_stats(secret_id).await? {
             let retrieved_at = std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
@@ -49,11 +49,13 @@ impl RedisStatsStore {
                 .as_secs();
             stat.retrieved_at = Some(retrieved_at);
             self.store_stats(secret_id, &stat).await?;
+            return Ok(Some(stat));
         }
 
-        Ok(())
+        Ok(None)
     }
 
+    /// Retrieve the stats for the given secret ID.
     async fn retrieve_stats(&self, secret_id: Uuid) -> Result<Option<SecretStats>> {
         let key = Self::key(secret_id);
         let value: Option<String> = self.con.clone().get(key).await?;

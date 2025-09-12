@@ -12,17 +12,29 @@ use uuid::Uuid;
 
 use super::SecretStats;
 use super::redis_stats_store::RedisStatsStore;
-use crate::observer::{SecretEventContext, SecretObserver};
+use crate::{
+    metrics::EventMetrics,
+    observer::{SecretEventContext, SecretObserver},
+};
 
 /// Observer that records per secret statistics.
 pub struct StatsObserver {
     store: RedisStatsStore,
+    event_metrics: Option<EventMetrics>,
 }
 
 impl StatsObserver {
     /// Create a new stats observer with a reference to the stats store.
     pub fn new(store: RedisStatsStore) -> Self {
-        Self { store }
+        Self {
+            store,
+            event_metrics: None,
+        }
+    }
+
+    pub fn with_event_metrics(mut self, metrics: EventMetrics) -> Self {
+        self.event_metrics = Some(metrics);
+        self
     }
 }
 
@@ -42,9 +54,23 @@ impl SecretObserver for StatsObserver {
     #[instrument(skip(self, _context))]
     async fn on_secret_retrieved(&self, secret_id: Uuid, _context: &SecretEventContext) {
         let store = self.store.clone();
+        let event_metrics_opt = self.event_metrics.clone();
         tokio::spawn(async move {
             if let Err(e) = store.update_retrieved_at(secret_id).await {
                 error!("Failed to update stats with retrieved_at for secret {secret_id}: {e}");
+            }
+            match store.update_retrieved_at(secret_id).await {
+                Ok(stat) => {
+                    if let Some(s) = stat
+                        && let Some(metrics) = event_metrics_opt
+                        && let Some(lifetime) = s.lifetime()
+                    {
+                        metrics.secret_lifetime_histogram.record(lifetime, &[]);
+                    }
+                }
+                Err(e) => {
+                    error!("Failed to update stats with retrieved_at for secret {secret_id}: {e}");
+                }
             }
         });
     }
