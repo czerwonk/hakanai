@@ -13,6 +13,7 @@ mod otel;
 mod redis_client;
 mod size_limit;
 mod size_limited_json;
+mod stats;
 mod token;
 mod user;
 mod web_api;
