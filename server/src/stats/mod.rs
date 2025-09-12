@@ -36,8 +36,8 @@ impl SecretStats {
 
     /// Calculates the lifetime of the secret from creation to retrieval.
     pub fn lifetime(&self) -> Option<u64> {
-        if let Some(retrived) = self.retrieved_at {
-            return Some(retrived.saturating_sub(self.created_at));
+        if let Some(retrieved) = self.retrieved_at {
+            return Some(retrieved.saturating_sub(self.created_at));
         }
 
         None
