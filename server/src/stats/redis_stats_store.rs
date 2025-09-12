@@ -7,7 +7,7 @@ use redis::AsyncCommands;
 use redis::aio::ConnectionManager;
 use uuid::Uuid;
 
-use super::SecretStats;
+use super::secret_stats::SecretStats;
 
 /// Stores and retrieves secret statistics using Redis.
 #[derive(Clone)]

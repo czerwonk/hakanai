@@ -10,8 +10,8 @@ use async_trait::async_trait;
 use tracing::{error, instrument};
 use uuid::Uuid;
 
-use super::SecretStats;
 use super::redis_stats_store::RedisStatsStore;
+use super::secret_stats::SecretStats;
 use crate::{
     metrics::EventMetrics,
     observer::{SecretEventContext, SecretObserver},
