@@ -12,7 +12,7 @@ use tracing::info;
 
 use hakanai_lib::models::{CreateTokenRequest, CreateTokenResponse};
 
-use crate::admin_user::AdminUser;
+use super::admin_user::AdminUser;
 use crate::app_data::AppData;
 use crate::token::TokenData;
 

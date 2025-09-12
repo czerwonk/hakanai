@@ -1,4 +1,5 @@
 mod admin_api;
+mod admin_user;
 mod size_limit;
 mod size_limited_json;
 mod web_api;
