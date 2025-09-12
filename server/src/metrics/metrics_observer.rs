@@ -12,7 +12,7 @@ use uuid::Uuid;
 
 use hakanai_lib::models::SecretRestrictions;
 
-use crate::metrics::EventMetrics;
+use super::event_metrics::EventMetrics;
 use crate::observer::{SecretEventContext, SecretObserver};
 
 /// Observer that records OpenTelemetry metrics for secret events.

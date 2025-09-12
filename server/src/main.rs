@@ -5,7 +5,6 @@ mod app_data;
 mod data_store;
 mod filters;
 mod metrics;
-mod metrics_observer;
 mod observer;
 mod options;
 mod otel;
@@ -24,9 +23,9 @@ use std::time::Duration;
 use clap::Parser;
 use redis::aio::ConnectionManager;
 use tokio::time::timeout;
-use tracing::{info, warn};
+use tracing::{debug, info, warn};
 
-use crate::metrics::EventMetrics;
+use crate::metrics::{EventMetrics, MetricsCollector};
 use crate::options::Args;
 use crate::redis_client::RedisClient;
 use crate::stats::StatsStore;
@@ -169,13 +168,15 @@ async fn initialize_admin_token(token_manager: &TokenManager<RedisClient>) -> an
 
 fn initialize_metrics(redis_client: &RedisClient) {
     info!("Initializing metrics collection with 30s interval");
-    let redis_token_store = Arc::new(redis_client.clone());
-    let redis_data_store = Arc::new(redis_client.clone());
+    let token_store = Arc::new(redis_client.clone());
+    let data_store = Arc::new(redis_client.clone());
     let collection_interval = Duration::from_secs(30); // Collect metrics every 30 seconds
 
-    crate::metrics::init_metrics_collection(
-        redis_token_store,
-        redis_data_store,
-        collection_interval,
+    let collector = MetricsCollector::new();
+    collector.start_collection(token_store, data_store, collection_interval);
+
+    debug!(
+        "Started metrics collection with interval: {:?}",
+        collection_interval
     );
 }
