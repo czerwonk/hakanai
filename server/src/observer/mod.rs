@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 mod observer_manager;
 mod webhook_observer;
 
