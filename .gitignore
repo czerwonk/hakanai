@@ -36,3 +36,6 @@ server/includes/components/
 server/includes/core/
 
 helm/hakanai/charts/
+
+*_REPORT.md
+docs/RESOLVED*
