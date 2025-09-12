@@ -191,22 +191,9 @@ hakanai token --limit 5m --ttl 7d
 
 Consult Redis documentation for your version's specific configuration syntax.
 
-### Log Management
+### Log Management and Observability
 
-Hakanai provides comprehensive logging with OpenTelemetry integration. For detailed logging configuration, structured log format, dual logging mode, and trace correlation, see the [Observability Guide](OBSERVABILITY.md#logging).
-
-Quick examples:
-
-```bash
-# View structured logs
-journalctl -u hakanai -f -o json | jq .
-
-# Enable debug logging
-RUST_LOG=debug hakanai-server
-
-# Enable OTEL dual logging
-OTEL_EXPORTER_OTLP_ENDPOINT="http://collector:4318" hakanai-server
-```
+Hakanai provides comprehensive logging, tracing and metrics with OpenTelemetry integration. For detailed information see the [Observability Guide](OBSERVABILITY.md).
 
 ### Webhook Monitoring
 
