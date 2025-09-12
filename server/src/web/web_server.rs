@@ -20,13 +20,13 @@ use crate::metrics::{EventMetrics, MetricsObserver};
 use crate::observer::{ObserverManager, WebhookObserver};
 use crate::options::{Args, WebhookArgs};
 use crate::size_limit;
-use crate::stats::{StatsObserver, StatsStore};
+use crate::stats::{StatsObserver, RedisStatsStore};
 use crate::token::{TokenCreator, TokenValidator};
 
 pub struct WebServerOptions {
     args: Args,
     event_metrics: Option<EventMetrics>,
-    stats_store: Option<StatsStore>,
+    stats_store: Option<RedisStatsStore>,
 }
 
 impl WebServerOptions {
@@ -43,7 +43,7 @@ impl WebServerOptions {
         self
     }
 
-    pub fn with_stats_store(mut self, stats_store: StatsStore) -> Self {
+    pub fn with_stats_store(mut self, stats_store: RedisStatsStore) -> Self {
         self.stats_store = Some(stats_store);
         self
     }

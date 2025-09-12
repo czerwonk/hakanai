@@ -1,8 +1,8 @@
+mod redis_stats_store;
 mod stats_observer;
-mod stats_store;
 
+pub use redis_stats_store::RedisStatsStore;
 pub use stats_observer::StatsObserver;
-pub use stats_store::StatsStore;
 
 use std::time::{SystemTime, UNIX_EPOCH};
 

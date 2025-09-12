@@ -28,7 +28,7 @@ use tracing::{debug, info, warn};
 use crate::metrics::{EventMetrics, MetricsCollector};
 use crate::options::Args;
 use crate::redis_client::RedisClient;
-use crate::stats::StatsStore;
+use crate::stats::RedisStatsStore;
 use crate::token::{RedisTokenStore, TokenManager, TokenStore};
 
 #[cfg(test)]
@@ -101,7 +101,7 @@ async fn main() -> Result<()> {
     }
 
     if stats_enabled {
-        let stats_store = StatsStore::new(redis_con.clone(), stats_ttl);
+        let stats_store = RedisStatsStore::new(redis_con.clone(), stats_ttl);
         options = options.with_stats_store(stats_store);
     }
 

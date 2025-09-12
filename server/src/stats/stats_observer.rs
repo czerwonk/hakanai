@@ -11,17 +11,17 @@ use tracing::{error, instrument};
 use uuid::Uuid;
 
 use super::SecretStats;
-use super::stats_store::StatsStore;
+use super::redis_stats_store::RedisStatsStore;
 use crate::observer::{SecretEventContext, SecretObserver};
 
 /// Observer that records per secret statistics.
 pub struct StatsObserver {
-    store: StatsStore,
+    store: RedisStatsStore,
 }
 
 impl StatsObserver {
     /// Create a new stats observer with a reference to the stats store.
-    pub fn new(store: StatsStore) -> Self {
+    pub fn new(store: RedisStatsStore) -> Self {
         Self { store }
     }
 }
