@@ -60,13 +60,15 @@ impl SecretObserver for StatsObserver {
                 error!("Failed to update stats with retrieved_at for secret {secret_id}: {e}");
             }
             match store.update_retrieved_at(secret_id).await {
-                Ok(stat) => {
-                    if let Some(s) = stat
-                        && let Some(metrics) = event_metrics_opt
-                        && let Some(lifetime) = s.lifetime()
+                Ok(Some(stat)) => {
+                    if let Some(metrics) = event_metrics_opt
+                        && let Some(lifetime) = stat.lifetime()
                     {
                         metrics.secret_lifetime_histogram.record(lifetime, &[]);
                     }
+                }
+                Ok(None) => {
+                    error!("No stats found to update with retrieved_at for secret {secret_id}");
                 }
                 Err(e) => {
                     error!("Failed to update stats with retrieved_at for secret {secret_id}: {e}");
