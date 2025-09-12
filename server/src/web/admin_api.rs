@@ -12,8 +12,8 @@ use tracing::info;
 
 use hakanai_lib::models::{CreateTokenRequest, CreateTokenResponse};
 
-use super::AppData;
 use super::admin_user::AdminUser;
+use super::app_data::AppData;
 use crate::token::TokenData;
 
 /// Configure admin API routes

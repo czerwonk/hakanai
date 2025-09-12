@@ -10,6 +10,5 @@ mod web_assets;
 mod web_routes;
 mod web_server;
 
-pub use app_data::AppData;
 pub use web_server::WebServerOptions;
 pub use web_server::run_server;
