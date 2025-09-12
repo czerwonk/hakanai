@@ -11,11 +11,11 @@ use opentelemetry_instrumentation_actix_web::{RequestMetrics, RequestTracing};
 use tracing::{error, info, instrument};
 
 use super::admin_api;
+use super::app_data::{AnonymousOptions, AppData};
 use super::size_limit;
 use super::web_api;
 use super::web_assets::AssetManager;
 use super::web_routes;
-use crate::app_data::{AnonymousOptions, AppData};
 use crate::metrics::{EventMetrics, MetricsObserver};
 use crate::observer::{ObserverManager, WebhookObserver};
 use crate::options::{Args, WebhookArgs};

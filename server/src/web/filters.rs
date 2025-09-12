@@ -7,7 +7,7 @@ use actix_web::HttpRequest;
 
 use hakanai_lib::models::CountryCode;
 
-use crate::app_data::AppData;
+use super::app_data::AppData;
 
 /// Check if the request is from a whitelisted IP range
 pub fn is_request_from_whitelisted_ip(req: &HttpRequest, app_data: &AppData) -> bool {
@@ -100,7 +100,7 @@ fn is_ip_in_ranges(ip: &IpAddr, ranges: &[ipnet::IpNet]) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::app_data::{AnonymousOptions, AppData};
+    use crate::web::app_data::{AnonymousOptions, AppData};
     use actix_web::{HttpRequest, test};
     use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
     use std::time::Duration;

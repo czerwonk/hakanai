@@ -1,7 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 
-mod app_data;
-mod filters;
 mod metrics;
 mod observer;
 mod options;

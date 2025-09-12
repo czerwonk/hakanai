@@ -11,9 +11,9 @@ use hakanai_lib::models::{
     PostSecretRequest, PostSecretResponse, SecretRestrictions, restrictions,
 };
 
+use super::app_data::AppData;
+use super::filters;
 use super::size_limited_json::SizeLimitedJson;
-use crate::app_data::AppData;
-use crate::filters;
 use crate::observer::SecretEventContext;
 use crate::secret::SecretStorePopResult;
 use crate::user::User;
@@ -262,10 +262,10 @@ mod tests {
 
     use actix_web::{App, test};
 
-    use crate::app_data::AnonymousOptions;
     use crate::observer::MockObserver;
     use crate::secret::{MockSecretStore, SecretStore};
     use crate::token::{MockTokenManager, TokenData};
+    use crate::web::app_data::AnonymousOptions;
 
     use hakanai_lib::models::SecretRestrictions;
 

@@ -4,8 +4,9 @@ use actix_web::http::header;
 use actix_web::{HttpRequest, HttpResponse, Responder, web};
 use tracing::error;
 
+use super::app_data::AppData;
+use super::filters;
 use super::web_assets::AssetManager;
-use crate::filters;
 
 const DEFAULT_CACHE_MAX_AGE: u64 = 604800; // 7 days
 const VOLATILE_CACHE_MAX_AGE: u64 = 86400; // 1 day
@@ -188,7 +189,7 @@ async fn serve_robots_txt() -> impl Responder {
     )
 }
 
-async fn serve_impressum(app_data: web::Data<crate::app_data::AppData>) -> impl Responder {
+async fn serve_impressum(app_data: web::Data<AppData>) -> impl Responder {
     match &app_data.impressum_html {
         Some(html) => HttpResponse::Ok()
             .content_type("text/html; charset=utf-8")
@@ -205,7 +206,7 @@ async fn serve_impressum(app_data: web::Data<crate::app_data::AppData>) -> impl 
     }
 }
 
-async fn serve_privacy(app_data: web::Data<crate::app_data::AppData>) -> impl Responder {
+async fn serve_privacy(app_data: web::Data<AppData>) -> impl Responder {
     match &app_data.privacy_html {
         Some(html) => HttpResponse::Ok()
             .content_type("text/html; charset=utf-8")
@@ -222,10 +223,7 @@ async fn serve_privacy(app_data: web::Data<crate::app_data::AppData>) -> impl Re
     }
 }
 
-async fn serve_config(
-    app_data: web::Data<crate::app_data::AppData>,
-    req: HttpRequest,
-) -> impl Responder {
+async fn serve_config(app_data: web::Data<AppData>, req: HttpRequest) -> impl Responder {
     let whitelisted = filters::is_request_from_whitelisted_ip(&req, &app_data);
     let size_limit = if whitelisted {
         app_data.upload_size_limit
@@ -306,7 +304,7 @@ async fn serve_wasm_binary() -> impl Responder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::app_data::{AnonymousOptions, AppData};
+    use crate::web::app_data::{AnonymousOptions, AppData};
     use actix_web::{App, test, web};
     use std::str::FromStr;
 
