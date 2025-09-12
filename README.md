@@ -86,6 +86,7 @@ hakanai get https://hakanai.example.com/s/uuid-here --output-dir /downloads/
 ### Web Interface
 
 Visit your server URL (e.g., `http://localhost:8080`) to:
+
 - Create new secrets with text or file uploads
 - Apply access restrictions (IP, country, ASN, passphrase)
 - Retrieve secrets directly in your browser
@@ -110,6 +111,7 @@ We implement true client-side encryption - your secrets are encrypted before lea
 - **[Customization](docs/CUSTOMIZATION.md)** - Asset overrides and white-labeling
 - **[Deployment](docs/DEPLOYMENT.md)** - Production deployment and architecture
 - **[Development](docs/DEVELOPMENT.md)** - Building, testing, and contributing
+- **[Observability](docs/OBSERVABILITY.md)** - OpenTelemetry metrics, traces, and monitoring
 
 **Live API Docs**: Visit `/docs` on your running server for interactive OpenAPI documentation.
 
