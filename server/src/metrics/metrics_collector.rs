@@ -24,7 +24,7 @@ pub struct MetricsCollector {
     active_secret_count_gauge: Gauge<u64>,
 
     /// Gauge for tracking expired secret count
-    expired_secret_count_gauge: Gauge<u64>,
+    expired_secrets_gauge: Gauge<u64>,
 }
 
 impl MetricsCollector {
@@ -39,15 +39,15 @@ impl MetricsCollector {
             .u64_gauge("hakanai_active_secrets")
             .with_description("Number of active secrets stored")
             .build();
-        let expired_secret_count_gauge = meter
-            .u64_gauge("hakanai_expired_secrets_total")
+        let expired_secrets_gauge = meter
+            .u64_gauge("hakanai_expired_secrets")
             .with_description("Number of expired secrets")
             .build();
 
         Self {
             token_count_gauge,
             active_secret_count_gauge,
-            expired_secret_count_gauge,
+            expired_secrets_gauge,
         }
     }
 
@@ -63,7 +63,7 @@ impl MetricsCollector {
     ) {
         let token_count_gauge = self.token_count_gauge.clone();
         let secret_count_gauge = self.active_secret_count_gauge.clone();
-        let expired_secret_count_gauge = self.expired_secret_count_gauge.clone();
+        let expired_secrets_gauge = self.expired_secrets_gauge.clone();
 
         tokio::spawn(async move {
             let mut interval = interval(interval_duration);
@@ -76,7 +76,7 @@ impl MetricsCollector {
                 if let Err(err) = collect_secret_metrics(
                     &stats_store,
                     &secret_count_gauge,
-                    &expired_secret_count_gauge,
+                    &expired_secrets_gauge,
                 )
                 .await
                 {
@@ -104,7 +104,7 @@ async fn collect_token_metrics<T: TokenStore>(
 async fn collect_secret_metrics<S: StatsStore>(
     stats_store: &Arc<S>,
     active_secret_count_gauge: &Gauge<u64>,
-    expired_secret_count_gauge: &Gauge<u64>,
+    expired_secrets_gauge: &Gauge<u64>,
 ) -> Result<()> {
     let stats = stats_store.get_all_stats().await?;
 
@@ -123,7 +123,7 @@ async fn collect_secret_metrics<S: StatsStore>(
         }
     }
 
-    expired_secret_count_gauge.record(expired, &[]);
+    expired_secrets_gauge.record(expired, &[]);
     active_secret_count_gauge.record(active, &[]);
     Ok(())
 }
