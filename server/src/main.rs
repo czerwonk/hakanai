@@ -82,18 +82,16 @@ async fn main() -> Result<()> {
         return Err(std::io::Error::other(e));
     }
 
-    let stats_enabled = args.stats_enabled;
-    let stats_ttl = args.stats_ttl;
-    let mut options = web::WebServerOptions::new(args);
+    let stats_store = RedisStatsStore::new(redis_con.clone(), args.stats_ttl);
 
     if otel_handler.is_some() {
-        initialize_metrics(&secret_store, &token_store);
-        options = options.with_event_metrics(EventMetrics::new());
+        initialize_metrics(&token_store, &stats_store);
     }
 
-    if stats_enabled {
-        let stats_store = RedisStatsStore::new(redis_con.clone(), stats_ttl);
-        options = options.with_stats_store(stats_store);
+    let mut options = web::WebServerOptions::new(args, stats_store);
+
+    if otel_handler.is_some() {
+        options = options.with_event_metrics(EventMetrics::new());
     }
 
     let res = web::run_server(secret_store, token_manager, options).await;
@@ -162,14 +160,14 @@ async fn initialize_admin_token<T: TokenStore>(
     Ok(())
 }
 
-fn initialize_metrics(redis_secret_store: &RedisSecretStore, redis_token_store: &RedisTokenStore) {
+fn initialize_metrics(redis_token_store: &RedisTokenStore, redis_stats_store: &RedisStatsStore) {
     info!("Initializing metrics collection with 30s interval");
     let token_store = Arc::new(redis_token_store.clone());
-    let secret_store = Arc::new(redis_secret_store.clone());
+    let stats_store = Arc::new(redis_stats_store.clone());
     let collection_interval = Duration::from_secs(30); // Collect metrics every 30 seconds
 
     let collector = MetricsCollector::new();
-    collector.start_collection(token_store, secret_store, collection_interval);
+    collector.start_collection(token_store, stats_store, collection_interval);
 
     debug!(
         "Started metrics collection with interval: {:?}",

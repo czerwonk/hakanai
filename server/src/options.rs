@@ -68,15 +68,6 @@ pub struct Args {
 
     #[arg(
         long,
-        value_name = "STATS_ENABLED",
-        env = "HAKANAI_STATS_ENABLED",
-        help = "Enable or disable statistics collection. Defaults to true.",
-        default_value = "true"
-    )]
-    pub stats_enabled: bool,
-
-    #[arg(
-        long,
         value_name = "STATS_TTL",
         env = "HAKANAI_STATS_TTL",
         default_value = "30d",
@@ -303,7 +294,6 @@ mod tests {
             country_header: None,
             asn_header: None,
             custom_assets_dir: None,
-            stats_enabled: true,
             stats_ttl: Duration::from_secs(3600),
         }
     }

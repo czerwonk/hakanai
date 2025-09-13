@@ -93,12 +93,6 @@ pub trait SecretStore: Send + Sync {
     /// true if the data store is healthy, false otherwise.
     async fn is_healthy(&self) -> Result<(), SecretStoreError>;
 
-    /// Returns the count of active secrets in the data store.
-    ///
-    /// # Returns
-    /// The number of secrets currently stored (not yet retrieved).
-    async fn active_secret_count(&self) -> Result<usize, SecretStoreError>;
-
     /// Stores IP restrictions for a secret with the same TTL as the secret itself.
     ///
     /// # Arguments

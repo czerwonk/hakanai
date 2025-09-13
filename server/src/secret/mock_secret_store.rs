@@ -57,18 +57,6 @@ impl MockSecretStore {
         }
     }
 
-    /// Set the secret count to return
-    pub fn with_secret_count(self, count: usize) -> Self {
-        *self.secret_count.lock().unwrap() = count;
-        self
-    }
-
-    /// Configure operations to fail
-    pub fn with_failures(self) -> Self {
-        *self.should_fail.lock().unwrap() = true;
-        self
-    }
-
     /// Add a stored secret
     #[allow(dead_code)]
     pub fn with_stored_secret(self, id: Uuid, data: &str) -> Self {
@@ -210,13 +198,6 @@ impl SecretStore for MockSecretStore {
             return Err(SecretStoreError::InternalError("Mock failure".to_string()));
         }
         Ok(())
-    }
-
-    async fn active_secret_count(&self) -> Result<usize, SecretStoreError> {
-        if *self.should_fail.lock().unwrap() {
-            return Err(SecretStoreError::InternalError("Mock failure".to_string()));
-        }
-        Ok(*self.secret_count.lock().unwrap())
     }
 
     async fn set_restrictions(

@@ -108,13 +108,6 @@ impl SecretStore for RedisSecretStore {
     }
 
     #[instrument(skip(self), err)]
-    async fn active_secret_count(&self) -> Result<usize, SecretStoreError> {
-        let pattern = format!("{SECRET_PREFIX}*");
-        let keys: Vec<String> = self.con.clone().keys(pattern).await?;
-        Ok(keys.len())
-    }
-
-    #[instrument(skip(self), err)]
     async fn set_restrictions(
         &self,
         id: Uuid,

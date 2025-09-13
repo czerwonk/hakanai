@@ -10,22 +10,25 @@ use async_trait::async_trait;
 use tracing::{error, instrument};
 use uuid::Uuid;
 
-use super::redis_stats_store::RedisStatsStore;
 use super::secret_stats::SecretStats;
+use super::stats_store::StatsStore;
 use crate::{
     metrics::EventMetrics,
     observer::{SecretEventContext, SecretObserver},
 };
 
 /// Observer that records per secret statistics.
-pub struct StatsObserver {
-    store: RedisStatsStore,
+pub struct StatsObserver<T: StatsStore> {
+    store: T,
     event_metrics: Option<EventMetrics>,
 }
 
-impl StatsObserver {
+impl<T> StatsObserver<T>
+where
+    T: StatsStore + Clone + Send + Sync + 'static,
+{
     /// Create a new stats observer with a reference to the stats store.
-    pub fn new(store: RedisStatsStore) -> Self {
+    pub fn new(store: T) -> StatsObserver<T> {
         Self {
             store,
             event_metrics: None,
@@ -39,7 +42,10 @@ impl StatsObserver {
 }
 
 #[async_trait]
-impl SecretObserver for StatsObserver {
+impl<T> SecretObserver for StatsObserver<T>
+where
+    T: StatsStore + Clone + Send + Sync + 'static,
+{
     #[instrument(skip(self, context))]
     async fn on_secret_created(&self, secret_id: Uuid, context: &SecretEventContext) {
         let stat = SecretStats::new(context.ttl.unwrap_or_default().as_secs());

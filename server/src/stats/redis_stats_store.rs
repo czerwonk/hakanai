@@ -3,9 +3,12 @@
 use std::time::Duration;
 
 use anyhow::Result;
+use async_trait::async_trait;
 use redis::AsyncCommands;
 use redis::aio::ConnectionManager;
 use uuid::Uuid;
+
+use crate::stats::StatsStore;
 
 use super::secret_stats::SecretStats;
 
@@ -26,8 +29,24 @@ impl RedisStatsStore {
         format!("stats:{}", secret_id)
     }
 
+    /// Retrieve the stats for the given secret ID.
+    async fn retrieve_stats(&self, secret_id: Uuid) -> Result<Option<SecretStats>> {
+        let key = Self::key(secret_id);
+        let value: Option<String> = self.con.clone().get(key).await?;
+
+        if let Some(json) = value {
+            let stats = serde_json::from_str(&json)?;
+            return Ok(Some(stats));
+        }
+
+        Ok(None)
+    }
+}
+
+#[async_trait]
+impl StatsStore for RedisStatsStore {
     /// Store the stats for the given secret ID.
-    pub async fn store_stats(&self, secret_id: Uuid, stats: &SecretStats) -> Result<()> {
+    async fn store_stats(&self, secret_id: Uuid, stats: &SecretStats) -> Result<()> {
         let key = Self::key(secret_id);
         let value = serde_json::to_string(stats)?;
 
@@ -41,7 +60,7 @@ impl RedisStatsStore {
     }
 
     /// Update the `retrieved_at` field of the stats for the given secret ID.
-    pub async fn update_retrieved_at(&self, secret_id: Uuid) -> Result<Option<SecretStats>> {
+    async fn update_retrieved_at(&self, secret_id: Uuid) -> Result<Option<SecretStats>> {
         if let Some(mut stat) = self.retrieve_stats(secret_id).await? {
             let retrieved_at = std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
@@ -55,16 +74,22 @@ impl RedisStatsStore {
         Ok(None)
     }
 
-    /// Retrieve the stats for the given secret ID.
-    async fn retrieve_stats(&self, secret_id: Uuid) -> Result<Option<SecretStats>> {
-        let key = Self::key(secret_id);
-        let value: Option<String> = self.con.clone().get(key).await?;
+    /// Retrieve all stats stored in Redis.
+    async fn get_all_stats(&self) -> Result<Vec<SecretStats>> {
+        let mut stats = Vec::new();
 
-        if let Some(json) = value {
-            let stats = serde_json::from_str(&json)?;
-            return Ok(Some(stats));
+        let mut con = self.con.clone();
+        let keys: Vec<String> = con.keys("stats:*").await?;
+
+        for key in keys {
+            let value: Option<String> = con.get(&key).await?;
+            if let Some(json) = value
+                && let Ok(stat) = serde_json::from_str(&json)
+            {
+                stats.push(stat);
+            }
         }
 
-        Ok(None)
+        Ok(stats)
     }
 }

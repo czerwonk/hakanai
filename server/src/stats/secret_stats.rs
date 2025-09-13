@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde::{Deserialize, Serialize};
@@ -36,6 +38,15 @@ impl SecretStats {
 
         None
     }
+
+    /// Returns true if the secret expired before being retrieved.
+    pub fn has_expired(&self, current_timestamp: u64) -> bool {
+        if self.retrieved_at.is_some() {
+            return false;
+        }
+
+        current_timestamp >= self.created_at.saturating_add(self.ttl)
+    }
 }
 
 #[cfg(test)]
@@ -73,5 +84,49 @@ mod tests {
 
         let stats = SecretStats::new(300);
         assert!(stats.created_at >= current_time)
+    }
+
+    #[test]
+    fn test_has_expired_before_ttl() {
+        let stats = SecretStats {
+            created_at: 100,
+            ttl: 200,
+            retrieved_at: None,
+        };
+
+        assert_eq!(stats.has_expired(250), false);
+    }
+
+    #[test]
+    fn test_has_expired_exact_ttl() {
+        let stats = SecretStats {
+            created_at: 100,
+            ttl: 200,
+            retrieved_at: None,
+        };
+
+        assert_eq!(stats.has_expired(300), true);
+    }
+
+    #[test]
+    fn test_has_expired_after_ttl() {
+        let stats = SecretStats {
+            created_at: 100,
+            ttl: 200,
+            retrieved_at: None,
+        };
+
+        assert_eq!(stats.has_expired(301), true);
+    }
+
+    #[test]
+    fn test_has_expired_with_retrieved() {
+        let stats = SecretStats {
+            created_at: 100,
+            ttl: 200,
+            retrieved_at: Some(250),
+        };
+
+        assert_eq!(stats.has_expired(301), false);
     }
 }

@@ -26,25 +26,20 @@ use crate::token::{TokenCreator, TokenValidator};
 pub struct WebServerOptions {
     args: Args,
     event_metrics: Option<EventMetrics>,
-    stats_store: Option<RedisStatsStore>,
+    stats_store: RedisStatsStore,
 }
 
 impl WebServerOptions {
-    pub fn new(args: Args) -> Self {
+    pub fn new(args: Args, stats_store: RedisStatsStore) -> Self {
         Self {
             args,
+            stats_store,
             event_metrics: None,
-            stats_store: None,
         }
     }
 
     pub fn with_event_metrics(mut self, metrics: EventMetrics) -> Self {
         self.event_metrics = Some(metrics);
-        self
-    }
-
-    pub fn with_stats_store(mut self, stats_store: RedisStatsStore) -> Self {
-        self.stats_store = Some(stats_store);
         self
     }
 }
@@ -81,13 +76,12 @@ where
             let metrics_observer = MetricsObserver::new(event_metrics.clone());
             observer_manager.register_observer(Box::new(metrics_observer));
         }
-        if let Some(stats_store) = &options.stats_store {
-            let mut stats_observer = StatsObserver::new(stats_store.clone());
-            if let Some(event_metrics) = options.event_metrics.clone() {
-                stats_observer = stats_observer.with_event_metrics(event_metrics);
-            }
-            observer_manager.register_observer(Box::new(stats_observer));
+
+        let mut stats_observer = StatsObserver::new(options.stats_store.clone());
+        if let Some(event_metrics) = options.event_metrics.clone() {
+            stats_observer = stats_observer.with_event_metrics(event_metrics);
         }
+        observer_manager.register_observer(Box::new(stats_observer));
 
         let asset_manager = AssetManager::new(args.custom_assets_dir.clone());
         let app_data = AppData {
