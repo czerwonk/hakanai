@@ -6,6 +6,7 @@ use anyhow::Result;
 use async_trait::async_trait;
 use redis::AsyncCommands;
 use redis::aio::ConnectionManager;
+use tracing::warn;
 use uuid::Uuid;
 
 use crate::stats::StatsStore;
@@ -74,19 +75,45 @@ impl StatsStore for RedisStatsStore {
         Ok(None)
     }
 
-    /// Retrieve all stats stored in Redis.
+    /// Retrieve all stats stored in Redis using SCAN for better performance.
     async fn get_all_stats(&self) -> Result<Vec<SecretStats>> {
         let mut stats = Vec::new();
-
         let mut con = self.con.clone();
-        let keys: Vec<String> = con.keys("stats:*").await?;
+        let mut cursor = 0u64;
+        let mut i = 0;
 
-        for key in keys {
-            let value: Option<String> = con.get(&key).await?;
-            if let Some(json) = value
-                && let Ok(stat) = serde_json::from_str(&json)
-            {
-                stats.push(stat);
+        const KEYS_PER_SCAN: usize = 100;
+        const MAX_ITERATIONS: usize = 10_000;
+
+        loop {
+            i += 1;
+            if i > MAX_ITERATIONS {
+                warn!("Max iterations reached while scanning Redis stats keys");
+                break; // Prevent infinite loops in case of unexpected behavior
+            }
+
+            let (new_cursor, keys): (u64, Vec<String>) = redis::cmd("SCAN")
+                .cursor_arg(cursor)
+                .arg("MATCH")
+                .arg("stats:*")
+                .arg("COUNT")
+                .arg(KEYS_PER_SCAN)
+                .query_async(&mut con)
+                .await?;
+
+            // Fetch values for all keys in this batch
+            if !keys.is_empty() {
+                let values: Vec<Option<String>> = con.get(keys).await?;
+                for value in values.into_iter().flatten() {
+                    if let Ok(stat) = serde_json::from_str(&value) {
+                        stats.push(stat);
+                    }
+                }
+            }
+
+            cursor = new_cursor;
+            if cursor == 0 {
+                break; // Scan complete when cursor returns to 0
             }
         }
 
