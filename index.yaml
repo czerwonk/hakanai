@@ -5,8 +5,38 @@ entries:
       category: Security
       licenses: MIT
     apiVersion: v2
+    appVersion: v2.15.2
+    created: "2025-09-13T10:50:22.381810665Z"
+    dependencies:
+    - condition: redis.enabled
+      name: redis
+      repository: oci://registry-1.docker.io/bitnamicharts
+      version: ~20.5.0
+    description: A minimalist one-time secret sharing service implementing zero-knowledge
+      principles
+    digest: 3fc683461dfbea72a14a742ebf6237b1570d4f1db13b9d40394546daba874297
+    home: https://github.com/czerwonk/hakanai
+    keywords:
+    - secret-sharing
+    - zero-knowledge
+    - security
+    - encryption
+    maintainers:
+    - email: daniel@routing.rocks
+      name: Daniel Brendgen-Czerwonk
+    name: hakanai
+    sources:
+    - https://github.com/czerwonk/hakanai
+    type: application
+    urls:
+    - https://czerwonk.github.io/hakanai/hakanai-0.9.2.tgz
+    version: 0.9.2
+  - annotations:
+      category: Security
+      licenses: MIT
+    apiVersion: v2
     appVersion: v2.15.1
-    created: "2025-09-13T09:25:30.528292171Z"
+    created: "2025-09-13T10:50:22.375238186Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -36,7 +66,7 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: v2.15.0
-    created: "2025-09-13T09:25:30.521541582Z"
+    created: "2025-09-13T10:50:22.368657287Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -66,7 +96,7 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: v2.14.3
-    created: "2025-09-13T09:25:30.515131845Z"
+    created: "2025-09-13T10:50:22.361841726Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -96,7 +126,7 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: v2.14.2
-    created: "2025-09-13T09:25:30.508500973Z"
+    created: "2025-09-13T10:50:22.355048039Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -126,7 +156,7 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: v2.14.1
-    created: "2025-09-13T09:25:30.502661955Z"
+    created: "2025-09-13T10:50:22.348255467Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -156,7 +186,7 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: v2.14.0
-    created: "2025-09-13T09:25:30.496241501Z"
+    created: "2025-09-13T10:50:22.337442922Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -186,7 +216,7 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: v2.13.4
-    created: "2025-09-13T09:25:30.489627713Z"
+    created: "2025-09-13T10:50:22.327625121Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -216,7 +246,7 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: v2.13.3
-    created: "2025-09-13T09:25:30.483267945Z"
+    created: "2025-09-13T10:50:22.320204481Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -246,7 +276,7 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: v2.13.2
-    created: "2025-09-13T09:25:30.476624917Z"
+    created: "2025-09-13T10:50:22.313667098Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -276,7 +306,7 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: v2.13.1
-    created: "2025-09-13T09:25:30.470687115Z"
+    created: "2025-09-13T10:50:22.305099564Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -306,7 +336,7 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: v2.13.0
-    created: "2025-09-13T09:25:30.463982068Z"
+    created: "2025-09-13T10:50:22.299157607Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -336,7 +366,7 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: v2.12.7
-    created: "2025-09-13T09:25:30.457305886Z"
+    created: "2025-09-13T10:50:22.288560816Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -366,7 +396,7 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: v2.12.6
-    created: "2025-09-13T09:25:30.450814224Z"
+    created: "2025-09-13T10:50:22.276725354Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -396,7 +426,7 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: v2.12.5
-    created: "2025-09-13T09:25:30.444490439Z"
+    created: "2025-09-13T10:50:22.269966047Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -426,7 +456,7 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: v2.12.4
-    created: "2025-09-13T09:25:30.43759256Z"
+    created: "2025-09-13T10:50:22.263494823Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -456,7 +486,7 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: v2.12.3
-    created: "2025-09-13T09:25:30.431146901Z"
+    created: "2025-09-13T10:50:22.257098294Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -486,7 +516,7 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: v2.12.2
-    created: "2025-09-13T09:25:30.424788811Z"
+    created: "2025-09-13T10:50:22.2506446Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -516,7 +546,7 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: v2.12.1
-    created: "2025-09-13T09:25:30.418955143Z"
+    created: "2025-09-13T10:50:22.244064863Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -546,7 +576,7 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: v2.12.0
-    created: "2025-09-13T09:25:30.409378751Z"
+    created: "2025-09-13T10:50:22.237892785Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -576,7 +606,7 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: 2.12.0
-    created: "2025-09-13T09:25:30.402703918Z"
+    created: "2025-09-13T10:50:22.231386567Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -606,7 +636,7 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: v2.11.0
-    created: "2025-09-13T09:25:30.396079751Z"
+    created: "2025-09-13T10:50:22.224634692Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -636,7 +666,7 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: v2.10.7
-    created: "2025-09-13T09:25:30.389652787Z"
+    created: "2025-09-13T10:50:22.217951735Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -666,7 +696,7 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: v2.10.7
-    created: "2025-09-13T09:25:30.383027074Z"
+    created: "2025-09-13T10:50:22.211206705Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -696,7 +726,7 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: v2.10.6
-    created: "2025-09-13T09:25:30.376601047Z"
+    created: "2025-09-13T10:50:22.20468032Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -726,7 +756,7 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: v2.10.6
-    created: "2025-09-13T09:25:30.370124497Z"
+    created: "2025-09-13T10:50:22.198040459Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -756,7 +786,7 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: v2.10.5
-    created: "2025-09-13T09:25:30.363663151Z"
+    created: "2025-09-13T10:50:22.191614199Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -786,7 +816,7 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: v2.9.8
-    created: "2025-09-13T09:25:30.35693826Z"
+    created: "2025-09-13T10:50:22.184981955Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -816,7 +846,7 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: v2.9.8
-    created: "2025-09-13T09:25:30.351234837Z"
+    created: "2025-09-13T10:50:22.179288244Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -846,7 +876,7 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: v2.9.8
-    created: "2025-09-13T09:25:30.344498203Z"
+    created: "2025-09-13T10:50:22.172652394Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -876,7 +906,7 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: v2.9.7
-    created: "2025-09-13T09:25:30.33803776Z"
+    created: "2025-09-13T10:50:22.166065535Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -906,7 +936,7 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: v2.9.7
-    created: "2025-09-13T09:25:30.331340208Z"
+    created: "2025-09-13T10:50:22.159225122Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -936,7 +966,7 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: v2.9.7
-    created: "2025-09-13T09:25:30.324897793Z"
+    created: "2025-09-13T10:50:22.152614536Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -966,7 +996,7 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: v2.9.7
-    created: "2025-09-13T09:25:30.318366883Z"
+    created: "2025-09-13T10:50:22.146094292Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -996,7 +1026,7 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: 2.9.7
-    created: "2025-09-13T09:25:30.312039997Z"
+    created: "2025-09-13T10:50:22.139356493Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -1026,7 +1056,7 @@ entries:
       licenses: MIT
     apiVersion: v2
     appVersion: 2.9.7
-    created: "2025-09-13T09:25:30.305639667Z"
+    created: "2025-09-13T10:50:22.132805962Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -1051,4 +1081,4 @@ entries:
     urls:
     - https://czerwonk.github.io/hakanai/hakanai-0.2.1.tgz
     version: 0.2.1
-generated: "2025-09-13T09:25:30.298628292Z"
+generated: "2025-09-13T10:50:22.125637748Z"
