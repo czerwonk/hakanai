@@ -51,10 +51,11 @@ services:
 
 ### System Metrics
 
-| Metric                   | Type  | Description                        | Labels |
-| ------------------------ | ----- | ---------------------------------- | ------ |
-| `hakanai_active_tokens`  | Gauge | Number of active user tokens       | -      |
-| `hakanai_active_secrets` | Gauge | Number of secrets currently stored | -      |
+| Metric                          | Type  | Description                                        | Labels |
+| ------------------------------- | ----- | -------------------------------------------------- | ------ |
+| `hakanai_active_tokens`         | Gauge | Number of active user tokens                       | -      |
+| `hakanai_active_secrets`        | Gauge | Number of secrets currently stored (not retrieved) | -      |
+| `hakanai_expired_secrets_total` | Gauge | Number of secrets that expired without retrieval   | -      |
 
 ### Restriction Type Bitfield
 
@@ -235,10 +236,11 @@ Logs automatically include trace context when OTEL is enabled:
 
 ### Missing Metrics
 
-Some metrics update periodically (default: 60 seconds):
+Some metrics update periodically (default: 30 seconds):
 
 - `hakanai_active_tokens`
 - `hakanai_active_secrets`
+- `hakanai_expired_secrets_total`
 
 Event-based metrics update in real-time:
 
