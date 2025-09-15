@@ -22,7 +22,7 @@ bytes = { version = "1.10.1", optional = true }
 ipnet = { version = "2.11.0", features = ["serde"] }
 rand = "0.9.1"
 reqwest = { version = "0.12.22", optional = true, features = ["json", "stream"] }
-serde = { version = "1.0.219", features = ["derive"] }
+serde = { version = "1.0.223", features = ["derive"] }
 serde_json = { version = "1.0.140", optional = true }
 serde_with = "3.14.0"
 sha2 = "0.10.9"
