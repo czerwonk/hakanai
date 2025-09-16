@@ -29,10 +29,7 @@
 //! // Send a text secret
 //! let secret_url = client.send_secret(
 //!     Url::parse("https://example.com")?,
-//!     hakanai_lib::models::Payload {
-//!         data: "My secret message".to_string(),
-//!         filename: None,
-//!     },
+//!     hakanai_lib::models::Payload::from_bytes(b"My secret message"),
 //!     Duration::from_secs(3600), // 1 hour TTL
 //!     "auth-token".to_string(),
 //!     None, // No custom options
@@ -59,7 +56,7 @@
 //!
 //! // Read file and create payload
 //! let file_contents = std::fs::read("document.pdf")?;
-//! let payload = Payload::from_bytes(&file_contents, Some("document.pdf".to_string()));
+//! let payload = Payload::from_bytes(&file_contents).with_filename("document.pdf");
 //!
 //! // Send the file
 //! let secret_url = client.send_secret(
@@ -99,7 +96,7 @@
 //!
 //! client.send_secret(
 //!     Url::parse("https://example.com")?,
-//!     Payload { data: "Secret data".to_string(), filename: None },
+//!     Payload::from_bytes(b"Secret data"),
 //!     Duration::from_secs(3600),
 //!     "auth-token".to_string(),
 //!     Some(options),

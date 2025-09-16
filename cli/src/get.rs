@@ -153,7 +153,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_successful_to_stdout() -> Result<()> {
-        let payload = Payload::from_bytes(b"secret text content", None);
+        let payload = Payload::from_bytes(b"secret text content");
         let client = MockClient::new().with_receive_success(payload);
         let factory = MockFactory::new().with_client(client);
 
@@ -165,7 +165,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_successful_to_file_with_payload_filename() -> Result<()> {
         let temp_dir = TempDir::new()?;
-        let payload = Payload::from_bytes(b"file content", Some("document.txt".to_string()));
+        let payload = Payload::from_bytes(b"file content").with_filename("document.txt");
         let client = MockClient::new().with_receive_success(payload);
         let factory = MockFactory::new().with_client(client);
 
@@ -188,7 +188,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_successful_to_file_with_custom_filename() -> Result<()> {
         let temp_dir = TempDir::new()?;
-        let payload = Payload::from_bytes(b"binary content", Some("original.bin".to_string()));
+        let payload = Payload::from_bytes(b"binary content").with_filename("original.bin");
         let client = MockClient::new().with_receive_success(payload);
         let factory = MockFactory::new().with_client(client);
 
@@ -212,7 +212,7 @@ mod tests {
     async fn test_get_successful_binary_content() -> Result<()> {
         let temp_dir = TempDir::new()?;
         let binary_data = vec![0x00, 0x01, 0xFF, 0xFE, 0x42, 0x43];
-        let payload = Payload::from_bytes(&binary_data, Some("binary.dat".to_string()));
+        let payload = Payload::from_bytes(&binary_data).with_filename("binary.dat");
         let client = MockClient::new().with_receive_success(payload);
         let factory = MockFactory::new().with_client(client);
 
@@ -245,7 +245,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_empty_payload() -> Result<()> {
-        let payload = Payload::from_bytes(b"", None);
+        let payload = Payload::from_bytes(b"");
         let client = MockClient::new().with_receive_success(payload);
         let factory = MockFactory::new().with_client(client);
 
@@ -262,7 +262,7 @@ mod tests {
         // Create existing file
         fs::write(&file_path, "existing content")?;
 
-        let payload = Payload::from_bytes(b"new content", None);
+        let payload = Payload::from_bytes(b"new content");
         let client = MockClient::new().with_receive_success(payload);
         let factory = MockFactory::new().with_client(client);
 
@@ -358,7 +358,7 @@ mod tests {
         let temp_dir = TempDir::new()?;
 
         // Test that non-zip files are saved normally even with --extract
-        let payload = Payload::from_bytes(b"Not a zip file", Some("document.pdf".to_string()));
+        let payload = Payload::from_bytes(b"Not a zip file").with_filename("document.pdf");
         let client = MockClient::new().with_receive_success(payload);
         let factory = MockFactory::new().with_client(client);
 
@@ -401,7 +401,7 @@ mod tests {
             zip.finish()?;
         }
 
-        let payload = Payload::from_bytes(&zip_data, Some("archive.zip".to_string()));
+        let payload = Payload::from_bytes(&zip_data).with_filename("archive.zip");
         let client = MockClient::new().with_receive_success(payload);
         let factory = MockFactory::new().with_client(client);
 
@@ -449,7 +449,7 @@ mod tests {
             zip.finish()?;
         }
 
-        let payload = Payload::from_bytes(&zip_data, Some("empty.zip".to_string()));
+        let payload = Payload::from_bytes(&zip_data).with_filename("empty.zip");
         let client = MockClient::new().with_receive_success(payload);
         let factory = MockFactory::new().with_client(client);
 
@@ -473,7 +473,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_with_passphrase() -> Result<()> {
-        let payload = Payload::from_bytes(b"protected secret", None);
+        let payload = Payload::from_bytes(b"protected secret");
         let client = MockClient::new().with_receive_success(payload);
         let factory = MockFactory::new().with_client(client);
 
@@ -486,7 +486,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_with_empty_passphrase() -> Result<()> {
-        let payload = Payload::from_bytes(b"protected secret", None);
+        let payload = Payload::from_bytes(b"protected secret");
         let client = MockClient::new().with_receive_success(payload);
         let factory = MockFactory::new().with_client(client);
 
@@ -499,7 +499,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_with_unicode_passphrase() -> Result<()> {
-        let payload = Payload::from_bytes(b"unicode protected secret", None);
+        let payload = Payload::from_bytes(b"unicode protected secret");
         let client = MockClient::new().with_receive_success(payload);
         let factory = MockFactory::new().with_client(client);
 
@@ -512,7 +512,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_without_passphrase() -> Result<()> {
-        let payload = Payload::from_bytes(b"unprotected secret", None);
+        let payload = Payload::from_bytes(b"unprotected secret");
         let client = MockClient::new().with_receive_success(payload);
         let factory = MockFactory::new().with_client(client);
 
@@ -525,8 +525,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_passphrase_with_file_output() -> Result<()> {
         let temp_dir = TempDir::new()?;
-        let payload =
-            Payload::from_bytes(b"protected file content", Some("protected.txt".to_string()));
+        let payload = Payload::from_bytes(b"protected file content").with_filename("protected.txt");
         let client = MockClient::new().with_receive_success(payload);
         let factory = MockFactory::new().with_client(client);
 
@@ -548,7 +547,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_long_passphrase() -> Result<()> {
-        let payload = Payload::from_bytes(b"secret with very long passphrase", None);
+        let payload = Payload::from_bytes(b"secret with very long passphrase");
         let client = MockClient::new().with_receive_success(payload);
         let factory = MockFactory::new().with_client(client);
 
@@ -563,7 +562,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_passphrase_with_special_characters() -> Result<()> {
-        let payload = Payload::from_bytes(b"secret with special chars in passphrase", None);
+        let payload = Payload::from_bytes(b"secret with special chars in passphrase");
         let client = MockClient::new().with_receive_success(payload);
         let factory = MockFactory::new().with_client(client);
 

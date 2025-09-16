@@ -288,7 +288,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_mock_client_payload_type() -> Result<()> {
-        let payload = Payload::from_bytes(b"test payload", Some("test.txt".to_string()));
+        let payload = Payload::from_bytes(b"test payload").with_filename("test.txt");
         let mock = MockClient::<Payload>::new().with_receive_success(payload.clone());
 
         let result = mock
