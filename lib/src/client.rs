@@ -87,10 +87,7 @@ use crate::web::WebClient;
 /// let base_client = client::new();
 /// let validating_client = ValidatingClient::new(Box::new(base_client), 1024 * 1024); // 1MB limit
 ///
-/// let payload = Payload {
-///     data: "test secret".to_string(),
-///     filename: None,
-/// };
+/// let payload = Payload::from_bytes(b"test secret");
 ///
 /// // This will validate before sending
 /// let url = validating_client.send_secret(
@@ -162,7 +159,7 @@ pub trait Client<T>: Send + Sync {
 ///
 /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
 /// let client = client::new();
-/// let payload = Payload::from_bytes(b"Test secret", None);
+/// let payload = Payload::from_bytes(b"Test secret");
 ///
 /// match client.send_secret(
 ///     Url::parse("https://api.example.com")?,
@@ -261,10 +258,7 @@ impl From<aes_gcm::Error> for ClientError {
 /// // Send a secret
 /// let url = client.send_secret(
 ///     Url::parse("https://api.example.com")?,
-///     Payload {
-///         data: "my secret data".to_string(),
-///         filename: None,
-///     },
+///     Payload::from_bytes(b"my secret data"),
 ///     Duration::from_secs(3600),
 ///     "auth-token".to_string(),
 ///     None,

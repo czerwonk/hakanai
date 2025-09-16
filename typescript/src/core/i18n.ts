@@ -86,6 +86,7 @@ const I18nKeys = {
     Copy: "button.copy",
     Create: "button.create",
     Download: "button.download",
+    Preview: "button.preview",
     ReadClipboard: "button.readClipboard",
     Retrieve: "button.retrieve",
     RetrieveAnother: "button.retrieveAnother",
@@ -147,6 +148,7 @@ const I18nKeys = {
     AllowedIPs: "aria.allowedIPs",
     AllowedCountries: "aria.allowedCountries",
     AllowedASNs: "aria.allowedASNs",
+    ClosePreview: "aria.closePreview",
     CopySecret: "aria.copySecret",
     DownloadSecret: "aria.downloadSecret",
     DownloadQRCode: "aria.downloadQRCode",
@@ -154,6 +156,7 @@ const I18nKeys = {
     FileInput: "aria.fileInput",
     KeyInput: "aria.keyInput",
     LogoHome: "aria.logoHome",
+    PreviewContent: "aria.previewContent",
     SecretInput: "aria.secretInput",
     SwitchToDark: "aria.switchToDark",
     SwitchToLight: "aria.switchToLight",
@@ -240,6 +243,7 @@ const I18nKeys = {
     InvalidJsonFormat: "validation.INVALID_JSON_FORMAT",
     InvalidToken: "validation.INVALID_TOKEN",
     InvalidTtl: "validation.INVALID_TTL",
+    InvalidDataType: "validation.INVALID_DATA_TYPE",
     MissingData: "validation.MISSING_DATA",
   },
 } as const;
@@ -344,6 +348,7 @@ const translations: Translations = {
     [I18nKeys.Button.Close]: "Close",
     [I18nKeys.Button.ShowQrCode]: "Show QR Code",
     [I18nKeys.Button.Download]: "💾 Download",
+    [I18nKeys.Button.Preview]: "👁️ Preview",
     [I18nKeys.Button.ChooseFile]: "📁 Choose File",
     [I18nKeys.Button.ReadClipboard]: "📄 Read Clipboard",
 
@@ -388,9 +393,11 @@ const translations: Translations = {
     [I18nKeys.Msg.Downloaded]: "Secret downloaded as text file",
     [I18nKeys.Msg.BinaryDetected]: "Use download button to save the file.",
 
+    [I18nKeys.Aria.ClosePreview]: "Close preview",
     [I18nKeys.Aria.CopySecret]: "Copy secret to clipboard",
     [I18nKeys.Aria.DownloadSecret]: "Download secret as file",
     [I18nKeys.Aria.DownloadQRCode]: "Download QR code as SVG file",
+    [I18nKeys.Aria.PreviewContent]: "Preview content",
     [I18nKeys.Aria.AllowedIPs]: "Enter IP addresses or CIDR ranges, one per line, to restrict access to this secret",
     [I18nKeys.Aria.AllowedCountries]:
       "Enter 2-letter country codes, one per line, to restrict access to this secret by geographic location",
@@ -452,14 +459,6 @@ const translations: Translations = {
     [I18nKeys.Error.PayloadTooLarge]: "Secret size exceeds the limit",
     [I18nKeys.Error.HashValidationFailed]: "Hash validation failed - data may be tempered or corrupted",
     [I18nKeys.Error.NotSupported]: "Feature not supported - the server does not support this operation",
-
-    [I18nKeys.Validation.MissingData]: "Missing or invalid data field",
-    [I18nKeys.Validation.InvalidFilename]: "Invalid filename field - must be text",
-    [I18nKeys.Validation.InvalidToken]: "Invalid token field - must be text",
-    [I18nKeys.Validation.InvalidTtl]: "Invalid expiration time - must be a positive number",
-    [I18nKeys.Validation.EmptyJson]: "Clipboard content is empty",
-    [I18nKeys.Validation.InvalidJsonFormat]: "Invalid clipboard format - not valid JSON",
-
     [I18nKeys.Error.ExpectedUint8Array]: "Input must be a Uint8Array (binary data)",
     [I18nKeys.Error.ExpectedString]: "Input must be a string (text data)",
     [I18nKeys.Error.InvalidInputFormat]: "Input contains invalid characters or format",
@@ -480,6 +479,14 @@ const translations: Translations = {
     [I18nKeys.Error.InvalidRestrictions]: "IP restrictions are invalid or malformed",
     [I18nKeys.Error.InvalidServerResponse]: "Server response is missing required data",
     [I18nKeys.Error.CryptoContextDisposed]: "Crypto context has been disposed and cannot be reused",
+
+    [I18nKeys.Validation.MissingData]: "Missing or invalid data field",
+    [I18nKeys.Validation.InvalidFilename]: "Invalid filename field - must be text",
+    [I18nKeys.Validation.InvalidToken]: "Invalid token field - must be text",
+    [I18nKeys.Validation.InvalidTtl]: "Invalid expiration time - must be a positive number",
+    [I18nKeys.Validation.EmptyJson]: "Clipboard content is empty",
+    [I18nKeys.Validation.InvalidJsonFormat]: "Invalid clipboard format - not valid JSON",
+    [I18nKeys.Validation.InvalidDataType]: "Invalid data_type value",
   },
   de: {
     [I18nKeys.Page.CreateTitle]: "Hakanai - Secret erstellen",
@@ -567,6 +574,7 @@ const translations: Translations = {
     [I18nKeys.Button.Close]: "Schließen",
     [I18nKeys.Button.ShowQrCode]: "QR-Code anzeigen",
     [I18nKeys.Button.Download]: "💾 Speichern",
+    [I18nKeys.Button.Preview]: "👁️ Vorschau",
     [I18nKeys.Button.ChooseFile]: "📁 Datei auswählen",
     [I18nKeys.Button.ReadClipboard]: "📄 Zwischenablage lesen",
 
@@ -619,9 +627,11 @@ const translations: Translations = {
       "2-Buchstaben-Ländercodes eingeben, eine pro Zeile, um den Zugriff auf dieses Secret nach geografischer Lage zu beschränken",
     [I18nKeys.Aria.AllowedASNs]:
       "ASN-Nummern eingeben, eine pro Zeile, um den Zugriff auf dieses Secret nach Netzwerkanbieter zu beschränken",
+    [I18nKeys.Aria.ClosePreview]: "Vorschau schließen",
     [I18nKeys.Aria.CopySecret]: "Secret in die Zwischenablage kopieren",
     [I18nKeys.Aria.DownloadSecret]: "Secret als Datei herunterladen",
     [I18nKeys.Aria.DownloadQRCode]: "QR-Code als SVG-Datei herunterladen",
+    [I18nKeys.Aria.PreviewContent]: "Inhalt anzeigen",
     [I18nKeys.Aria.SecretInput]: "Bitte die geheime Nachricht eingeben, die sicher geteult werden soll",
     [I18nKeys.Aria.FileInput]: "Datei zum sicheren Teilen auswählen. Die Datei wird vor dem Versenden verschlüsselt.",
     [I18nKeys.Aria.TokenInput]: "Bitte den Authentifizierungs-Token eingeben, falls vom Server erforderlich",
@@ -676,15 +686,6 @@ const translations: Translations = {
       "Ungültiger Ländercode. Muss ein 2-stelliger Großbuchstaben-Code sein (z.B. US, DE, CA)",
     [I18nKeys.Error.InvalidASN]: "Ungültige ASN. Muss zwischen 1 und 4294967295 liegen",
     [I18nKeys.Error.ASNMustBeNumber]: "ASN muss eine Zahl sein",
-
-    [I18nKeys.Validation.MissingData]: "Fehlende oder ungültige Daten",
-    [I18nKeys.Validation.InvalidFilename]: "Ungültiger Dateiname - muss Text sein",
-    [I18nKeys.Validation.InvalidToken]: "Ungültiger Token - muss Text sein",
-    [I18nKeys.Validation.InvalidTtl]: "Ungültige Ablaufzeit - muss eine positive Zahl sein",
-    [I18nKeys.Validation.EmptyJson]: "Zwischenablage ist leer",
-    [I18nKeys.Validation.InvalidJsonFormat]: "Ungültiges Format der Zwischenablage - kein gültiges JSON",
-    [I18nKeys.Error.PayloadTooLarge]: "Secret-Größe überschreitet das Limit",
-
     [I18nKeys.Error.ExpectedUint8Array]: "Eingabe muss ein Uint8Array (binäre Daten) sein",
     [I18nKeys.Error.ExpectedString]: "Eingabe muss ein String (Textdaten) sein",
     [I18nKeys.Error.InvalidInputFormat]: "Eingabe enthält ungültige Zeichen oder Format",
@@ -708,6 +709,15 @@ const translations: Translations = {
     [I18nKeys.Error.HashValidationFailed]:
       "Validierung fehlgeschlagen - Daten könnten beschädigt oder verändert worden sein",
     [I18nKeys.Error.NotSupported]: "Funktion nicht unterstützt - der Server unterstützt diese Operation nicht",
+    [I18nKeys.Error.PayloadTooLarge]: "Secret-Größe überschreitet das Limit",
+
+    [I18nKeys.Validation.MissingData]: "Fehlende oder ungültige Daten",
+    [I18nKeys.Validation.InvalidFilename]: "Ungültiger Dateiname - muss Text sein",
+    [I18nKeys.Validation.InvalidToken]: "Ungültiger Token - muss Text sein",
+    [I18nKeys.Validation.InvalidTtl]: "Ungültige Ablaufzeit - muss eine positive Zahl sein",
+    [I18nKeys.Validation.EmptyJson]: "Zwischenablage ist leer",
+    [I18nKeys.Validation.InvalidJsonFormat]: "Ungültiges Format der Zwischenablage - kein gültiges JSON",
+    [I18nKeys.Validation.InvalidDataType]: "Ungültiger data_type Wert",
   },
 };
 

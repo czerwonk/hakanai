@@ -2,9 +2,15 @@
 
 import { HakanaiError, HakanaiErrorCodes } from "./errors";
 
+enum PayloadDataType {
+  Generic = "generic",
+  Image = "image",
+}
+
 interface PayloadData {
   readonly data: string;
   readonly filename?: string;
+  readonly data_type?: PayloadDataType;
 
   /**
    * Set data from raw bytes (for binary files or text converted to bytes)
@@ -33,10 +39,12 @@ interface PayloadData {
 class PayloadDataImpl implements PayloadData {
   private _data: string = "";
   private _filename?: string;
+  private _data_type?: PayloadDataType;
 
-  constructor(data: string = "", filename?: string) {
+  constructor(data: string = "", filename?: string, data_type?: PayloadDataType) {
     this._data = data;
     this._filename = filename;
+    this._data_type = data_type;
   }
 
   get data(): string {
@@ -45,6 +53,10 @@ class PayloadDataImpl implements PayloadData {
 
   get filename(): string | undefined {
     return this._filename;
+  }
+
+  get data_type(): PayloadDataType | undefined {
+    return this._data_type;
   }
 
   setFromBytes(bytes: Uint8Array): void {
@@ -92,4 +104,4 @@ class PayloadDataImpl implements PayloadData {
   }
 }
 
-export { type PayloadData, PayloadDataImpl };
+export { type PayloadData, PayloadDataType, PayloadDataImpl };

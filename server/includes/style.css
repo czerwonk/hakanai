@@ -1236,6 +1236,7 @@ button.loading::after {
 }
 .copy-btn,
 .download-btn,
+.preview-btn,
 .secondary-btn {
   font-size: var(--font-size-sm);
 }
@@ -2211,6 +2212,52 @@ input[type="number"] {
 }
 .qr-code-container:hover {
   transform: scale(1.05);
+}
+
+/* Image preview overlay */
+.image-preview-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  cursor: pointer;
+  animation: fadeIn 0.2s ease-in;
+}
+
+.image-preview-modal {
+  background: var(--surface);
+  padding: 20px;
+  border-radius: var(--border-radius-lg);
+  max-width: 90vw;
+  max-height: 90vh;
+  animation: scaleIn 0.2s ease-out;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  border: 1px solid var(--border);
+  position: relative;
+  cursor: default;
+}
+
+.image-preview-modal .preview-image {
+  max-width: 100%;
+  max-height: calc(90vh - 120px); /* Account for buttons and padding */
+  object-fit: contain;
+  border-radius: var(--border-radius);
+}
+
+.image-preview-modal .buttons-container {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  width: 100%;
 }
 
 /* QR Code fullscreen overlay */

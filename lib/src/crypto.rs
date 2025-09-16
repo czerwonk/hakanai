@@ -145,10 +145,7 @@ impl Drop for CryptoContext {
 /// // Send a secret (automatically encrypted)
 /// let secret_url = client.send_secret(
 ///     Url::parse("https://api.example.com")?,
-///     Payload {
-///         data: "My secret message".to_string(),
-///         filename: None,
-///     },
+///     Payload::from_bytes(b"My secret message"),
 ///     Duration::from_secs(3600),
 ///     "auth-token".to_string(),
 ///     None,
@@ -384,7 +381,7 @@ mod tests {
         let ttl = Duration::from_secs(3600);
         let token = "test_token".to_string();
 
-        let payload = Payload::from_bytes(secret_data, None);
+        let payload = Payload::from_bytes(secret_data);
 
         // Send the secret
         let send_result = crypto_client
@@ -439,10 +436,7 @@ mod tests {
         let crypto_client = CryptoClient::new(Box::new(mock_client.clone()));
 
         let base_url = Url::parse("https://example.com")?;
-        let payload = Payload {
-            data: "Test secret with hash".to_string(),
-            filename: None,
-        };
+        let payload = Payload::from_bytes(b"Test secret with hash");
         let ttl = Duration::from_secs(3600);
         let token = "test_token".to_string();
 
@@ -486,10 +480,7 @@ mod tests {
         let crypto_client = CryptoClient::new(Box::new(mock_client.clone()));
 
         let base_url = Url::parse("https://example.com")?;
-        let payload = Payload {
-            data: "Test secret without hash".to_string(),
-            filename: None,
-        };
+        let payload = Payload::from_bytes(b"Test secret without hash");
         let ttl = Duration::from_secs(3600);
         let token = "test_token".to_string();
 

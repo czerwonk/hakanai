@@ -1,8 +1,34 @@
 // SPDX-License-Identifier: Apache-2.0
 
+use std::str::FromStr;
+
 use base64::Engine;
 use serde::{Deserialize, Serialize};
 use zeroize::Zeroize;
+
+use crate::models::ValidationError;
+
+/// Specifies the type of payload to allow for specialized handling.
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub enum PayloadDataType {
+    Generic,
+    Image,
+}
+
+impl FromStr for PayloadDataType {
+    type Err = ValidationError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "generic" => Ok(PayloadDataType::Generic),
+            "image" => Ok(PayloadDataType::Image),
+            _ => Err(ValidationError::new(format!(
+                "Invalid payload data type: {s}"
+            ))),
+        }
+    }
+}
 
 /// Represents the data payload of a secret, which can be either a text message
 /// or a file with optional metadata.
@@ -13,6 +39,9 @@ pub struct Payload {
 
     /// The filename of the file, if not set data is assumed to be a text message.
     pub filename: Option<String>,
+
+    /// The type of payload for specialized handling.
+    pub data_type: Option<PayloadDataType>,
 }
 
 impl Payload {
@@ -25,24 +54,25 @@ impl Payload {
     ///
     /// * `bytes` - The raw binary data of the secret.
     /// * `filename` - An optional filename for the file.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use hakanai_lib::models::Payload;
-    ///
-    /// // Binary file
-    /// let pdf_bytes = vec![0x25, 0x50, 0x44, 0x46]; // PDF magic bytes
-    /// let payload = Payload::from_bytes(&pdf_bytes, Some("document.pdf".to_string()));
-    /// assert_eq!(payload.filename, Some("document.pdf".to_string()));
-    ///
-    /// // Text without filename
-    /// let text_payload = Payload::from_bytes(b"Secret message", None);
-    /// assert!(text_payload.filename.is_none());
-    /// ```
-    pub fn from_bytes(bytes: &[u8], filename: Option<String>) -> Self {
+    pub fn from_bytes(bytes: &[u8]) -> Self {
         let data = base64::prelude::BASE64_STANDARD.encode(bytes);
-        Self { data, filename }
+        Self {
+            data,
+            filename: None,
+            data_type: None,
+        }
+    }
+
+    /// Sets the filename for the payload, indicating that it represents a file.
+    pub fn with_filename(mut self, filename: &str) -> Self {
+        self.filename = Some(filename.to_string());
+        self
+    }
+
+    /// Sets the payload type for specialized handling.
+    pub fn with_type(mut self, data_type: PayloadDataType) -> Self {
+        self.data_type = Some(data_type);
+        self
     }
 
     /// Decodes the base64 data and returns it as bytes.
@@ -84,7 +114,7 @@ mod tests {
     #[test]
     fn test_payload_from_bytes() -> Result<()> {
         let bytes = b"Hello, world!";
-        let payload = Payload::from_bytes(bytes, Some("greeting.txt".to_string()));
+        let payload = Payload::from_bytes(bytes).with_filename("greeting.txt");
         assert_eq!(payload.filename, Some("greeting.txt".to_string()));
         assert_eq!(
             payload.data.to_string(),
@@ -96,7 +126,7 @@ mod tests {
     #[test]
     fn test_payload_decode_bytes() -> Result<()> {
         let bytes = b"Hello, world!";
-        let payload = Payload::from_bytes(bytes, None);
+        let payload = Payload::from_bytes(bytes);
         let decoded = payload.decode_bytes()?;
         assert_eq!(decoded, bytes);
         Ok(())
@@ -104,10 +134,7 @@ mod tests {
 
     #[test]
     fn test_payload_serialization_roundtrip() -> Result<()> {
-        let payload = Payload {
-            data: "test data".to_string(),
-            filename: Some("test.txt".to_string()),
-        };
+        let payload = Payload::from_bytes(b"test data").with_filename("test.txt");
 
         let serialized = payload.serialize()?;
         let deserialized = Payload::deserialize(&serialized)?;
@@ -119,10 +146,11 @@ mod tests {
 
     #[test]
     fn test_payload_serialize_text_no_filename() -> Result<()> {
-        let payload = Payload {
-            data: base64::prelude::BASE64_STANDARD.encode(b"Hello, world!"),
-            filename: None,
-        };
+        let bytes = base64::prelude::BASE64_STANDARD
+            .encode(b"Hello, world!")
+            .as_bytes()
+            .to_vec();
+        let payload = Payload::from_bytes(&bytes);
 
         let serialized = payload.serialize()?;
         let deserialized = Payload::deserialize(&serialized)?;
@@ -134,10 +162,7 @@ mod tests {
 
     #[test]
     fn test_payload_serialize_empty() -> Result<()> {
-        let payload = Payload {
-            data: String::new(),
-            filename: None,
-        };
+        let payload = Payload::from_bytes(b"");
 
         let serialized = payload.serialize()?;
         let deserialized = Payload::deserialize(&serialized)?;
@@ -172,10 +197,11 @@ mod tests {
         ];
 
         for filename in special_filenames {
-            let payload = Payload {
-                data: base64::prelude::BASE64_STANDARD.encode(b"test content"),
-                filename: Some(filename.to_string()),
-            };
+            let bytes = base64::prelude::BASE64_STANDARD
+                .encode(b"test content")
+                .as_bytes()
+                .to_vec();
+            let payload = Payload::from_bytes(&bytes).with_filename(filename);
 
             let serialized = payload.serialize()?;
             let deserialized = Payload::deserialize(&serialized)?;
@@ -189,7 +215,7 @@ mod tests {
     fn test_payload_serialize_large_binary() -> Result<()> {
         // Create a large binary payload (1MB)
         let large_data = vec![0xDEu8; 1024 * 1024];
-        let payload = Payload::from_bytes(&large_data, Some("large_file.bin".to_string()));
+        let payload = Payload::from_bytes(&large_data).with_filename("large_file.bin");
 
         let serialized = payload.serialize()?;
         let deserialized = Payload::deserialize(&serialized)?;
@@ -239,7 +265,7 @@ mod tests {
     #[test]
     fn test_payload_from_bytes_without_filename() -> Result<()> {
         let bytes = b"Secret message";
-        let payload = Payload::from_bytes(bytes, None);
+        let payload = Payload::from_bytes(bytes);
 
         assert!(payload.filename.is_none());
         assert_eq!(payload.decode_bytes()?, bytes);
@@ -250,7 +276,7 @@ mod tests {
     fn test_payload_serialize_preserves_base64() -> Result<()> {
         // Test that serialization preserves the exact base64 encoding
         let original_bytes = b"Binary\x00\x01\x02\x03data";
-        let payload = Payload::from_bytes(original_bytes, Some("binary.dat".to_string()));
+        let payload = Payload::from_bytes(original_bytes).with_filename("binary.dat");
 
         let serialized = payload.serialize()?;
         let deserialized = Payload::deserialize(&serialized)?;
@@ -262,10 +288,7 @@ mod tests {
 
     #[test]
     fn test_payload_zeroize() {
-        let mut payload = Payload {
-            data: "sensitive data".to_string(),
-            filename: Some("secret.txt".to_string()),
-        };
+        let mut payload = Payload::from_bytes(b"sensitive data").with_filename("secret.txt");
 
         payload.zeroize();
 

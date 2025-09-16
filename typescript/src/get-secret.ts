@@ -1,32 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import { HakanaiClient, ContentAnalysis, type PayloadData } from "./hakanai-client";
+import { HakanaiClient, HakanaiErrorCodes, type PayloadData } from "./hakanai-client";
 import { initI18n, I18nKeys } from "./core/i18n";
 import { KeyboardShortcuts } from "./core/keyboard-shortcuts";
-import {
-  announceToScreenReader,
-  createButton,
-  createButtonContainer,
-  debounce,
-  generateRandomId,
-  hideElement,
-  secureInputClear,
-  showElement,
-  expandView,
-  unexpandView,
-} from "./core/dom-utils";
-import { copyToClipboard } from "./core/clipboard";
+import { debounce, hideElement, secureInputClear, showElement, unexpandView } from "./core/dom-utils";
 import { displayErrorMessage } from "./components/error-display";
-import { formatFileSize } from "./core/formatters";
 import { ProgressBar } from "./components/progress-bar";
 import { initTheme } from "./core/theme";
 import { ErrorHandler, handleAPIError, isHakanaiError } from "./core/error";
 import { initFeatures } from "./core/app-config";
-import { HakanaiErrorCodes } from "./hakanai-client";
+import { showSecret } from "./components/get-result";
 
 const TIMEOUTS = {
   DEBOUNCE: 300,
-  CLEANUP_DELAY: 100,
 } as const;
 
 const baseUrl = window.location.origin.includes("file://") ? "http://localhost:8080" : window.location.origin;
@@ -154,6 +140,13 @@ async function performRetrieval(url: string, passphrase?: string): Promise<void>
   }
 }
 
+function showSuccess(payload: PayloadData) {
+  clearResult();
+
+  const { resultDiv } = getElements();
+  showSecret(payload, resultDiv, resetForm);
+}
+
 function showError(message: string): void {
   unexpandView();
 
@@ -250,223 +243,6 @@ function hideKeyInput(keyInputGroup: HTMLElement, keyInput: HTMLInputElement): v
 function showKeyInput(keyInputGroup: HTMLElement, keyInput: HTMLInputElement): void {
   showElement(keyInputGroup);
   keyInput.required = true;
-}
-
-function createTextSecret(payload: PayloadData, decodedBytes: Uint8Array): HTMLElement {
-  const secretId = "secret-" + generateRandomId();
-  const container = document.createElement("div");
-  container.className = "secret-container";
-
-  const textarea = createSecretTextarea(secretId, decodedBytes);
-  container.appendChild(textarea);
-
-  const buttonsContainer = createButtonContainer();
-  buttonsContainer.appendChild(createCopyButton(secretId));
-  buttonsContainer.appendChild(createDownloadButton(payload, decodedBytes));
-  container.appendChild(buttonsContainer);
-
-  expandView();
-  if (window.innerWidth > 640) {
-    resizeTextarea(textarea);
-  }
-
-  return container;
-}
-
-function createSecretTextarea(secretId: string, decodedBytes: Uint8Array): HTMLTextAreaElement {
-  const textarea = document.createElement("textarea");
-  textarea.id = secretId;
-  textarea.className = "secret-display";
-  textarea.readOnly = true;
-  textarea.setAttribute("aria-label", "Retrieved secret content");
-
-  // Use TextDecoder with pre-decoded bytes for better performance
-  const decoder = new TextDecoder();
-  textarea.value = decoder.decode(decodedBytes);
-
-  textarea.addEventListener("click", () => textarea.select());
-  return textarea;
-}
-
-function resizeTextarea(textarea: HTMLTextAreaElement): void {
-  // Use CSS custom properties to set height without inline styles
-  const styles = window.getComputedStyle(textarea);
-  const minHeight = parseInt(styles.minHeight);
-  const maxHeight = parseInt(styles.maxHeight);
-  const scrollHeight = textarea.scrollHeight;
-  const height = Math.min(Math.max(scrollHeight, minHeight), maxHeight);
-
-  // Set CSS custom property instead of inline style
-  textarea.style.setProperty("--textarea-height", height + "px");
-  textarea.classList.add("auto-height");
-}
-
-function createBinarySecret(payload: PayloadData, decodedBytes: Uint8Array): HTMLElement {
-  const container = document.createElement("div");
-  container.className = "secret-container";
-
-  const message = document.createElement("p");
-  message.className = "binary-message";
-  message.textContent = window.i18n.t(I18nKeys.Msg.BinaryDetected);
-  container.appendChild(message);
-
-  const buttonsContainer = createButtonContainer();
-  buttonsContainer.appendChild(createDownloadButton(payload, decodedBytes, true));
-  container.appendChild(buttonsContainer);
-
-  return container;
-}
-
-function createCopyButton(secretId: string): HTMLButtonElement {
-  return createButton(
-    "btn copy-btn",
-    window.i18n.t(I18nKeys.Button.Copy),
-    window.i18n.t(I18nKeys.Aria.CopySecret),
-    function (this: HTMLButtonElement) {
-      copySecret(secretId, this);
-    },
-  );
-}
-
-function createDownloadButton(
-  payload: PayloadData,
-  decodedBytes: Uint8Array,
-  isBinary: boolean = false,
-): HTMLButtonElement {
-  return createButton(
-    "btn download-btn",
-    window.i18n.t(I18nKeys.Button.Download),
-    window.i18n.t(I18nKeys.Aria.DownloadSecret),
-    () => downloadSecret(payload, decodedBytes, isBinary),
-  );
-}
-
-function createFilenameInfo(filename: string, size: number): HTMLElement {
-  const fileInfo = document.createElement("p");
-  fileInfo.className = "file-info";
-
-  const fileLabel = document.createElement("strong");
-  fileLabel.textContent = window.i18n.t(I18nKeys.Label.Filename) + " ";
-  fileInfo.appendChild(fileLabel);
-  fileInfo.appendChild(document.createTextNode(filename));
-
-  // Add size information
-  const sizeSpan = document.createElement("span");
-  sizeSpan.textContent = ` (${formatFileSize(size)})`;
-  fileInfo.appendChild(sizeSpan);
-
-  return fileInfo;
-}
-
-function createNoteElement(): HTMLElement {
-  const container = document.createElement("div");
-  container.className = "note-container";
-
-  const note = document.createElement("p");
-  note.className = "note-element";
-  note.appendChild(document.createTextNode("⚠️ " + window.i18n.t(I18nKeys.Msg.RetrieveNote)));
-  container.appendChild(note);
-
-  // Add CTA below the destruction note
-  const cta = document.createElement("p");
-  cta.className = "retrieve-cta";
-
-  const ctaLink = document.createElement("a");
-  ctaLink.href = "/";
-  ctaLink.textContent = window.i18n.t(I18nKeys.Msg.RetrieveCTA) + " →";
-  ctaLink.setAttribute("aria-label", "Learn more about Hakanai and create your own secrets");
-  cta.appendChild(ctaLink);
-
-  container.appendChild(cta);
-
-  // Add separator line
-  const separator = document.createElement("hr");
-  separator.className = "section-separator";
-  container.appendChild(separator);
-
-  // Add "Retrieve Another Secret" button with proper spacing and centering
-  const buttonContainer = document.createElement("div");
-  buttonContainer.className = "retrieve-another-container";
-
-  const retrieveAnotherButton = createButton(
-    "btn secondary",
-    window.i18n.t(I18nKeys.Button.RetrieveAnother),
-    "Show the form again to retrieve another secret",
-    () => resetForm(),
-  );
-  buttonContainer.appendChild(retrieveAnotherButton);
-  container.appendChild(buttonContainer);
-
-  return container;
-}
-
-function showSuccess(payload: PayloadData): void {
-  clearResult();
-
-  const { resultDiv } = getElements();
-  resultDiv.className = "result success";
-
-  const title = document.createElement("h3");
-  title.textContent = window.i18n.t(I18nKeys.Msg.SuccessTitle);
-  resultDiv.appendChild(title);
-
-  const decodedBytes = payload.decodeBytes();
-  const isBinaryFile = payload.filename != null || ContentAnalysis.isBinary(decodedBytes);
-
-  const container = isBinaryFile ? createBinarySecret(payload, decodedBytes) : createTextSecret(payload, decodedBytes);
-  resultDiv.appendChild(container);
-
-  if (payload.filename) {
-    resultDiv.appendChild(createFilenameInfo(payload.filename, decodedBytes.length));
-  }
-
-  resultDiv.appendChild(createNoteElement());
-  announceToScreenReader(window.i18n.t(I18nKeys.Msg.SuccessTitle));
-}
-
-function copySecret(secretId: string, button: HTMLButtonElement): void {
-  const secretElement = document.getElementById(secretId) as HTMLTextAreaElement;
-  if (!secretElement) {
-    showError(window.i18n.t(I18nKeys.Msg.CopyFailed));
-    return;
-  }
-
-  copyToClipboard(secretElement.value, button);
-}
-
-function generateFilename(payload: PayloadData, isBinary: boolean): string {
-  if (payload.filename) {
-    return payload.filename;
-  }
-
-  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-
-  const extension = isBinary ? ".bin" : ".txt";
-
-  return `hakanai-secret-${timestamp}${extension}`;
-}
-
-function downloadSecret(payload: PayloadData, decodedBytes: Uint8Array, isBinary: boolean): void {
-  const filename = generateFilename(payload, isBinary);
-  const mimeType = payload.filename ? "application/octet-stream" : "text/plain;charset=utf-8";
-
-  const blob = new Blob([decodedBytes], { type: mimeType });
-  const url = window.URL.createObjectURL(blob);
-
-  const anchor = document.createElement("a");
-  hideElement(anchor);
-  anchor.href = url;
-  anchor.download = filename;
-
-  document.body.appendChild(anchor);
-  anchor.click();
-
-  setTimeout(() => {
-    document.body.removeChild(anchor);
-    window.URL.revokeObjectURL(url);
-  }, TIMEOUTS.CLEANUP_DELAY);
-
-  announceToScreenReader(window.i18n.t(I18nKeys.Msg.Downloaded));
 }
 
 function setupUrlInput(): void {
@@ -566,4 +342,4 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // Export functions for testing
-export { normalizeUrl, hasUrlFragment, validateInputs, generateFilename };
+export { normalizeUrl, hasUrlFragment, validateInputs };

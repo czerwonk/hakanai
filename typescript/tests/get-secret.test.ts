@@ -57,60 +57,6 @@ describe("get-secret.ts", () => {
     });
   });
 
-  describe("Filename generation", () => {
-    test("generateFilename uses payload filename when available", () => {
-      const { generateFilename } = getSecretModule;
-
-      const payloadWithFilename = { filename: "document.pdf" };
-      expect(generateFilename(payloadWithFilename, false)).toBe("document.pdf");
-    });
-
-    test("generateFilename creates timestamp filename when no filename", () => {
-      const { generateFilename } = getSecretModule;
-
-      const payloadWithoutFilename = { filename: undefined };
-      const result = generateFilename(payloadWithoutFilename, false);
-
-      expect(result).toMatch(/^hakanai-secret-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}.*\.txt$/);
-    });
-
-    test("generateFilename handles null filename", () => {
-      const { generateFilename } = getSecretModule;
-
-      const payloadWithNullFilename = { filename: null };
-      const result = generateFilename(payloadWithNullFilename, false);
-
-      expect(result).toMatch(/^hakanai-secret-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}.*\.txt$/);
-    });
-
-    test("generateFilename uses .bin extension for binary content", () => {
-      const { generateFilename } = getSecretModule;
-
-      const payloadWithoutFilename = { filename: undefined };
-      const result = generateFilename(payloadWithoutFilename, true);
-
-      expect(result).toMatch(/^hakanai-secret-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}.*\.bin$/);
-    });
-
-    test("generateFilename uses .txt extension for text content", () => {
-      const { generateFilename } = getSecretModule;
-
-      const payloadWithoutFilename = { filename: undefined };
-      const result = generateFilename(payloadWithoutFilename, false);
-
-      expect(result).toMatch(/^hakanai-secret-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}.*\.txt$/);
-    });
-
-    test("generateFilename prefers payload filename over binary detection", () => {
-      const { generateFilename } = getSecretModule;
-
-      const payloadWithFilename = { filename: "important.pdf" };
-      const result = generateFilename(payloadWithFilename, true);
-
-      expect(result).toBe("important.pdf");
-    });
-  });
-
   describe("URL format validation edge cases", () => {
     test("normalizeUrl handles edge cases", () => {
       const { normalizeUrl } = getSecretModule;
@@ -155,19 +101,6 @@ describe("get-secret.ts", () => {
   });
 
   describe("Security considerations", () => {
-    test("filename generation creates safe filenames", () => {
-      const { generateFilename } = getSecretModule;
-
-      const timestamp = generateFilename({ filename: null });
-
-      // Should not contain dangerous characters
-      expect(timestamp).not.toMatch(/[<>:"/\\|?*]/);
-
-      // Should be a reasonable length
-      expect(timestamp.length).toBeLessThan(100);
-      expect(timestamp.length).toBeGreaterThan(10);
-    });
-
     test("URL normalization doesn't break valid URLs", () => {
       const { normalizeUrl } = getSecretModule;
 

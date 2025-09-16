@@ -249,6 +249,33 @@ paths:
                     type: string
 components:
   schemas:
+    PayloadPlaintext:
+      description: |
+        Internal structure of the secret after decryption (for documentation only).
+        This is NEVER sent unencrypted over the wire - all secrets are encrypted client-side before transmission.
+        This schema documents the JSON structure that gets encrypted into the 'data' field.
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: string
+          format: byte
+          description: Base64-encoded actual content (text or binary)
+          example: SGVsbG8sIHdvcmxkIQ==
+        filename:
+          type: string
+          description: Optional filename for file downloads. When present, the content will be offered as a downloadable file.
+          example: document.pdf
+        data_type:
+          type: string
+          enum: [generic, image]
+          default: generic
+          description: |
+            Type hint for specialized handling in the UI.
+            - generic: Default type, content is downloaded or displayed as text
+            - image: Content can be previewed as an image (user must explicitly choose to preview)
+          example: image
     CreateSecretRequest:
       type: object
       required:
@@ -257,7 +284,10 @@ components:
       properties:
         data:
           type: string
-          description: Base64-encoded secret data (encrypted client-side)
+          description: |
+            Base64-encoded AES-256-GCM encrypted payload.
+            The decrypted content is a JSON object with the structure defined in the PayloadPlaintext schema.
+            Encryption happens entirely client-side - the server never sees the plaintext.
           example: bXkgc2VjcmV0IG1lc3NhZ2U=
         expires_in:
           type: integer

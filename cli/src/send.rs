@@ -46,8 +46,14 @@ pub async fn send<T: Factory>(factory: T, args: SendArgs) -> Result<()> {
         ));
     }
 
-    let filename = get_filename(&secret, args.clone())?;
-    let payload = Payload::from_bytes(secret.bytes.as_ref(), filename);
+    let mut payload = Payload::from_bytes(secret.bytes.as_ref());
+    if let Some(filename) = get_filename(&secret, args.clone())? {
+        payload = payload.with_filename(&filename);
+    }
+
+    if let Some(data_type) = args.data_type.clone() {
+        payload = payload.with_type(data_type);
+    }
 
     let user_agent = helper::get_user_agent_name();
     let observer = factory.new_observer("Sending secret...")?;
@@ -74,7 +80,6 @@ pub async fn send<T: Factory>(factory: T, args: SendArgs) -> Result<()> {
 
     Ok(())
 }
-
 
 fn read_secret(args: SendArgs) -> Result<Secret> {
     if let Some(files) = args.files {
