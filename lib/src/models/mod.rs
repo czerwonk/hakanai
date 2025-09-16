@@ -24,7 +24,7 @@ pub mod token;
 
 pub use country_code::CountryCode;
 pub use errors::ValidationError;
-pub use payload::Payload;
+pub use payload::{Payload, PayloadDataType};
 pub use restrictions::SecretRestrictions;
 pub use secret::{PostSecretRequest, PostSecretResponse};
 pub use token::{CreateTokenRequest, CreateTokenResponse};

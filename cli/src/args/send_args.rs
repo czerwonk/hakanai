@@ -7,7 +7,7 @@ use anyhow::{Result, anyhow};
 use clap::Parser;
 use url::Url;
 
-use hakanai_lib::models::{CountryCode, SecretRestrictions};
+use hakanai_lib::models::{CountryCode, PayloadDataType, SecretRestrictions};
 use hakanai_lib::utils::ip;
 use zeroize::Zeroizing;
 
@@ -115,6 +115,13 @@ pub struct SendArgs {
         env = "HAKANAI_REQUIRE_PASSPHRASE"
     )]
     pub require_passphrase: Option<String>,
+
+    #[arg(
+        long = "type",
+        help = "Specify the payload type for specialized handling (e.g., image).",
+        value_parser = PayloadDataType::from_str
+    )]
+    pub data_type: Option<PayloadDataType>,
 }
 
 impl SendArgs {
@@ -194,6 +201,7 @@ impl SendArgs {
             allowed_countries: None,
             allowed_asns: None,
             require_passphrase: None,
+            data_type: None,
         }
     }
 
