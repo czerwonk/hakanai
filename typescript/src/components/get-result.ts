@@ -103,11 +103,12 @@ function createBinarySecret(payload: PayloadData, decodedBytes: Uint8Array): HTM
 
   const buttonsContainer = createButtonContainer();
 
+  buttonsContainer.appendChild(createDownloadButton(payload, decodedBytes, true));
+
   if (payload.data_type === PayloadDataType.Image) {
     buttonsContainer.appendChild(createPreviewButton(payload, decodedBytes));
   }
 
-  buttonsContainer.appendChild(createDownloadButton(payload, decodedBytes, true));
   container.appendChild(buttonsContainer);
 
   return container;
