@@ -188,7 +188,7 @@ impl SendArgs {
     #[cfg(test)]
     pub fn builder() -> Self {
         Self {
-            server: Url::parse("http://localhost:8080").unwrap(),
+            server: Url::parse("http://localhost:8080").expect("Invalid URL"),
             ttl: Duration::from_secs(24 * 60 * 60), // 24h
             token: None,
             token_file: None,
@@ -207,7 +207,7 @@ impl SendArgs {
 
     #[cfg(test)]
     pub fn with_server(mut self, server: &str) -> Self {
-        self.server = Url::parse(server).unwrap();
+        self.server = Url::parse(server).expect("Invalid URL");
         self
     }
 
@@ -398,29 +398,37 @@ mod tests {
     fn test_get_restrictions_with_all_options() {
         // Test that all restriction types are properly processed when set
         let args = SendArgs::builder()
-            .with_allowed_ips(vec!["192.168.1.0/24".parse().unwrap()])
-            .with_allowed_countries(vec!["US".parse().unwrap()])
+            .with_allowed_ips(vec!["192.168.1.0/24".parse().expect("Invalid CIDR")])
+            .with_allowed_countries(vec!["US".parse().expect("Invalid country code")])
             .with_allowed_asns(vec![13335])
             .with_require_passphrase("test123456");
 
         let result = args.get_restrictions();
-        assert!(
-            result.is_some(),
-            "Should return restrictions when all options are set"
-        );
-        let restrictions = result.unwrap();
+        let restrictions = result.expect("Restictions should be set");
         assert_eq!(
-            restrictions.allowed_ips.as_ref().unwrap().len(),
+            restrictions
+                .allowed_ips
+                .as_ref()
+                .expect("Allowed IPs should be set")
+                .len(),
             1,
             "Should have one IP restriction"
         );
         assert_eq!(
-            restrictions.allowed_countries.as_ref().unwrap().len(),
+            restrictions
+                .allowed_countries
+                .as_ref()
+                .expect("Allowed countries should be set")
+                .len(),
             1,
             "Should have one country restriction"
         );
         assert_eq!(
-            restrictions.allowed_asns.as_ref().unwrap().len(),
+            restrictions
+                .allowed_asns
+                .as_ref()
+                .expect("Allowed ASNs should be set")
+                .len(),
             1,
             "Should have one ASN restriction"
         );
@@ -455,16 +463,17 @@ mod tests {
     #[test]
     fn test_get_restrictions_only_ips() {
         // Test that only IP restrictions are processed correctly
-        let args = SendArgs::builder().with_allowed_ips(vec!["10.0.0.0/8".parse().unwrap()]);
+        let args =
+            SendArgs::builder().with_allowed_ips(vec!["10.0.0.0/8".parse().expect("Invalid CIDR")]);
 
         let result = args.get_restrictions();
-        assert!(
-            result.is_some(),
-            "Should return restrictions when IPs are set"
-        );
-        let restrictions = result.unwrap();
+        let restrictions = result.expect("Should have restrictions");
         assert_eq!(
-            restrictions.allowed_ips.as_ref().unwrap().len(),
+            restrictions
+                .allowed_ips
+                .as_ref()
+                .expect("Allowed IPs should be set")
+                .len(),
             1,
             "Should have one IP restriction"
         );
@@ -485,20 +494,21 @@ mod tests {
     #[test]
     fn test_get_restrictions_only_countries() {
         // Test that only country restrictions are processed correctly
-        let args = SendArgs::builder().with_allowed_countries(vec!["DE".parse().unwrap()]);
+        let args = SendArgs::builder()
+            .with_allowed_countries(vec!["DE".parse().expect("Invalid country code")]);
 
         let result = args.get_restrictions();
-        assert!(
-            result.is_some(),
-            "Should return restrictions when countries are set"
-        );
-        let restrictions = result.unwrap();
+        let restrictions = result.expect("Restrictions should be set");
         assert!(
             restrictions.allowed_ips.is_none(),
             "Should have no IP restrictions"
         );
         assert_eq!(
-            restrictions.allowed_countries.as_ref().unwrap().len(),
+            restrictions
+                .allowed_countries
+                .as_ref()
+                .expect("Allowed contries should be set")
+                .len(),
             1,
             "Should have one country restriction"
         );
@@ -518,11 +528,7 @@ mod tests {
         let args = SendArgs::builder().with_allowed_asns(vec![15169]);
 
         let result = args.get_restrictions();
-        assert!(
-            result.is_some(),
-            "Should return restrictions when ASNs are set"
-        );
-        let restrictions = result.unwrap();
+        let restrictions = result.expect("Restrictions should be set");
         assert!(
             restrictions.allowed_ips.is_none(),
             "Should have no IP restrictions"
@@ -532,7 +538,11 @@ mod tests {
             "Should have no country restrictions"
         );
         assert_eq!(
-            restrictions.allowed_asns.as_ref().unwrap().len(),
+            restrictions
+                .allowed_asns
+                .as_ref()
+                .expect("Allowed ASNs should be set")
+                .len(),
             1,
             "Should have one ASN restriction"
         );
@@ -548,11 +558,7 @@ mod tests {
         let args = SendArgs::builder().with_require_passphrase("validpassword");
 
         let result = args.get_restrictions();
-        assert!(
-            result.is_some(),
-            "Should return restrictions when passphrase is set"
-        );
-        let restrictions = result.unwrap();
+        let restrictions = result.expect("Restrictions should be set");
         assert!(
             restrictions.allowed_ips.is_none(),
             "Should have no IP restrictions"

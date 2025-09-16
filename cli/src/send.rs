@@ -310,7 +310,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_send_successful_text_file() -> Result<()> {
-        let expected_url = url::Url::parse("https://example.com/s/success123#key").unwrap();
+        let expected_url =
+            url::Url::parse("https://example.com/s/success123#key").expect("Invalid URL");
         let client = MockClient::new().with_send_success(expected_url.clone());
         let factory = MockFactory::new().with_client(client);
 
@@ -330,7 +331,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_send_successful_as_file() -> Result<()> {
-        let expected_url = url::Url::parse("https://example.com/s/file123#key").unwrap();
+        let expected_url =
+            url::Url::parse("https://example.com/s/file123#key").expect("Invalid URL");
         let client = MockClient::new().with_send_success(expected_url.clone());
         let factory = MockFactory::new().with_client(client);
 
@@ -351,7 +353,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_send_successful_with_custom_filename() -> Result<()> {
-        let expected_url = url::Url::parse("https://example.com/s/custom123#key").unwrap();
+        let expected_url =
+            url::Url::parse("https://example.com/s/custom123#key").expect("Invalid URL");
         let client = MockClient::new().with_send_success(expected_url.clone());
         let factory = MockFactory::new().with_client(client);
 
@@ -399,7 +402,8 @@ mod tests {
     #[tokio::test]
     async fn test_send_with_all_restrictions() -> Result<()> {
         // Integration test ensuring all restriction types work together in the full send flow
-        let expected_url = url::Url::parse("https://example.com/s/restricted123#key").unwrap();
+        let expected_url =
+            url::Url::parse("https://example.com/s/restricted123#key").expect("Invalid URL");
         let client = MockClient::new().with_send_success(expected_url.clone());
         let factory = MockFactory::new().with_client(client);
 
@@ -412,8 +416,8 @@ mod tests {
             .with_ttl(Duration::from_secs(3600))
             .with_token("token123")
             .with_file(file_path.to_string_lossy().as_ref())
-            .with_allowed_ips(vec!["192.168.1.0/24".parse().unwrap()])
-            .with_allowed_countries(vec!["US".parse().unwrap()])
+            .with_allowed_ips(vec!["192.168.1.0/24".parse().expect("Invalid CIDR")])
+            .with_allowed_countries(vec!["US".parse().expect("Invalid country code")])
             .with_allowed_asns(vec![13335])
             .with_require_passphrase("test123456");
 

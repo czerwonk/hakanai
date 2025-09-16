@@ -42,12 +42,15 @@ mod tests {
     fn test_get_command_parsing() {
         let args =
             Args::try_parse_from(["hakanai", "get", "https://example.com/secret/abc123#test"])
-                .unwrap();
+                .expect("Failed to parse arguments");
 
         match args.command {
             Command::Get(get_args) => {
                 assert_eq!(
-                    get_args.secret_url().unwrap().as_str(),
+                    get_args
+                        .secret_url()
+                        .expect("Failed to get secret URL")
+                        .as_str(),
                     "https://example.com/secret/abc123#test"
                 );
             }
@@ -64,12 +67,15 @@ mod tests {
             "--key",
             "test",
         ])
-        .unwrap();
+        .expect("Failed to parse arguments");
 
         match args.command {
             Command::Get(get_args) => {
                 assert_eq!(
-                    get_args.secret_url().unwrap().as_str(),
+                    get_args
+                        .secret_url()
+                        .expect("Failed to get secret URL")
+                        .as_str(),
                     "https://example.com/secret/abc123#test"
                 );
             }
@@ -110,7 +116,8 @@ mod tests {
         ];
 
         for (ttl_str, expected_duration) in test_cases {
-            let args = Args::try_parse_from(["hakanai", "send", "--ttl", ttl_str]).unwrap();
+            let args = Args::try_parse_from(["hakanai", "send", "--ttl", ttl_str])
+                .expect("Failed to parse arguments");
 
             match args.command {
                 Command::Send(send_args) => {
@@ -157,11 +164,11 @@ mod tests {
             "--allow-ip",
             "172.16.0.100",
         ])
-        .unwrap();
+        .expect("Failed to parse arguments");
 
         match args.command {
             Command::Send(send_args) => {
-                let allowed_ips = send_args.allowed_ips.unwrap();
+                let allowed_ips = send_args.allowed_ips.expect("Allowed IPs should be set");
                 assert_eq!(allowed_ips.len(), 3);
                 assert_eq!(allowed_ips[0].to_string(), "192.168.1.0/24");
                 assert_eq!(allowed_ips[1].to_string(), "10.0.0.0/8");
@@ -183,11 +190,13 @@ mod tests {
             "--allow-country",
             "CA",
         ])
-        .unwrap();
+        .expect("Failed to parse arguments");
 
         match args.command {
             Command::Send(send_args) => {
-                let allowed_countries = send_args.allowed_countries.unwrap();
+                let allowed_countries = send_args
+                    .allowed_countries
+                    .expect("Allowed countries should be set");
                 assert_eq!(allowed_countries.len(), 3);
                 assert_eq!(allowed_countries[0].as_str(), "US");
                 assert_eq!(allowed_countries[1].as_str(), "DE");
@@ -199,12 +208,12 @@ mod tests {
 
     #[test]
     fn test_send_command_with_comma_separated_asns() {
-        let args =
-            Args::try_parse_from(["hakanai", "send", "--allow-asn", "13335,15169,32934"]).unwrap();
+        let args = Args::try_parse_from(["hakanai", "send", "--allow-asn", "13335,15169,32934"])
+            .expect("Failed to parse arguments");
 
         match args.command {
             Command::Send(send_args) => {
-                let allowed_asns = send_args.allowed_asns.unwrap();
+                let allowed_asns = send_args.allowed_asns.expect("Allowed ASNs should be set");
                 assert_eq!(allowed_asns.len(), 3);
                 assert_eq!(allowed_asns[0], 13335);
                 assert_eq!(allowed_asns[1], 15169);

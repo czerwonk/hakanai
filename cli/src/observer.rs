@@ -59,7 +59,7 @@ mod tests {
         progress_bar.set_style(
             ProgressStyle::default_bar()
             .template("{msg}\n{spinner:.green} [{elapsed_precise}] [{bar:40.white/gray}] {bytes}/{total_bytes} ({percent}%) {bytes_per_sec} ETA: {eta}")
-            .unwrap()
+            .expect("invalid template")
             .progress_chars("██▓▒░  ")
         );
         progress_bar.set_message(label.to_string());

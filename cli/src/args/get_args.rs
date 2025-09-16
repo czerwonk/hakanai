@@ -132,7 +132,7 @@ impl GetArgs {
     #[cfg(test)]
     pub fn builder(link: &str) -> Self {
         Self {
-            link: Url::parse(link).unwrap(),
+            link: Url::parse(link).expect("Invalid URL"),
             key: None,
             to_stdout: false,
             filename: None,
@@ -299,7 +299,7 @@ mod tests {
     fn test_validate_error_output_dir_is_file() {
         use tempfile::NamedTempFile;
 
-        let temp_file = NamedTempFile::new().unwrap();
+        let temp_file = NamedTempFile::new().expect("Failed to create temp file");
         let file_path = temp_file.path();
 
         let args = GetArgs::builder("https://example.com/s/test#key")
@@ -319,7 +319,7 @@ mod tests {
     fn test_validate_success_with_valid_output_dir() -> Result<()> {
         use tempfile::TempDir;
 
-        let temp_dir = TempDir::new().unwrap();
+        let temp_dir = TempDir::new().expect("Failed to create temp dir");
         let args = GetArgs::builder("https://example.com/s/test#key")
             .with_output_dir(temp_dir.path().to_string_lossy().as_ref());
 
@@ -348,7 +348,7 @@ mod tests {
     #[test]
     fn test_secret_url_with_fragment_in_url() {
         let args = GetArgs::builder("https://example.com/s/test#mykey");
-        let url = args.secret_url().unwrap();
+        let url = args.secret_url().expect("Failed to get secret URL");
         assert_eq!(url.as_str(), "https://example.com/s/test#mykey");
         assert_eq!(url.fragment(), Some("mykey"));
     }
@@ -356,7 +356,7 @@ mod tests {
     #[test]
     fn test_secret_url_with_key_parameter() {
         let args = GetArgs::builder("https://example.com/s/test").with_key("mykey");
-        let url = args.secret_url().unwrap();
+        let url = args.secret_url().expect("Failed to get secret URL");
         assert_eq!(url.as_str(), "https://example.com/s/test#mykey");
         assert_eq!(url.fragment(), Some("mykey"));
     }
@@ -404,7 +404,7 @@ mod tests {
     fn test_secret_url_with_complex_url() {
         let args = GetArgs::builder("https://example.com:8080/api/v1/secret?param=value")
             .with_key("test123");
-        let url = args.secret_url().unwrap();
+        let url = args.secret_url().expect("Failed to get secret URL");
         assert_eq!(
             url.as_str(),
             "https://example.com:8080/api/v1/secret?param=value#test123"
@@ -414,7 +414,7 @@ mod tests {
     #[test]
     fn test_secret_url_preserves_original_fragment() {
         let args = GetArgs::builder("https://example.com/s/test#original:hash");
-        let url = args.secret_url().unwrap();
+        let url = args.secret_url().expect("Failed to get secret URL");
         assert_eq!(url.fragment(), Some("original:hash"));
     }
 
@@ -422,7 +422,7 @@ mod tests {
     fn test_secret_url_with_special_characters_in_key() {
         let args =
             GetArgs::builder("https://example.com/s/test").with_key("key-with_special.chars");
-        let url = args.secret_url().unwrap();
+        let url = args.secret_url().expect("Failed to get secret URL");
         assert_eq!(url.fragment(), Some("key-with_special.chars"));
     }
 }
