@@ -180,11 +180,7 @@ mod tests {
     fn test_secret_receive_options_with_passphrase() {
         let opts = SecretReceiveOptions::new().with_passphrase(b"mypassword");
 
-        assert!(
-            opts.passphrase_hash.is_some(),
-            "Passphrase hash should be set"
-        );
-        let hash = opts.passphrase_hash.unwrap();
+        let hash = opts.passphrase_hash.expect("Passphrase hash should be set");
         assert_eq!(hash.len(), 64, "SHA-256 hash should be 64 characters long");
         assert!(
             hash.chars().all(|c| c.is_ascii_hexdigit()),

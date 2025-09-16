@@ -65,8 +65,12 @@ mod tests {
 
         for code in valid_codes {
             let result = CountryCode::new(code);
-            assert!(result.is_ok(), "Expected {} to be valid", code);
-            assert_eq!(result.unwrap().as_str(), code);
+            assert_eq!(
+                result
+                    .expect(&format!("Expected {code} to be valid"))
+                    .as_str(),
+                code
+            );
         }
     }
 
@@ -102,13 +106,13 @@ mod tests {
 
     #[test]
     fn test_as_str() {
-        let country_code = CountryCode::new("US").unwrap();
+        let country_code = CountryCode::new("US").expect("Failed to parse valid country code");
         assert_eq!(country_code.as_str(), "US");
     }
 
     #[test]
     fn test_from_string_conversion() {
-        let country_code = CountryCode::new("DE").unwrap();
+        let country_code = CountryCode::new("DE").expect("Failed to parse valid country code");
         let string_value: String = country_code.into();
         assert_eq!(string_value, "DE");
     }
@@ -132,9 +136,9 @@ mod tests {
 
     #[test]
     fn test_equality() {
-        let code1 = CountryCode::new("US").unwrap();
-        let code2 = CountryCode::new("US").unwrap();
-        let code3 = CountryCode::new("DE").unwrap();
+        let code1 = CountryCode::new("US").expect("Failed to parse valid country code");
+        let code2 = CountryCode::new("US").expect("Failed to parse valid country code");
+        let code3 = CountryCode::new("DE").expect("Failed to parse valid country code");
 
         assert_eq!(code1, code2);
         assert_ne!(code1, code3);
@@ -142,7 +146,7 @@ mod tests {
 
     #[test]
     fn test_clone() {
-        let original = CountryCode::new("JP").unwrap();
+        let original = CountryCode::new("JP").expect("Failed to parse valid country code");
         let cloned = original.clone();
 
         assert_eq!(original, cloned);
@@ -151,15 +155,16 @@ mod tests {
 
     #[test]
     fn test_serde_serialization() {
-        let country_code = CountryCode::new("FR").unwrap();
-        let json = serde_json::to_string(&country_code).unwrap();
+        let country_code = CountryCode::new("FR").expect("Failed to parse valid country code");
+        let json = serde_json::to_string(&country_code).expect("Failed to serialize in json");
         assert_eq!(json, "\"FR\"");
     }
 
     #[test]
     fn test_serde_deserialization_valid() {
         let json = "\"GB\"";
-        let country_code: CountryCode = serde_json::from_str(json).unwrap();
+        let country_code: CountryCode =
+            serde_json::from_str(json).expect("Failed to deserialize from json");
         assert_eq!(country_code.as_str(), "GB");
     }
 
@@ -191,7 +196,7 @@ mod tests {
 
     #[test]
     fn test_from_str_valid() {
-        let country_code: CountryCode = "US".parse().unwrap();
+        let country_code: CountryCode = "US".parse().expect("Failed to parse valid country code");
         assert_eq!(country_code.as_str(), "US");
     }
 
