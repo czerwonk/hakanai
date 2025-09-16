@@ -140,7 +140,7 @@ export class ShareData {
       params.get("filename") ?? undefined,
       params.get("token") ?? undefined,
       params.get("ttl") ? parseInt(params.get("ttl")!) : undefined,
-      undefined, // restrictions are not passed via fragment
+      undefined, // restrictions intentionally set to undefined, as they are not encoded in URL fragments
       params.get("data_type") ?? undefined,
     );
   }
