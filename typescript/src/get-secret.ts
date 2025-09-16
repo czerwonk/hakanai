@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import { HakanaiClient, HakanaiErrorCodes, PayloadData } from "./hakanai-client";
+import { HakanaiClient, HakanaiErrorCodes, type PayloadData } from "./hakanai-client";
 import { initI18n, I18nKeys } from "./core/i18n";
 import { KeyboardShortcuts } from "./core/keyboard-shortcuts";
 import { debounce, hideElement, secureInputClear, showElement, unexpandView } from "./core/dom-utils";
