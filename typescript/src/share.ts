@@ -192,7 +192,7 @@ async function createSecret(): Promise<void> {
     const client = new HakanaiClient(window.location.origin);
 
     const sanitizedFilename = sharePayload.filename ? sanitizeFileName(sharePayload.filename) : undefined;
-    const hakanaiPayload = client.createPayload(sanitizedFilename || undefined);
+    const hakanaiPayload = client.createPayload(sanitizedFilename || undefined, sharePayload.data_type);
     hakanaiPayload.setFromBase64(sharePayload.data);
 
     if (!ttlSelector) {
