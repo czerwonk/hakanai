@@ -240,6 +240,7 @@ const I18nKeys = {
     InvalidJsonFormat: "validation.INVALID_JSON_FORMAT",
     InvalidToken: "validation.INVALID_TOKEN",
     InvalidTtl: "validation.INVALID_TTL",
+    InvalidDataType: "validation.INVALID_DATA_TYPE",
     MissingData: "validation.MISSING_DATA",
   },
 } as const;
@@ -459,6 +460,7 @@ const translations: Translations = {
     [I18nKeys.Validation.InvalidTtl]: "Invalid expiration time - must be a positive number",
     [I18nKeys.Validation.EmptyJson]: "Clipboard content is empty",
     [I18nKeys.Validation.InvalidJsonFormat]: "Invalid clipboard format - not valid JSON",
+    [I18nKeys.Validation.InvalidDataType]: "Invalid data_type value",
 
     [I18nKeys.Error.ExpectedUint8Array]: "Input must be a Uint8Array (binary data)",
     [I18nKeys.Error.ExpectedString]: "Input must be a string (text data)",
@@ -683,7 +685,7 @@ const translations: Translations = {
     [I18nKeys.Validation.InvalidTtl]: "Ungültige Ablaufzeit - muss eine positive Zahl sein",
     [I18nKeys.Validation.EmptyJson]: "Zwischenablage ist leer",
     [I18nKeys.Validation.InvalidJsonFormat]: "Ungültiges Format der Zwischenablage - kein gültiges JSON",
-    [I18nKeys.Error.PayloadTooLarge]: "Secret-Größe überschreitet das Limit",
+    [I18nKeys.Validation.InvalidDataType]: "Ungültiger data_type Wert",
 
     [I18nKeys.Error.ExpectedUint8Array]: "Eingabe muss ein Uint8Array (binäre Daten) sein",
     [I18nKeys.Error.ExpectedString]: "Eingabe muss ein String (Textdaten) sein",
@@ -708,6 +710,7 @@ const translations: Translations = {
     [I18nKeys.Error.HashValidationFailed]:
       "Validierung fehlgeschlagen - Daten könnten beschädigt oder verändert worden sein",
     [I18nKeys.Error.NotSupported]: "Funktion nicht unterstützt - der Server unterstützt diese Operation nicht",
+    [I18nKeys.Error.PayloadTooLarge]: "Secret-Größe überschreitet das Limit",
   },
 };
 
