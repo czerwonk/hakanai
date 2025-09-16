@@ -86,6 +86,7 @@ const I18nKeys = {
     Copy: "button.copy",
     Create: "button.create",
     Download: "button.download",
+    Preview: "button.preview",
     ReadClipboard: "button.readClipboard",
     Retrieve: "button.retrieve",
     RetrieveAnother: "button.retrieveAnother",
@@ -147,6 +148,7 @@ const I18nKeys = {
     AllowedIPs: "aria.allowedIPs",
     AllowedCountries: "aria.allowedCountries",
     AllowedASNs: "aria.allowedASNs",
+    ClosePreview: "aria.closePreview",
     CopySecret: "aria.copySecret",
     DownloadSecret: "aria.downloadSecret",
     DownloadQRCode: "aria.downloadQRCode",
@@ -154,6 +156,7 @@ const I18nKeys = {
     FileInput: "aria.fileInput",
     KeyInput: "aria.keyInput",
     LogoHome: "aria.logoHome",
+    PreviewContent: "aria.previewContent",
     SecretInput: "aria.secretInput",
     SwitchToDark: "aria.switchToDark",
     SwitchToLight: "aria.switchToLight",
@@ -345,6 +348,7 @@ const translations: Translations = {
     [I18nKeys.Button.Close]: "Close",
     [I18nKeys.Button.ShowQrCode]: "Show QR Code",
     [I18nKeys.Button.Download]: "💾 Download",
+    [I18nKeys.Button.Preview]: "👁️ Preview",
     [I18nKeys.Button.ChooseFile]: "📁 Choose File",
     [I18nKeys.Button.ReadClipboard]: "📄 Read Clipboard",
 
@@ -389,9 +393,11 @@ const translations: Translations = {
     [I18nKeys.Msg.Downloaded]: "Secret downloaded as text file",
     [I18nKeys.Msg.BinaryDetected]: "Use download button to save the file.",
 
+    [I18nKeys.Aria.ClosePreview]: "Close preview",
     [I18nKeys.Aria.CopySecret]: "Copy secret to clipboard",
     [I18nKeys.Aria.DownloadSecret]: "Download secret as file",
     [I18nKeys.Aria.DownloadQRCode]: "Download QR code as SVG file",
+    [I18nKeys.Aria.PreviewContent]: "Preview content",
     [I18nKeys.Aria.AllowedIPs]: "Enter IP addresses or CIDR ranges, one per line, to restrict access to this secret",
     [I18nKeys.Aria.AllowedCountries]:
       "Enter 2-letter country codes, one per line, to restrict access to this secret by geographic location",
@@ -569,6 +575,7 @@ const translations: Translations = {
     [I18nKeys.Button.Close]: "Schließen",
     [I18nKeys.Button.ShowQrCode]: "QR-Code anzeigen",
     [I18nKeys.Button.Download]: "💾 Speichern",
+    [I18nKeys.Button.Preview]: "👁️ Vorschau",
     [I18nKeys.Button.ChooseFile]: "📁 Datei auswählen",
     [I18nKeys.Button.ReadClipboard]: "📄 Zwischenablage lesen",
 
@@ -621,9 +628,11 @@ const translations: Translations = {
       "2-Buchstaben-Ländercodes eingeben, eine pro Zeile, um den Zugriff auf dieses Secret nach geografischer Lage zu beschränken",
     [I18nKeys.Aria.AllowedASNs]:
       "ASN-Nummern eingeben, eine pro Zeile, um den Zugriff auf dieses Secret nach Netzwerkanbieter zu beschränken",
+    [I18nKeys.Aria.ClosePreview]: "Vorschau schließen",
     [I18nKeys.Aria.CopySecret]: "Secret in die Zwischenablage kopieren",
     [I18nKeys.Aria.DownloadSecret]: "Secret als Datei herunterladen",
     [I18nKeys.Aria.DownloadQRCode]: "QR-Code als SVG-Datei herunterladen",
+    [I18nKeys.Aria.PreviewContent]: "Inhalt anzeigen",
     [I18nKeys.Aria.SecretInput]: "Bitte die geheime Nachricht eingeben, die sicher geteult werden soll",
     [I18nKeys.Aria.FileInput]: "Datei zum sicheren Teilen auswählen. Die Datei wird vor dem Versenden verschlüsselt.",
     [I18nKeys.Aria.TokenInput]: "Bitte den Authentifizierungs-Token eingeben, falls vom Server erforderlich",
