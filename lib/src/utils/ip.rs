@@ -31,15 +31,15 @@ use serde::{Deserialize, Deserializer};
 /// use hakanai_lib::utils::ip::parse_ipnet;
 ///
 /// // CIDR notation
-/// let network = parse_ipnet("192.168.1.0/24").unwrap();
+/// let network = parse_ipnet("192.168.1.0/24").expect("Failed to parse CIDR");
 /// assert_eq!(network.to_string(), "192.168.1.0/24");
 ///
 /// // Single IPv4 address (converted to /32)
-/// let host = parse_ipnet("192.168.1.100").unwrap();
+/// let host = parse_ipnet("192.168.1.100").expect("Failed to parse CIDR");
 /// assert_eq!(host.to_string(), "192.168.1.100/32");
 ///
 /// // Single IPv6 address (converted to /128)
-/// let ipv6_host = parse_ipnet("2001:db8::1").unwrap();
+/// let ipv6_host = parse_ipnet("2001:db8::1").expect("Failed to parse CIDR");
 /// assert_eq!(ipv6_host.to_string(), "2001:db8::1/128");
 ///
 /// // Invalid input
@@ -96,37 +96,37 @@ mod tests {
 
     #[test]
     fn test_parse_ipv4_single_address() {
-        let result = parse_ipnet("192.168.1.100").unwrap();
+        let result = parse_ipnet("192.168.1.100").expect("Failed to parse IP");
         assert_eq!(result.to_string(), "192.168.1.100/32");
     }
 
     #[test]
     fn test_parse_ipv4_cidr() {
-        let result = parse_ipnet("10.0.0.0/8").unwrap();
+        let result = parse_ipnet("10.0.0.0/8").expect("Failed to parse CIDR");
         assert_eq!(result.to_string(), "10.0.0.0/8");
     }
 
     #[test]
     fn test_parse_ipv6_single_address() {
-        let result = parse_ipnet("2001:db8::1").unwrap();
+        let result = parse_ipnet("2001:db8::1").expect("Failed to parse IP");
         assert_eq!(result.to_string(), "2001:db8::1/128");
     }
 
     #[test]
     fn test_parse_ipv6_cidr() {
-        let result = parse_ipnet("2001:db8::/32").unwrap();
+        let result = parse_ipnet("2001:db8::/32").expect("Failed to parse CIDR");
         assert_eq!(result.to_string(), "2001:db8::/32");
     }
 
     #[test]
     fn test_parse_localhost_ipv4() {
-        let result = parse_ipnet("127.0.0.1").unwrap();
+        let result = parse_ipnet("127.0.0.1").expect("Failed to parse IP");
         assert_eq!(result.to_string(), "127.0.0.1/32");
     }
 
     #[test]
     fn test_parse_localhost_ipv6() {
-        let result = parse_ipnet("::1").unwrap();
+        let result = parse_ipnet("::1").expect("Failed to parse IP");
         assert_eq!(result.to_string(), "::1/128");
     }
 
@@ -140,7 +140,7 @@ mod tests {
         ];
 
         for (input, expected) in cases {
-            let result = parse_ipnet(input).unwrap();
+            let result = parse_ipnet(input).expect(&format!("Failed to parse {input}"));
             assert_eq!(
                 result.to_string(),
                 expected,
@@ -219,7 +219,7 @@ mod tests {
         ];
 
         for (input, expected) in cases {
-            let result = parse_ipnet(input).unwrap();
+            let result = parse_ipnet(input).expect(&format!("Failed to parse {input}"));
             assert_eq!(
                 result.to_string(),
                 expected,
