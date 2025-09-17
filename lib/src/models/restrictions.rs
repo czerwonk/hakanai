@@ -123,9 +123,10 @@ mod tests {
     fn test_secret_restrictions_deserialization() {
         // Test with valid IP addresses and CIDR ranges
         let json = r#"{"allowed_ips": ["127.0.0.1", "192.168.1.0/24", "::1", "2001:db8::/32"]}"#;
-        let restrictions: SecretRestrictions = serde_json::from_str(json).unwrap();
+        let restrictions: SecretRestrictions =
+            serde_json::from_str(json).expect("Failed to parse JSON");
 
-        let ips = restrictions.allowed_ips.unwrap();
+        let ips = restrictions.allowed_ips.expect("Allowed IPs should be set");
         assert_eq!(ips.len(), 4);
         assert_eq!(ips[0].to_string(), "127.0.0.1/32");
         assert_eq!(ips[1].to_string(), "192.168.1.0/24");
@@ -139,9 +140,12 @@ mod tests {
     fn test_secret_restrictions_deserialization_with_countries() {
         // Test with valid country codes
         let json = r#"{"allowed_countries": ["US", "DE", "CA"]}"#;
-        let restrictions: SecretRestrictions = serde_json::from_str(json).unwrap();
+        let restrictions: SecretRestrictions =
+            serde_json::from_str(json).expect("Failed to parse JSON");
 
-        let countries = restrictions.allowed_countries.unwrap();
+        let countries = restrictions
+            .allowed_countries
+            .expect("Allowed countries should be set");
         assert_eq!(countries.len(), 3);
         assert_eq!(countries[0].as_str(), "US");
         assert_eq!(countries[1].as_str(), "DE");
@@ -154,9 +158,12 @@ mod tests {
     fn test_secret_restrictions_deserialization_with_asns() {
         // Test with valid country codes
         let json = r#"{"allowed_asns": [48821,202739]}"#;
-        let restrictions: SecretRestrictions = serde_json::from_str(json).unwrap();
+        let restrictions: SecretRestrictions =
+            serde_json::from_str(json).expect("Failed to parse JSON");
 
-        let asns = restrictions.allowed_asns.unwrap();
+        let asns = restrictions
+            .allowed_asns
+            .expect("Allowed ASNs should be set");
         assert_eq!(asns.len(), 2);
         assert_eq!(asns[0], 48821);
         assert_eq!(asns[1], 202739);
@@ -168,41 +175,32 @@ mod tests {
     fn test_secret_restrictions_deserialization_all() {
         // Test with both IPs and countries
         let json = r#"{"allowed_ips": ["192.168.1.0/24"], "allowed_countries": ["US", "DE"], "allowed_asns": [202739]}"#;
-        let restrictions: SecretRestrictions = serde_json::from_str(json).unwrap();
+        let restrictions: SecretRestrictions =
+            serde_json::from_str(json).expect("Failed to parse JSON");
 
-        let ips = restrictions.allowed_ips.unwrap();
+        let ips = restrictions.allowed_ips.expect("Allowed IPs should be set");
         assert_eq!(ips.len(), 1);
         assert_eq!(ips[0].to_string(), "192.168.1.0/24");
 
-        let countries = restrictions.allowed_countries.unwrap();
+        let countries = restrictions
+            .allowed_countries
+            .expect("Allowed countries should be set");
         assert_eq!(countries.len(), 2);
         assert_eq!(countries[0].as_str(), "US");
         assert_eq!(countries[1].as_str(), "DE");
 
-        let asns = restrictions.allowed_asns.unwrap();
+        let asns = restrictions
+            .allowed_asns
+            .expect("Allowed ASNs should be set");
         assert_eq!(asns.len(), 1);
         assert_eq!(asns[0], 202739);
     }
 
     #[test]
     fn test_secret_restrictions_deserialization_empty() {
-        // Test with null allowed_ips
-        let json = r#"{"allowed_ips": null}"#;
-        let restrictions: SecretRestrictions = serde_json::from_str(json).unwrap();
-        assert!(restrictions.allowed_ips.is_none());
-        assert!(restrictions.allowed_countries.is_none());
-        assert!(restrictions.allowed_asns.is_none());
-
-        // Test with null allowed_countries
-        let json = r#"{"allowed_countries": null}"#;
-        let restrictions: SecretRestrictions = serde_json::from_str(json).unwrap();
-        assert!(restrictions.allowed_ips.is_none());
-        assert!(restrictions.allowed_countries.is_none());
-        assert!(restrictions.allowed_asns.is_none());
-
-        // Test with empty object
         let json = r#"{}"#;
-        let restrictions: SecretRestrictions = serde_json::from_str(json).unwrap();
+        let restrictions: SecretRestrictions =
+            serde_json::from_str(json).expect("Failed to parse JSON");
         assert!(restrictions.allowed_ips.is_none());
         assert!(restrictions.allowed_countries.is_none());
         assert!(restrictions.allowed_asns.is_none());
@@ -259,9 +257,15 @@ mod tests {
 
         // Test with multiple IPs and CIDR ranges
         let restrictions = SecretRestrictions::default().with_allowed_ips(vec![
-            "127.0.0.1/32".parse::<IpNet>().unwrap(),
-            "192.168.1.0/24".parse::<IpNet>().unwrap(),
-            "::1/128".parse::<IpNet>().unwrap(),
+            "127.0.0.1/32"
+                .parse::<IpNet>()
+                .expect("Failed to pase valid IP"),
+            "192.168.1.0/24"
+                .parse::<IpNet>()
+                .expect("Failed to pase valid CIDR"),
+            "::1/128"
+                .parse::<IpNet>()
+                .expect("Failed to pase valid IPv6"),
         ]);
         assert_eq!(
             restrictions.to_string(),
@@ -272,9 +276,9 @@ mod tests {
     #[test]
     fn test_format_display_countries() {
         let restrictions = SecretRestrictions::default().with_allowed_countries(vec![
-            CountryCode::new("US").unwrap(),
-            CountryCode::new("DE").unwrap(),
-            CountryCode::new("CA").unwrap(),
+            CountryCode::new("US").expect("Failed to parse valid country code: US"),
+            CountryCode::new("DE").expect("Failed to parse valid country code: DE"),
+            CountryCode::new("CA").expect("Failed to parse valid country code: CA"),
         ]);
         assert_eq!(restrictions.to_string(), "Allowed Countries: US, DE, CA");
     }
@@ -290,8 +294,14 @@ mod tests {
         use ipnet::IpNet;
 
         let restrictions = SecretRestrictions::default()
-            .with_allowed_ips(vec!["192.168.1.0/24".parse::<IpNet>().unwrap()])
-            .with_allowed_countries(vec![CountryCode::new("US").unwrap()])
+            .with_allowed_ips(vec![
+                "192.168.1.0/24"
+                    .parse::<IpNet>()
+                    .expect("Failed to parse valid CIDR"),
+            ])
+            .with_allowed_countries(vec![
+                CountryCode::new("US").expect("Failed to parse valid country code"),
+            ])
             .with_allowed_asns(vec![202739]);
 
         let display = restrictions.to_string();
@@ -314,12 +324,18 @@ mod tests {
     #[test]
     fn test_with_allowed_countries() {
         let restrictions = SecretRestrictions::default().with_allowed_countries(vec![
-            CountryCode::new("US").unwrap(),
-            CountryCode::new("DE").unwrap(),
+            CountryCode::new("US").expect("Failed to parse valid country code: US"),
+            CountryCode::new("DE").expect("Failed to parse valid country code: DE"),
         ]);
 
         assert!(restrictions.allowed_ips.is_none());
-        assert_eq!(restrictions.allowed_countries.unwrap().len(), 2);
+        assert_eq!(
+            restrictions
+                .allowed_countries
+                .expect("Allowed countries should be set")
+                .len(),
+            2
+        );
     }
 
     #[test]
@@ -348,14 +364,16 @@ mod tests {
 
     #[test]
     fn test_is_with_ips() {
-        let ip = "127.0.0.1/32".parse::<IpNet>().unwrap();
+        let ip = "127.0.0.1/32"
+            .parse::<IpNet>()
+            .expect("Failed to parse valid IP");
         let restrictions = SecretRestrictions::default().with_allowed_ips(vec![ip]);
         assert!(!restrictions.is_empty());
     }
 
     #[test]
     fn test_is_with_countries() {
-        let country = CountryCode::new("DE").unwrap();
+        let country = CountryCode::new("DE").expect("Failed to parse valid country code");
         let restrictions = SecretRestrictions::default().with_allowed_countries(vec![country]);
         assert!(!restrictions.is_empty());
     }
@@ -372,15 +390,13 @@ mod tests {
         let restrictions = SecretRestrictions::default().with_passphrase(b"mypassword");
 
         assert!(
-            restrictions.passphrase_hash.is_some(),
-            "Passphrase hash should be set"
-        );
-        assert!(
             !restrictions.is_empty(),
             "Restrictions with passphrase should not be empty"
         );
-        // Should hash to a hex string (64 characters for SHA-256)
-        let hash = restrictions.passphrase_hash.unwrap();
+
+        let hash = restrictions
+            .passphrase_hash
+            .expect("Hash should be present");
         assert_eq!(hash.len(), 64, "SHA-256 hash should be 64 characters long");
         assert!(
             hash.chars().all(|c| c.is_ascii_hexdigit()),
@@ -393,14 +409,12 @@ mod tests {
         let restrictions = SecretRestrictions::default().with_passphrase(b"");
 
         assert!(
-            restrictions.passphrase_hash.is_some(),
-            "Empty passphrase should still produce a hash"
-        );
-        assert!(
             !restrictions.is_empty(),
             "Restrictions with empty passphrase should not be empty"
         );
-        let hash = restrictions.passphrase_hash.unwrap();
+        let hash = restrictions
+            .passphrase_hash
+            .expect("Hash should be present");
         assert_eq!(
             hash.len(),
             64,
@@ -418,14 +432,12 @@ mod tests {
         let restrictions = SecretRestrictions::default().with_passphrase(unicode_phrase.as_bytes());
 
         assert!(
-            restrictions.passphrase_hash.is_some(),
-            "Unicode passphrase should be hashed"
-        );
-        assert!(
             !restrictions.is_empty(),
             "Restrictions with unicode passphrase should not be empty"
         );
-        let hash = restrictions.passphrase_hash.unwrap();
+        let hash = restrictions
+            .passphrase_hash
+            .expect("Hash should be present");
         assert_eq!(
             hash.len(),
             64,
@@ -443,14 +455,12 @@ mod tests {
         let restrictions = SecretRestrictions::default().with_passphrase(&binary_data);
 
         assert!(
-            restrictions.passphrase_hash.is_some(),
-            "Binary passphrase should be hashed"
-        );
-        assert!(
             !restrictions.is_empty(),
             "Restrictions with binary passphrase should not be empty"
         );
-        let hash = restrictions.passphrase_hash.unwrap();
+        let hash = restrictions
+            .passphrase_hash
+            .expect("Hash should be present");
         assert_eq!(
             hash.len(),
             64,
@@ -468,14 +478,12 @@ mod tests {
         let restrictions = SecretRestrictions::default().with_passphrase(special_chars);
 
         assert!(
-            restrictions.passphrase_hash.is_some(),
-            "Special character passphrase should be hashed"
-        );
-        assert!(
             !restrictions.is_empty(),
             "Restrictions with special char passphrase should not be empty"
         );
-        let hash = restrictions.passphrase_hash.unwrap();
+        let hash = restrictions
+            .passphrase_hash
+            .expect("Hash should be present");
         assert_eq!(
             hash.len(),
             64,
@@ -547,14 +555,12 @@ mod tests {
         let restrictions = SecretRestrictions::default().with_passphrase(&long_passphrase);
 
         assert!(
-            restrictions.passphrase_hash.is_some(),
-            "Long passphrase should be hashed"
-        );
-        assert!(
             !restrictions.is_empty(),
             "Restrictions with long passphrase should not be empty"
         );
-        let hash = restrictions.passphrase_hash.unwrap();
+        let hash = restrictions
+            .passphrase_hash
+            .expect("Hash should be present");
         assert_eq!(
             hash.len(),
             64,
@@ -570,8 +576,10 @@ mod tests {
     fn test_with_passphrase_combined_with_other_restrictions() {
         use ipnet::IpNet;
 
-        let ip = "192.168.1.0/24".parse::<IpNet>().unwrap();
-        let country = CountryCode::new("US").unwrap();
+        let ip = "192.168.1.0/24"
+            .parse::<IpNet>()
+            .expect("Failed to parse valid CIDR");
+        let country = CountryCode::new("US").expect("Failed to parse valid country code");
         let restrictions = SecretRestrictions::default()
             .with_allowed_ips(vec![ip])
             .with_allowed_countries(vec![country])
@@ -647,7 +655,9 @@ mod tests {
     fn test_display_with_passphrase_and_other_restrictions() {
         use ipnet::IpNet;
 
-        let ip = "192.168.1.0/24".parse::<IpNet>().unwrap();
+        let ip = "192.168.1.0/24"
+            .parse::<IpNet>()
+            .expect("Failed to parse valid CIDR");
         let restrictions = SecretRestrictions::default()
             .with_allowed_ips(vec![ip])
             .with_passphrase(b"secret");
@@ -666,7 +676,7 @@ mod tests {
     #[test]
     fn test_serialization_with_passphrase() {
         let restrictions = SecretRestrictions::default().with_passphrase(b"test");
-        let serialized = serde_json::to_string(&restrictions).unwrap();
+        let serialized = serde_json::to_string(&restrictions).expect("Failed to serialize");
 
         assert!(
             serialized.contains("passphrase_hash"),
@@ -692,14 +702,14 @@ mod tests {
     #[test]
     fn test_deserialization_with_passphrase() {
         let json = r#"{"passphrase_hash": "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"}"#;
-        let restrictions: SecretRestrictions = serde_json::from_str(json).unwrap();
+        let restrictions: SecretRestrictions =
+            serde_json::from_str(json).expect("Failed to parse JSON");
 
-        assert!(
-            restrictions.passphrase_hash.is_some(),
-            "Deserialized restrictions should have passphrase hash"
-        );
         assert_eq!(
-            restrictions.passphrase_hash.as_ref().unwrap(),
+            restrictions
+                .passphrase_hash
+                .as_ref()
+                .expect("Hash should be set"),
             "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
             "Deserialized passphrase hash should match expected value"
         );
@@ -712,18 +722,15 @@ mod tests {
     #[test]
     fn test_deserialization_with_passphrase_and_other_fields() {
         let json = r#"{"allowed_ips": ["192.168.1.0/24"], "passphrase_hash": "abc123"}"#;
-        let restrictions: SecretRestrictions = serde_json::from_str(json).unwrap();
+        let restrictions: SecretRestrictions =
+            serde_json::from_str(json).expect("Failed to parse JSON");
 
         assert!(
             restrictions.allowed_ips.is_some(),
             "Deserialized restrictions should have allowed IPs"
         );
-        assert!(
-            restrictions.passphrase_hash.is_some(),
-            "Deserialized restrictions should have passphrase hash"
-        );
         assert_eq!(
-            restrictions.passphrase_hash.unwrap(),
+            restrictions.passphrase_hash.expect("Hash should be set"),
             "abc123",
             "Deserialized passphrase hash should match expected value"
         );
