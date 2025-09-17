@@ -1196,7 +1196,7 @@ mod tests {
         assert_eq!(resp.status(), 501); // Should return Not Implemented
 
         let body = test::read_body(resp).await;
-        let body_str = String::from_utf8(body.to_vec()).unwrap();
+        let body_str = String::from_utf8(body.to_vec()).expect("Response body is valid UTF-8");
         assert!(body_str.contains("Country restrictions are not supported by the server"));
     }
 
@@ -1582,8 +1582,7 @@ mod tests {
         let mut restrictions = SecretRestrictions::default();
         restrictions.passphrase_hash = Some(passphrase_hash.to_string());
         // Add IP restriction too
-        use std::str::FromStr;
-        restrictions.allowed_ips = Some(vec![ipnet::IpNet::from_str("127.0.0.0/8").unwrap()]);
+        restrictions.allowed_ips = Some(vec!["127.0.0.0/8".must_parse()]);
 
         let mock_store = MockSecretStore::new()
             .with_pop_result(SecretStorePopResult::Found(

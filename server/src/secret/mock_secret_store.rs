@@ -116,27 +116,6 @@ impl MockSecretStore {
         self.restrictions.lock().expect("Failed to acquire lock")
     }
 
-    /// Add a stored secret
-    #[allow(dead_code)]
-    pub fn with_stored_secret(self, id: Uuid, data: &str) -> Self {
-        self.get_stored_secrets_mut()
-            .insert(id.to_string(), data.to_string());
-        self
-    }
-
-    /// Mark a secret as accessed
-    #[allow(dead_code)]
-    pub fn with_accessed_secret(self, id: Uuid) -> Self {
-        self.get_accessed_secrets_mut().push(id.to_string());
-        self
-    }
-
-    /// Set the secret count manually
-    #[allow(dead_code)]
-    pub fn set_secret_count(&self, count: usize) {
-        self.set_secret_count_internal(count);
-    }
-
     /// Set a custom pop result for testing specific scenarios
     pub fn with_pop_result(self, result: SecretStorePopResult) -> Self {
         self.set_custom_pop_result(Some(result));
@@ -153,12 +132,6 @@ impl MockSecretStore {
     pub fn with_put_error(self) -> Self {
         self.set_should_fail(true);
         self
-    }
-
-    /// Get the stored secrets for testing verification
-    #[allow(dead_code)]
-    pub fn get_stored_secrets(&self) -> HashMap<String, String> {
-        self.get_stored_secrets_mut().clone()
     }
 
     /// Get all put operations for testing verification
@@ -179,7 +152,6 @@ impl MockSecretStore {
     }
 
     /// Get all restrictions for testing verification
-    #[allow(dead_code)]
     pub fn get_restrictions(&self) -> HashMap<String, SecretRestrictions> {
         self.get_restrictions_mut().clone()
     }
