@@ -120,7 +120,7 @@ mod tests {
     }
 
     #[test]
-    fn test_bitfield_value_for_restrictions_contry_only() {
+    fn test_bitfield_value_for_restrictions_country_only() {
         let restrictions =
             SecretRestrictions::default().with_allowed_countries(vec!["DE".must_parse()]);
         let value = bitfield_value_for_restrictions(&restrictions);
