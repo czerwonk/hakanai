@@ -117,6 +117,7 @@ impl Display for SecretRestrictions {
 mod tests {
     use super::*;
     use crate::models::CountryCode;
+    use crate::utils::test::MustParse;
     use ipnet::IpNet;
 
     #[test]
@@ -253,19 +254,11 @@ mod tests {
 
     #[test]
     fn test_format_display_ips() {
-        use ipnet::IpNet;
-
         // Test with multiple IPs and CIDR ranges
         let restrictions = SecretRestrictions::default().with_allowed_ips(vec![
-            "127.0.0.1/32"
-                .parse::<IpNet>()
-                .expect("Failed to pase valid IP"),
-            "192.168.1.0/24"
-                .parse::<IpNet>()
-                .expect("Failed to pase valid CIDR"),
-            "::1/128"
-                .parse::<IpNet>()
-                .expect("Failed to pase valid IPv6"),
+            "127.0.0.1/32".must_parse(),
+            "192.168.1.0/24".must_parse(),
+            "::1/128".must_parse(),
         ]);
         assert_eq!(
             restrictions.to_string(),
@@ -276,9 +269,9 @@ mod tests {
     #[test]
     fn test_format_display_countries() {
         let restrictions = SecretRestrictions::default().with_allowed_countries(vec![
-            CountryCode::new("US").expect("Failed to parse valid country code: US"),
-            CountryCode::new("DE").expect("Failed to parse valid country code: DE"),
-            CountryCode::new("CA").expect("Failed to parse valid country code: CA"),
+            "US".must_parse(),
+            "DE".must_parse(),
+            "CA".must_parse(),
         ]);
         assert_eq!(restrictions.to_string(), "Allowed Countries: US, DE, CA");
     }
@@ -291,17 +284,9 @@ mod tests {
 
     #[test]
     fn test_format_display_all() {
-        use ipnet::IpNet;
-
         let restrictions = SecretRestrictions::default()
-            .with_allowed_ips(vec![
-                "192.168.1.0/24"
-                    .parse::<IpNet>()
-                    .expect("Failed to parse valid CIDR"),
-            ])
-            .with_allowed_countries(vec![
-                CountryCode::new("US").expect("Failed to parse valid country code"),
-            ])
+            .with_allowed_ips(vec!["192.168.1.0/24".must_parse()])
+            .with_allowed_countries(vec!["US".must_parse()])
             .with_allowed_asns(vec![202739]);
 
         let display = restrictions.to_string();
@@ -323,10 +308,8 @@ mod tests {
 
     #[test]
     fn test_with_allowed_countries() {
-        let restrictions = SecretRestrictions::default().with_allowed_countries(vec![
-            CountryCode::new("US").expect("Failed to parse valid country code: US"),
-            CountryCode::new("DE").expect("Failed to parse valid country code: DE"),
-        ]);
+        let restrictions = SecretRestrictions::default()
+            .with_allowed_countries(vec!["US".must_parse(), "DE".must_parse()]);
 
         assert!(restrictions.allowed_ips.is_none());
         assert_eq!(
@@ -364,16 +347,14 @@ mod tests {
 
     #[test]
     fn test_is_with_ips() {
-        let ip = "127.0.0.1/32"
-            .parse::<IpNet>()
-            .expect("Failed to parse valid IP");
+        let ip: IpNet = "127.0.0.1/32".must_parse();
         let restrictions = SecretRestrictions::default().with_allowed_ips(vec![ip]);
         assert!(!restrictions.is_empty());
     }
 
     #[test]
     fn test_is_with_countries() {
-        let country = CountryCode::new("DE").expect("Failed to parse valid country code");
+        let country: CountryCode = "DE".must_parse();
         let restrictions = SecretRestrictions::default().with_allowed_countries(vec![country]);
         assert!(!restrictions.is_empty());
     }
@@ -576,10 +557,8 @@ mod tests {
     fn test_with_passphrase_combined_with_other_restrictions() {
         use ipnet::IpNet;
 
-        let ip = "192.168.1.0/24"
-            .parse::<IpNet>()
-            .expect("Failed to parse valid CIDR");
-        let country = CountryCode::new("US").expect("Failed to parse valid country code");
+        let ip: IpNet = "192.168.1.0/24".must_parse();
+        let country: CountryCode = "US".must_parse();
         let restrictions = SecretRestrictions::default()
             .with_allowed_ips(vec![ip])
             .with_allowed_countries(vec![country])
@@ -655,9 +634,7 @@ mod tests {
     fn test_display_with_passphrase_and_other_restrictions() {
         use ipnet::IpNet;
 
-        let ip = "192.168.1.0/24"
-            .parse::<IpNet>()
-            .expect("Failed to parse valid CIDR");
+        let ip: IpNet = "192.168.1.0/24".must_parse();
         let restrictions = SecretRestrictions::default()
             .with_allowed_ips(vec![ip])
             .with_passphrase(b"secret");

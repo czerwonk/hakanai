@@ -208,6 +208,7 @@ fn print_restrictions(restrictions: &SecretRestrictions) {
 mod tests {
     use super::*;
     use crate::factory_mock::test_utils::MockFactory;
+    use hakanai_lib::utils::test::MustParse;
     use std::fs;
     use std::time::Duration;
     use tempfile::TempDir;
@@ -416,8 +417,8 @@ mod tests {
             .with_ttl(Duration::from_secs(3600))
             .with_token("token123")
             .with_file(file_path.to_string_lossy().as_ref())
-            .with_allowed_ips(vec!["192.168.1.0/24".parse().expect("Invalid CIDR")])
-            .with_allowed_countries(vec!["US".parse().expect("Invalid country code")])
+            .with_allowed_ips(vec!["192.168.1.0/24".must_parse()])
+            .with_allowed_countries(vec!["US".must_parse()])
             .with_allowed_asns(vec![13335])
             .with_require_passphrase("test123456");
 

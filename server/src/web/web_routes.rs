@@ -389,7 +389,7 @@ mod tests {
 
         assert!(resp.status().is_success());
         let body = test::read_body(resp).await;
-        let body_str = std::str::from_utf8(&body).unwrap();
+        let body_str = std::str::from_utf8(&body).expect("Response body is not valid UTF-8");
         assert!(body_str.contains("Impressum"));
         assert!(body_str.contains("Test content"));
     }
@@ -446,7 +446,7 @@ mod tests {
 
         assert!(resp.status().is_success());
         let body = test::read_body(resp).await;
-        let body_str = std::str::from_utf8(&body).unwrap();
+        let body_str = std::str::from_utf8(&body).expect("Response body is not valid UTF-8");
         assert!(body_str.contains("Privacy Policy"));
         assert!(body_str.contains("Test content"));
     }
@@ -557,7 +557,9 @@ mod tests {
                 upload_size_limit: limit,
             })
             .with_trusted_ip_header("x-real-ip".to_string())
-            .with_trusted_ip_ranges(Some(vec![ipnet::IpNet::from_str("127.0.0.1/32").unwrap()]));
+            .with_trusted_ip_ranges(Some(vec![
+                ipnet::IpNet::from_str("127.0.0.1/32").expect("Failed to parse valid IP"),
+            ]));
         app_data.upload_size_limit = 2048;
 
         let app = test::init_service(

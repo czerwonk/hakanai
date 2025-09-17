@@ -26,28 +26,35 @@ impl MockObserver {
         }
     }
 
+    // Private accessor functions for cleaner lock handling
+    fn get_created_events_mut(&self) -> std::sync::MutexGuard<'_, Vec<(Uuid, HeaderMap)>> {
+        self.created_events.lock().expect("Failed to acquire lock")
+    }
+
+    fn get_retrieved_events_mut(&self) -> std::sync::MutexGuard<'_, Vec<(Uuid, HeaderMap)>> {
+        self.retrieved_events
+            .lock()
+            .expect("Failed to acquire lock")
+    }
+
     pub fn get_created_events(&self) -> Vec<(Uuid, HeaderMap)> {
-        self.created_events.lock().unwrap().clone()
+        self.get_created_events_mut().clone()
     }
 
     pub fn get_retrieved_events(&self) -> Vec<(Uuid, HeaderMap)> {
-        self.retrieved_events.lock().unwrap().clone()
+        self.get_retrieved_events_mut().clone()
     }
 }
 
 #[async_trait]
 impl SecretObserver for MockObserver {
     async fn on_secret_created(&self, secret_id: Uuid, context: &SecretEventContext) {
-        self.created_events
-            .lock()
-            .unwrap()
+        self.get_created_events_mut()
             .push((secret_id, context.headers.clone()));
     }
 
     async fn on_secret_retrieved(&self, secret_id: Uuid, context: &SecretEventContext) {
-        self.retrieved_events
-            .lock()
-            .unwrap()
+        self.get_retrieved_events_mut()
             .push((secret_id, context.headers.clone()));
     }
 }

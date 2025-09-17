@@ -107,20 +107,21 @@ fn bitfield_value_for_restrictions(restrictions: &SecretRestrictions) -> u32 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use hakanai_lib::models::{CountryCode, SecretRestrictions};
+    use hakanai_lib::models::SecretRestrictions;
+    use hakanai_lib::utils::test::MustParse;
 
     #[test]
     fn test_bitfield_value_for_restrictions_ip_only() {
         let restrictions =
-            SecretRestrictions::default().with_allowed_ips(vec!["127.0.0.1/32".parse().unwrap()]);
+            SecretRestrictions::default().with_allowed_ips(vec!["127.0.0.1/32".must_parse()]);
         let value = bitfield_value_for_restrictions(&restrictions);
         assert_eq!(value, 1);
     }
 
     #[test]
     fn test_bitfield_value_for_restrictions_contry_only() {
-        let restrictions = SecretRestrictions::default()
-            .with_allowed_countries(vec![CountryCode::new("DE").unwrap()]);
+        let restrictions =
+            SecretRestrictions::default().with_allowed_countries(vec!["DE".must_parse()]);
         let value = bitfield_value_for_restrictions(&restrictions);
         assert_eq!(value, 2);
     }
@@ -142,9 +143,9 @@ mod tests {
     #[test]
     fn test_bitfield_value_for_restrictions_all_set() {
         let restrictions = SecretRestrictions::default()
-            .with_allowed_ips(vec!["127.0.0.1/32".parse().unwrap()])
+            .with_allowed_ips(vec!["127.0.0.1/32".must_parse()])
             .with_allowed_asns(vec![202739])
-            .with_allowed_countries(vec![CountryCode::new("DE").unwrap()])
+            .with_allowed_countries(vec!["DE".must_parse()])
             .with_passphrase(b"test");
         let value = bitfield_value_for_restrictions(&restrictions);
         assert_eq!(value, 15);

@@ -124,28 +124,27 @@ where
         self
     }
 
+    // Private accessor functions for cleaner lock handling
+    fn get_sent_data_mut(&self) -> std::sync::MutexGuard<'_, Option<T>> {
+        self.sent_data.lock().expect("Unable to acquire lock")
+    }
+
     /// Get the data that was sent to the mock client.
     ///
     /// This is useful for verifying that the correct data was passed to the client
     /// during testing.
     pub fn get_sent_data(&self) -> Option<T> {
-        self.sent_data
-            .lock()
-            .expect("Unable to aquire lock")
-            .clone()
+        self.get_sent_data_mut().clone()
     }
 
     /// Check if any data was sent to the mock client.
     pub fn was_send_called(&self) -> bool {
-        self.sent_data
-            .lock()
-            .expect("Unable to aquire lock")
-            .is_some()
+        self.get_sent_data_mut().is_some()
     }
 
     /// Clear any captured sent data.
     pub fn clear_sent_data(&self) {
-        *self.sent_data.lock().expect("Unable to aquire lock") = None;
+        *self.get_sent_data_mut() = None;
     }
 }
 
@@ -174,7 +173,7 @@ where
         _opts: Option<SecretSendOptions>,
     ) -> Result<Url, ClientError> {
         // Capture the sent data
-        *self.sent_data.lock().expect("Unable to aquire lock") = Some(data);
+        *self.get_sent_data_mut() = Some(data);
 
         // Return configured response
         if self.send_should_fail {

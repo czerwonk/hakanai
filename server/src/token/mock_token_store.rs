@@ -41,37 +41,75 @@ impl MockTokenStore {
         }
     }
 
+    // Private accessor functions for cleaner lock handling
+    fn get_token_count(&self) -> usize {
+        *self.token_count.lock().expect("Failed to acquire lock")
+    }
+
+    fn set_token_count_internal(&self, count: usize) {
+        *self.token_count.lock().expect("Failed to acquire lock") = count;
+    }
+
+    fn should_fail(&self) -> bool {
+        *self.should_fail.lock().expect("Failed to acquire lock")
+    }
+
+    fn set_should_fail_internal(&self, fail: bool) {
+        *self.should_fail.lock().expect("Failed to acquire lock") = fail;
+    }
+
+    fn is_empty(&self) -> bool {
+        *self.is_empty.lock().expect("Failed to acquire lock")
+    }
+
+    fn set_is_empty(&self, empty: bool) {
+        *self.is_empty.lock().expect("Failed to acquire lock") = empty;
+    }
+
+    fn get_admin_token_internal(&self) -> Option<String> {
+        self.admin_token
+            .lock()
+            .expect("Failed to acquire lock")
+            .clone()
+    }
+
+    fn set_admin_token_internal(&self, token: Option<String>) {
+        *self.admin_token.lock().expect("Failed to acquire lock") = token;
+    }
+
+    fn get_stored_tokens_mut(&self) -> std::sync::MutexGuard<'_, HashMap<String, TokenData>> {
+        self.stored_tokens.lock().expect("Failed to acquire lock")
+    }
+
     /// Set the token count to return
     pub fn with_token_count(self, count: usize) -> Self {
-        *self.token_count.lock().unwrap() = count;
-        *self.is_empty.lock().unwrap() = count == 0;
+        self.set_token_count_internal(count);
+        self.set_is_empty(count == 0);
         self
     }
 
     /// Configure operations to fail
     pub fn with_failures(self) -> Self {
-        *self.should_fail.lock().unwrap() = true;
+        self.set_should_fail_internal(true);
         self
     }
 
     /// Configure operations to succeed
     #[allow(dead_code)]
     pub fn with_success(self) -> Self {
-        *self.should_fail.lock().unwrap() = false;
+        self.set_should_fail_internal(false);
         self
     }
 
     /// Set admin token
     pub fn with_admin_token(self, token_hash: &str) -> Self {
-        *self.admin_token.lock().unwrap() = Some(token_hash.to_string());
+        self.set_admin_token_internal(Some(token_hash.to_string()));
         self
     }
 
     /// Add a stored token
     pub fn with_stored_token(self, token_hash: &str, token_data: TokenData) -> Self {
-        self.stored_tokens
-            .lock()
-            .unwrap()
+        self.get_stored_tokens_mut()
             .insert(token_hash.to_string(), token_data);
         self.inc_token_count();
         self
@@ -79,31 +117,31 @@ impl MockTokenStore {
 
     /// Set store as empty
     pub fn with_empty_store(self) -> Self {
-        *self.is_empty.lock().unwrap() = true;
-        *self.token_count.lock().unwrap() = 0;
+        self.set_is_empty(true);
+        self.set_token_count_internal(0);
         self
     }
 
     /// Set store as non-empty
     pub fn with_non_empty_store(self, count: usize) -> Self {
-        *self.is_empty.lock().unwrap() = false;
-        *self.token_count.lock().unwrap() = count;
+        self.set_is_empty(false);
+        self.set_token_count_internal(count);
         self
     }
 
     /// Manually set the token count (for testing metrics)
     pub fn set_token_count(&self, count: usize) {
-        *self.token_count.lock().unwrap() = count;
+        self.set_token_count_internal(count);
     }
 
     pub fn inc_token_count(&self) {
-        let current = *self.token_count.lock().unwrap();
-        *self.token_count.lock().unwrap() = current + 1;
+        let current = self.get_token_count();
+        self.set_token_count_internal(current + 1);
     }
 
     /// Enable/disable failures (for testing error scenarios)
     pub fn set_should_fail(&self, should_fail: bool) {
-        *self.should_fail.lock().unwrap() = should_fail;
+        self.set_should_fail_internal(should_fail);
     }
 }
 
@@ -116,10 +154,10 @@ impl Default for MockTokenStore {
 #[async_trait]
 impl TokenStore for MockTokenStore {
     async fn get_token(&self, token_hash: &str) -> Result<Option<TokenData>, TokenError> {
-        if *self.should_fail.lock().unwrap() {
+        if self.should_fail() {
             return Err(TokenError::Custom("Mock failure".to_string()));
         }
-        Ok(self.stored_tokens.lock().unwrap().get(token_hash).cloned())
+        Ok(self.get_stored_tokens_mut().get(token_hash).cloned())
     }
 
     async fn store_token(
@@ -128,54 +166,52 @@ impl TokenStore for MockTokenStore {
         _ttl: Duration,
         token_data: TokenData,
     ) -> Result<(), TokenError> {
-        if *self.should_fail.lock().unwrap() {
+        if self.should_fail() {
             return Err(TokenError::Custom("Mock failure".to_string()));
         }
-        self.stored_tokens
-            .lock()
-            .unwrap()
+        self.get_stored_tokens_mut()
             .insert(token_hash.to_string(), token_data);
         self.inc_token_count();
         Ok(())
     }
 
     async fn clear_all_user_tokens(&self) -> Result<(), TokenError> {
-        if *self.should_fail.lock().unwrap() {
+        if self.should_fail() {
             return Err(TokenError::Custom("Mock failure".to_string()));
         }
-        self.stored_tokens.lock().unwrap().clear();
-        *self.token_count.lock().unwrap() = 0;
-        *self.is_empty.lock().unwrap() = true;
+        self.get_stored_tokens_mut().clear();
+        self.set_token_count_internal(0);
+        self.set_is_empty(true);
         Ok(())
     }
 
     async fn admin_token_exists(&self) -> Result<bool, TokenError> {
-        if *self.should_fail.lock().unwrap() {
+        if self.should_fail() {
             return Err(TokenError::Custom("Mock failure".to_string()));
         }
-        Ok(self.admin_token.lock().unwrap().is_some())
+        Ok(self.get_admin_token_internal().is_some())
     }
 
     async fn get_admin_token(&self) -> Result<Option<String>, TokenError> {
-        if *self.should_fail.lock().unwrap() {
+        if self.should_fail() {
             return Err(TokenError::Custom("Mock failure".to_string()));
         }
-        Ok(self.admin_token.lock().unwrap().clone())
+        Ok(self.get_admin_token_internal())
     }
 
     async fn store_admin_token(&self, token_hash: &str) -> Result<(), TokenError> {
-        if *self.should_fail.lock().unwrap() {
+        if self.should_fail() {
             return Err(TokenError::Custom("Mock failure".to_string()));
         }
-        *self.admin_token.lock().unwrap() = Some(token_hash.to_string());
+        self.set_admin_token_internal(Some(token_hash.to_string()));
         Ok(())
     }
 
     async fn user_token_count(&self) -> Result<usize, TokenError> {
-        if *self.should_fail.lock().unwrap() {
+        if self.should_fail() {
             return Err(TokenError::Custom("Mock failure".to_string()));
         }
-        Ok(*self.token_count.lock().unwrap())
+        Ok(self.get_token_count())
     }
 }
 

@@ -58,6 +58,7 @@ impl FromStr for CountryCode {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::utils::test::MustParse;
 
     #[test]
     fn test_valid_country_codes() {
@@ -106,13 +107,13 @@ mod tests {
 
     #[test]
     fn test_as_str() {
-        let country_code = CountryCode::new("US").expect("Failed to parse valid country code");
+        let country_code: CountryCode = "US".must_parse();
         assert_eq!(country_code.as_str(), "US");
     }
 
     #[test]
     fn test_from_string_conversion() {
-        let country_code = CountryCode::new("DE").expect("Failed to parse valid country code");
+        let country_code: CountryCode = "DE".must_parse();
         let string_value: String = country_code.into();
         assert_eq!(string_value, "DE");
     }
@@ -136,9 +137,9 @@ mod tests {
 
     #[test]
     fn test_equality() {
-        let code1 = CountryCode::new("US").expect("Failed to parse valid country code");
-        let code2 = CountryCode::new("US").expect("Failed to parse valid country code");
-        let code3 = CountryCode::new("DE").expect("Failed to parse valid country code");
+        let code1: CountryCode = "US".must_parse();
+        let code2: CountryCode = "US".must_parse();
+        let code3: CountryCode = "DE".must_parse();
 
         assert_eq!(code1, code2);
         assert_ne!(code1, code3);
@@ -146,7 +147,7 @@ mod tests {
 
     #[test]
     fn test_clone() {
-        let original = CountryCode::new("JP").expect("Failed to parse valid country code");
+        let original: CountryCode = "JP".must_parse();
         let cloned = original.clone();
 
         assert_eq!(original, cloned);
@@ -155,7 +156,7 @@ mod tests {
 
     #[test]
     fn test_serde_serialization() {
-        let country_code = CountryCode::new("FR").expect("Failed to parse valid country code");
+        let country_code: CountryCode = "FR".must_parse();
         let json = serde_json::to_string(&country_code).expect("Failed to serialize in json");
         assert_eq!(json, "\"FR\"");
     }
@@ -196,7 +197,7 @@ mod tests {
 
     #[test]
     fn test_from_str_valid() {
-        let country_code: CountryCode = "US".parse().expect("Failed to parse valid country code");
+        let country_code: CountryCode = "US".must_parse();
         assert_eq!(country_code.as_str(), "US");
     }
 

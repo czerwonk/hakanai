@@ -36,36 +36,67 @@ impl MockTokenManager {
         }
     }
 
+    // Private accessor functions for cleaner lock handling
+    fn get_user_tokens_mut(&self) -> std::sync::MutexGuard<'_, HashMap<String, TokenData>> {
+        self.user_tokens.lock().expect("Failed to acquire lock")
+    }
+
+    fn get_admin_tokens_mut(&self) -> std::sync::MutexGuard<'_, Vec<String>> {
+        self.admin_tokens.lock().expect("Failed to acquire lock")
+    }
+
+    fn creation_should_fail(&self) -> bool {
+        *self
+            .creation_should_fail
+            .lock()
+            .expect("Failed to acquire lock")
+    }
+
+    fn set_creation_should_fail(&self, fail: bool) {
+        *self
+            .creation_should_fail
+            .lock()
+            .expect("Failed to acquire lock") = fail;
+    }
+
+    fn get_created_token(&self) -> String {
+        self.created_token
+            .lock()
+            .expect("Failed to acquire lock")
+            .clone()
+    }
+
+    fn set_created_token(&self, token: String) {
+        *self.created_token.lock().expect("Failed to acquire lock") = token;
+    }
+
     /// Add a valid user token with associated metadata
     pub fn with_user_token(self, token: &str, data: TokenData) -> Self {
-        self.user_tokens
-            .lock()
-            .unwrap()
-            .insert(token.to_string(), data);
+        self.get_user_tokens_mut().insert(token.to_string(), data);
         self
     }
 
     /// Add a valid admin token
     pub fn with_admin_token(self, token: &str) -> Self {
-        self.admin_tokens.lock().unwrap().push(token.to_string());
+        self.get_admin_tokens_mut().push(token.to_string());
         self
     }
 
     /// Configure token creation to fail
     pub fn with_creation_failure(self) -> Self {
-        *self.creation_should_fail.lock().unwrap() = true;
+        self.set_creation_should_fail(true);
         self
     }
 
     /// Configure the token to return on successful creation
     pub fn with_created_token(self, token: &str) -> Self {
-        *self.created_token.lock().unwrap() = token.to_string();
+        self.set_created_token(token.to_string());
         self
     }
 
     /// Add multiple user tokens with unlimited upload size
     pub fn with_unlimited_user_tokens(self, tokens: &[&str]) -> Self {
-        let mut user_tokens = self.user_tokens.lock().unwrap();
+        let mut user_tokens = self.get_user_tokens_mut();
         for token in tokens {
             user_tokens.insert(
                 token.to_string(),
@@ -80,7 +111,7 @@ impl MockTokenManager {
 
     /// Add user token with specific upload size limit
     pub fn with_limited_user_token(self, token: &str, size_limit: i64) -> Self {
-        self.user_tokens.lock().unwrap().insert(
+        self.get_user_tokens_mut().insert(
             token.to_string(),
             TokenData {
                 upload_size_limit: Some(size_limit),
@@ -91,7 +122,7 @@ impl MockTokenManager {
 
     /// Add multiple admin tokens
     pub fn with_admin_tokens(self, tokens: &[&str]) -> Self {
-        let mut admin_tokens = self.admin_tokens.lock().unwrap();
+        let mut admin_tokens = self.get_admin_tokens_mut();
         for token in tokens {
             admin_tokens.push(token.to_string());
         }
@@ -109,7 +140,7 @@ impl Default for MockTokenManager {
 #[async_trait]
 impl TokenValidator for MockTokenManager {
     async fn validate_user_token(&self, token: &str) -> Result<TokenData, TokenError> {
-        let user_tokens = self.user_tokens.lock().unwrap();
+        let user_tokens = self.get_user_tokens_mut();
         if let Some(data) = user_tokens.get(token) {
             Ok(data.clone())
         } else {
@@ -118,7 +149,7 @@ impl TokenValidator for MockTokenManager {
     }
 
     async fn validate_admin_token(&self, token: &str) -> Result<(), TokenError> {
-        let admin_tokens = self.admin_tokens.lock().unwrap();
+        let admin_tokens = self.get_admin_tokens_mut();
         if admin_tokens.contains(&token.to_string()) {
             Ok(())
         } else {
@@ -134,10 +165,10 @@ impl TokenCreator for MockTokenManager {
         _token_data: TokenData,
         _ttl: Duration,
     ) -> Result<String, TokenError> {
-        if *self.creation_should_fail.lock().unwrap() {
+        if self.creation_should_fail() {
             Err(TokenError::Custom("Mock creation failure".to_string()))
         } else {
-            Ok(self.created_token.lock().unwrap().clone())
+            Ok(self.get_created_token())
         }
     }
 }

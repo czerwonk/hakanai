@@ -269,6 +269,7 @@ impl Args {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use hakanai_lib::utils::test::MustParse;
 
     fn create_test_args() -> Args {
         Args {
@@ -303,7 +304,7 @@ mod tests {
         let args = Args {
             reset_admin_token: true,
             enable_admin_token: true,
-            trusted_ip_ranges: Some(vec!["127.0.0.0/8".parse().unwrap()]),
+            trusted_ip_ranges: Some(vec!["127.0.0.0/8".must_parse()]),
             ..create_test_args()
         };
 
@@ -352,7 +353,7 @@ mod tests {
             anonymous_upload_size_limit: 32 * 1024, // 32KB in bytes
             upload_size_limit: 10 * 1024 * 1024,    // 10MB in bytes
             allow_anonymous: true,
-            trusted_ip_ranges: Some(vec!["127.0.0.0/8".parse().unwrap()]),
+            trusted_ip_ranges: Some(vec!["127.0.0.0/8".must_parse()]),
             ..create_test_args()
         };
 
@@ -379,7 +380,9 @@ mod tests {
             ..create_test_args()
         };
 
-        let result = args.load_impressum_content().unwrap();
+        let result = args
+            .load_impressum_content()
+            .expect("Failed to load impressum content");
         assert!(result.is_none());
     }
 
@@ -403,19 +406,27 @@ mod tests {
         use std::io::Write;
 
         // Create a temporary file for testing
-        let mut temp_file = tempfile::NamedTempFile::new().unwrap();
+        let mut temp_file = tempfile::NamedTempFile::new().expect("Failed to create temp file");
         let test_content = "Test impressum content\nLine 2 of impressum";
-        write!(temp_file, "{test_content}").unwrap();
-        temp_file.flush().unwrap();
+        write!(temp_file, "{test_content}").expect("Failed to write to temp file");
+        temp_file.flush().expect("Failed to flush temp file");
 
         let args = Args {
-            impressum_file: Some(temp_file.path().to_str().unwrap().to_string()),
+            impressum_file: Some(
+                temp_file
+                    .path()
+                    .to_str()
+                    .expect("Failed to get path to impressum file")
+                    .to_string(),
+            ),
             ..create_test_args()
         };
 
-        let result = args.load_impressum_content().unwrap();
-        assert!(result.is_some());
-        assert_eq!(result.unwrap(), test_content);
+        let result = args
+            .load_impressum_content()
+            .expect("Failed to load impressum content");
+        let content = result.expect("Result should not be none");
+        assert_eq!(content, test_content);
     }
 
     #[test]
@@ -425,7 +436,9 @@ mod tests {
             ..create_test_args()
         };
 
-        let result = args.load_privacy_content().unwrap();
+        let result = args
+            .load_privacy_content()
+            .expect("Failed to load privacy content");
         assert!(result.is_none());
     }
 
@@ -449,18 +462,26 @@ mod tests {
         use std::io::Write;
 
         // Create a temporary file for testing
-        let mut temp_file = tempfile::NamedTempFile::new().unwrap();
+        let mut temp_file = tempfile::NamedTempFile::new().expect("Failed to create temp file");
         let test_content = "Test privacy policy content\nData protection guidelines";
-        write!(temp_file, "{test_content}").unwrap();
-        temp_file.flush().unwrap();
+        write!(temp_file, "{test_content}").expect("Failed to write to temp file");
+        temp_file.flush().expect("Failed to flush temp file");
 
         let args = Args {
-            privacy_file: Some(temp_file.path().to_str().unwrap().to_string()),
+            privacy_file: Some(
+                temp_file
+                    .path()
+                    .to_str()
+                    .expect("Failed to get path to privacy file")
+                    .to_string(),
+            ),
             ..create_test_args()
         };
 
-        let result = args.load_privacy_content().unwrap();
-        assert!(result.is_some());
-        assert_eq!(result.unwrap(), test_content);
+        let result = args
+            .load_privacy_content()
+            .expect("Failed to get privacy content");
+        let content = result.expect("Result should not be none");
+        assert_eq!(content, test_content);
     }
 }

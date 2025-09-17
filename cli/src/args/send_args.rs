@@ -275,6 +275,7 @@ impl SendArgs {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use hakanai_lib::utils::test::MustParse;
 
     #[test]
     fn test_validate_passphrase_exactly_8_chars() -> Result<()> {
@@ -398,8 +399,8 @@ mod tests {
     fn test_get_restrictions_with_all_options() {
         // Test that all restriction types are properly processed when set
         let args = SendArgs::builder()
-            .with_allowed_ips(vec!["192.168.1.0/24".parse().expect("Invalid CIDR")])
-            .with_allowed_countries(vec!["US".parse().expect("Invalid country code")])
+            .with_allowed_ips(vec!["192.168.1.0/24".must_parse()])
+            .with_allowed_countries(vec!["US".must_parse()])
             .with_allowed_asns(vec![13335])
             .with_require_passphrase("test123456");
 
@@ -463,8 +464,7 @@ mod tests {
     #[test]
     fn test_get_restrictions_only_ips() {
         // Test that only IP restrictions are processed correctly
-        let args =
-            SendArgs::builder().with_allowed_ips(vec!["10.0.0.0/8".parse().expect("Invalid CIDR")]);
+        let args = SendArgs::builder().with_allowed_ips(vec!["10.0.0.0/8".must_parse()]);
 
         let result = args.get_restrictions();
         let restrictions = result.expect("Should have restrictions");
@@ -494,8 +494,7 @@ mod tests {
     #[test]
     fn test_get_restrictions_only_countries() {
         // Test that only country restrictions are processed correctly
-        let args = SendArgs::builder()
-            .with_allowed_countries(vec!["DE".parse().expect("Invalid country code")]);
+        let args = SendArgs::builder().with_allowed_countries(vec!["DE".must_parse()]);
 
         let result = args.get_restrictions();
         let restrictions = result.expect("Restrictions should be set");

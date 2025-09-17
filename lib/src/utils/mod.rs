@@ -20,3 +20,5 @@ pub mod hashing;
 pub mod human_size;
 pub mod ip;
 pub mod timestamp;
+
+pub mod test;
