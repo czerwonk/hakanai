@@ -258,8 +258,10 @@ fn ensure_ttl_is_valid(expires_in: Duration, max_ttl: Duration) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use hakanai_lib::utils::test::MustParse;
     use std::time::Duration;
 
+    use actix_web::http::header::{HeaderMap, HeaderValue};
     use actix_web::{App, test};
 
     use crate::observer::MockObserver;
@@ -268,6 +270,12 @@ mod tests {
     use crate::web::app_data::AnonymousOptions;
 
     use hakanai_lib::models::SecretRestrictions;
+
+    fn get_header_value<'a>(headers: &'a HeaderMap, name: &str) -> &'a HeaderValue {
+        headers
+            .get(name)
+            .expect(format!("Header does not exist: {name}").as_str())
+    }
 
     // Helper function to create test AppData with default values
     fn create_test_app_data(
@@ -680,8 +688,8 @@ mod tests {
 
         // Verify headers were passed
         let headers = &created_events[0].1;
-        assert_eq!(headers.get("user-agent").unwrap(), "test-agent");
-        assert_eq!(headers.get("x-request-id").unwrap(), "test-123");
+        assert_eq!(get_header_value(headers, "user-agent"), "test-agent");
+        assert_eq!(get_header_value(headers, "x-request-id"), "test-123");
     }
 
     #[actix_web::test]
@@ -720,8 +728,8 @@ mod tests {
         assert_eq!(retrieved_events[0].0, secret_id);
 
         let headers = &retrieved_events[0].1;
-        assert_eq!(headers.get("user-agent").unwrap(), "hakanai-cli");
-        assert_eq!(headers.get("x-forwarded-for").unwrap(), "192.168.1.1");
+        assert_eq!(get_header_value(headers, "user-agent"), "hakanai-cli");
+        assert_eq!(get_header_value(headers, "x-forwarded-for"), "192.168.1.1");
     }
 
     #[actix_web::test]
@@ -768,18 +776,21 @@ mod tests {
         assert_eq!(created_events[0].0, body.id);
 
         let headers = &created_events[0].1;
-        assert_eq!(headers.get("authorization").unwrap(), "Bearer valid_token");
-        assert_eq!(headers.get("user-agent").unwrap(), "authenticated-client");
+        assert_eq!(
+            get_header_value(headers, "authorization"),
+            "Bearer valid_token"
+        );
+        assert_eq!(
+            get_header_value(headers, "user-agent"),
+            "authenticated-client"
+        );
     }
 
     #[actix_web::test]
     async fn test_get_secret_with_ip_restriction_allowed() {
         // Create a secret with IP restrictions that allow the request
         let secret_id = Uuid::new_v4();
-        let allowed_ips = vec![
-            "192.168.1.0/24".parse::<ipnet::IpNet>().unwrap(),
-            "10.0.0.0/8".parse::<ipnet::IpNet>().unwrap(),
-        ];
+        let allowed_ips = vec!["192.168.1.0/24".must_parse(), "10.0.0.0/8".must_parse()];
 
         let mock_store = MockSecretStore::new()
             .with_pop_result(SecretStorePopResult::Found("test_secret".to_string()))
@@ -813,7 +824,7 @@ mod tests {
     async fn test_get_secret_with_ip_restriction_blocked() {
         // Create a secret with IP restrictions that block the request
         let secret_id = Uuid::new_v4();
-        let allowed_ips = vec!["192.168.1.0/24".parse::<ipnet::IpNet>().unwrap()];
+        let allowed_ips = vec!["192.168.1.0/24".must_parse()];
 
         let mock_store = MockSecretStore::new()
             .with_pop_result(SecretStorePopResult::Found("test_secret".to_string()))
@@ -875,7 +886,7 @@ mod tests {
     async fn test_get_secret_with_ipv6_restriction() {
         // Test IPv6 address restrictions
         let secret_id = Uuid::new_v4();
-        let allowed_ips = vec!["2001:db8::/32".parse::<ipnet::IpNet>().unwrap()];
+        let allowed_ips = vec!["2001:db8::/32".must_parse()];
 
         let mock_store = MockSecretStore::new()
             .with_pop_result(SecretStorePopResult::Found("test_secret".to_string()))
@@ -908,9 +919,9 @@ mod tests {
         // Test with multiple IP ranges allowed
         let secret_id = Uuid::new_v4();
         let allowed_ips = vec![
-            "192.168.1.0/24".parse::<ipnet::IpNet>().unwrap(),
-            "10.0.0.0/8".parse::<ipnet::IpNet>().unwrap(),
-            "172.16.0.0/12".parse::<ipnet::IpNet>().unwrap(),
+            "192.168.1.0/24".must_parse(),
+            "10.0.0.0/8".must_parse(),
+            "172.16.0.0/12".must_parse(),
         ];
 
         let mock_store = MockSecretStore::new()
@@ -943,7 +954,7 @@ mod tests {
     async fn test_get_secret_with_single_ip_restriction() {
         // Test restriction to a single IP address (using /32 for IPv4)
         let secret_id = Uuid::new_v4();
-        let allowed_ips = vec!["192.168.1.100/32".parse::<ipnet::IpNet>().unwrap()];
+        let allowed_ips = vec!["192.168.1.100/32".must_parse()];
 
         let mock_store = MockSecretStore::new()
             .with_pop_result(SecretStorePopResult::Found("test_secret".to_string()))
@@ -994,10 +1005,7 @@ mod tests {
         ))
         .await;
 
-        let allowed_ips = vec![
-            "192.168.1.0/24".parse::<ipnet::IpNet>().unwrap(),
-            "10.0.0.0/8".parse::<ipnet::IpNet>().unwrap(),
-        ];
+        let allowed_ips = vec!["192.168.1.0/24".must_parse(), "10.0.0.0/8".must_parse()];
 
         let payload = PostSecretRequest::new("test_secret".to_string(), Duration::from_secs(3600))
             .with_restrictions(SecretRestrictions::default().with_allowed_ips(allowed_ips.clone()));
@@ -1059,7 +1067,7 @@ mod tests {
     async fn test_get_secret_ip_restriction_with_proxy_chain() {
         // Test IP extraction from proxy chain (multiple IPs in x-forwarded-for)
         let secret_id = Uuid::new_v4();
-        let allowed_ips = vec!["192.168.1.0/24".parse::<ipnet::IpNet>().unwrap()];
+        let allowed_ips = vec!["192.168.1.0/24".must_parse()];
 
         let mock_store = MockSecretStore::new()
             .with_pop_result(SecretStorePopResult::Found("test_secret".to_string()))

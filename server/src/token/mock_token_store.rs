@@ -246,7 +246,9 @@ mod tests {
         assert_eq!(count, 1, "Initial token count should be 1");
 
         // Clear tokens
-        mock.clear_all_user_tokens().await.unwrap();
+        mock.clear_all_user_tokens()
+            .await
+            .expect("Failed to clear tokens");
 
         // Verify cleared state
         let count = mock

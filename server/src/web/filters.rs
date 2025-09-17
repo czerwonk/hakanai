@@ -102,6 +102,7 @@ mod tests {
     use super::*;
     use crate::web::app_data::{AnonymousOptions, AppData};
     use actix_web::{HttpRequest, test};
+    use hakanai_lib::utils::test::MustParse;
     use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
     use std::time::Duration;
 
@@ -126,10 +127,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_is_ip_in_ranges_ipv4() {
-        let ranges = vec![
-            "10.0.0.0/8".parse::<ipnet::IpNet>().unwrap(),
-            "192.168.1.0/24".parse::<ipnet::IpNet>().unwrap(),
-        ];
+        let ranges = vec!["10.0.0.0/8".must_parse(), "192.168.1.0/24".must_parse()];
 
         // Test IPs in range
         let ip = IpAddr::V4(Ipv4Addr::new(10, 0, 0, 1));
@@ -148,10 +146,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_is_ip_in_ranges_ipv6() {
-        let ranges = vec![
-            "2001:db8::/32".parse::<ipnet::IpNet>().unwrap(),
-            "::1/128".parse::<ipnet::IpNet>().unwrap(),
-        ];
+        let ranges = vec!["2001:db8::/32".must_parse(), "::1/128".must_parse()];
 
         // Test IPs in range
         let ip = IpAddr::V6(Ipv6Addr::new(0x2001, 0xdb8, 0, 0, 0, 0, 0, 1));
@@ -170,10 +165,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_is_ip_in_ranges_mixed() {
-        let ranges = vec![
-            "10.0.0.0/8".parse::<ipnet::IpNet>().unwrap(),
-            "2001:db8::/32".parse::<ipnet::IpNet>().unwrap(),
-        ];
+        let ranges = vec!["10.0.0.0/8".must_parse(), "2001:db8::/32".must_parse()];
 
         // Test IPv4 in range
         let ip = IpAddr::V4(Ipv4Addr::new(10, 1, 2, 3));
@@ -268,10 +260,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_is_request_from_whitelisted_ip_true() {
-        let ranges = vec![
-            "10.0.0.0/8".parse::<ipnet::IpNet>().unwrap(),
-            "2001:db8::/32".parse::<ipnet::IpNet>().unwrap(),
-        ];
+        let ranges = vec!["10.0.0.0/8".must_parse(), "2001:db8::/32".must_parse()];
         let app_data = create_test_app_data(Some(ranges), "x-forwarded-for");
         let req = create_request_with_headers(&[("x-forwarded-for", "10.0.0.1")]);
 
@@ -280,7 +269,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_is_request_from_outside_whitelisted_ip_range() {
-        let ranges = vec!["10.0.0.0/8".parse::<ipnet::IpNet>().unwrap()];
+        let ranges = vec!["10.0.0.0/8".must_parse()];
         let app_data = create_test_app_data(Some(ranges), "x-forwarded-for");
         let req = create_request_with_headers(&[("x-forwarded-for", "192.168.1.1")]);
 
@@ -303,7 +292,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_is_request_from_whitelisted_ip_no_client_ip() {
-        let ranges = vec!["10.0.0.0/8".parse::<ipnet::IpNet>().unwrap()];
+        let ranges = vec!["10.0.0.0/8".must_parse()];
         let app_data = create_test_app_data(Some(ranges), "x-forwarded-for");
         let req = create_request_with_headers(&[]);
 
@@ -506,12 +495,7 @@ mod tests {
     // Country-related tests
     #[actix_web::test]
     async fn test_is_request_from_country_basic() {
-        use hakanai_lib::models::CountryCode;
-
-        let countries = vec![
-            CountryCode::from_str("US").unwrap(),
-            CountryCode::from_str("DE").unwrap(),
-        ];
+        let countries = vec!["US".must_parse(), "DE".must_parse()];
         let app_data = AppData::default().with_country_header(Some("x-country".to_string()));
 
         // Test request from allowed country (lowercase)
@@ -545,9 +529,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_is_request_from_country_no_header_config() {
-        use hakanai_lib::models::CountryCode;
-
-        let countries = vec![CountryCode::from_str("US").unwrap()];
+        let countries = vec!["US".must_parse()];
         let app_data = AppData::default().with_country_header(None);
 
         let req = create_request_with_headers(&[("x-country", "US")]);
@@ -559,9 +541,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_is_request_from_country_missing_header() {
-        use hakanai_lib::models::CountryCode;
-
-        let countries = vec![CountryCode::from_str("US").unwrap()];
+        let countries = vec!["US".must_parse()];
         let app_data = AppData::default().with_country_header(Some("x-country".to_string()));
 
         let req = create_request_with_headers(&[("x-different-header", "US")]);
@@ -579,9 +559,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_is_request_from_country_case_insensitive() {
-        use hakanai_lib::models::CountryCode;
-
-        let countries = vec![CountryCode::from_str("US").unwrap()];
+        let countries = vec!["US".must_parse()];
         let app_data = AppData::default().with_country_header(Some("x-country".to_string()));
 
         // Test various case combinations
@@ -598,9 +576,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_is_request_from_country_with_whitespace() {
-        use hakanai_lib::models::CountryCode;
-
-        let countries = vec![CountryCode::from_str("US").unwrap()];
+        let countries = vec!["US".must_parse()];
         let app_data = AppData::default().with_country_header(Some("x-country".to_string()));
 
         let req = create_request_with_headers(&[("x-country", "  US  ")]);
