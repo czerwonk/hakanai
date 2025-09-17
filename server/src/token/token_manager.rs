@@ -138,10 +138,14 @@ impl<T: TokenStore> TokenValidator for TokenManager<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::error::Error;
+
     use crate::token::MockTokenStore;
 
+    type Result<T> = std::result::Result<T, Box<dyn Error>>;
+
     #[tokio::test]
-    async fn test_create_default_token_when_empty() -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_create_default_token_when_empty() -> Result<()> {
         let mock_store = MockTokenStore::new();
         let manager = TokenManager::new(mock_store.clone());
 
@@ -159,7 +163,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_no_token_created_when_not_empty() -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_no_token_created_when_not_empty() -> Result<()> {
         let mock_store = MockTokenStore::new().with_stored_token(
             "existing_hash",
             TokenData {
@@ -178,7 +182,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_validate_token_success() -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_validate_token_success() -> Result<()> {
         let test_token = "test_token_123";
         let test_hash = hashing::sha256_hex_from_string(test_token);
         let test_data = TokenData {
@@ -209,7 +213,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_generate_token_format() -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_generate_token_format() -> Result<()> {
         let token = TokenManager::<MockTokenStore>::generate_token()?;
 
         // Should be base64 URL-safe encoded
@@ -221,7 +225,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_generate_token_uniqueness() -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_generate_token_uniqueness() -> Result<()> {
         let token1 = TokenManager::<MockTokenStore>::generate_token()?;
         let token2 = TokenManager::<MockTokenStore>::generate_token()?;
 
@@ -260,7 +264,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_token_data_serialization() -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_token_data_serialization() -> Result<()> {
         let token_data = TokenData {
             upload_size_limit: Some(1024),
         };
@@ -276,7 +280,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_token_data_none_upload_limit() -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_token_data_none_upload_limit() -> Result<()> {
         let token_data = TokenData {
             upload_size_limit: None,
         };
@@ -288,7 +292,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_validate_admin_token_success() -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_validate_admin_token_success() -> Result<()> {
         let test_token = "admin_token_123";
         let test_hash = hashing::sha256_hex_from_string(test_token);
 
@@ -316,7 +320,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_validate_admin_token_wrong_hash() -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_validate_admin_token_wrong_hash() -> Result<()> {
         let correct_token = "admin_token_123";
         let wrong_token = "wrong_admin_token";
         let correct_hash = hashing::sha256_hex_from_string(correct_token);
@@ -335,7 +339,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_create_admin_token_success() -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_create_admin_token_success() -> Result<()> {
         let mock_store = MockTokenStore::new();
         let manager = TokenManager::new(mock_store.clone());
 
@@ -350,8 +354,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_create_admin_token_if_none_when_empty() -> Result<(), Box<dyn std::error::Error>>
-    {
+    async fn test_create_admin_token_if_none_when_empty() -> Result<()> {
         let mock_store = MockTokenStore::new();
         let manager = TokenManager::new(mock_store);
 
@@ -361,8 +364,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_create_admin_token_if_none_when_exists() -> Result<(), Box<dyn std::error::Error>>
-    {
+    async fn test_create_admin_token_if_none_when_exists() -> Result<()> {
         let mock_store = MockTokenStore::new().with_admin_token("existing_admin_hash");
         let manager = TokenManager::new(mock_store.clone());
 

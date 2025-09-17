@@ -176,10 +176,14 @@ impl TokenCreator for MockTokenManager {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::error::Error;
+
     use crate::token::TokenData;
 
+    type Result<T> = std::result::Result<T, Box<dyn Error>>;
+
     #[tokio::test]
-    async fn test_mock_token_manager_builder() -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_mock_token_manager_builder() -> Result<()> {
         let mock = MockTokenManager::new()
             .with_user_token(
                 "user_token",
@@ -247,7 +251,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_mock_token_manager_bulk_methods() -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_mock_token_manager_bulk_methods() -> Result<()> {
         let mock = MockTokenManager::new()
             .with_unlimited_user_tokens(&["token1", "token2"])
             .with_admin_tokens(&["admin1", "admin2"]);
@@ -264,8 +268,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_mock_token_manager_limited_user_token() -> Result<(), Box<dyn std::error::Error>>
-    {
+    async fn test_mock_token_manager_limited_user_token() -> Result<()> {
         let mock = MockTokenManager::new().with_limited_user_token("limited_token", 2048);
 
         let result = mock.validate_user_token("limited_token").await?;
