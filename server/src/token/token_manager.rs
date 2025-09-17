@@ -205,7 +205,7 @@ mod tests {
             "Expected error for nonexistent token, got: {:?}",
             result
         );
-        assert!(matches!(result.err().unwrap(), TokenError::InvalidToken));
+        assert!(matches!(result.unwrap_err(), TokenError::InvalidToken));
     }
 
     #[tokio::test]
@@ -241,7 +241,7 @@ mod tests {
             "Expected error for store failure, got: {:?}",
             result
         );
-        assert!(matches!(result.err().unwrap(), TokenError::Custom(_)));
+        assert!(matches!(result.unwrap_err(), TokenError::Custom(_)));
     }
 
     #[tokio::test]
@@ -256,7 +256,7 @@ mod tests {
             "Expected error for store failure, got: {:?}",
             result
         );
-        assert!(matches!(result.err().unwrap(), TokenError::Custom(_)));
+        assert!(matches!(result.unwrap_err(), TokenError::Custom(_)));
     }
 
     #[tokio::test]
@@ -312,7 +312,7 @@ mod tests {
             "Expected error for nonexistent admin token, got: {:?}",
             result
         );
-        assert!(matches!(result.err().unwrap(), TokenError::InvalidToken));
+        assert!(matches!(result.unwrap_err(), TokenError::InvalidToken));
     }
 
     #[tokio::test]
@@ -330,7 +330,7 @@ mod tests {
             "Expected error for wrong admin token, got: {:?}",
             result
         );
-        assert!(matches!(result.err().unwrap(), TokenError::InvalidToken));
+        assert!(matches!(result.unwrap_err(), TokenError::InvalidToken));
         Ok(())
     }
 

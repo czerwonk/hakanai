@@ -306,7 +306,7 @@ mod tests {
     use super::*;
     use crate::web::app_data::{AnonymousOptions, AppData};
     use actix_web::{App, test, web};
-    use std::str::FromStr;
+    use hakanai_lib::utils::test::MustParse;
 
     fn create_test_app_data() -> AppData {
         AppData::default()
@@ -557,9 +557,7 @@ mod tests {
                 upload_size_limit: limit,
             })
             .with_trusted_ip_header("x-real-ip".to_string())
-            .with_trusted_ip_ranges(Some(vec![
-                ipnet::IpNet::from_str("127.0.0.1/32").expect("Failed to parse valid IP"),
-            ]));
+            .with_trusted_ip_ranges(Some(vec!["127.0.0.1/32".must_parse()]));
         app_data.upload_size_limit = 2048;
 
         let app = test::init_service(

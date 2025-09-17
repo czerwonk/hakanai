@@ -8,8 +8,12 @@ use clap::Parser;
 use url::Url;
 
 use hakanai_lib::models::{CountryCode, PayloadDataType, SecretRestrictions};
-use hakanai_lib::utils::ip;
 use zeroize::Zeroizing;
+
+use hakanai_lib::utils::ip;
+
+#[cfg(test)]
+use hakanai_lib::utils::test::MustParse;
 
 const MIN_PASSPHRASE_LENGTH: usize = 8;
 
@@ -188,7 +192,7 @@ impl SendArgs {
     #[cfg(test)]
     pub fn builder() -> Self {
         Self {
-            server: Url::parse("http://localhost:8080").expect("Invalid URL"),
+            server: "http://localhost:8080".must_parse(),
             ttl: Duration::from_secs(24 * 60 * 60), // 24h
             token: None,
             token_file: None,
@@ -207,7 +211,7 @@ impl SendArgs {
 
     #[cfg(test)]
     pub fn with_server(mut self, server: &str) -> Self {
-        self.server = Url::parse(server).expect("Invalid URL");
+        self.server = server.must_parse();
         self
     }
 

@@ -65,6 +65,7 @@ pub async fn create_token(
 mod tests {
     use super::*;
     use actix_web::{App, test, web};
+    use hakanai_lib::utils::test::MustParse;
     use std::time::Duration;
 
     use crate::token::MockTokenManager;
@@ -72,11 +73,7 @@ mod tests {
 
     fn create_test_app_data(token_manager: MockTokenManager) -> AppData {
         // Configure with localhost trusted IP for tests
-        let trusted_ranges = vec![
-            "127.0.0.0/8"
-                .parse::<ipnet::IpNet>()
-                .expect("Failed to parse valid CIDR"),
-        ];
+        let trusted_ranges = vec!["127.0.0.0/8".must_parse()];
 
         AppData::default()
             .with_token_validator(Box::new(token_manager.clone()))
@@ -372,11 +369,7 @@ mod tests {
         let token_manager = MockTokenManager::new()
             .with_admin_token("admin_token")
             .with_created_token("new_user_token");
-        let trusted_ranges = vec![
-            "10.0.0.0/8"
-                .parse::<ipnet::IpNet>()
-                .expect("Failed to parse valid CIDR"),
-        ];
+        let trusted_ranges = vec!["10.0.0.0/8".must_parse()];
 
         let app_data = create_test_app_data(token_manager)
             .with_trusted_ip_ranges(Some(trusted_ranges))
@@ -412,11 +405,7 @@ mod tests {
     #[actix_web::test]
     async fn test_admin_api_no_ip_header_with_trusted_ranges() {
         let token_manager = MockTokenManager::new().with_admin_token("admin_token");
-        let trusted_ranges = vec![
-            "10.0.0.0/8"
-                .parse::<ipnet::IpNet>()
-                .expect("Failed to parse valid CIDR"),
-        ];
+        let trusted_ranges = vec!["10.0.0.0/8".must_parse()];
 
         let app_data = create_test_app_data(token_manager)
             .with_trusted_ip_ranges(Some(trusted_ranges))
@@ -454,11 +443,7 @@ mod tests {
         let token_manager = MockTokenManager::new()
             .with_admin_token("admin_token")
             .with_created_token("new_user_token");
-        let trusted_ranges = vec![
-            "2001:db8::/32"
-                .parse::<ipnet::IpNet>()
-                .expect("Failed to parse valid CIDR"),
-        ];
+        let trusted_ranges = vec!["2001:db8::/32".must_parse()];
 
         let app_data = create_test_app_data(token_manager)
             .with_trusted_ip_ranges(Some(trusted_ranges))
@@ -495,14 +480,7 @@ mod tests {
         let token_manager = MockTokenManager::new()
             .with_admin_token("admin_token")
             .with_created_token("new_user_token");
-        let trusted_ranges = vec![
-            "10.0.0.0/8"
-                .parse::<ipnet::IpNet>()
-                .expect("Failed to parse valid CIDR"),
-            "192.168.1.0/24"
-                .parse::<ipnet::IpNet>()
-                .expect("Failed to parse valid CIDR"),
-        ];
+        let trusted_ranges = vec!["10.0.0.0/8".must_parse(), "192.168.1.0/24".must_parse()];
 
         let app_data = create_test_app_data(token_manager)
             .with_trusted_ip_ranges(Some(trusted_ranges))
@@ -548,14 +526,7 @@ mod tests {
         let token_manager = MockTokenManager::new()
             .with_admin_token("admin_token")
             .with_created_token("new_user_token");
-        let trusted_ranges = vec![
-            "127.0.0.0/8"
-                .parse::<ipnet::IpNet>()
-                .expect("Failed to parse valid CIDR"),
-            "::1/128"
-                .parse::<ipnet::IpNet>()
-                .expect("Failed to parse valid CIDR"),
-        ];
+        let trusted_ranges = vec!["127.0.0.0/8".must_parse(), "::1/128".must_parse()];
 
         let app_data = create_test_app_data(token_manager)
             .with_trusted_ip_ranges(Some(trusted_ranges))

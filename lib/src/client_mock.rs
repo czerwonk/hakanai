@@ -14,6 +14,8 @@ use url::Url;
 use crate::client::{Client, ClientError};
 #[cfg(any(test, feature = "testing"))]
 use crate::options::{SecretReceiveOptions, SecretSendOptions};
+#[cfg(any(test, feature = "testing"))]
+use crate::utils::test::MustParse;
 
 /// A generic mock client implementation using the builder pattern.
 ///
@@ -67,9 +69,7 @@ where
     pub fn new() -> Self {
         Self {
             sent_data: Arc::new(Mutex::new(None)),
-            response_url: Some(
-                Url::parse("https://example.com/secret/123").expect("Failed to parse valid URL"),
-            ),
+            response_url: Some("https://example.com/secret/123".must_parse()),
             response_data: None,
             send_should_fail: false,
             send_error_message: None,
@@ -183,9 +183,10 @@ where
                 .unwrap_or_else(|| "Mock send error".to_string());
             Err(ClientError::Custom(error_msg))
         } else {
-            Ok(self.response_url.clone().unwrap_or_else(|| {
-                Url::parse("https://example.com/secret/default").expect("Failed to parse valid URL")
-            }))
+            Ok(self
+                .response_url
+                .clone()
+                .unwrap_or_else(|| "https://example.com/secret/default".must_parse()))
         }
     }
 
@@ -212,20 +213,20 @@ where
 mod tests {
     use super::*;
     use crate::models::Payload;
+    use crate::utils::test::MustParse;
     use std::error::Error;
 
     type Result<T> = std::result::Result<T, Box<dyn Error>>;
 
     #[tokio::test]
     async fn test_mock_client_vec_u8_send_success() -> Result<()> {
-        let mock = MockClient::<Vec<u8>>::new().with_send_success(
-            Url::parse("https://test.com/secret/456").expect("Failed to parse valid URL"),
-        );
+        let mock = MockClient::<Vec<u8>>::new()
+            .with_send_success("https://test.com/secret/456".must_parse());
 
         let test_data = b"test data".to_vec();
         let result = mock
             .send_secret(
-                Url::parse("https://example.com").expect("Failed to parse valid URL"),
+                "https://example.com".must_parse(),
                 test_data.clone(),
                 Duration::from_secs(3600),
                 "token".to_string(),
@@ -246,7 +247,7 @@ mod tests {
         let test_data = b"test data".to_vec();
         let result = mock
             .send_secret(
-                Url::parse("https://example.com").expect("Failed to parse valid URL"),
+                "https://example.com".must_parse(),
                 test_data.clone(),
                 Duration::from_secs(3600),
                 "token".to_string(),
@@ -269,10 +270,7 @@ mod tests {
         let mock = MockClient::<Vec<u8>>::new().with_receive_success(response_data.clone());
 
         let result = mock
-            .receive_secret(
-                Url::parse("https://example.com/secret/123").expect("Failed to parse valid URL"),
-                None,
-            )
+            .receive_secret("https://example.com/secret/123".must_parse(), None)
             .await;
 
         let data = result?;
@@ -285,10 +283,7 @@ mod tests {
         let mock = MockClient::<Vec<u8>>::new().with_receive_failure("Not found".to_string());
 
         let result = mock
-            .receive_secret(
-                Url::parse("https://example.com/secret/123").expect("Failed to parse valid URL"),
-                None,
-            )
+            .receive_secret("https://example.com/secret/123".must_parse(), None)
             .await;
 
         assert!(result.is_err(), "Expected receive error, got: {:?}", result);
@@ -305,10 +300,7 @@ mod tests {
         let mock = MockClient::<Payload>::new().with_receive_success(payload.clone());
 
         let result = mock
-            .receive_secret(
-                Url::parse("https://example.com/secret/123").expect("Failed to parse valid URL"),
-                None,
-            )
+            .receive_secret("https://example.com/secret/123".must_parse(), None)
             .await;
 
         let received = result?;
@@ -319,8 +311,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_mock_client_builder_pattern() -> Result<()> {
-        let test_url =
-            Url::parse("https://test.com/secret/abc").expect("Failed to parse valid URL");
+        let test_url: Url = "https://test.com/secret/abc".must_parse();
         let test_data = b"test response".to_vec();
 
         let mock = MockClient::new().with_success(test_url.clone(), test_data.clone());
@@ -328,7 +319,7 @@ mod tests {
         // Test send
         let send_result = mock
             .send_secret(
-                Url::parse("https://example.com").expect("Failed to parse valid URL"),
+                "https://example.com".must_parse(),
                 b"send data".to_vec(),
                 Duration::from_secs(3600),
                 "token".to_string(),
@@ -341,10 +332,7 @@ mod tests {
 
         // Test receive
         let receive_result = mock
-            .receive_secret(
-                Url::parse("https://example.com/secret/123").expect("Failed to parse valid URL"),
-                None,
-            )
+            .receive_secret("https://example.com/secret/123".must_parse(), None)
             .await;
 
         let receive_data = receive_result?;
@@ -359,7 +347,7 @@ mod tests {
         // Test send failure
         let send_result = mock
             .send_secret(
-                Url::parse("https://example.com").expect("Failed to parse valid URL"),
+                "https://example.com".must_parse(),
                 b"test".to_vec(),
                 Duration::from_secs(3600),
                 "token".to_string(),
@@ -375,10 +363,7 @@ mod tests {
 
         // Test receive failure
         let receive_result = mock
-            .receive_secret(
-                Url::parse("https://example.com/secret/123").expect("Failed to parse valid URL"),
-                None,
-            )
+            .receive_secret("https://example.com/secret/123".must_parse(), None)
             .await;
 
         assert!(
@@ -399,7 +384,7 @@ mod tests {
         let test_data = b"captured data".to_vec();
         let _ = mock
             .send_secret(
-                Url::parse("https://example.com").expect("Failed to parse valid URL"),
+                "https://example.com".must_parse(),
                 test_data.clone(),
                 Duration::from_secs(3600),
                 "token".to_string(),
@@ -422,7 +407,7 @@ mod tests {
 
         let result = mock
             .send_secret(
-                Url::parse("https://example.com").expect("Failed to parse valid URL"),
+                "https://example.com".must_parse(),
                 b"test".to_vec(),
                 Duration::from_secs(3600),
                 "token".to_string(),

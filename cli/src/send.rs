@@ -311,8 +311,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_send_successful_text_file() -> Result<()> {
-        let expected_url =
-            url::Url::parse("https://example.com/s/success123#key").expect("Invalid URL");
+        let expected_url: Url = "https://example.com/s/success123#key".must_parse();
         let client = MockClient::new().with_send_success(expected_url.clone());
         let factory = MockFactory::new().with_client(client);
 
@@ -332,8 +331,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_send_successful_as_file() -> Result<()> {
-        let expected_url =
-            url::Url::parse("https://example.com/s/file123#key").expect("Invalid URL");
+        let expected_url: Url = "https://example.com/s/file123#key".must_parse();
         let client = MockClient::new().with_send_success(expected_url.clone());
         let factory = MockFactory::new().with_client(client);
 
@@ -354,8 +352,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_send_successful_with_custom_filename() -> Result<()> {
-        let expected_url =
-            url::Url::parse("https://example.com/s/custom123#key").expect("Invalid URL");
+        let expected_url: url::Url = "https://example.com/s/custom123#key".must_parse();
         let client = MockClient::new().with_send_success(expected_url.clone());
         let factory = MockFactory::new().with_client(client);
 
@@ -403,8 +400,7 @@ mod tests {
     #[tokio::test]
     async fn test_send_with_all_restrictions() -> Result<()> {
         // Integration test ensuring all restriction types work together in the full send flow
-        let expected_url =
-            url::Url::parse("https://example.com/s/restricted123#key").expect("Invalid URL");
+        let expected_url: url::Url = "https://example.com/s/restricted123#key".must_parse();
         let client = MockClient::new().with_send_success(expected_url.clone());
         let factory = MockFactory::new().with_client(client);
 
