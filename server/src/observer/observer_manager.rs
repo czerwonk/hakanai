@@ -40,8 +40,9 @@ impl ObserverManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::observer::mock_observer::MockObserver;
     use actix_web::http::header::HeaderMap;
+
+    use crate::observer::mock_observer::MockObserver;
 
     #[tokio::test]
     async fn test_notify_secret_created_with_multiple_observers() {

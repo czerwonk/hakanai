@@ -270,9 +270,11 @@ fn verify_hash(plaintext: &[u8], expected_hash: &str) -> Result<(), ClientError>
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::client_mock::MockClient;
     use std::error::Error;
+
     use url::Url;
+
+    use crate::client_mock::MockClient;
 
     type Result<T> = std::result::Result<T, Box<dyn Error>>;
 

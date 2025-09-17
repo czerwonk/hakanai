@@ -35,8 +35,9 @@ pub enum Command {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clap::Parser;
     use std::time::Duration;
+
+    use clap::Parser;
 
     #[test]
     fn test_get_command_parsing() {

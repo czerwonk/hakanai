@@ -207,9 +207,9 @@ impl WebClient {
 #[cfg(test)]
 mod tests {
     use super::*;
-
     use std::error::Error;
     use std::time::Duration;
+
     use url::Url;
     use uuid::Uuid;
 

@@ -107,6 +107,7 @@ fn bitfield_value_for_restrictions(restrictions: &SecretRestrictions) -> u32 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
     use hakanai_lib::models::SecretRestrictions;
     use hakanai_lib::utils::test::MustParse;
 

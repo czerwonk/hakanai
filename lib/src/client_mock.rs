@@ -212,9 +212,10 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::error::Error;
+
     use crate::models::Payload;
     use crate::utils::test::MustParse;
-    use std::error::Error;
 
     type Result<T> = std::result::Result<T, Box<dyn Error>>;
 

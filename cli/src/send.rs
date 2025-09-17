@@ -207,13 +207,15 @@ fn print_restrictions(restrictions: &SecretRestrictions) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::factory_mock::test_utils::MockFactory;
-    use hakanai_lib::utils::test::MustParse;
     use std::fs;
     use std::time::Duration;
+
     use tempfile::TempDir;
 
     use hakanai_lib::client_mock::MockClient;
+    use hakanai_lib::utils::test::MustParse;
+
+    use crate::factory_mock::test_utils::MockFactory;
 
     #[test]
     fn test_read_secret_from_files_creates_archive() -> Result<()> {

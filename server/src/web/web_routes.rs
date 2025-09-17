@@ -304,9 +304,11 @@ async fn serve_wasm_binary() -> impl Responder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::web::app_data::{AnonymousOptions, AppData};
     use actix_web::{App, test, web};
+
     use hakanai_lib::utils::test::MustParse;
+
+    use crate::web::app_data::{AnonymousOptions, AppData};
 
     fn create_test_app_data() -> AppData {
         AppData::default()

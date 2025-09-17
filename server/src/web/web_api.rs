@@ -258,18 +258,18 @@ fn ensure_ttl_is_valid(expires_in: Duration, max_ttl: Duration) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use hakanai_lib::utils::test::MustParse;
     use std::time::Duration;
 
     use actix_web::http::header::{HeaderMap, HeaderValue};
     use actix_web::{App, test};
 
+    use hakanai_lib::models::SecretRestrictions;
+    use hakanai_lib::utils::test::MustParse;
+
     use crate::observer::MockObserver;
     use crate::secret::{MockSecretStore, SecretStore};
     use crate::token::{MockTokenManager, TokenData};
     use crate::web::app_data::AnonymousOptions;
-
-    use hakanai_lib::models::SecretRestrictions;
 
     fn get_header_value<'a>(headers: &'a HeaderMap, name: &str) -> &'a HeaderValue {
         headers

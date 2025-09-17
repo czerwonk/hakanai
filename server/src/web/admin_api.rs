@@ -64,9 +64,11 @@ pub async fn create_token(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use actix_web::{App, test, web};
-    use hakanai_lib::utils::test::MustParse;
     use std::time::Duration;
+
+    use actix_web::{App, test, web};
+
+    use hakanai_lib::utils::test::MustParse;
 
     use crate::token::MockTokenManager;
     use crate::web::app_data::{AnonymousOptions, AppData};

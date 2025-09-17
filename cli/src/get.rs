@@ -143,13 +143,15 @@ fn write_to_timestamped_file<T: Read>(filename: String, r: T, target_dir: &Path)
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::factory_mock::test_utils::MockFactory;
-    use anyhow::Result;
-    use hakanai_lib::models::Payload;
     use std::fs;
+
+    use anyhow::Result;
     use tempfile::TempDir;
 
     use hakanai_lib::client_mock::MockClient;
+    use hakanai_lib::models::Payload;
+
+    use crate::factory_mock::test_utils::MockFactory;
 
     #[tokio::test]
     async fn test_get_successful_to_stdout() -> Result<()> {

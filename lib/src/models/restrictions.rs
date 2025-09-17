@@ -116,9 +116,10 @@ impl Display for SecretRestrictions {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use ipnet::IpNet;
+
     use crate::models::CountryCode;
     use crate::utils::test::MustParse;
-    use ipnet::IpNet;
 
     #[test]
     fn test_secret_restrictions_deserialization() {

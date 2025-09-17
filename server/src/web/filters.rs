@@ -100,11 +100,14 @@ fn is_ip_in_ranges(ip: &IpAddr, ranges: &[ipnet::IpNet]) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::web::app_data::{AnonymousOptions, AppData};
-    use actix_web::{HttpRequest, test};
-    use hakanai_lib::utils::test::MustParse;
     use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
     use std::time::Duration;
+
+    use actix_web::{HttpRequest, test};
+
+    use hakanai_lib::utils::test::MustParse;
+
+    use crate::web::app_data::{AnonymousOptions, AppData};
 
     fn create_test_app_data(trusted_ranges: Option<Vec<ipnet::IpNet>>, header: &str) -> AppData {
         AppData::default()
