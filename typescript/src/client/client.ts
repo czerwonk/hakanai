@@ -461,11 +461,10 @@ class HakanaiClient {
         data_type: payload.data_type ?? null,
       };
       const payloadJson = JSON.stringify(secretPayload);
-      const encodedBytes = new TextEncoder().encode(payloadJson);
-      const payloadBytes = encodedBytes instanceof Uint8Array ? encodedBytes : new Uint8Array(encodedBytes);
+      const payloadBytes = new TextEncoder().encode(payloadJson);
 
-      const encryptedData = await cryptoContext.encrypt(payloadBytes);
-      const hash = await HashUtils.hashContent(payloadBytes);
+      const encryptedData = await cryptoContext.encrypt(payloadBytes.buffer);
+      const hash = await HashUtils.hashContent(payloadBytes.buffer);
 
       // Clear payload bytes after encryption
       SecureMemory.clearUint8Array(payloadBytes);
@@ -533,7 +532,7 @@ class HakanaiClient {
     );
   }
 
-  private async verifyHash(plaintext: Uint8Array, expectedHash: string): Promise<void> {
+  private async verifyHash(plaintext: ArrayBuffer, expectedHash: string): Promise<void> {
     const actualHash = await HashUtils.hashContent(plaintext);
     if (actualHash !== expectedHash) {
       throw new HakanaiError(HakanaiErrorCodes.HASH_MISMATCH, "Hash verification failed");
@@ -590,7 +589,7 @@ class HakanaiClient {
       const decryptedBytes = await cryptoContext.decrypt(encryptedData);
 
       if (hash) {
-        await this.verifyHash(decryptedBytes, hash);
+        await this.verifyHash(decryptedBytes.buffer as ArrayBuffer, hash);
       }
 
       const decryptedJson = new TextDecoder().decode(decryptedBytes);

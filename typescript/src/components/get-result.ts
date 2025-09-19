@@ -29,7 +29,9 @@ export function showSecret(payload: PayloadData, resultDiv: HTMLElement, resetCa
   const decodedBytes = payload.decodeBytes();
   const isBinaryFile = payload.filename != null || ContentAnalysis.isBinary(decodedBytes);
 
-  const container = isBinaryFile ? createBinarySecret(payload, decodedBytes) : createTextSecret(payload, decodedBytes);
+  const container = isBinaryFile
+    ? createBinarySecret(payload, decodedBytes.buffer as ArrayBuffer)
+    : createTextSecret(payload, decodedBytes.buffer as ArrayBuffer);
   resultDiv.appendChild(container);
 
   if (payload.filename) {
@@ -43,7 +45,7 @@ export function showSecret(payload: PayloadData, resultDiv: HTMLElement, resetCa
   announceToScreenReader(window.i18n.t(I18nKeys.Msg.SuccessTitle));
 }
 
-function createTextSecret(payload: PayloadData, decodedBytes: Uint8Array): HTMLElement {
+function createTextSecret(payload: PayloadData, decodedBytes: ArrayBuffer): HTMLElement {
   const secretId = "secret-" + generateRandomId();
   const container = document.createElement("div");
   container.className = "secret-container";
@@ -64,7 +66,7 @@ function createTextSecret(payload: PayloadData, decodedBytes: Uint8Array): HTMLE
   return container;
 }
 
-function createSecretTextarea(secretId: string, decodedBytes: Uint8Array): HTMLTextAreaElement {
+function createSecretTextarea(secretId: string, decodedBytes: ArrayBuffer): HTMLTextAreaElement {
   const textarea = document.createElement("textarea");
   textarea.id = secretId;
   textarea.className = "secret-display";
@@ -92,7 +94,7 @@ function resizeTextarea(textarea: HTMLTextAreaElement): void {
   textarea.classList.add("auto-height");
 }
 
-function createBinarySecret(payload: PayloadData, decodedBytes: Uint8Array): HTMLElement {
+function createBinarySecret(payload: PayloadData, decodedBytes: ArrayBuffer): HTMLElement {
   const container = document.createElement("div");
   container.className = "secret-container";
 
@@ -114,7 +116,7 @@ function createBinarySecret(payload: PayloadData, decodedBytes: Uint8Array): HTM
   return container;
 }
 
-function createPreviewButton(payload: PayloadData, decodedBytes: Uint8Array): HTMLButtonElement {
+function createPreviewButton(payload: PayloadData, decodedBytes: ArrayBuffer): HTMLButtonElement {
   return createButton(
     "btn preview-btn",
     window.i18n.t(I18nKeys.Button.Preview) || "Preview",
@@ -136,7 +138,7 @@ function createCopyButton(secretId: string): HTMLButtonElement {
 
 function createDownloadButton(
   payload: PayloadData,
-  decodedBytes: Uint8Array,
+  decodedBytes: ArrayBuffer,
   isBinary: boolean = false,
 ): HTMLButtonElement {
   return createButton(
@@ -229,7 +231,7 @@ function generateFilename(payload: PayloadData, isBinary: boolean): string {
   return `hakanai-secret-${timestamp}${extension}`;
 }
 
-function downloadSecret(payload: PayloadData, decodedBytes: Uint8Array, isBinary: boolean): void {
+function downloadSecret(payload: PayloadData, decodedBytes: ArrayBuffer, isBinary: boolean): void {
   const filename = generateFilename(payload, isBinary);
   const mimeType = payload.filename ? "application/octet-stream" : "text/plain;charset=utf-8";
 
@@ -252,7 +254,7 @@ function downloadSecret(payload: PayloadData, decodedBytes: Uint8Array, isBinary
   announceToScreenReader(window.i18n.t(I18nKeys.Msg.Downloaded));
 }
 
-function showImagePreview(payload: PayloadData, decodedBytes: Uint8Array): void {
+function showImagePreview(payload: PayloadData, decodedBytes: ArrayBuffer): void {
   const overlay = document.createElement("div");
   overlay.className = "image-preview-overlay";
   overlay.setAttribute("aria-modal", "true");

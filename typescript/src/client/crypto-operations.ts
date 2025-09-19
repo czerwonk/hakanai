@@ -52,7 +52,7 @@ class CryptoContext {
 
     const cryptoKey = await CryptoContext.getCrypto().subtle.importKey(
       "raw",
-      keyBytes,
+      keyBytes.buffer,
       { name: "AES-GCM", length: KEY_LENGTH * 8 },
       false,
       ["encrypt", "decrypt"],
@@ -99,7 +99,7 @@ class CryptoContext {
    * @returns Base64-encoded ciphertext with prepended nonce
    * @throws {Error} If encryption fails, context is disposed, or context already used
    */
-  async encrypt(plaintextBytes: Uint8Array): Promise<string> {
+  async encrypt(plaintextBytes: ArrayBuffer): Promise<string> {
     this.checkDisposed();
 
     if (this.isUsed) {
@@ -109,15 +109,14 @@ class CryptoContext {
       );
     }
 
-    if (!(plaintextBytes instanceof Uint8Array)) {
-      throw new HakanaiError(HakanaiErrorCodes.EXPECTED_UINT8_ARRAY, "Plaintext must be a Uint8Array");
-    }
-
     // Mark context as used to prevent nonce reuse
     this.isUsed = true;
 
     const ciphertext = await CryptoContext.getCrypto().subtle.encrypt(
-      { name: "AES-GCM", iv: this.nonce },
+      {
+        name: "AES-GCM",
+        iv: this.nonce.buffer as ArrayBuffer,
+      },
       this.cryptoKey,
       plaintextBytes,
     );
@@ -165,14 +164,18 @@ class CryptoContext {
     }
 
     // Extract nonce and update context nonce
-    this.nonce.set(combined.slice(0, NONCE_LENGTH));
+    const nonce = combined.slice(0, NONCE_LENGTH);
+    this.nonce.set(nonce);
     const ciphertext = combined.slice(NONCE_LENGTH);
 
     try {
       const plaintextBytes = await CryptoContext.getCrypto().subtle.decrypt(
-        { name: "AES-GCM", iv: this.nonce },
+        {
+          name: "AES-GCM",
+          iv: nonce.buffer,
+        },
         this.cryptoKey,
-        ciphertext,
+        ciphertext.buffer,
       );
 
       return new Uint8Array(plaintextBytes);
