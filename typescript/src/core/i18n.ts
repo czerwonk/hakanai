@@ -348,7 +348,7 @@ const translations: Translations = {
     [I18nKeys.Button.Close]: "Close",
     [I18nKeys.Button.ShowQrCode]: "Show QR Code",
     [I18nKeys.Button.Download]: "💾 Download",
-    [I18nKeys.Button.Preview]: "👁️ Preview",
+    [I18nKeys.Button.Preview]: "👁️ Show",
     [I18nKeys.Button.ChooseFile]: "📁 Choose File",
     [I18nKeys.Button.ReadClipboard]: "📄 Read Clipboard",
 
