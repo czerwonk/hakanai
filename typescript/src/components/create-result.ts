@@ -6,6 +6,7 @@ import { QRCodeGenerator } from "../core/qr-generator";
 import { I18nKeys } from "../core/i18n";
 import type { RestrictionData } from "../core/restriction-data.js";
 import { PreferenceStorage } from "../core/preferences.js";
+import { isWebShareSupported, shareContent } from "../core/web-share";
 
 /**
  * Options for success result display
@@ -165,10 +166,40 @@ function createLabeledInputWithCopy(
   );
   inputContainer.appendChild(copyButton);
 
+  if (isWebShareSupported()) {
+    const shareButton = createShareButton(value);
+    inputContainer.appendChild(shareButton);
+  }
+
   const qrButton = createQrButton(value);
   inputContainer.appendChild(qrButton);
 
   container.appendChild(inputContainer);
+}
+
+/**
+ * Create a share button for native sharing
+ */
+function createShareButton(url: string): HTMLButtonElement {
+  const button = createButton(
+    "btn share-btn",
+    window.i18n.t(I18nKeys.Button.Share),
+    window.i18n.t(I18nKeys.Aria.ShareSecret),
+    async () => {
+      try {
+        await shareContent({
+          title: window.i18n.t(I18nKeys.Msg.ShareTitle),
+          text: window.i18n.t(I18nKeys.Msg.ShareText),
+          url: url,
+        });
+      } catch (error) {
+        if (error instanceof Error && error.name !== "AbortError") {
+          console.error("Share failed:", error);
+        }
+      }
+    },
+  );
+  return button;
 }
 
 /**

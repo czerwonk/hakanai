@@ -1234,6 +1234,7 @@ button.loading::after {
   margin-top: var(--spacing-xs);
 }
 .copy-btn,
+.share-btn,
 .download-btn,
 .preview-btn,
 .secondary-btn {
@@ -1583,7 +1584,8 @@ button.loading::after {
   width: 100%;
   margin-bottom: var(--spacing-sm);
 }
-.url-container .input-group .copy-btn {
+.url-container .input-group .copy-btn,
+.url-container .input-group .share-btn {
   margin-right: var(--spacing-sm);
 }
 
