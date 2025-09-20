@@ -80,7 +80,10 @@ async fn serve_js_client() -> impl Responder {
 
 async fn serve_css(asset_manager: web::Data<AssetManager>) -> impl Responder {
     let asset_res = asset_manager
-        .get_embedded_asset_append_custom("style.css", include_bytes!("../../includes/style.css"))
+        .get_embedded_asset_append_custom(
+            "style.css",
+            include_bytes!("../../includes/style.min.css"),
+        )
         .await;
 
     match asset_res {

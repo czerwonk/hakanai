@@ -32,6 +32,7 @@ docker-compose.override.yml
 server/includes/*.html
 server/includes/*.js
 server/includes/*.wasm
+server/includes/*.min.css
 server/includes/components/
 server/includes/core/
 

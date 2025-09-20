@@ -54,7 +54,7 @@ clean-rust:
 
 .PHONY: clean-ts
 clean-ts:
-	rm -rf server/includes/*.js server/includes/core server/includes/components
+	rm -rf server/includes/*.js server/includes/core server/includes/components server/includes/*.min.css
 	rm -rf typescript/tests/node_modules typescript/tests/coverage
 
 .PHONY: clean-wasm
