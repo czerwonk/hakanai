@@ -9,10 +9,7 @@ const commonConfig = {
     }),
   ],
   onwarn: (warning, warn) => {
-    if (
-      warning.plugin === "typescript" &&
-      warning.message.includes("hakanai_wasm.js")
-    ) {
+    if (warning.plugin === "typescript" && warning.message.includes("hakanai_wasm.js")) {
       return;
     }
     warn(warning);
@@ -28,12 +25,6 @@ const createBundle = (fileName) => ({
   ...commonConfig,
 });
 
-const bundles = [
-  "create-secret",
-  "get-secret",
-  "share",
-  "common",
-  "hakanai-client",
-];
+const bundles = ["create-secret", "get-secret", "share", "common", "hakanai-client", "service-worker"];
 
 export default bundles.map((fileName) => createBundle(fileName));

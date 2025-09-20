@@ -18,6 +18,13 @@ import { initFeatures } from "./core/app-config";
 import { TTLSelector } from "./components/ttl-selector";
 import { ProgressBar } from "./components/progress-bar";
 import { RestrictionData, toSecretRestrictions } from "./core/restriction-data";
+import {
+  registerServiceWorker,
+  SHARE_CACHE_NAME,
+  SHARE_DATA_KEY,
+  type ShareTargetData,
+  type ShareTargetFile,
+} from "./service-worker";
 
 const DEFAULT_TTL = 3600; // Default TTL in seconds (1 hour)
 
@@ -248,7 +255,65 @@ function initKeyboardShortcuts(): void {
   });
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+/**
+ * Convert Share Target data to ShareData format
+ */
+function convertShareTargetToShareData(data: ShareTargetData): ShareData | null {
+  if (data.file && data.file.data) {
+    const file = data.file as ShareTargetFile;
+    return new ShareData(file.data, file.name);
+  }
+
+  const content = data.text || data.url || data.title || "";
+  if (content) {
+    const data = btoa(encodeURIComponent(content));
+    return new ShareData(data);
+  }
+
+  return null;
+}
+
+/**
+ * Check for and process Share Target data from service worker cache
+ */
+async function checkForShareTargetData(): Promise<boolean> {
+  // Check if we have data from Share Target (via service worker)
+  if (!("caches" in window)) {
+    return false;
+  }
+
+  try {
+    const cache = await caches.open(SHARE_CACHE_NAME);
+    const response = await cache.match(SHARE_DATA_KEY);
+
+    if (!response) {
+      return false;
+    }
+
+    const data = (await response.json()) as ShareTargetData;
+
+    // Clear the cache immediately after reading
+    await cache.delete("/share-target-data");
+
+    // Also tell service worker to clear (belt and suspenders)
+    if (navigator.serviceWorker?.controller) {
+      navigator.serviceWorker.controller.postMessage({ type: "CLEAR_SHARE_CACHE" });
+    }
+
+    const shareData = convertShareTargetToShareData(data);
+
+    if (shareData) {
+      showShareContent(shareData);
+      return true;
+    }
+  } catch (error) {
+    console.error("Error reading share target data:", error);
+  }
+
+  return false;
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
   initI18n();
   initTTLSelector();
   initFeatures();
@@ -257,5 +322,10 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("read-clipboard")?.addEventListener("click", readClipboard);
   document.getElementById("share-button")?.addEventListener("click", createSecret);
 
-  showPermissionPrompt();
+  await registerServiceWorker();
+
+  const hasShareData = await checkForShareTargetData();
+  if (!hasShareData) {
+    showPermissionPrompt();
+  }
 });

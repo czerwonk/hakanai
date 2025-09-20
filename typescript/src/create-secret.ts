@@ -17,6 +17,7 @@ import { FileDropzone } from "./components/file-dropzone";
 import { RestrictionsTabs } from "./components/restrictions-tabs";
 import { RestrictionData, toSecretRestrictions } from "./core/restriction-data";
 import { SizeLimitIndicator } from "./components/size-limit";
+import { registerServiceWorker } from "./service-worker";
 
 let ttlSelector: TTLSelector | null = null;
 let fileDropzone: FileDropzone | null = null;
@@ -676,4 +677,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   await initSizeLimitIndicator();
   initRestrictionsCheckbox();
   initKeyboardShortcuts();
+
+  await registerServiceWorker();
 });

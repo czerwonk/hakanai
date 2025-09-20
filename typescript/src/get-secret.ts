@@ -10,6 +10,7 @@ import { initTheme } from "./core/theme";
 import { ErrorHandler, handleAPIError, isHakanaiError } from "./core/error";
 import { initFeatures } from "./core/app-config";
 import { showSecret } from "./components/get-result";
+import { registerServiceWorker } from "./service-worker";
 
 const TIMEOUTS = {
   DEBOUNCE: 300,
@@ -331,7 +332,7 @@ function initKeyboardShortcuts(): void {
   });
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   initI18n();
   initTheme();
   setupForm();
@@ -339,6 +340,8 @@ document.addEventListener("DOMContentLoaded", () => {
   initFeatures();
   initKeyboardShortcuts();
   setupSmartFocus();
+
+  await registerServiceWorker();
 });
 
 // Export functions for testing

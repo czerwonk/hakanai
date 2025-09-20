@@ -7,9 +7,12 @@
 import { initI18n } from "./core/i18n";
 import { initTheme } from "./core/theme";
 import { initFeatures } from "./core/app-config";
+import { registerServiceWorker } from "./service-worker";
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   initI18n();
   initTheme();
   initFeatures();
+
+  await registerServiceWorker();
 });

@@ -37,6 +37,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
         .route("/openapi.yaml", web::get().to(serve_openapi_yaml))
         .route("/privacy", web::get().to(serve_privacy))
         .route("/robots.txt", web::get().to(serve_robots_txt))
+        .route("/service-worker.js", web::get().to(serve_service_worker))
         .route("/share", web::get().to(serve_share_html))
         .route("/share.js", web::get().to(serve_share_js))
         .route("/share.shortcut", web::get().to(serve_shortcut))
@@ -348,6 +349,14 @@ async fn serve_shortcut() -> impl Responder {
 async fn serve_common_js() -> impl Responder {
     serve_with_caching_header(
         include_bytes!("../../includes/common.js"),
+        "application/javascript",
+        VOLATILE_CACHE_MAX_AGE,
+    )
+}
+
+async fn serve_service_worker() -> impl Responder {
+    serve_with_caching_header(
+        include_bytes!("../../includes/service-worker.js"),
         "application/javascript",
         VOLATILE_CACHE_MAX_AGE,
     )
