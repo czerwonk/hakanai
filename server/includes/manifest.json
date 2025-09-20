@@ -4,24 +4,16 @@
   "description": "Zero-knowledge one-time secret sharing service",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#1f1f1f",
-  "theme_color": "#7FB4CA",
+  "background_color": "#16161d",
+  "theme_color": "#7fb4ca",
   "orientation": "portrait-primary",
-  "scope": "/",
   "categories": ["security", "utilities", "productivity"],
   "lang": "en",
   "icons": [
     {
-      "src": "/icon.svg",
+      "src": "/app-icon.svg",
       "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/logo.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
+      "type": "image/svg+xml"
     }
   ],
   "shortcuts": [
@@ -29,27 +21,13 @@
       "name": "Create Secret",
       "short_name": "Create",
       "description": "Create a new one-time secret",
-      "url": "/create",
-      "icons": [
-        {
-          "src": "/icon.svg",
-          "sizes": "any",
-          "type": "image/svg+xml"
-        }
-      ]
+      "url": "/create"
     },
     {
       "name": "Retrieve Secret",
       "short_name": "Retrieve",
       "description": "Retrieve a one-time secret",
-      "url": "/get",
-      "icons": [
-        {
-          "src": "/icon.svg",
-          "sizes": "any",
-          "type": "image/svg+xml"
-        }
-      ]
+      "url": "/get"
     }
   ]
 }

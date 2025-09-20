@@ -28,6 +28,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
         .route("/get-secret.js", web::get().to(serve_get_secret_js))
         .route("/hakanai-client.js", web::get().to(serve_js_client))
         .route("/icon.svg", web::get().to(serve_icon))
+        .route("/app-icon.svg", web::get().to(serve_app_icon))
         .route("/impressum", web::get().to(serve_impressum))
         .route("/logo.svg", web::get().to(serve_logo))
         .route("/manifest.json", web::get().to(serve_manifest))
@@ -122,6 +123,20 @@ async fn serve_logo(asset_manager: web::Data<AssetManager>) -> impl Responder {
 async fn serve_icon(asset_manager: web::Data<AssetManager>) -> impl Responder {
     let asset_res = asset_manager
         .get_embedded_asset_or_custom("icon.svg", include_bytes!("../../../icon.svg"))
+        .await;
+
+    match asset_res {
+        Ok(content) => serve_with_caching_header(&content, "image/svg+xml", DEFAULT_CACHE_MAX_AGE),
+        Err(e) => {
+            error!("Failed to load icon asset: {e}");
+            HttpResponse::InternalServerError().body("Internal Server Error")
+        }
+    }
+}
+
+async fn serve_app_icon(asset_manager: web::Data<AssetManager>) -> impl Responder {
+    let asset_res = asset_manager
+        .get_embedded_asset_or_custom("app-icon.svg", include_bytes!("../../../app-icon.svg"))
         .await;
 
     match asset_res {
