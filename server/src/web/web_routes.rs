@@ -29,6 +29,8 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
         .route("/hakanai-client.js", web::get().to(serve_js_client))
         .route("/icon.svg", web::get().to(serve_icon))
         .route("/app-icon.svg", web::get().to(serve_app_icon))
+        .route("/app-icon-192.png", web::get().to(serve_app_icon_192))
+        .route("/app-icon-512.png", web::get().to(serve_app_icon_512))
         .route("/impressum", web::get().to(serve_impressum))
         .route("/logo.svg", web::get().to(serve_logo))
         .route("/manifest.json", web::get().to(serve_manifest))
@@ -148,7 +150,41 @@ async fn serve_app_icon(asset_manager: web::Data<AssetManager>) -> impl Responde
     match asset_res {
         Ok(content) => serve_with_caching_header(&content, "image/svg+xml", DEFAULT_CACHE_MAX_AGE),
         Err(e) => {
-            error!("Failed to load icon asset: {e}");
+            error!("Failed to load app-icon asset: {e}");
+            HttpResponse::InternalServerError().body("Internal Server Error")
+        }
+    }
+}
+
+async fn serve_app_icon_192(asset_manager: web::Data<AssetManager>) -> impl Responder {
+    let asset_res = asset_manager
+        .get_embedded_asset_or_custom(
+            "app-icon-192.png",
+            include_bytes!("../../../icons/app-icon-192.png"),
+        )
+        .await;
+
+    match asset_res {
+        Ok(content) => serve_with_caching_header(&content, "image/png", DEFAULT_CACHE_MAX_AGE),
+        Err(e) => {
+            error!("Failed to load app-icon (192x192) asset: {e}");
+            HttpResponse::InternalServerError().body("Internal Server Error")
+        }
+    }
+}
+
+async fn serve_app_icon_512(asset_manager: web::Data<AssetManager>) -> impl Responder {
+    let asset_res = asset_manager
+        .get_embedded_asset_or_custom(
+            "app-icon-512.png",
+            include_bytes!("../../../icons/app-icon-512.png"),
+        )
+        .await;
+
+    match asset_res {
+        Ok(content) => serve_with_caching_header(&content, "image/png", DEFAULT_CACHE_MAX_AGE),
+        Err(e) => {
+            error!("Failed to load app-icon (512x512) asset: {e}");
             HttpResponse::InternalServerError().body("Internal Server Error")
         }
     }
@@ -194,12 +230,23 @@ async fn serve_index() -> HttpResponse {
     )
 }
 
-async fn serve_manifest() -> impl Responder {
-    serve_with_caching_header(
-        include_bytes!("../../includes/manifest.json"),
-        "application/manifest+json",
-        DEFAULT_CACHE_MAX_AGE,
-    )
+async fn serve_manifest(asset_manager: web::Data<AssetManager>) -> impl Responder {
+    let asset_res = asset_manager
+        .get_embedded_asset_or_custom(
+            "manifest.json",
+            include_bytes!("../../includes/manifest.json"),
+        )
+        .await;
+
+    match asset_res {
+        Ok(content) => {
+            serve_with_caching_header(&content, "application/manifest+json", DEFAULT_CACHE_MAX_AGE)
+        }
+        Err(e) => {
+            error!("Failed to load PWA manifest: {e}");
+            HttpResponse::InternalServerError().body("Internal Server Error")
+        }
+    }
 }
 
 async fn serve_robots_txt() -> impl Responder {
