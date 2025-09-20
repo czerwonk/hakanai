@@ -58,6 +58,7 @@ jobs:
           path: |
             server/includes/*.js
             server/includes/*.wasm
+            server/includes/*.min.css
           retention-days: 1
 
   # Run clippy in parallel with assets
