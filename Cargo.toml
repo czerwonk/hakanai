@@ -10,7 +10,7 @@ members = [
 ]
 
 [workspace.dependencies]
-hakanai-lib = { path = "lib", version = "2.16.2" }
+hakanai-lib = { path = "lib", version = "2.16.3" }
 
 [profile.release]
 opt-level = "z"
