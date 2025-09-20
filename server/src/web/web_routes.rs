@@ -125,7 +125,7 @@ async fn serve_logo(asset_manager: web::Data<AssetManager>) -> impl Responder {
 
 async fn serve_icon(asset_manager: web::Data<AssetManager>) -> impl Responder {
     let asset_res = asset_manager
-        .get_embedded_asset_or_custom("icon.svg", include_bytes!("../../../icon.svg"))
+        .get_embedded_asset_or_custom("icon.svg", include_bytes!("../../../icons/icon.svg"))
         .await;
 
     match asset_res {
@@ -139,7 +139,10 @@ async fn serve_icon(asset_manager: web::Data<AssetManager>) -> impl Responder {
 
 async fn serve_app_icon(asset_manager: web::Data<AssetManager>) -> impl Responder {
     let asset_res = asset_manager
-        .get_embedded_asset_or_custom("app-icon.svg", include_bytes!("../../../app-icon.svg"))
+        .get_embedded_asset_or_custom(
+            "app-icon.svg",
+            include_bytes!("../../../icons/app-icon.svg"),
+        )
         .await;
 
     match asset_res {
