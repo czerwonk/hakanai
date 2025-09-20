@@ -219,22 +219,7 @@ async function createSecret(): Promise<void> {
   }
 }
 
-function initShareData() {
-  const fragment = window.location.hash.substring(1);
-  if (fragment) {
-    try {
-      const fragmentData = ShareData.fromFragment(fragment);
-      if (fragmentData) {
-        showShareContent(fragmentData);
-        return;
-      }
-    } catch (error) {
-      showError(`Invalid share data: ${error instanceof Error ? error.message : "Unknown error"}`);
-      return;
-    }
-  }
-
-  // Show permission prompt for clipboard access
+function showPermissionPrompt() {
   const permissionPrompt = document.getElementById("permission-prompt")!;
   showElement(permissionPrompt);
   hideOtherSections("permission-prompt");
@@ -272,5 +257,5 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("read-clipboard")?.addEventListener("click", readClipboard);
   document.getElementById("share-button")?.addEventListener("click", createSecret);
 
-  initShareData();
+  showPermissionPrompt();
 });

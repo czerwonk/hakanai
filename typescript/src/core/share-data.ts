@@ -30,7 +30,7 @@ export class ShareDataError extends Error {
 }
 
 /**
- * Share data structure for clipboard and fragment-based sharing
+ * Share data structure for sharing secrets with different input methods
  */
 export class ShareData {
   public readonly data_type?: PayloadDataType;
@@ -118,30 +118,6 @@ export class ShareData {
       payload.ttl,
       payload.restrictions,
       payload.data_type,
-    );
-  }
-
-  /**
-   * Create ShareData from URL fragment parameters
-   * @param fragment URL fragment (without #)
-   * @returns ShareData instance or null if no data found
-   * @throws Error if validation fails
-   */
-  static fromFragment(fragment: string): ShareData | null {
-    if (!fragment) return null;
-
-    const params = new URLSearchParams(fragment);
-    const data = params.get("data");
-
-    if (!data) return null;
-
-    return new ShareData(
-      data,
-      params.get("filename") ?? undefined,
-      params.get("token") ?? undefined,
-      params.get("ttl") ? parseInt(params.get("ttl")!) : undefined,
-      undefined, // restrictions intentionally set to undefined, as they are not encoded in URL fragments
-      params.get("data_type") ?? undefined,
     );
   }
 

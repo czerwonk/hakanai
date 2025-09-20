@@ -107,50 +107,6 @@ describe("ShareData", () => {
     });
   });
 
-  describe("fromFragment", () => {
-    test("parses valid fragment with all parameters", () => {
-      const fragment = "data=SGVsbG8gV29ybGQ%3D&filename=test.txt&token=token123&ttl=3600";
-
-      const shareData = ShareData.fromFragment(fragment);
-      expect(shareData).not.toBeNull();
-      expect(shareData!.data).toBe("SGVsbG8gV29ybGQ=");
-      expect(shareData!.filename).toBe("test.txt");
-      expect(shareData!.token).toBe("token123");
-      expect(shareData!.ttl).toBe(3600);
-    });
-
-    test("parses fragment with minimal data", () => {
-      const fragment = "data=SGVsbG8%3D";
-
-      const shareData = ShareData.fromFragment(fragment);
-      expect(shareData).not.toBeNull();
-      expect(shareData!.data).toBe("SGVsbG8=");
-      expect(shareData!.filename).toBeUndefined();
-      expect(shareData!.token).toBeUndefined();
-      expect(shareData!.ttl).toBeUndefined();
-    });
-
-    test("returns null for empty fragment", () => {
-      expect(ShareData.fromFragment("")).toBeNull();
-      expect(ShareData.fromFragment("other=value")).toBeNull(); // no data param
-    });
-
-    test("parses TTL as number", () => {
-      const fragment = "data=test&ttl=7200";
-
-      const shareData = ShareData.fromFragment(fragment);
-      expect(shareData!.ttl).toBe(7200);
-      expect(typeof shareData!.ttl).toBe("number");
-    });
-
-    test("handles invalid TTL gracefully", () => {
-      const fragment = "data=test&ttl=invalid";
-
-      // Should throw during ShareData construction due to NaN TTL
-      expect(() => ShareData.fromFragment(fragment)).toThrow('Invalid "ttl" field - must be positive number');
-    });
-  });
-
   describe("getContentSize", () => {
     test("calculates content size correctly", () => {
       // Base64 formula: Math.ceil((base64Length * 3) / 4)
