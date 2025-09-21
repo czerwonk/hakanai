@@ -1228,8 +1228,9 @@ button.loading::after {
   color: var(--color-bg-main);
 }
 
-.buttons-container {
+.button-group {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--spacing-sm);
   margin-top: var(--spacing-xs);
 }
@@ -1585,9 +1586,6 @@ button.loading::after {
   margin-bottom: var(--spacing-sm);
 }
 .url-container .button-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--spacing-sm);
   margin-top: var(--spacing-sm);
 }
 .url-container .button-group .btn {
@@ -2260,8 +2258,9 @@ input[type="number"] {
   border-radius: var(--border-radius);
 }
 
-.image-preview-modal .buttons-container {
+.image-preview-modal .button-group {
   display: flex;
+  flex-wrap: wrap;
   gap: 1rem;
   justify-content: center;
   width: 100%;

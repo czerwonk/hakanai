@@ -39,11 +39,11 @@ describe("DOM Utilities", () => {
   });
 
   describe("createButtonContainer", () => {
-    test("should create div with buttons-container class", () => {
+    test("should create div with button-group class", () => {
       const container = createButtonContainer();
 
       expect(container.tagName).toBe("DIV");
-      expect(container.className).toBe("buttons-container");
+      expect(container.className).toBe("button-group");
     });
   });
 

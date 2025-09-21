@@ -33,7 +33,7 @@ export function createButton(
 
 export function createButtonContainer(): HTMLDivElement {
   const container = document.createElement("div");
-  container.className = "buttons-container";
+  container.className = "button-group";
   return container;
 }
 
