@@ -20,8 +20,8 @@ export async function registerServiceWorker() {
   }
 
   try {
-    const registration = await navigator.serviceWorker.register("/service-worker.js", {
-      scope: "/",
+    const registration = await navigator.serviceWorker.register("/sw.js", {
+      scope: "/share",
     });
     console.log("Service Worker registered successfully:", registration);
   } catch (error) {
