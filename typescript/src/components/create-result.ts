@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import { createButton, generateRandomId, expandView } from "../core/dom-utils";
+import { createButton, generateRandomId, expandView, createButtonContainer } from "../core/dom-utils";
 import { copyToClipboard, copyToClipboardByElementId } from "../core/clipboard";
 import { QRCodeGenerator } from "../core/qr-generator";
 import { I18nKeys } from "../core/i18n";
@@ -161,24 +161,22 @@ function createLabeledInputWithCopy(
   input.className = "url-input";
   inputContainer.appendChild(input);
 
-  // Create button group container
-  const buttonGroup = document.createElement("div");
-  buttonGroup.className = "button-group";
+  const buttonContainer = createButtonContainer();
 
   const copyButton = createButton("btn copy-btn", window.i18n.t(I18nKeys.Button.Copy), ariaLabel, () =>
     copyToClipboardByElementId(inputId, copyButton as HTMLButtonElement),
   );
-  buttonGroup.appendChild(copyButton);
+  buttonContainer.appendChild(copyButton);
 
   if (isWebShareSupported()) {
     const shareButton = createShareButton(value);
-    buttonGroup.appendChild(shareButton);
+    buttonContainer.appendChild(shareButton);
   }
 
   const qrButton = createQrButton(value);
-  buttonGroup.appendChild(qrButton);
+  buttonContainer.appendChild(qrButton);
 
-  inputContainer.appendChild(buttonGroup);
+  inputContainer.appendChild(buttonContainer);
   container.appendChild(inputContainer);
 }
 
