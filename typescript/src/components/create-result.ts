@@ -161,19 +161,24 @@ function createLabeledInputWithCopy(
   input.className = "url-input";
   inputContainer.appendChild(input);
 
+  // Create button group container
+  const buttonGroup = document.createElement("div");
+  buttonGroup.className = "button-group";
+
   const copyButton = createButton("btn copy-btn", window.i18n.t(I18nKeys.Button.Copy), ariaLabel, () =>
     copyToClipboardByElementId(inputId, copyButton as HTMLButtonElement),
   );
-  inputContainer.appendChild(copyButton);
+  buttonGroup.appendChild(copyButton);
 
   if (isWebShareSupported()) {
     const shareButton = createShareButton(value);
-    inputContainer.appendChild(shareButton);
+    buttonGroup.appendChild(shareButton);
   }
 
   const qrButton = createQrButton(value);
-  inputContainer.appendChild(qrButton);
+  buttonGroup.appendChild(qrButton);
 
+  inputContainer.appendChild(buttonGroup);
   container.appendChild(inputContainer);
 }
 

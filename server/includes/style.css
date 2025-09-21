@@ -1584,9 +1584,15 @@ button.loading::after {
   width: 100%;
   margin-bottom: var(--spacing-sm);
 }
-.url-container .input-group .copy-btn,
-.url-container .input-group .share-btn {
-  margin-right: var(--spacing-sm);
+.url-container .button-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-sm);
+}
+.url-container .button-group .btn {
+  flex: 1 1 auto;
+  min-width: 100px;
 }
 
 /* QR Code styling */
