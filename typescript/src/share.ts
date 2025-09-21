@@ -18,13 +18,7 @@ import { initFeatures } from "./core/app-config";
 import { TTLSelector } from "./components/ttl-selector";
 import { ProgressBar } from "./components/progress-bar";
 import { RestrictionData, toSecretRestrictions } from "./core/restriction-data";
-import {
-  registerServiceWorker,
-  SHARE_CACHE_NAME,
-  SHARE_DATA_KEY,
-  type ShareTargetData,
-  type ShareTargetFile,
-} from "./service-worker";
+import { registerServiceWorker, SHARE_CACHE_NAME, SHARE_DATA_KEY } from "./service-worker";
 
 const DEFAULT_TTL = 3600; // Default TTL in seconds (1 hour)
 
@@ -256,24 +250,6 @@ function initKeyboardShortcuts(): void {
 }
 
 /**
- * Convert Share Target data to ShareData format
- */
-function convertShareTargetToShareData(data: ShareTargetData): ShareData | null {
-  if (data.file && data.file.data) {
-    const file = data.file as ShareTargetFile;
-    return new ShareData(file.data, file.name);
-  }
-
-  const content = data.text || data.url || data.title || "";
-  if (content) {
-    const data = btoa(encodeURIComponent(content));
-    return new ShareData(data);
-  }
-
-  return null;
-}
-
-/**
  * Check for and process Share Target data from service worker cache
  */
 async function checkForShareTargetData(): Promise<boolean> {
@@ -290,7 +266,8 @@ async function checkForShareTargetData(): Promise<boolean> {
       return false;
     }
 
-    const data = (await response.json()) as ShareTargetData;
+    const json = await response.text();
+    const shareData = ShareData.fromJSON(json);
 
     // Clear the cache immediately after reading
     await cache.delete("/share-target-data");
@@ -299,8 +276,6 @@ async function checkForShareTargetData(): Promise<boolean> {
     if (navigator.serviceWorker?.controller) {
       navigator.serviceWorker.controller.postMessage({ type: "CLEAR_SHARE_CACHE" });
     }
-
-    const shareData = convertShareTargetToShareData(data);
 
     if (shareData) {
       showShareContent(shareData);

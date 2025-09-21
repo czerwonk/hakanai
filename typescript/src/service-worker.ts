@@ -8,6 +8,8 @@
 /// <reference lib="webworker" />
 declare const self: ServiceWorkerGlobalScope & typeof globalThis;
 
+import { ShareData } from "./core/share-data.js";
+
 export const SHARE_CACHE_NAME = "hakanai-share-v1";
 export const SHARE_DATA_KEY = "/share-target-data";
 
@@ -32,7 +34,7 @@ export async function registerServiceWorker() {
 /**
  * File data structure for shared files
  */
-export interface ShareTargetFile {
+interface ShareTargetFile {
   name: string;
   type: string;
   size: number;
@@ -42,7 +44,7 @@ export interface ShareTargetFile {
 /**
  * Share target data structure
  */
-export interface ShareTargetData {
+interface ShareTargetData {
   title: string;
   text: string;
   url: string;
@@ -84,6 +86,24 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
   }
 
   return btoa(binary);
+}
+
+/**
+ * Convert Share Target data to ShareData format
+ */
+function shareTargetToShareData(data: ShareTargetData): ShareData | null {
+  if (data.file && data.file.data) {
+    const file = data.file as ShareTargetFile;
+    return new ShareData(file.data, file.name);
+  }
+
+  const content = data.text || data.url || data.title || "";
+  if (content) {
+    const data = btoa(encodeURIComponent(content));
+    return new ShareData(data);
+  }
+
+  return null;
 }
 
 /**
@@ -133,7 +153,7 @@ async function extractFileData(formData: FormData): Promise<ShareTargetFile | nu
 /**
  * Store data in cache
  */
-async function storeInCache(data: ShareTargetData): Promise<void> {
+async function storeInCache(data: ShareData): Promise<void> {
   const cache = await caches.open(SHARE_CACHE_NAME);
   await cache.put(
     SHARE_DATA_KEY,
@@ -153,18 +173,20 @@ async function handleShareTarget(request: Request): Promise<Response> {
   try {
     const formData = await request.formData();
 
-    const shareData = extractTextData(formData);
+    const data = extractTextData(formData);
     const fileData = await extractFileData(formData);
     if (fileData) {
-      shareData.file = fileData;
+      data.file = fileData;
     }
 
-    await storeInCache(shareData);
+    const shareData = shareTargetToShareData(data);
+    if (shareData) {
+      await storeInCache(shareData);
+    }
 
     return Response.redirect("/share", 303);
   } catch (error) {
     console.error("Error handling share target:", error);
-    // On error, redirect to share page anyway
     return Response.redirect("/share", 303);
   }
 }
