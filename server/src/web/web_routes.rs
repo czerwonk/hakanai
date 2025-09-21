@@ -356,7 +356,7 @@ async fn serve_common_js() -> impl Responder {
 
 async fn serve_service_worker() -> impl Responder {
     serve_with_caching_header(
-        include_bytes!("../../includes/service-worker.js"),
+        include_bytes!("../../includes/sw.js"),
         "application/javascript",
         VOLATILE_CACHE_MAX_AGE,
     )

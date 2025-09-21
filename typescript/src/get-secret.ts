@@ -10,7 +10,7 @@ import { initTheme } from "./core/theme";
 import { ErrorHandler, handleAPIError, isHakanaiError } from "./core/error";
 import { initFeatures } from "./core/app-config";
 import { showSecret } from "./components/get-result";
-import { registerServiceWorker } from "./service-worker";
+import { registerServiceWorker } from "./core/service-worker";
 
 const TIMEOUTS = {
   DEBOUNCE: 300,

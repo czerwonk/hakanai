@@ -25,6 +25,6 @@ const createBundle = (fileName) => ({
   ...commonConfig,
 });
 
-const bundles = ["create-secret", "get-secret", "share", "common", "hakanai-client", "service-worker"];
+const bundles = ["create-secret", "get-secret", "share", "common", "hakanai-client", "sw"];
 
 export default bundles.map((fileName) => createBundle(fileName));

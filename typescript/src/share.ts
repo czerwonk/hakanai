@@ -18,7 +18,7 @@ import { initFeatures } from "./core/app-config";
 import { TTLSelector } from "./components/ttl-selector";
 import { ProgressBar } from "./components/progress-bar";
 import { RestrictionData, toSecretRestrictions } from "./core/restriction-data";
-import { registerServiceWorker, SHARE_CACHE_NAME, SHARE_DATA_KEY } from "./service-worker";
+import { registerServiceWorker, SHARE_CACHE_NAME, SHARE_DATA_KEY } from "./core/service-worker";
 
 const DEFAULT_TTL = 3600; // Default TTL in seconds (1 hour)
 
