@@ -13,7 +13,7 @@ import {
 import { copyToClipboard } from "../core/clipboard";
 import { formatFileSize } from "../core/formatters";
 import { isFileShareSupported, isWebShareSupported, createShareableFile, shareContent } from "../core/web-share";
-import { getFileIcon } from "../core/file-utils";
+import { getFileIcon, sanitizeFileName } from "../core/file-utils";
 
 const TIMEOUTS = {
   CLEANUP_DELAY: 100,
@@ -36,7 +36,10 @@ export function showSecret(
   const decodedBytes = payload.decodeBytes();
   const isBinaryFile = payload.filename != null || ContentAnalysis.isBinary(decodedBytes);
 
-  if (!payload.filename) {
+  if (payload.filename) {
+    const sanatized = sanitizeFileName(payload.filename);
+    payload.setFilename(sanatized!);
+  } else {
     const extension = isBinaryFile ? ".bin" : ".txt";
     const filename = generateFilename(secretId, extension);
     payload.setFilename(filename);

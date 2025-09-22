@@ -5,7 +5,7 @@ import { initI18n, I18nKeys } from "./core/i18n";
 import { announceToScreenReader, secureInputClear, showElement, hideElement } from "./core/dom-utils";
 import { initTheme } from "./core/theme";
 import { saveAuthTokenToStorage, getAuthTokenFromStorage, clearAuthTokenStorage } from "./core/auth-storage";
-import { formatFileSize, sanitizeFileName } from "./core/formatters";
+import { formatFileSize } from "./core/formatters";
 import { displaySuccessResult } from "./components/create-result";
 import { displayErrorMessage } from "./components/error-display";
 import { ErrorHandler, handleAPIError } from "./core/error";
@@ -18,7 +18,7 @@ import { RestrictionsTabs } from "./components/restrictions-tabs";
 import { RestrictionData, toSecretRestrictions } from "./core/restriction-data";
 import { SizeLimitIndicator } from "./components/size-limit";
 import { registerServiceWorker } from "./core/service-worker";
-import { getExt, isImageExt } from "./core/file-utils";
+import { getExt, isImageExt, sanitizeFileName } from "./core/file-utils";
 
 let ttlSelector: TTLSelector | null = null;
 let fileDropzone: FileDropzone | null = null;

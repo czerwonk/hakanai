@@ -7,7 +7,7 @@
 
 import { HakanaiClient } from "./hakanai-client";
 import { initI18n, I18nKeys } from "./core/i18n";
-import { formatFileSize, sanitizeFileName } from "./core/formatters";
+import { formatFileSize } from "./core/formatters";
 import { hideElement, showElement } from "./core/dom-utils";
 import { KeyboardShortcuts } from "./core/keyboard-shortcuts";
 import { displaySuccessResult } from "./components/create-result";
@@ -19,6 +19,7 @@ import { TTLSelector } from "./components/ttl-selector";
 import { ProgressBar } from "./components/progress-bar";
 import { RestrictionData, toSecretRestrictions } from "./core/restriction-data";
 import { registerServiceWorker, SHARE_CACHE_NAME, SHARE_DATA_KEY } from "./core/service-worker";
+import { sanitizeFileName } from "./core/file-utils";
 
 const DEFAULT_TTL = 3600; // Default TTL in seconds (1 hour)
 
