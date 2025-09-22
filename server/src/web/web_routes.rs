@@ -26,7 +26,6 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
         .route("/docs", web::get().to(serve_docs_html))
         .route("/get", web::get().to(serve_get_secret_html))
         .route("/get-secret.js", web::get().to(serve_get_secret_js))
-        .route("/hakanai-client.js", web::get().to(serve_js_client))
         .route("/icon.svg", web::get().to(serve_icon))
         .route("/app-icon.svg", web::get().to(serve_app_icon))
         .route("/app-icon-192.png", web::get().to(serve_app_icon_192))
@@ -70,14 +69,6 @@ async fn serve_create_secret_html() -> HttpResponse {
         include_bytes!("../../includes/create-secret.html"),
         "text/html",
         HIGHLY_VOLATILE_CACHE_MAX_AGE,
-    )
-}
-
-async fn serve_js_client() -> impl Responder {
-    serve_with_caching_header(
-        include_bytes!("../../includes/hakanai-client.js"),
-        "application/javascript",
-        VOLATILE_CACHE_MAX_AGE,
     )
 }
 

@@ -37,8 +37,8 @@ export function showSecret(
   const isBinaryFile = payload.filename != null || ContentAnalysis.isBinary(decodedBytes);
 
   if (payload.filename) {
-    const sanatized = sanitizeFileName(payload.filename);
-    payload.setFilename(sanatized!);
+    const sanitized = sanitizeFileName(payload.filename);
+    payload.setFilename(sanitized!);
   } else {
     const extension = isBinaryFile ? ".bin" : ".txt";
     const filename = generateFilename(secretId, extension);
