@@ -36,6 +36,12 @@ interface PayloadData {
    * Set the filename associated with the payload (optional)
    */
   setFilename(filename: string): void;
+
+  /*
+   * Set the data type of the payload (optional)
+   * Defaults to 'generic' if not set
+   */
+  setDataType(dataType: PayloadDataType): void;
 }
 
 /**
@@ -110,6 +116,10 @@ class PayloadDataImpl implements PayloadData {
 
   setFilename(filename: string): void {
     this._filename = filename;
+  }
+
+  setDataType(dataType: PayloadDataType): void {
+    this._data_type = dataType;
   }
 }
 

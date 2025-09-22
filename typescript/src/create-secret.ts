@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import { HakanaiClient, type PayloadData } from "./hakanai-client";
+import { HakanaiClient, PayloadDataType, type PayloadData } from "./hakanai-client";
 import { initI18n, I18nKeys } from "./core/i18n";
 import { announceToScreenReader, secureInputClear, showElement, hideElement } from "./core/dom-utils";
 import { initTheme } from "./core/theme";
@@ -18,6 +18,7 @@ import { RestrictionsTabs } from "./components/restrictions-tabs";
 import { RestrictionData, toSecretRestrictions } from "./core/restriction-data";
 import { SizeLimitIndicator } from "./components/size-limit";
 import { registerServiceWorker } from "./core/service-worker";
+import { getExt, isImageExt } from "./core/file-utils";
 
 let ttlSelector: TTLSelector | null = null;
 let fileDropzone: FileDropzone | null = null;
@@ -121,6 +122,12 @@ async function validateAndProcessFileInput(fileInput: HTMLInputElement): Promise
     const fileBytes = await readFileAsBytes(file);
     const payload = client.createPayload(fileName!);
     payload.setFromBytes(fileBytes);
+
+    const ext = getExt(file.name);
+    if (isImageExt(ext)) {
+      payload.setDataType(PayloadDataType.Image);
+    }
+
     return payload;
   } catch {
     showError(window.i18n.t(I18nKeys.Msg.FileReadError));
@@ -231,7 +238,6 @@ function handleCreateError(error: unknown): void {
 async function createSecret(): Promise<void> {
   const elements = getElements();
   if (!elements) {
-    showError("Page not fully loaded. Please refresh and try again.");
     return;
   }
 

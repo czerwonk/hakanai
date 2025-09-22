@@ -66,8 +66,21 @@ const MIME_MAP: Record<string, string> = {
  * @returns MIME type string
  */
 export function getMimeType(filename: string): string {
-  const ext = filename.split(".").pop()?.toLowerCase();
+  const ext = getExt(filename);
   return ext && MIME_MAP[ext] ? MIME_MAP[ext] : "application/octet-stream";
+}
+
+/**
+ * Get file extension from filename
+ * @param filename The filename to extract extension from
+ * @returns extension in lowercase without the dot
+ */
+export function getExt(filename: string): string {
+  return filename.split(".").pop()?.toLowerCase() || "";
+}
+
+export function isImageExt(ext: string): boolean {
+  return ["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp", "ico", "heic", "heif"].includes(ext.toLowerCase());
 }
 
 /**
@@ -76,39 +89,39 @@ export function getMimeType(filename: string): string {
  * @returns Emoji icon representing the file type
  */
 export function getFileIcon(filename: string): string {
-  const ext = filename.split(".").pop()?.toLowerCase();
+  const ext = getExt(filename);
 
   // Image files
-  if (["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp", "ico", "heic", "heif"].includes(ext || "")) {
+  if (isImageExt(ext)) {
     return "🖼️";
   }
   // Video files
-  if (["mp4", "avi", "mov", "webm", "mkv", "m4v"].includes(ext || "")) {
+  if (["mp4", "avi", "mov", "webm", "mkv", "m4v"].includes(ext)) {
     return "🎬";
   }
   // Audio files
-  if (["mp3", "wav", "m4a", "ogg", "flac"].includes(ext || "")) {
+  if (["mp3", "wav", "m4a", "ogg", "flac"].includes(ext)) {
     return "🎵";
   }
   // Documents
   if (["pdf"].includes(ext || "")) {
     return "📄";
   }
-  if (["doc", "docx", "odt", "rtf"].includes(ext || "")) {
+  if (["doc", "docx", "odt", "rtf"].includes(ext)) {
     return "📝";
   }
-  if (["xls", "xlsx", "csv"].includes(ext || "")) {
+  if (["xls", "xlsx", "csv"].includes(ext)) {
     return "📊";
   }
-  if (["ppt", "pptx"].includes(ext || "")) {
+  if (["ppt", "pptx"].includes(ext)) {
     return "📈";
   }
   // Archives
-  if (["zip", "7z", "rar", "tar", "gz"].includes(ext || "")) {
+  if (["zip", "7z", "rar", "tar", "gz"].includes(ext)) {
     return "📦";
   }
   // Code/text files
-  if (["txt", "md", "json", "xml", "js", "ts", "css", "html", "py", "rs", "go"].includes(ext || "")) {
+  if (["txt", "md", "json", "xml", "js", "ts", "css", "html", "py", "rs", "go"].includes(ext)) {
     return "📃";
   }
 
