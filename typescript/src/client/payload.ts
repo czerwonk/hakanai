@@ -31,6 +31,11 @@ interface PayloadData {
    * Decode the base64-encoded data field to bytes for binary data
    */
   decodeBytes(): Uint8Array;
+
+  /*
+   * Set the filename associated with the payload (optional)
+   */
+  setFilename(filename: string): void;
 }
 
 /**
@@ -101,6 +106,10 @@ class PayloadDataImpl implements PayloadData {
       bytes[i] = binaryString.charCodeAt(i);
     }
     return bytes;
+  }
+
+  setFilename(filename: string): void {
+    this._filename = filename;
   }
 }
 

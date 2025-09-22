@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { I18nKeys } from "./i18n.js";
+import { getMimeType } from "./file-utils.js";
+
+// Re-export getMimeType for backward compatibility
+export { getMimeType };
 
 /**
  * Web Share API functionality for native sharing
@@ -11,76 +15,6 @@ export interface ShareOptions {
   text?: string;
   url?: string;
   files?: File[];
-}
-
-/**
- * Common MIME type mappings for file extensions
- */
-const MIME_MAP: Record<string, string> = {
-  // Images
-  jpg: "image/jpeg",
-  jpeg: "image/jpeg",
-  png: "image/png",
-  gif: "image/gif",
-  webp: "image/webp",
-  heic: "image/heic",
-  heif: "image/heif",
-  svg: "image/svg+xml",
-  bmp: "image/bmp",
-  ico: "image/x-icon",
-
-  // Documents
-  pdf: "application/pdf",
-  doc: "application/msword",
-  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  xls: "application/vnd.ms-excel",
-  xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  ppt: "application/vnd.ms-powerpoint",
-  pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-  odt: "application/vnd.oasis.opendocument.text",
-
-  // Videos
-  mp4: "video/mp4",
-  mov: "video/quicktime",
-  avi: "video/x-msvideo",
-  webm: "video/webm",
-  mkv: "video/x-matroska",
-  m4v: "video/x-m4v",
-
-  // Audio
-  mp3: "audio/mpeg",
-  wav: "audio/wav",
-  m4a: "audio/mp4",
-  ogg: "audio/ogg",
-  flac: "audio/flac",
-
-  // Text/Code
-  txt: "text/plain",
-  json: "application/json",
-  xml: "application/xml",
-  html: "text/html",
-  css: "text/css",
-  js: "text/javascript",
-  ts: "text/typescript",
-  md: "text/markdown",
-  csv: "text/csv",
-
-  // Archives
-  zip: "application/zip",
-  tar: "application/x-tar",
-  gz: "application/gzip",
-  "7z": "application/x-7z-compressed",
-  rar: "application/vnd.rar",
-};
-
-/**
- * Get MIME type from filename
- * @param filename The filename to extract extension from (always provided due to generateFilename)
- * @returns MIME type string
- */
-export function getMimeType(filename: string): string {
-  const ext = filename.split(".").pop()?.toLowerCase();
-  return ext && MIME_MAP[ext] ? MIME_MAP[ext] : "application/octet-stream";
 }
 
 /**

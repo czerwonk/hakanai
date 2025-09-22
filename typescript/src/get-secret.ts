@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import { HakanaiClient, HakanaiErrorCodes, type PayloadData } from "./hakanai-client";
+import { HakanaiClient, HakanaiErrorCodes, type PayloadData, UrlParser } from "./hakanai-client";
 import { initI18n, I18nKeys } from "./core/i18n";
 import { KeyboardShortcuts } from "./core/keyboard-shortcuts";
 import { debounce, hideElement, secureInputClear, showElement, unexpandView } from "./core/dom-utils";
@@ -127,8 +127,10 @@ async function performRetrieval(url: string, passphrase?: string): Promise<void>
   showLoadingState();
 
   try {
+    const secretId = UrlParser.parseSecretUrl(url).secretId;
     const payload = await client.receivePayload(url, progressBar, passphrase);
-    showSuccess(payload);
+
+    showSuccess(payload, secretId);
     clearInputs();
     updateKeyInputVisibility();
     hidePassphraseInput();
@@ -141,11 +143,11 @@ async function performRetrieval(url: string, passphrase?: string): Promise<void>
   }
 }
 
-function showSuccess(payload: PayloadData) {
+function showSuccess(payload: PayloadData, secretId: string) {
   clearResult();
 
   const { resultDiv } = getElements();
-  showSecret(payload, resultDiv, resetForm);
+  showSecret(payload, resultDiv, resetForm, secretId);
 }
 
 function showError(message: string): void {

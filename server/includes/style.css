@@ -1563,6 +1563,54 @@ button.loading::after {
   }
 }
 
+/* File secret display */
+.file-secret-container {
+  margin-top: var(--spacing-md);
+}
+
+.file-info-section {
+  text-align: center;
+  padding: var(--spacing-md) 0;
+  margin-bottom: var(--spacing-lg);
+}
+
+.file-name-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-xs);
+}
+
+.file-icon {
+  font-size: var(--font-size-xxl);
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+}
+
+.file-info-section .file-name {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--theme-text);
+  margin: 0;
+  word-break: break-word;
+  display: inline-block;
+}
+
+.file-info-section .file-size {
+  font-size: var(--font-size-sm);
+  color: var(--theme-text-secondary);
+  margin: 0;
+  opacity: 0.8;
+}
+
+.file-info-section .file-size strong {
+  color: var(--theme-text-secondary);
+  font-weight: normal;
+  margin-right: var(--spacing-xs);
+}
+
 /* Success result layout improvements */
 .result.success {
   padding: var(--spacing-xl);

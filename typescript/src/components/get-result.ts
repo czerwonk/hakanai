@@ -13,12 +13,18 @@ import {
 import { copyToClipboard } from "../core/clipboard";
 import { formatFileSize } from "../core/formatters";
 import { isFileShareSupported, isWebShareSupported, createShareableFile, shareContent } from "../core/web-share";
+import { getFileIcon } from "../core/file-utils";
 
 const TIMEOUTS = {
   CLEANUP_DELAY: 100,
 } as const;
 
-export function showSecret(payload: PayloadData, resultDiv: HTMLElement, resetCallback: () => void): void {
+export function showSecret(
+  payload: PayloadData,
+  resultDiv: HTMLElement,
+  resetCallback: () => void,
+  secretId: string,
+): void {
   if (!payload || !resultDiv) return;
 
   resultDiv.className = "result success";
@@ -30,14 +36,16 @@ export function showSecret(payload: PayloadData, resultDiv: HTMLElement, resetCa
   const decodedBytes = payload.decodeBytes();
   const isBinaryFile = payload.filename != null || ContentAnalysis.isBinary(decodedBytes);
 
-  const container = isBinaryFile
-    ? createBinarySecret(payload, decodedBytes.buffer as ArrayBuffer)
-    : createTextSecret(payload, decodedBytes.buffer as ArrayBuffer);
-  resultDiv.appendChild(container);
-
-  if (payload.filename) {
-    resultDiv.appendChild(createFilenameInfo(payload.filename, decodedBytes.length));
+  if (!payload.filename) {
+    const extension = isBinaryFile ? ".bin" : ".txt";
+    const filename = generateFilename(secretId, extension);
+    payload.setFilename(filename);
   }
+
+  const container = isBinaryFile
+    ? createBinarySecret(payload, decodedBytes.buffer as ArrayBuffer, decodedBytes.length)
+    : createTextSecret(payload, secretId, decodedBytes.buffer as ArrayBuffer);
+  resultDiv.appendChild(container);
 
   const noteElement = createNoteElement();
   addResetElement(noteElement, resetCallback);
@@ -46,20 +54,20 @@ export function showSecret(payload: PayloadData, resultDiv: HTMLElement, resetCa
   announceToScreenReader(window.i18n.t(I18nKeys.Msg.SuccessTitle));
 }
 
-function createTextSecret(payload: PayloadData, decodedBytes: ArrayBuffer): HTMLElement {
-  const secretId = "secret-" + generateRandomId();
+function createTextSecret(payload: PayloadData, secretId: string, decodedBytes: ArrayBuffer): HTMLElement {
+  const elementId = `secret-${secretId}`;
   const container = document.createElement("div");
   container.className = "secret-container";
 
-  const textarea = createSecretTextarea(secretId, decodedBytes);
+  const textarea = createSecretTextarea(elementId, decodedBytes);
   container.appendChild(textarea);
 
   const buttonsContainer = createButtonContainer();
-  buttonsContainer.appendChild(createCopyButton(secretId));
+  buttonsContainer.appendChild(createCopyButton(elementId));
   buttonsContainer.appendChild(createDownloadButton(payload, decodedBytes));
 
   if (isWebShareSupported() && (!payload.filename || isFileShareSupported())) {
-    buttonsContainer.appendChild(createShareButton(payload, decodedBytes, false));
+    buttonsContainer.appendChild(createShareButton(payload, decodedBytes));
   }
 
   container.appendChild(buttonsContainer);
@@ -72,9 +80,9 @@ function createTextSecret(payload: PayloadData, decodedBytes: ArrayBuffer): HTML
   return container;
 }
 
-function createSecretTextarea(secretId: string, decodedBytes: ArrayBuffer): HTMLTextAreaElement {
+function createSecretTextarea(elementId: string, decodedBytes: ArrayBuffer): HTMLTextAreaElement {
   const textarea = document.createElement("textarea");
-  textarea.id = secretId;
+  textarea.id = elementId;
   textarea.className = "secret-display";
   textarea.readOnly = true;
   textarea.setAttribute("aria-label", "Retrieved secret content");
@@ -100,21 +108,42 @@ function resizeTextarea(textarea: HTMLTextAreaElement): void {
   textarea.classList.add("auto-height");
 }
 
-function createBinarySecret(payload: PayloadData, decodedBytes: ArrayBuffer): HTMLElement {
+function createBinarySecret(payload: PayloadData, decodedBytes: ArrayBuffer, size: number): HTMLElement {
   const container = document.createElement("div");
-  container.className = "secret-container";
+  container.className = "secret-container file-secret-container";
 
-  const message = document.createElement("p");
-  message.className = "binary-message";
-  message.textContent = window.i18n.t(I18nKeys.Msg.BinaryDetected);
-  container.appendChild(message);
+  const fileInfoSection = document.createElement("div");
+  fileInfoSection.className = "file-info-section";
+
+  const filenameWrapper = document.createElement("div");
+  filenameWrapper.className = "file-name-wrapper";
+
+  const icon = getFileIcon(payload.filename || "");
+  const iconSpan = document.createElement("span");
+  iconSpan.className = "file-icon";
+  iconSpan.textContent = icon;
+
+  const filenameElement = document.createElement("h4");
+  filenameElement.className = "file-name";
+  filenameElement.textContent = payload.filename || "Unknown file";
+
+  filenameWrapper.appendChild(iconSpan);
+  filenameWrapper.appendChild(filenameElement);
+  fileInfoSection.appendChild(filenameWrapper);
+
+  const sizeElement = document.createElement("p");
+  sizeElement.className = "file-size";
+  sizeElement.innerHTML = `<strong>${window.i18n.t(I18nKeys.Label.Size)}</strong> ${formatFileSize(size)}`;
+  fileInfoSection.appendChild(sizeElement);
+
+  container.appendChild(fileInfoSection);
 
   const buttonsContainer = createButtonContainer();
 
-  buttonsContainer.appendChild(createDownloadButton(payload, decodedBytes, true));
+  buttonsContainer.appendChild(createDownloadButton(payload, decodedBytes));
 
   if (isFileShareSupported()) {
-    buttonsContainer.appendChild(createShareButton(payload, decodedBytes, true));
+    buttonsContainer.appendChild(createShareButton(payload, decodedBytes));
   }
 
   if (payload.data_type === PayloadDataType.Image) {
@@ -135,39 +164,28 @@ function createPreviewButton(payload: PayloadData, decodedBytes: ArrayBuffer): H
   );
 }
 
-function createCopyButton(secretId: string): HTMLButtonElement {
+function createCopyButton(elementId: string): HTMLButtonElement {
   return createButton(
     "btn copy-btn",
     window.i18n.t(I18nKeys.Button.Copy),
     window.i18n.t(I18nKeys.Aria.CopySecret),
     function (this: HTMLButtonElement) {
-      copySecret(secretId, this);
+      copySecret(elementId, this);
     },
   );
 }
 
-function createDownloadButton(
-  payload: PayloadData,
-  decodedBytes: ArrayBuffer,
-  isBinary: boolean = false,
-): HTMLButtonElement {
+function createDownloadButton(payload: PayloadData, decodedBytes: ArrayBuffer): HTMLButtonElement {
   return createButton(
     "btn download-btn",
     window.i18n.t(I18nKeys.Button.Download),
     window.i18n.t(I18nKeys.Aria.DownloadSecret),
-    () => downloadSecret(payload, decodedBytes, isBinary),
+    () => downloadSecret(payload, decodedBytes),
   );
 }
 
-function createShareButton(
-  payload: PayloadData,
-  decodedBytes: ArrayBuffer | null,
-  isBinary: boolean = false,
-): HTMLButtonElement {
-  const clickHandler =
-    isBinary || payload.filename
-      ? () => shareFileSecret(payload, decodedBytes!, isBinary)
-      : () => shareTextSecret(payload);
+function createShareButton(payload: PayloadData, decodedBytes: ArrayBuffer): HTMLButtonElement {
+  const clickHandler = payload.filename ? () => shareFileSecret(payload, decodedBytes) : () => shareTextSecret(payload);
 
   return createButton(
     "btn share-btn",
@@ -175,23 +193,6 @@ function createShareButton(
     window.i18n.t(I18nKeys.Aria.ShareSecret),
     clickHandler,
   );
-}
-
-function createFilenameInfo(filename: string, size: number): HTMLElement {
-  const fileInfo = document.createElement("p");
-  fileInfo.className = "file-info";
-
-  const fileLabel = document.createElement("strong");
-  fileLabel.textContent = window.i18n.t(I18nKeys.Label.Filename) + " ";
-  fileInfo.appendChild(fileLabel);
-  fileInfo.appendChild(document.createTextNode(filename));
-
-  // Add size information
-  const sizeSpan = document.createElement("span");
-  sizeSpan.textContent = ` (${formatFileSize(size)})`;
-  fileInfo.appendChild(sizeSpan);
-
-  return fileInfo;
 }
 
 function createNoteElement(): HTMLElement {
@@ -240,27 +241,18 @@ function addResetElement(container: HTMLElement, resetCallback: () => void) {
   container.appendChild(buttonContainer);
 }
 
-function copySecret(secretId: string, button: HTMLButtonElement): void {
-  const secretElement = document.getElementById(secretId) as HTMLTextAreaElement;
+function copySecret(elementId: string, button: HTMLButtonElement): void {
+  const secretElement = document.getElementById(elementId) as HTMLTextAreaElement;
   if (!secretElement) return;
 
   copyToClipboard(secretElement.value, button);
 }
 
-function generateFilename(payload: PayloadData, isBinary: boolean): string {
-  if (payload.filename) {
-    return payload.filename;
-  }
-
-  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-
-  const extension = isBinary ? ".bin" : ".txt";
-
-  return `hakanai-secret-${timestamp}${extension}`;
+function generateFilename(secretId: string, extension: string): string {
+  return `secret-${secretId}${extension}`;
 }
 
-function downloadSecret(payload: PayloadData, decodedBytes: ArrayBuffer, isBinary: boolean): void {
-  const filename = generateFilename(payload, isBinary);
+function downloadSecret(payload: PayloadData, decodedBytes: ArrayBuffer): void {
   const mimeType = payload.filename ? "application/octet-stream" : "text/plain;charset=utf-8";
 
   const blob = new Blob([decodedBytes], { type: mimeType });
@@ -269,7 +261,7 @@ function downloadSecret(payload: PayloadData, decodedBytes: ArrayBuffer, isBinar
   const anchor = document.createElement("a");
   hideElement(anchor);
   anchor.href = url;
-  anchor.download = filename;
+  anchor.download = payload.filename || "";
 
   document.body.appendChild(anchor);
   anchor.click();
@@ -299,10 +291,9 @@ async function shareTextSecret(payload: PayloadData): Promise<void> {
   }
 }
 
-async function shareFileSecret(payload: PayloadData, decodedBytes: ArrayBuffer, isBinary: boolean): Promise<void> {
+async function shareFileSecret(payload: PayloadData, decodedBytes: ArrayBuffer): Promise<void> {
   try {
-    const filename = generateFilename(payload, isBinary);
-    const file = createShareableFile(decodedBytes, filename);
+    const file = createShareableFile(decodedBytes, payload.filename || "");
 
     await shareContent({
       files: [file],
@@ -335,7 +326,7 @@ function showImagePreview(payload: PayloadData, decodedBytes: ArrayBuffer): void
   img.className = "preview-image";
 
   const buttonsContainer = createButtonContainer();
-  buttonsContainer.appendChild(createDownloadButton(payload, decodedBytes, true));
+  buttonsContainer.appendChild(createDownloadButton(payload, decodedBytes));
 
   const closeButton = createButton(
     "btn close-btn",
@@ -372,6 +363,3 @@ function showImagePreview(payload: PayloadData, decodedBytes: ArrayBuffer): void
 
   document.body.appendChild(overlay);
 }
-
-// Export functions for testing
-export { generateFilename };
