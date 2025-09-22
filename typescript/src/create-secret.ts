@@ -99,10 +99,6 @@ function readFileAsBytes(file: File): Promise<Uint8Array> {
   });
 }
 
-function validateFilename(fileName: string): boolean {
-  return sanitizeFileName(fileName) !== null;
-}
-
 async function validateAndProcessFileInput(fileInput: HTMLInputElement): Promise<PayloadData | null> {
   const file = fileInput.files?.[0];
   if (!file) {
@@ -112,7 +108,7 @@ async function validateAndProcessFileInput(fileInput: HTMLInputElement): Promise
   }
 
   const fileName = sanitizeFileName(file.name);
-  if (!validateFilename(file.name)) {
+  if (!fileName) {
     showError(window.i18n.t(I18nKeys.Msg.InvalidFilename));
     fileInput.focus();
     return null;
@@ -120,7 +116,7 @@ async function validateAndProcessFileInput(fileInput: HTMLInputElement): Promise
 
   try {
     const fileBytes = await readFileAsBytes(file);
-    const payload = client.createPayload(fileName!);
+    const payload = client.createPayload(fileName);
     payload.setFromBytes(fileBytes);
 
     const ext = getExt(file.name);
@@ -325,11 +321,10 @@ function getFileElements(): FileElements {
   };
 }
 
-function showFileInfo(file: File, elements: FileElements): void {
+function showFileInfo(file: File, fileName: string, elements: FileElements): void {
   const { fileInfoDiv, fileNameSpan, fileSizeSpan } = elements;
-  const sanitizedName = sanitizeFileName(file.name);
 
-  fileNameSpan.textContent = sanitizedName ?? "Invalid filename";
+  fileNameSpan.textContent = fileName;
   fileSizeSpan.textContent = `(${formatFileSize(file.size)})`;
   showElement(fileInfoDiv);
   fileInfoDiv.className = "file-info";
@@ -391,15 +386,22 @@ async function updateFileInfo(): Promise<void> {
   if (fileInput.files?.length) {
     const file = fileInput.files[0];
 
-    // Validate file size
-    const isValid = await validateFileSize(file);
-    if (!isValid) {
+    const isFileSizeValid = await validateFileSize(file);
+    if (!isFileSizeValid) {
       fileInput.value = "";
       hideFileInfo(elements);
       return;
     }
 
-    showFileInfo(file, elements);
+    const fileName = sanitizeFileName(file.name);
+    if (!fileName) {
+      showError(window.i18n.t(I18nKeys.Msg.InvalidFilename));
+      fileInput.value = "";
+      hideFileInfo(elements);
+      return;
+    }
+
+    showFileInfo(file, fileName, elements);
     switchToFileMode(elements);
   } else {
     hideFileInfo(elements);
