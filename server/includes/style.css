@@ -1526,6 +1526,11 @@ button.loading::after {
   .container:not(.homepage-container) .header {
     margin: calc(-1 * var(--spacing-lg)) calc(-1 * var(--spacing-lg)) var(--spacing-lg) calc(-1 * var(--spacing-lg));
   }
+
+  /* Expand buttons to fill width for better tap targets on mobile */
+  .button-group .btn {
+    flex: 1 1 auto;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1589,7 +1594,6 @@ button.loading::after {
   margin-top: var(--spacing-sm);
 }
 .url-container .button-group .btn {
-  flex: 1 1 auto;
   min-width: 100px;
 }
 
