@@ -1568,6 +1568,10 @@ button.loading::after {
   margin-top: var(--spacing-md);
 }
 
+.file-secret-container .button-group {
+  justify-content: center;
+}
+
 .file-info-section {
   text-align: center;
   padding: var(--spacing-md) 0;
