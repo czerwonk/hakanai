@@ -12,6 +12,7 @@ import {
 } from "../core/dom-utils";
 import { copyToClipboard } from "../core/clipboard";
 import { formatFileSize } from "../core/formatters";
+import { isFileShareSupported, isWebShareSupported, createShareableFile, shareContent } from "../core/web-share";
 
 const TIMEOUTS = {
   CLEANUP_DELAY: 100,
@@ -56,6 +57,11 @@ function createTextSecret(payload: PayloadData, decodedBytes: ArrayBuffer): HTML
   const buttonsContainer = createButtonContainer();
   buttonsContainer.appendChild(createCopyButton(secretId));
   buttonsContainer.appendChild(createDownloadButton(payload, decodedBytes));
+
+  if (isWebShareSupported() && (!payload.filename || isFileShareSupported())) {
+    buttonsContainer.appendChild(createShareButton(payload, decodedBytes, false));
+  }
+
   container.appendChild(buttonsContainer);
 
   expandView();
@@ -107,6 +113,10 @@ function createBinarySecret(payload: PayloadData, decodedBytes: ArrayBuffer): HT
 
   buttonsContainer.appendChild(createDownloadButton(payload, decodedBytes, true));
 
+  if (isFileShareSupported()) {
+    buttonsContainer.appendChild(createShareButton(payload, decodedBytes, true));
+  }
+
   if (payload.data_type === PayloadDataType.Image) {
     buttonsContainer.appendChild(createPreviewButton(payload, decodedBytes));
   }
@@ -146,6 +156,24 @@ function createDownloadButton(
     window.i18n.t(I18nKeys.Button.Download),
     window.i18n.t(I18nKeys.Aria.DownloadSecret),
     () => downloadSecret(payload, decodedBytes, isBinary),
+  );
+}
+
+function createShareButton(
+  payload: PayloadData,
+  decodedBytes: ArrayBuffer | null,
+  isBinary: boolean = false,
+): HTMLButtonElement {
+  const clickHandler =
+    isBinary || payload.filename
+      ? () => shareFileSecret(payload, decodedBytes!, isBinary)
+      : () => shareTextSecret(payload);
+
+  return createButton(
+    "btn share-btn",
+    window.i18n.t(I18nKeys.Button.Share),
+    window.i18n.t(I18nKeys.Aria.ShareSecret),
+    clickHandler,
   );
 }
 
@@ -252,6 +280,41 @@ function downloadSecret(payload: PayloadData, decodedBytes: ArrayBuffer, isBinar
   }, TIMEOUTS.CLEANUP_DELAY);
 
   announceToScreenReader(window.i18n.t(I18nKeys.Msg.Downloaded));
+}
+
+async function shareTextSecret(payload: PayloadData): Promise<void> {
+  try {
+    const text = payload.decode();
+
+    await shareContent({
+      text: text,
+      title: "Hakanai Secret",
+    });
+
+    announceToScreenReader(window.i18n.t(I18nKeys.Msg.Shared));
+  } catch (error) {
+    if (error instanceof Error && error.name !== "AbortError") {
+      console.error("Failed to share:", error);
+    }
+  }
+}
+
+async function shareFileSecret(payload: PayloadData, decodedBytes: ArrayBuffer, isBinary: boolean): Promise<void> {
+  try {
+    const filename = generateFilename(payload, isBinary);
+    const file = createShareableFile(decodedBytes, filename);
+
+    await shareContent({
+      files: [file],
+      title: "Hakanai Secret",
+    });
+
+    announceToScreenReader(window.i18n.t(I18nKeys.Msg.Shared));
+  } catch (error) {
+    if (error instanceof Error && error.name !== "AbortError") {
+      console.error("Failed to share:", error);
+    }
+  }
 }
 
 function showImagePreview(payload: PayloadData, decodedBytes: ArrayBuffer): void {
