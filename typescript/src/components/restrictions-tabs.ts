@@ -2,7 +2,7 @@
 
 import { showElement, hideElement } from "../core/dom-utils";
 import { fetchAppConfig } from "../core/app-config";
-import { RestrictionData } from "../core/restriction-data.js";
+import { RestrictionData } from "../core/restriction-data";
 import { I18nKeys } from "../core/i18n";
 import { InputValidation } from "../client/validation";
 

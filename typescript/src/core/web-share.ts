@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import { I18nKeys } from "./i18n.js";
-import { getMimeType } from "./file-utils.js";
+import { I18nKeys } from "./i18n";
+import { getMimeType } from "./file-utils";
 
 // Re-export getMimeType for backward compatibility
 export { getMimeType };

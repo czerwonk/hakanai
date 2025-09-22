@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import { HakanaiError, HakanaiErrorCodes } from "../hakanai-client.js";
+import { HakanaiError, HakanaiErrorCodes } from "../hakanai-client";
 
 // Error handler interface - UI classes implement this
 export interface ErrorHandler {

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import { HashUtils, type SecretRestrictions } from "../hakanai-client.js";
+import { HashUtils, type SecretRestrictions } from "../hakanai-client";
 
 /**
  * Plain restriction data interface

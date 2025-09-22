@@ -4,8 +4,8 @@ import { createButton, generateRandomId, expandView, createButtonContainer } fro
 import { copyToClipboard, copyToClipboardByElementId } from "../core/clipboard";
 import { QRCodeGenerator } from "../core/qr-generator";
 import { I18nKeys } from "../core/i18n";
-import type { RestrictionData } from "../core/restriction-data.js";
-import { PreferenceStorage } from "../core/preferences.js";
+import type { RestrictionData } from "../core/restriction-data";
+import { PreferenceStorage } from "../core/preferences";
 import { isWebShareSupported, shareContent } from "../core/web-share";
 
 /**

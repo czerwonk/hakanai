@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import { RestrictionData } from "./restriction-data.js";
-import { PayloadDataType } from "../hakanai-client.js";
+import { RestrictionData } from "./restriction-data";
+import { PayloadDataType } from "../hakanai-client";
 
 /**
  * Validation error codes for ShareData
