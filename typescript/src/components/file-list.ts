@@ -110,8 +110,8 @@ export class FileListComponent {
     const filesArray = Array.from(newFiles);
 
     for (const file of filesArray) {
-      // Skip if file already exists (by name and size)
       if (this.isDuplicate(file)) {
+        // skip if file already exists (by name and size)
         continue;
       }
 
@@ -253,44 +253,27 @@ export class FileListComponent {
     li.className = "file-list-item";
     li.dataset.fileId = id;
 
-    const sanitizedName = sanitizeFileName(item.file.name) || item.file.name;
+    const fileName = sanitizeFileName(item.file.name) || item.file.name || "";
 
-    // Add all child elements
-    li.appendChild(this.createFileIcon(item.file.name));
-    li.appendChild(this.createFileName(sanitizedName));
-    li.appendChild(this.createFileSize(item.file.size));
-    li.appendChild(this.createRemoveButton(id, sanitizedName));
+    li.appendChild(this.createSpan(getFileIcon(fileName), "file-icon"));
+    li.appendChild(this.createSpan(fileName, "file-name"));
+    li.appendChild(this.createSpan(formatFileSize(item.file.size), "file-size"));
+    li.appendChild(this.createRemoveButton(id, fileName));
 
     return li;
   }
 
-  private createFileIcon(filename: string): HTMLElement {
-    const iconSpan = document.createElement("span");
-    iconSpan.className = "file-icon";
-    iconSpan.textContent = getFileIcon(filename);
+  private createSpan(content: string, className: string): HTMLElement {
+    const span = document.createElement("span");
+    span.className = className;
+    span.textContent = content;
 
-    return iconSpan;
-  }
-
-  private createFileName(name: string): HTMLElement {
-    const nameSpan = document.createElement("span");
-    nameSpan.className = "file-name";
-    nameSpan.textContent = name;
-
-    return nameSpan;
-  }
-
-  private createFileSize(size: number): HTMLElement {
-    const sizeSpan = document.createElement("span");
-    sizeSpan.className = "file-size";
-    sizeSpan.textContent = formatFileSize(size);
-
-    return sizeSpan;
+    return span;
   }
 
   private createRemoveButton(id: string, filename: string): HTMLElement {
     const removeBtn = document.createElement("button");
-    removeBtn.className = "file-remove";
+    removeBtn.className = "remove-file-btn";
     removeBtn.setAttribute("aria-label", `Remove ${filename}`);
     removeBtn.textContent = "❌";
     removeBtn.addEventListener("click", (e) => {
