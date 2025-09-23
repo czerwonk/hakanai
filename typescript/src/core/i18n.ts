@@ -284,7 +284,7 @@ const translations: Translations = {
     [I18nKeys.Label.ContentPreview]: "Content Preview",
     [I18nKeys.Label.ExpiresIn]: "Expires in:",
     [I18nKeys.Label.Expires]: "Expires after:",
-    [I18nKeys.Label.FileSelect]: "Select file to share:",
+    [I18nKeys.Label.FileSelect]: "Select file(s) to share:",
     [I18nKeys.Label.File]: "🗂️ File",
     [I18nKeys.Label.Filename]: "Filename:",
     [I18nKeys.Label.Key]: "Decryption Key:",
@@ -320,7 +320,7 @@ const translations: Translations = {
     [I18nKeys.Helper.Url]:
       "Enter the URL to access the secret.\nThe decryption key after # is never sent to the server",
     [I18nKeys.Helper.Secret]: "Your message will be encrypted before leaving your browser",
-    [I18nKeys.Helper.FileSelect]: "File will be encrypted before upload.",
+    [I18nKeys.Helper.FileSelect]: "Files will be encrypted before upload.",
     [I18nKeys.Helper.Token]: "Leave empty if no authentication is required",
     [I18nKeys.Helper.Key]: "Base64-encoded decryption key with optional hash (shared separately)",
     [I18nKeys.Helper.SeparateKey]:
@@ -519,7 +519,7 @@ const translations: Translations = {
     [I18nKeys.Label.SecretType]: "Secret-Typ:",
     [I18nKeys.Label.Text]: "📝 Text-Nachricht",
     [I18nKeys.Label.File]: "🗂️ Datei",
-    [I18nKeys.Label.FileSelect]: "Datei zum Teilen auswählen:",
+    [I18nKeys.Label.FileSelect]: "Dateien zum Teilen auswählen:",
     [I18nKeys.Label.Token]: "Token:",
     [I18nKeys.Label.Expires]: "Läuft ab nach:",
     [I18nKeys.Label.Url]: "Secret-URL:",
@@ -554,7 +554,7 @@ const translations: Translations = {
     [I18nKeys.Helper.Url]:
       "URL eigeben um auf das Secret zuzugreifen.\nDer geheime Schlüssel nach dem # wird niemals an den Server gesendet",
     [I18nKeys.Helper.Secret]: "Die Nachricht wird verschlüsselt, bevor sie den Browser verlässt",
-    [I18nKeys.Helper.FileSelect]: "Die Datei wird vor dem Upload verschlüsselt.",
+    [I18nKeys.Helper.FileSelect]: "Die Dateien werden vor dem Upload verschlüsselt.",
     [I18nKeys.Helper.Token]: "Kann leer gelassen werden, wenn keine Authentifizierung erforderlich ist",
     [I18nKeys.Helper.Key]: "Base64-kodierter geheimer Schlüssel mit optionalen Hash-Informationen (separat geteilt)",
     [I18nKeys.Helper.SeparateKey]:
