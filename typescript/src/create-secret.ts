@@ -127,14 +127,8 @@ async function processMultipleFiles(files: File[]): Promise<PayloadData | null> 
   const tarBuilder = new TarBuilder();
 
   for (const file of files) {
-    const fileName = sanitizeFileName(file.name);
-    if (!fileName) {
-      showError(`Invalid filename: ${file.name}`);
-      return null;
-    }
-
     const fileBytes = await readFileAsArrayBuffer(file);
-    tarBuilder.addFile(fileName, fileBytes);
+    tarBuilder.addFile(file.name, fileBytes);
   }
 
   const tarArchive = tarBuilder.finalize();
