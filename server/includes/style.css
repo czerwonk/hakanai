@@ -1586,13 +1586,6 @@ button.loading::after {
   margin-bottom: var(--spacing-xs);
 }
 
-.file-icon {
-  font-size: var(--font-size-xxl);
-  line-height: 1;
-  display: inline-flex;
-  align-items: center;
-}
-
 .file-info-section .file-name {
   font-size: var(--font-size-lg);
   font-weight: 600;

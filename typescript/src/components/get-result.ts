@@ -122,15 +122,10 @@ function createBinarySecret(payload: PayloadData, decodedBytes: ArrayBuffer, siz
   filenameWrapper.className = "file-name-wrapper";
 
   const icon = getFileIcon(payload.filename || "");
-  const iconSpan = document.createElement("span");
-  iconSpan.className = "file-icon";
-  iconSpan.textContent = icon;
-
   const filenameElement = document.createElement("h4");
   filenameElement.className = "file-name";
-  filenameElement.textContent = payload.filename || "Unknown file";
+  filenameElement.textContent = `${icon} ${payload.filename}`;
 
-  filenameWrapper.appendChild(iconSpan);
   filenameWrapper.appendChild(filenameElement);
   fileInfoSection.appendChild(filenameWrapper);
 
