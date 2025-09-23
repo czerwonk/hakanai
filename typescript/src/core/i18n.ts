@@ -290,7 +290,7 @@ const translations: Translations = {
     [I18nKeys.Label.ContentPreview]: "Content Preview",
     [I18nKeys.Label.ExpiresIn]: "Expires in:",
     [I18nKeys.Label.Expires]: "Expires after:",
-    [I18nKeys.Label.FileSelect]: "Select file(s) to share:",
+    [I18nKeys.Label.FileSelect]: "Select files to share:",
     [I18nKeys.Label.File]: "🗂️ File",
     [I18nKeys.Label.Filename]: "Filename:",
     [I18nKeys.Label.Key]: "Decryption Key:",
