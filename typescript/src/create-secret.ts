@@ -138,7 +138,8 @@ async function processMultipleFiles(files: File[]): Promise<PayloadData | null> 
   }
 
   const tarArchive = tarBuilder.finalize();
-  const archiveName = `archive-${new Date().toISOString().slice(0, 10)}.tar`;
+  const timestamp = Math.floor(Date.now() / 1000);
+  const archiveName = `secret-${timestamp}.tar`;
 
   const payload = client.createPayload(archiveName);
   payload.setFromBytes(tarArchive);
