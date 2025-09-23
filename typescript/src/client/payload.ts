@@ -15,7 +15,7 @@ interface PayloadData {
   /**
    * Set data from raw bytes (for binary files or text converted to bytes)
    */
-  setFromBytes(bytes: Uint8Array): void;
+  setFromBytes(bytes: ArrayBuffer): void;
 
   /**
    * Set data directly from base64-encoded string (optimization for pre-encoded data)
@@ -70,18 +70,18 @@ class PayloadDataImpl implements PayloadData {
     return this._data_type;
   }
 
-  setFromBytes(bytes: Uint8Array): void {
-    if (!(bytes instanceof Uint8Array)) {
-      throw new HakanaiError(HakanaiErrorCodes.EXPECTED_UINT8_ARRAY, "Data must be a Uint8Array");
+  setFromBytes(bytes: ArrayBuffer): void {
+    if (!(bytes instanceof ArrayBuffer)) {
+      throw new HakanaiError(HakanaiErrorCodes.EXPECTED_UINT8_ARRAY, "Data must be a ArrayBuffer");
     }
 
     // Convert bytes to base64 for storage
     let binaryString = "";
     const chunkSize = 8192;
 
-    for (let i = 0; i < bytes.length; i += chunkSize) {
-      const chunk = bytes.subarray(i, i + chunkSize);
-      binaryString += String.fromCharCode(...chunk);
+    for (let i = 0; i < bytes.byteLength; i += chunkSize) {
+      const chunk = bytes.slice(i, i + chunkSize);
+      binaryString += String.fromCharCode(...new Uint8Array(chunk));
     }
 
     this._data = btoa(binaryString);

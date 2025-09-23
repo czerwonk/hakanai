@@ -127,7 +127,7 @@ fn archive_files(files: Vec<String>) -> Result<Secret> {
     zip.finish()?;
 
     let timestamp = timestamp::now_string()?;
-    let filename = format!("{timestamp}.zip");
+    let filename = format!("secret-{timestamp}.zip");
 
     Ok(Secret {
         bytes: Zeroizing::new(buffer),

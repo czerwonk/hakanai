@@ -10,7 +10,7 @@ describe("TarBuilder", () => {
 
     // TAR header is 512 bytes, content is 13 bytes, padding to 512, plus 1024 end blocks
     const expectedSize = 512 + 512 + 1024; // header + content block + end marker
-    expect(archive.length).toBe(expectedSize);
+    expect(archive.byteLength).toBe(expectedSize);
 
     // Check that filename appears in header
     const headerStr = new TextDecoder().decode(archive.slice(0, 100));
@@ -154,7 +154,7 @@ describe("TarBuilder", () => {
     const archive = builder.finalize();
 
     // Extract content from archive (after 512-byte header)
-    const extractedContent = archive.slice(512, 512 + 256);
+    const extractedContent = new Uint8Array(archive.slice(512, 512 + 256));
 
     // Should match original binary content
     expect(extractedContent).toEqual(binaryContent);
@@ -167,7 +167,7 @@ describe("TarBuilder", () => {
     const content = new Uint8Array(100).buffer; // 100 bytes needs 412 bytes padding
     builder.addFile("padded.txt", content);
 
-    const archive = builder.finalize();
+    const archive = new Uint8Array(builder.finalize());
 
     // Header (512) + content (100) + padding (412) + end marker (1024) = 2048
     expect(archive.length).toBe(2048);
@@ -225,7 +225,7 @@ describe("TarBuilder", () => {
     const builder = new TarBuilder();
     builder.addFile("test.txt", new TextEncoder().encode("test").buffer);
 
-    const archive = builder.finalize();
+    const archive = new Uint8Array(builder.finalize());
 
     // Extract checksum from header (position 148-155)
     const checksumField = archive.slice(148, 156);
@@ -251,7 +251,7 @@ describe("TarBuilder", () => {
     const archive = builder.finalize();
 
     // TAR files should end with two 512-byte blocks of zeros
-    const endMarker = archive.slice(archive.length - 1024);
+    const endMarker = new Uint8Array(archive.slice(archive.byteLength - 1024));
 
     for (let i = 0; i < 1024; i++) {
       expect(endMarker[i]).toBe(0);

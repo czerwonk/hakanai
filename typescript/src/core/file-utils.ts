@@ -143,3 +143,23 @@ export function sanitizeFileName(fileName: string): string | null {
 
   return sanitized.length > 0 ? sanitized : null;
 }
+
+/**
+ * Read a File object as an ArrayBuffer
+ * @param file file to read
+ * @returns
+ */
+export async function readFileAsArrayBuffer(file: File): Promise<ArrayBuffer> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target?.result instanceof ArrayBuffer) {
+        resolve(event.target.result);
+      } else {
+        reject(new Error("Failed to read file as ArrayBuffer"));
+      }
+    };
+    reader.onerror = () => reject(new Error("File read error"));
+    reader.readAsArrayBuffer(file);
+  });
+}

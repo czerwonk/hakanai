@@ -103,7 +103,7 @@ describe("Error Handling", () => {
 
     const testBytes = encodeText("test");
     const validPayload = client.createPayload();
-    validPayload.setFromBytes!(testBytes);
+    validPayload.setFromBytes(testBytes.buffer as ArrayBuffer);
 
     await expect(client.sendPayload(validPayload, 0)).rejects.toThrow("TTL must be a positive number");
 
@@ -133,7 +133,7 @@ describe("Error Handling", () => {
 
     const testBytes = encodeText("test secret");
     const payload = client.createPayload();
-    payload.setFromBytes!(testBytes);
+    payload.setFromBytes(testBytes.buffer as ArrayBuffer);
 
     await expect(client.sendPayload(payload, 3600)).rejects.toThrow();
   });
@@ -147,7 +147,7 @@ describe("Error Handling", () => {
 
     const testBytes = encodeText("test secret");
     const payload = client.createPayload();
-    payload.setFromBytes!(testBytes);
+    payload.setFromBytes(testBytes.buffer as ArrayBuffer);
 
     try {
       // Use a properly formatted but invalid token (43 chars base64url)
@@ -169,7 +169,7 @@ describe("Error Handling", () => {
 
     const testBytes = encodeText("test secret");
     const payload = client.createPayload();
-    payload.setFromBytes!(testBytes);
+    payload.setFromBytes(testBytes.buffer as ArrayBuffer);
 
     try {
       await client.sendPayload(payload, 3600);
@@ -190,7 +190,7 @@ describe("Error Handling", () => {
 
     const testBytes = encodeText("test secret");
     const payload = client.createPayload();
-    payload.setFromBytes!(testBytes);
+    payload.setFromBytes(testBytes.buffer as ArrayBuffer);
 
     try {
       await client.sendPayload(payload, 3600);

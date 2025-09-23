@@ -18,12 +18,15 @@ import { RestrictionsTabs } from "./components/restrictions-tabs";
 import { RestrictionData, toSecretRestrictions } from "./core/restriction-data";
 import { SizeLimitIndicator } from "./components/size-limit";
 import { registerServiceWorker } from "./core/service-worker";
-import { getExt, isImageExt, sanitizeFileName } from "./core/file-utils";
+import { getExt, isImageExt, sanitizeFileName, readFileAsArrayBuffer } from "./core/file-utils";
+import { FileListComponent } from "./components/file-list";
+import { TarBuilder } from "./core/tar-builder";
 
 let ttlSelector: TTLSelector | null = null;
 let fileDropzone: FileDropzone | null = null;
 let restrictionsTabs: RestrictionsTabs | null = null;
 let sizeLimitIndicator: SizeLimitIndicator | null = null;
+let fileListComponent: FileListComponent | null = null;
 
 interface Elements {
   button: HTMLButtonElement;
@@ -82,31 +85,25 @@ function getElements(): Elements | null {
   };
 }
 
-function readFileAsBytes(file: File): Promise<Uint8Array> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const arrayBuffer = e.target?.result as ArrayBuffer;
-        const bytes = new Uint8Array(arrayBuffer);
-        resolve(bytes);
-      } catch (error) {
-        reject(error);
-      }
-    };
-    reader.onerror = () => reject(new Error("Failed to read file"));
-    reader.readAsArrayBuffer(file);
-  });
-}
-
 async function validateAndProcessFileInput(fileInput: HTMLInputElement): Promise<PayloadData | null> {
-  const file = fileInput.files?.[0];
-  if (!file) {
+  const files = fileListComponent?.getFiles() || Array.from(fileInput.files || []);
+
+  if (files.length === 0) {
     showError(window.i18n.t(I18nKeys.Msg.EmptyFile));
     fileInput.focus();
     return null;
   }
 
+  try {
+    return files.length === 1 ? await processSingleFile(files[0], fileInput) : await processMultipleFiles(files);
+  } catch (error) {
+    showError(window.i18n.t(I18nKeys.Msg.FileReadError));
+    console.error("File processing error:", error);
+    return null;
+  }
+}
+
+async function processSingleFile(file: File, fileInput: HTMLInputElement): Promise<PayloadData | null> {
   const fileName = sanitizeFileName(file.name);
   if (!fileName) {
     showError(window.i18n.t(I18nKeys.Msg.InvalidFilename));
@@ -114,21 +111,34 @@ async function validateAndProcessFileInput(fileInput: HTMLInputElement): Promise
     return null;
   }
 
-  try {
-    const fileBytes = await readFileAsBytes(file);
-    const payload = client.createPayload(fileName);
-    payload.setFromBytes(fileBytes);
+  const fileBytes = await readFileAsArrayBuffer(file);
+  const payload = client.createPayload(fileName);
+  payload.setFromBytes(fileBytes);
 
-    const ext = getExt(file.name);
-    if (isImageExt(ext)) {
-      payload.setDataType(PayloadDataType.Image);
-    }
-
-    return payload;
-  } catch {
-    showError(window.i18n.t(I18nKeys.Msg.FileReadError));
-    return null;
+  const ext = getExt(file.name);
+  if (isImageExt(ext)) {
+    payload.setDataType(PayloadDataType.Image);
   }
+
+  return payload;
+}
+
+async function processMultipleFiles(files: File[]): Promise<PayloadData | null> {
+  const tarBuilder = new TarBuilder();
+
+  for (const file of files) {
+    const fileBytes = await readFileAsArrayBuffer(file);
+    tarBuilder.addFile(file.name, fileBytes);
+  }
+
+  const tarArchive = tarBuilder.finalize();
+  const timestamp = Math.floor(Date.now() / 1000);
+  const archiveName = `secret-${timestamp}.tar`;
+
+  const payload = client.createPayload(archiveName);
+  payload.setFromBytes(tarArchive);
+
+  return payload;
 }
 
 function validateTextInput(secretInput: HTMLInputElement): PayloadData | null {
@@ -147,7 +157,7 @@ function validateTextInput(secretInput: HTMLInputElement): PayloadData | null {
   const encoder = new TextEncoder();
   const textBytes = encoder.encode(secret);
   const payload = client.createPayload();
-  payload.setFromBytes(textBytes);
+  payload.setFromBytes(textBytes.buffer as ArrayBuffer);
   return payload;
 }
 
@@ -179,7 +189,7 @@ function setElementsState(elements: Elements, disabled: boolean): void {
 function clearInputs(secretInput: HTMLInputElement, fileInput: HTMLInputElement): void {
   secureInputClear(secretInput);
   fileInput.value = "";
-  updateFileInfo();
+  fileListComponent?.clear();
 }
 
 function areRestrictionsEnabled(): boolean {
@@ -470,17 +480,33 @@ function setupRadioHandlers(): void {
   }
 }
 
-function setupFileInputHandler(): void {
+async function setupFileInputHandler(): Promise<void> {
   const fileInput = document.getElementById("secretFile") as HTMLInputElement;
   const fileInputButton = document.getElementById("fileInputButton") as HTMLButtonElement;
   const dropzoneContainer = document.getElementById("fileDropzone");
+  const fileListContainer = document.getElementById("fileListContainer");
 
-  if (!fileInput || !fileInputButton || !dropzoneContainer) {
+  if (!fileInput || !fileInputButton || !dropzoneContainer || !fileListContainer) {
     return;
   }
 
-  // Always listen for file input changes
-  fileInput.addEventListener("change", updateFileInfo);
+  const config = await fetchAppConfig();
+  const limit = config?.secretSizeLimit;
+  fileListComponent = new FileListComponent(
+    fileListContainer,
+    (files) => {
+      if (files.length === 0) {
+        fileInput.value = "";
+      }
+    },
+    { maxTotalSize: limit },
+  );
+
+  fileInput.addEventListener("change", () => {
+    if (fileInput.files && fileInput.files.length > 0) {
+      fileListComponent?.addFiles(fileInput.files);
+    }
+  });
 
   if (FileDropzone.isDragAndDropSupported()) {
     fileDropzone = new FileDropzone({
@@ -657,7 +683,6 @@ function initRestrictionsCheckbox(): void {
   // Initially hide restrictions (checkbox is unchecked by default)
   hideElement(restrictionsInputGroup);
 
-  // Set up event handler for checkbox
   restrictAccessCheckbox.addEventListener("change", () => {
     if (restrictAccessCheckbox.checked) {
       showElement(restrictionsInputGroup);
@@ -678,7 +703,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   focusSecretInput();
   setupFormHandler();
   setupRadioHandlers();
-  setupFileInputHandler();
+  await setupFileInputHandler();
   initializeAuthToken();
   await initFeatures();
   await initTokenInputVisibility();

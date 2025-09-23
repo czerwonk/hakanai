@@ -160,7 +160,7 @@ describe("HakanaiClient Integration", () => {
     const textBytes = encodeText(originalText);
 
     const originalPayload = client.createPayload();
-    originalPayload.setFromBytes!(textBytes);
+    originalPayload.setFromBytes(textBytes.buffer as ArrayBuffer);
 
     // Send the secret
     const secretUrl = await client.sendPayload(originalPayload, 3600);
@@ -180,7 +180,7 @@ describe("HakanaiClient Integration", () => {
     const textBytes = encodeText(originalText);
 
     const originalPayload = client.createPayload(filename, PayloadDataType.Image);
-    originalPayload.setFromBytes!(textBytes);
+    originalPayload.setFromBytes(textBytes.buffer as ArrayBuffer);
 
     // Send the secret
     const secretUrl = await client.sendPayload(originalPayload, 1800);
@@ -201,7 +201,7 @@ describe("HakanaiClient Integration", () => {
     const textBytes = encodeText(originalText);
 
     const originalPayload = client.createPayload(filename);
-    originalPayload.setFromBytes!(textBytes);
+    originalPayload.setFromBytes(textBytes.buffer as ArrayBuffer);
 
     const secretUrl = await client.sendPayload(originalPayload);
     const retrievedPayload = await client.receivePayload(secretUrl);
@@ -215,7 +215,7 @@ describe("HakanaiClient Integration", () => {
     const textBytes = encodeText(originalText);
 
     const originalPayload = client.createPayload();
-    originalPayload.setFromBytes!(textBytes);
+    originalPayload.setFromBytes(textBytes.buffer as ArrayBuffer);
 
     const secretUrl = await client.sendPayload(originalPayload);
     const retrievedPayload = await client.receivePayload(secretUrl);
@@ -231,7 +231,7 @@ describe("HakanaiClient Integration", () => {
     const textBytes = encodeText(largeData);
 
     const originalPayload = client.createPayload(filename);
-    originalPayload.setFromBytes!(textBytes);
+    originalPayload.setFromBytes(textBytes.buffer as ArrayBuffer);
 
     const secretUrl = await client.sendPayload(originalPayload);
     const retrievedPayload = await client.receivePayload(secretUrl);
@@ -248,7 +248,7 @@ describe("HakanaiClient Integration", () => {
     const textBytes = encodeText(originalText);
 
     const originalPayload = client.createPayload();
-    originalPayload.setFromBytes!(textBytes);
+    originalPayload.setFromBytes(textBytes.buffer as ArrayBuffer);
 
     // Mock XHR to capture what gets sent
     const sentData: any[] = [];
@@ -288,7 +288,7 @@ describe("HakanaiClient Integration", () => {
     const textBytes = encodeText("test");
 
     const payload = client.createPayload();
-    payload.setFromBytes!(textBytes);
+    payload.setFromBytes(textBytes.buffer as ArrayBuffer);
 
     const url = await client.sendPayload(payload);
 
@@ -321,7 +321,7 @@ describe("HakanaiClient Integration", () => {
     const textBytes = encodeText(originalText);
 
     const originalPayload = client.createPayload(filename);
-    originalPayload.setFromBytes!(textBytes);
+    originalPayload.setFromBytes(textBytes.buffer as ArrayBuffer);
 
     const secretUrl = await client.sendPayload(originalPayload);
     const retrievedPayload = await client.receivePayload(secretUrl);
@@ -338,7 +338,7 @@ describe("HakanaiClient Integration", () => {
     const textBytes = encodeText(originalText);
 
     const originalPayload = client.createPayload(filename);
-    originalPayload.setFromBytes!(textBytes);
+    originalPayload.setFromBytes(textBytes.buffer as ArrayBuffer);
 
     const secretUrl = await client.sendPayload(originalPayload);
     const retrievedPayload = await client.receivePayload(secretUrl);
@@ -359,7 +359,7 @@ describe("HakanaiClient Integration", () => {
     const textBytes = encodeText(originalText);
 
     const originalPayload = client.createPayload();
-    originalPayload.setFromBytes!(textBytes);
+    originalPayload.setFromBytes(textBytes.buffer as ArrayBuffer);
 
     // Send the secret to get a valid URL
     const secretUrl = await client.sendPayload(originalPayload, 3600);
