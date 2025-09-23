@@ -18,7 +18,7 @@ import { RestrictionsTabs } from "./components/restrictions-tabs";
 import { RestrictionData, toSecretRestrictions } from "./core/restriction-data";
 import { SizeLimitIndicator } from "./components/size-limit";
 import { registerServiceWorker } from "./core/service-worker";
-import { getExt, isImageExt, sanitizeFileName } from "./core/file-utils";
+import { getExt, isImageExt, sanitizeFileName, readFileAsArrayBuffer } from "./core/file-utils";
 import { FileListComponent } from "./components/file-list";
 import { TarBuilder } from "./core/tar-builder";
 
@@ -144,21 +144,6 @@ async function processMultipleFiles(files: File[]): Promise<PayloadData | null> 
   payload.setFromBytes(tarArchive);
 
   return payload;
-}
-
-async function readFileAsArrayBuffer(file: File): Promise<ArrayBuffer> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      if (event.target?.result instanceof ArrayBuffer) {
-        resolve(event.target.result);
-      } else {
-        reject(new Error("Failed to read file as ArrayBuffer"));
-      }
-    };
-    reader.onerror = () => reject(new Error("File read error"));
-    reader.readAsArrayBuffer(file);
-  });
 }
 
 function validateTextInput(secretInput: HTMLInputElement): PayloadData | null {
