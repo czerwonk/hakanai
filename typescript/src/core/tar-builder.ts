@@ -54,7 +54,7 @@ export class TarBuilder {
    * Finalize the TAR archive and return the complete data
    * @returns Complete TAR archive as bytes
    */
-  finalize(): Uint8Array {
+  finalize(): ArrayBuffer {
     // TAR files end with two 512-byte blocks of zeros
     this.chunks.push(new Uint8Array(1024));
 
@@ -69,7 +69,7 @@ export class TarBuilder {
       offset += chunk.length;
     }
 
-    return result;
+    return result.buffer;
   }
 
   /**
