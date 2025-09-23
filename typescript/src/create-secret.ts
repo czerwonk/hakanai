@@ -495,22 +495,16 @@ function setupFileInputHandler(): void {
     return;
   }
 
-  // Initialize FileListComponent
   fileListComponent = new FileListComponent(fileListContainer, (files) => {
-    // Called when files change in the list
     if (files.length === 0) {
       fileInput.value = "";
-      switchToTextMode(getFileElements());
     }
   });
 
   fileInput.addEventListener("change", () => {
-    fileListComponent?.clear();
     if (fileInput.files && fileInput.files.length > 0) {
       fileListComponent?.addFiles(fileInput.files);
     }
-
-    switchToTextMode(getFileElements());
   });
 
   if (FileDropzone.isDragAndDropSupported()) {
@@ -688,7 +682,6 @@ function initRestrictionsCheckbox(): void {
   // Initially hide restrictions (checkbox is unchecked by default)
   hideElement(restrictionsInputGroup);
 
-  // Set up event handler for checkbox
   restrictAccessCheckbox.addEventListener("change", () => {
     if (restrictAccessCheckbox.checked) {
       showElement(restrictionsInputGroup);
