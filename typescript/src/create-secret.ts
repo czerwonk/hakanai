@@ -480,7 +480,7 @@ function setupRadioHandlers(): void {
   }
 }
 
-function setupFileInputHandler(): void {
+async function setupFileInputHandler(): Promise<void> {
   const fileInput = document.getElementById("secretFile") as HTMLInputElement;
   const fileInputButton = document.getElementById("fileInputButton") as HTMLButtonElement;
   const dropzoneContainer = document.getElementById("fileDropzone");
@@ -490,11 +490,17 @@ function setupFileInputHandler(): void {
     return;
   }
 
-  fileListComponent = new FileListComponent(fileListContainer, (files) => {
-    if (files.length === 0) {
-      fileInput.value = "";
-    }
-  });
+  const config = await fetchAppConfig();
+  const limit = config?.secretSizeLimit;
+  fileListComponent = new FileListComponent(
+    fileListContainer,
+    (files) => {
+      if (files.length === 0) {
+        fileInput.value = "";
+      }
+    },
+    { maxTotalSize: limit },
+  );
 
   fileInput.addEventListener("change", () => {
     if (fileInput.files && fileInput.files.length > 0) {
@@ -697,7 +703,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   focusSecretInput();
   setupFormHandler();
   setupRadioHandlers();
-  setupFileInputHandler();
+  await setupFileInputHandler();
   initializeAuthToken();
   await initFeatures();
   await initTokenInputVisibility();

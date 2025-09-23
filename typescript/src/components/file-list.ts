@@ -10,7 +10,7 @@
 
 import { formatFileSize } from "../core/formatters";
 import { getFileIcon, sanitizeFileName } from "../core/file-utils";
-import { showElement, hideElement } from "../core/dom-utils";
+import { showElement, hideElement, generateRandomId } from "../core/dom-utils";
 import { I18nKeys } from "../core/i18n";
 
 export interface FileListItem {
@@ -22,46 +22,43 @@ export class FileListComponent {
   private container: HTMLElement;
   private files: Map<string, FileListItem> = new Map();
   private onFilesChanged: (files: File[]) => void;
+  private containerDiv: HTMLElement | null = null;
   private fileListElement: HTMLElement | null = null;
   private summaryElement: HTMLElement | null = null;
-  private maxTotalSize: number = 0; // 0 means no limit
-  private onSizeExceeded?: (totalSize: number, maxSize: number) => void;
+  private warningElement: HTMLElement | null = null;
+  private maxTotalSize: number | undefined = undefined;
 
   constructor(
     container: HTMLElement,
     onFilesChanged: (files: File[]) => void,
     options?: {
       maxTotalSize?: number;
-      onSizeExceeded?: (totalSize: number, maxSize: number) => void;
     },
   ) {
     this.container = container;
     this.onFilesChanged = onFilesChanged;
-    this.maxTotalSize = options?.maxTotalSize || 0;
-    this.onSizeExceeded = options?.onSizeExceeded;
+    this.maxTotalSize = options?.maxTotalSize;
     this.init();
   }
 
   private init(): void {
-    const containerDiv = this.createContainer();
+    this.containerDiv = document.createElement("div");
+    this.containerDiv.className = "file-list-container";
+    hideElement(this.containerDiv);
 
-    const summaryDiv = this.createSummarySection();
-    containerDiv.appendChild(summaryDiv);
+    this.summaryElement = this.createSummarySection();
+    this.containerDiv.appendChild(this.summaryElement);
 
-    const fileList = this.createFileList();
-    containerDiv.appendChild(fileList);
+    this.warningElement = document.createElement("div");
+    this.warningElement.className = "limit-text danger";
+    hideElement(this.warningElement);
+    this.containerDiv.appendChild(this.warningElement);
 
-    this.container.appendChild(containerDiv);
+    this.fileListElement = document.createElement("ul");
+    this.fileListElement.className = "file-list";
+    this.containerDiv.appendChild(this.fileListElement);
 
-    this.fileListElement = fileList;
-    this.summaryElement = containerDiv;
-  }
-
-  private createContainer(): HTMLElement {
-    const containerDiv = document.createElement("div");
-    containerDiv.className = "file-list-container";
-    hideElement(containerDiv);
-    return containerDiv;
+    this.container.appendChild(this.containerDiv);
   }
 
   private createSummarySection(): HTMLElement {
@@ -90,52 +87,30 @@ export class FileListComponent {
     hideElement(bundleIndicator);
 
     const bundleText = document.createElement("span");
-    bundleText.setAttribute("data-i18n", "fileList.willBundle");
-    bundleText.textContent = "Will be bundled as TAR archive";
+    bundleText.textContent = window.i18n.t(I18nKeys.FileList.BundleNotice);
     bundleIndicator.appendChild(bundleText);
 
     return bundleIndicator;
   }
 
-  private createFileList(): HTMLElement {
-    const fileList = document.createElement("ul");
-    fileList.className = "file-list";
-    return fileList;
-  }
-
   /**
-   * Add files to the list - always add all files, let UI show warning
+   * Add files to the list
    */
   addFiles(newFiles: FileList | File[]): void {
     const filesArray = Array.from(newFiles);
 
     for (const file of filesArray) {
       if (this.isDuplicate(file)) {
-        // skip if file already exists (by name and size)
+        // skip if file already exists
         continue;
       }
 
-      const id = this.generateFileId(file);
+      const id = generateRandomId();
       this.files.set(id, { file, id });
     }
 
     this.render();
     this.notifyChange();
-  }
-
-  /**
-   * Update the size limit (e.g., when auth status changes)
-   */
-  setMaxSize(maxSize: number): void {
-    this.maxTotalSize = maxSize;
-    this.render(); // Re-render to show/hide warning
-  }
-
-  /**
-   * Check if current files exceed the size limit
-   */
-  isOverLimit(): boolean {
-    return this.maxTotalSize > 0 && this.getTotalSize() > this.maxTotalSize;
   }
 
   /**
@@ -177,10 +152,6 @@ export class FileListComponent {
     return false;
   }
 
-  private generateFileId(file: File): string {
-    return `file-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
-  }
-
   private removeFile(id: string): void {
     this.files.delete(id);
     this.render();
@@ -192,14 +163,14 @@ export class FileListComponent {
   }
 
   private render(): void {
-    if (!this.fileListElement || !this.summaryElement) return;
+    if (!this.containerDiv || !this.fileListElement || !this.summaryElement) return;
 
     if (this.files.size === 0) {
-      hideElement(this.summaryElement);
+      hideElement(this.containerDiv);
       return;
     }
 
-    showElement(this.summaryElement);
+    showElement(this.containerDiv);
 
     this.updateSummary();
     this.renderFileList();
@@ -209,14 +180,27 @@ export class FileListComponent {
     const countElement = this.container.querySelector(".file-count");
     const sizeElement = this.container.querySelector(".total-size");
     const bundleIndicator = this.container.querySelector(".bundle-indicator");
+    console.log("Updating summary:", {
+      countElement,
+      sizeElement,
+      bundleIndicator,
+      filesSize: this.files.size,
+    });
 
     if (countElement) {
-      countElement.textContent = this.files.size === 1 ? "1 file selected" : `${this.files.size} files selected`;
+      const countText =
+        this.files.size === 1
+          ? window.i18n.t(I18nKeys.FileList.OneFileSelected)
+          : `${this.files.size} ${window.i18n.t(I18nKeys.FileList.FilesSelected)}`;
+      countElement.textContent = countText;
     }
 
+    const totalSize = this.getTotalSize();
     if (sizeElement) {
-      sizeElement.textContent = `(${formatFileSize(this.getTotalSize())})`;
+      sizeElement.textContent = `(${formatFileSize(totalSize)})`;
     }
+
+    this.validateFileSizeLimit(totalSize);
 
     if (bundleIndicator) {
       if (this.needsBundle()) {
@@ -225,6 +209,21 @@ export class FileListComponent {
         hideElement(bundleIndicator as HTMLElement);
       }
     }
+  }
+
+  private validateFileSizeLimit(totalSize: number): void {
+    if (!this.warningElement) return;
+
+    if (!this.maxTotalSize || this.maxTotalSize == 0 || totalSize <= this.maxTotalSize) {
+      hideElement(this.warningElement);
+      return;
+    }
+
+    this.warningElement.textContent = window.i18n.t(I18nKeys.Msg.FileSizeExceeded, {
+      fileSize: formatFileSize(totalSize),
+      limit: formatFileSize(this.maxTotalSize),
+    });
+    showElement(this.warningElement);
   }
 
   private renderFileList(): void {
@@ -274,7 +273,6 @@ export class FileListComponent {
   private createRemoveButton(id: string, filename: string): HTMLElement {
     const removeBtn = document.createElement("button");
     removeBtn.className = "remove-file-btn";
-    removeBtn.setAttribute("aria-label", `Remove ${filename}`);
     removeBtn.textContent = "❌";
     removeBtn.addEventListener("click", (e) => {
       e.preventDefault();

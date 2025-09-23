@@ -255,6 +255,12 @@ const I18nKeys = {
     InvalidDataType: "validation.INVALID_DATA_TYPE",
     MissingData: "validation.MISSING_DATA",
   },
+
+  FileList: {
+    BundleNotice: "fileList.bundleNotice",
+    OneFileSelected: "fileList.oneFileSelected",
+    FilesSelected: "fileList.filesSelected",
+  },
 } as const;
 
 export type LanguageCode = "en" | "de";
@@ -373,8 +379,7 @@ const translations: Translations = {
       "This application requires JavaScript to encrypt secrets securely in your browser.",
     [I18nKeys.Msg.EmptySecret]: "Please enter a secret to share",
     [I18nKeys.Msg.EmptyFile]: "Please select a file to share",
-    [I18nKeys.Msg.FileSizeExceeded]:
-      "File size ({{fileSize}} KB) exceeds the {{limit}} KB limit. Please use a smaller file.",
+    [I18nKeys.Msg.FileSizeExceeded]: "File size ({{fileSize}}) exceeds the {{limit}} limit. Please use a smaller file.",
     [I18nKeys.Msg.CreateFailed]: "Failed to create secret",
     [I18nKeys.Msg.FileReadError]: "Error reading file",
     [I18nKeys.Msg.InvalidFilename]: "Invalid filename. Please select a file with a valid name.",
@@ -505,6 +510,10 @@ const translations: Translations = {
     [I18nKeys.Validation.EmptyJson]: "Clipboard content is empty",
     [I18nKeys.Validation.InvalidJsonFormat]: "Invalid clipboard format - not valid JSON",
     [I18nKeys.Validation.InvalidDataType]: "Invalid data_type value",
+
+    [I18nKeys.FileList.BundleNotice]: "Will be bundled as TAR archive",
+    [I18nKeys.FileList.OneFileSelected]: "1 file selected",
+    [I18nKeys.FileList.FilesSelected]: "files selected",
   },
   de: {
     [I18nKeys.Page.CreateTitle]: "Hakanai - Secret erstellen",
@@ -609,7 +618,7 @@ const translations: Translations = {
     [I18nKeys.Msg.EmptySecret]: "Bitte den Text für das Secret eingeben",
     [I18nKeys.Msg.EmptyFile]: "Bitte eine Datei zum Teilen auswählen",
     [I18nKeys.Msg.FileSizeExceeded]:
-      "Dateigröße ({{fileSize}} KB) überschreitet das {{limit}} KB Limit. Bitte eine kleinere Datei verwenden.",
+      "Dateigröße ({{fileSize}}) überschreitet das {{limit}} Limit. Bitte eine kleinere Datei verwenden.",
     [I18nKeys.Msg.CreateFailed]: "Fehler beim Erstellen des Secrets",
     [I18nKeys.Msg.FileReadError]: "Fehler beim Lesen der Datei",
     [I18nKeys.Msg.InvalidFilename]: "Ungültiger Dateiname. Bitte eine Datei mit einem gültigen Namen auswählen.",
@@ -746,6 +755,10 @@ const translations: Translations = {
     [I18nKeys.Validation.EmptyJson]: "Zwischenablage ist leer",
     [I18nKeys.Validation.InvalidJsonFormat]: "Ungültiges Format der Zwischenablage - kein gültiges JSON",
     [I18nKeys.Validation.InvalidDataType]: "Ungültiger data_type Wert",
+
+    [I18nKeys.FileList.BundleNotice]: "Wird zu einem TAR-Archiv zusammengeführt",
+    [I18nKeys.FileList.OneFileSelected]: "1 Datei ausgewählt",
+    [I18nKeys.FileList.FilesSelected]: "Dateien ausgewählt",
   },
 };
 
