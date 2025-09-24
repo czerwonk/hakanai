@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use anyhow::Result;
+use uuid::Uuid;
 
 use opentelemetry::trace::TracerProvider;
 use opentelemetry::{KeyValue, global};
@@ -94,9 +95,16 @@ fn is_otel_endpoint_set() -> bool {
 fn get_resource() -> Resource {
     let service_name =
         std::env::var("OTEL_SERVICE_NAME").unwrap_or_else(|_| "hakanai-server".to_string());
+
+    let instance_id = std::env::var("POD_NAME")
+        .or_else(|_| std::env::var("HOSTNAME"))
+        .or_else(|_| std::env::var("CONTAINER_ID"))
+        .unwrap_or_else(|_| Uuid::new_v4().to_string());
+
     Resource::builder()
         .with_service_name(service_name)
         .with_attribute(KeyValue::new("service.version", env!("CARGO_PKG_VERSION")))
+        .with_attribute(KeyValue::new("service.instance.id", instance_id))
         .build()
 }
 
