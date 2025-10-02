@@ -2,8 +2,8 @@ apiVersion: v2
 name: hakanai
 description: A minimalist one-time secret sharing service implementing zero-knowledge principles
 type: application
-version: 0.12.2
-appVersion: "v2.18.2"
+version: 0.12.3
+appVersion: "v2.18.3"
 keywords:
   - secret-sharing
   - zero-knowledge
