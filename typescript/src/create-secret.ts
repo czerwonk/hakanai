@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import { HakanaiClient, PayloadDataType, type PayloadData } from "./hakanai-client";
+import { HakanaiClient, type PayloadData } from "./hakanai-client";
 import { initI18n, I18nKeys } from "./core/i18n";
 import { announceToScreenReader, secureInputClear, showElement, hideElement } from "./core/dom-utils";
 import { initTheme } from "./core/theme";
@@ -114,11 +114,6 @@ async function processSingleFile(file: File, fileInput: HTMLInputElement): Promi
   const fileBytes = await readFileAsArrayBuffer(file);
   const payload = client.createPayload(fileName);
   payload.setFromBytes(fileBytes);
-
-  const ext = getExt(file.name);
-  if (isImageExt(ext)) {
-    payload.setDataType(PayloadDataType.Image);
-  }
 
   return payload;
 }

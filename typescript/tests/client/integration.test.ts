@@ -5,13 +5,7 @@
  * Tests real crypto operations with minimal mocking
  */
 
-import {
-  HakanaiClient,
-  HakanaiErrorCodes,
-  Base64UrlSafe,
-  PayloadDataImpl,
-  PayloadDataType,
-} from "../../src/hakanai-client";
+import { HakanaiClient, HakanaiErrorCodes, Base64UrlSafe } from "../../src/hakanai-client";
 
 // Helper function to ensure we get proper Uint8Array in tests
 function encodeText(text: string): Uint8Array {
@@ -179,7 +173,7 @@ describe("HakanaiClient Integration", () => {
     const filename = "test-document.txt";
     const textBytes = encodeText(originalText);
 
-    const originalPayload = client.createPayload(filename, PayloadDataType.Image);
+    const originalPayload = client.createPayload(filename);
     originalPayload.setFromBytes(textBytes.buffer as ArrayBuffer);
 
     // Send the secret
@@ -192,7 +186,6 @@ describe("HakanaiClient Integration", () => {
 
     expect(retrievedPayload.decode!()).toBe(originalText);
     expect(retrievedPayload.filename).toBe(filename);
-    expect(retrievedPayload.data_type).toBe(PayloadDataType.Image);
   });
 
   test("roundtrip with special characters and unicode", async () => {

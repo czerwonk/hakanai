@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { RestrictionData } from "./restriction-data";
-import { PayloadDataType } from "../hakanai-client";
 
 /**
  * Validation error codes for ShareData
@@ -13,7 +12,6 @@ export enum ShareDataValidationError {
   INVALID_TTL = "INVALID_TTL",
   EMPTY_JSON = "EMPTY_JSON",
   INVALID_JSON_FORMAT = "INVALID_JSON_FORMAT",
-  INVALID_DATA_TYPE = "INVALID_DATA_TYPE",
 }
 
 /**
@@ -33,40 +31,14 @@ export class ShareDataError extends Error {
  * Share data structure for sharing secrets with different input methods
  */
 export class ShareData {
-  public readonly data_type?: PayloadDataType;
-
   constructor(
     public readonly data: string, // base64-encoded content
     public readonly filename?: string,
     public readonly token?: string,
     public readonly ttl?: number,
     public readonly restrictions?: RestrictionData,
-    data_type?: PayloadDataType | string, // Accept string in constructor for parsing
   ) {
-    if (data_type !== undefined) {
-      this.data_type = this.parseDataType(data_type);
-    }
-
     this.validate();
-  }
-
-  /**
-   * Parse and validate data_type string to enum
-   */
-  private parseDataType(value: PayloadDataType | string): PayloadDataType {
-    if (typeof value !== "string") {
-      return value;
-    }
-
-    const validTypes = Object.values(PayloadDataType);
-    if (!validTypes.includes(value as PayloadDataType)) {
-      throw new ShareDataError(
-        ShareDataValidationError.INVALID_DATA_TYPE,
-        `Invalid "data_type" value "${value}" - must be one of: ${validTypes.join(", ")}`,
-      );
-    }
-
-    return value as PayloadDataType;
   }
 
   /**
@@ -111,14 +83,7 @@ export class ShareData {
       throw new ShareDataError(ShareDataValidationError.INVALID_JSON_FORMAT, "Invalid JSON format");
     }
 
-    return new ShareData(
-      payload.data,
-      payload.filename,
-      payload.token,
-      payload.ttl,
-      payload.restrictions,
-      payload.data_type,
-    );
+    return new ShareData(payload.data, payload.filename, payload.token, payload.ttl, payload.restrictions);
   }
 
   /**

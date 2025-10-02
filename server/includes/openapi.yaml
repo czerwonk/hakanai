@@ -267,15 +267,6 @@ components:
           type: string
           description: Optional filename for file downloads. When present, the content will be offered as a downloadable file.
           example: document.pdf
-        data_type:
-          type: string
-          enum: [generic, image]
-          default: generic
-          description: |
-            Type hint for specialized handling in the UI.
-            - generic: Default type, content is downloaded or displayed as text
-            - image: Content can be previewed as an image (user must explicitly choose to preview)
-          example: image
     CreateSecretRequest:
       type: object
       required:

@@ -15,7 +15,7 @@ import { Base64UrlSafe } from "./base64-utils";
 import { ContentAnalysis } from "./content-analysis";
 import { CryptoContext } from "./crypto-operations";
 import { HashUtils } from "./hash-utils";
-import { type PayloadData, PayloadDataImpl, PayloadDataType } from "./payload";
+import { type PayloadData, PayloadDataImpl } from "./payload";
 import { SecureMemory } from "./secure-memory";
 import { type DataTransferObserver } from "./progress-observer";
 
@@ -458,7 +458,6 @@ class HakanaiClient {
       const secretPayload = {
         data: payload.data,
         filename: payload.filename ?? null,
-        data_type: payload.data_type ?? null,
       };
       const payloadJson = JSON.stringify(secretPayload);
       const payloadBytes = new TextEncoder().encode(payloadJson);
@@ -609,7 +608,7 @@ class HakanaiClient {
         throw new HakanaiError(HakanaiErrorCodes.INVALID_PAYLOAD, "Invalid payload structure");
       }
 
-      return new PayloadDataImpl(payload.data, payload.filename ?? undefined, payload.data_type ?? undefined);
+      return new PayloadDataImpl(payload.data, payload.filename ?? undefined);
     } finally {
       cryptoContext.dispose();
     }
@@ -620,8 +619,8 @@ class HakanaiClient {
    * @param filename - Optional filename for file payloads
    * @returns Empty PayloadData object ready for data
    */
-  createPayload(filename?: string, data_type?: PayloadDataType): PayloadData {
-    return new PayloadDataImpl("", filename, data_type);
+  createPayload(filename?: string): PayloadData {
+    return new PayloadDataImpl("", filename);
   }
 }
 

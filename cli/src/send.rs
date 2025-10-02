@@ -51,10 +51,6 @@ pub async fn send<T: Factory>(factory: T, args: SendArgs) -> Result<()> {
         payload = payload.with_filename(&filename);
     }
 
-    if let Some(data_type) = args.data_type.clone() {
-        payload = payload.with_type(data_type);
-    }
-
     let user_agent = helper::get_user_agent_name();
     let observer = factory.new_observer("Sending secret...")?;
     let mut opts = SecretSendOptions::default()

@@ -252,7 +252,6 @@ const I18nKeys = {
     InvalidJsonFormat: "validation.INVALID_JSON_FORMAT",
     InvalidToken: "validation.INVALID_TOKEN",
     InvalidTtl: "validation.INVALID_TTL",
-    InvalidDataType: "validation.INVALID_DATA_TYPE",
     MissingData: "validation.MISSING_DATA",
   },
 
@@ -509,7 +508,6 @@ const translations: Translations = {
     [I18nKeys.Validation.InvalidTtl]: "Invalid expiration time - must be a positive number",
     [I18nKeys.Validation.EmptyJson]: "Clipboard content is empty",
     [I18nKeys.Validation.InvalidJsonFormat]: "Invalid clipboard format - not valid JSON",
-    [I18nKeys.Validation.InvalidDataType]: "Invalid data_type value",
 
     [I18nKeys.FileList.BundleNotice]: "Will be bundled as TAR archive",
     [I18nKeys.FileList.OneFileSelected]: "1 file selected",
@@ -754,7 +752,6 @@ const translations: Translations = {
     [I18nKeys.Validation.InvalidTtl]: "Ungültige Ablaufzeit - muss eine positive Zahl sein",
     [I18nKeys.Validation.EmptyJson]: "Zwischenablage ist leer",
     [I18nKeys.Validation.InvalidJsonFormat]: "Ungültiges Format der Zwischenablage - kein gültiges JSON",
-    [I18nKeys.Validation.InvalidDataType]: "Ungültiger data_type Wert",
 
     [I18nKeys.FileList.BundleNotice]: "Wird zu einem TAR-Archiv zusammengeführt",
     [I18nKeys.FileList.OneFileSelected]: "1 Datei ausgewählt",

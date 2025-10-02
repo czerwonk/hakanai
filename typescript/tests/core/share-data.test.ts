@@ -5,7 +5,6 @@
  */
 
 import { ShareData } from "../../src/core/share-data";
-import { PayloadDataType } from "../../src/client/payload";
 
 describe("ShareData", () => {
   describe("constructor and validation", () => {
@@ -18,12 +17,11 @@ describe("ShareData", () => {
     });
 
     test("creates valid ShareData with all fields", () => {
-      const shareData = new ShareData("SGVsbG8gV29ybGQ=", "test.txt", "token123", 3600, undefined, "image");
+      const shareData = new ShareData("SGVsbG8gV29ybGQ=", "test.txt", "token123", 3600, undefined);
       expect(shareData.data).toBe("SGVsbG8gV29ybGQ=");
       expect(shareData.filename).toBe("test.txt");
       expect(shareData.token).toBe("token123");
       expect(shareData.ttl).toBe(3600);
-      expect(shareData.data_type).toBe(PayloadDataType.Image);
     });
 
     test("throws error for missing data", () => {
@@ -51,12 +49,6 @@ describe("ShareData", () => {
         'Invalid "ttl" field - must be positive number',
       );
     });
-
-    test("throws error for invalid data type", () => {
-      expect(() => new ShareData("data", undefined, 123 as any, undefined, undefined, "test")).toThrow(
-        'Invalid "data_type" value "test" - must be one of: generic, image',
-      );
-    });
   });
 
   describe("fromJSON", () => {
@@ -69,7 +61,6 @@ describe("ShareData", () => {
         restrictions: {
           passphrase: "test",
         },
-        data_type: "image",
       });
 
       const shareData = ShareData.fromJSON(json);
@@ -78,7 +69,6 @@ describe("ShareData", () => {
       expect(shareData.token).toBe("token123");
       expect(shareData.ttl).toBe(3600);
       expect(shareData.restrictions?.passphrase).toBe("test");
-      expect(shareData.data_type).toBe(PayloadDataType.Image);
     });
 
     test("parses valid JSON with minimal data", () => {
