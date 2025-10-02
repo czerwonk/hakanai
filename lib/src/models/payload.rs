@@ -1,34 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-use std::str::FromStr;
-
 use base64::Engine;
 use serde::{Deserialize, Serialize};
 use zeroize::Zeroize;
-
-use crate::models::ValidationError;
-
-/// Specifies the type of payload to allow for specialized handling.
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(rename_all = "camelCase")]
-pub enum PayloadDataType {
-    Generic,
-    Image,
-}
-
-impl FromStr for PayloadDataType {
-    type Err = ValidationError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "generic" => Ok(PayloadDataType::Generic),
-            "image" => Ok(PayloadDataType::Image),
-            _ => Err(ValidationError::new(format!(
-                "Invalid payload data type: {s}"
-            ))),
-        }
-    }
-}
 
 /// Represents the data payload of a secret, which can be either a text message
 /// or a file with optional metadata.
@@ -39,9 +13,6 @@ pub struct Payload {
 
     /// The filename of the file, if not set data is assumed to be a text message.
     pub filename: Option<String>,
-
-    /// The type of payload for specialized handling.
-    pub data_type: Option<PayloadDataType>,
 }
 
 impl Payload {
@@ -59,19 +30,12 @@ impl Payload {
         Self {
             data,
             filename: None,
-            data_type: None,
         }
     }
 
     /// Sets the filename for the payload, indicating that it represents a file.
     pub fn with_filename(mut self, filename: &str) -> Self {
         self.filename = Some(filename.to_string());
-        self
-    }
-
-    /// Sets the payload type for specialized handling.
-    pub fn with_type(mut self, data_type: PayloadDataType) -> Self {
-        self.data_type = Some(data_type);
         self
     }
 
