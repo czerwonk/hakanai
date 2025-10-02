@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import { ContentAnalysis, type PayloadData, PayloadDataType } from "../hakanai-client";
+import { ContentAnalysis, type PayloadData } from "../hakanai-client";
 import { I18nKeys } from "../core/i18n";
 import {
   announceToScreenReader,
@@ -13,7 +13,7 @@ import {
 import { copyToClipboard } from "../core/clipboard";
 import { formatFileSize } from "../core/formatters";
 import { isFileShareSupported, isWebShareSupported, createShareableFile, shareContent } from "../core/web-share";
-import { getFileIcon, sanitizeFileName } from "../core/file-utils";
+import { getFileIcon, sanitizeFileName, getExt, isImageExt } from "../core/file-utils";
 
 const TIMEOUTS = {
   CLEANUP_DELAY: 100,
@@ -144,13 +144,21 @@ function createBinarySecret(payload: PayloadData, decodedBytes: ArrayBuffer, siz
     buttonsContainer.appendChild(createShareButton(payload, decodedBytes));
   }
 
-  if (payload.data_type === PayloadDataType.Image) {
+  if (hasPreviewSupport(payload)) {
     buttonsContainer.appendChild(createPreviewButton(payload, decodedBytes));
   }
 
   container.appendChild(buttonsContainer);
 
   return container;
+}
+
+function hasPreviewSupport(payload: PayloadData) {
+  const filename = payload.filename;
+  if (!filename) return false;
+
+  const ext = getExt(filename);
+  return isImageExt(ext);
 }
 
 function createPreviewButton(payload: PayloadData, decodedBytes: ArrayBuffer): HTMLButtonElement {

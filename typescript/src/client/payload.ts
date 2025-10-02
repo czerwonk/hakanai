@@ -2,15 +2,9 @@
 
 import { HakanaiError, HakanaiErrorCodes } from "./errors";
 
-enum PayloadDataType {
-  Generic = "generic",
-  Image = "image",
-}
-
 interface PayloadData {
   readonly data: string;
   readonly filename?: string;
-  readonly data_type?: PayloadDataType;
 
   /**
    * Set data from raw bytes (for binary files or text converted to bytes)
@@ -36,12 +30,6 @@ interface PayloadData {
    * Set the filename associated with the payload (optional)
    */
   setFilename(filename: string): void;
-
-  /*
-   * Set the data type of the payload (optional)
-   * Defaults to 'generic' if not set
-   */
-  setDataType(dataType: PayloadDataType): void;
 }
 
 /**
@@ -50,12 +38,10 @@ interface PayloadData {
 class PayloadDataImpl implements PayloadData {
   private _data: string = "";
   private _filename?: string;
-  private _data_type?: PayloadDataType;
 
-  constructor(data: string = "", filename?: string, data_type?: PayloadDataType) {
+  constructor(data: string = "", filename?: string) {
     this._data = data;
     this._filename = filename;
-    this._data_type = data_type;
   }
 
   get data(): string {
@@ -64,10 +50,6 @@ class PayloadDataImpl implements PayloadData {
 
   get filename(): string | undefined {
     return this._filename;
-  }
-
-  get data_type(): PayloadDataType | undefined {
-    return this._data_type;
   }
 
   setFromBytes(bytes: ArrayBuffer): void {
@@ -117,10 +99,6 @@ class PayloadDataImpl implements PayloadData {
   setFilename(filename: string): void {
     this._filename = filename;
   }
-
-  setDataType(dataType: PayloadDataType): void {
-    this._data_type = dataType;
-  }
 }
 
-export { type PayloadData, PayloadDataType, PayloadDataImpl };
+export { type PayloadData, PayloadDataImpl };
