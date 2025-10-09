@@ -34,6 +34,12 @@ pub async fn get<T: Factory>(factory: T, args: GetArgs) -> Result<()> {
         opts = opts.with_passphrase(bytes.as_ref());
     }
 
+    if args.ask_passphrase {
+        let passphrase = rpassword::prompt_password("Passphrase: ")?;
+        let bytes = Zeroizing::new(passphrase.bytes().collect::<Vec<u8>>());
+        opts = opts.with_passphrase(bytes.as_ref());
+    }
+
     let url = args.secret_url()?.clone();
     let payload = factory.new_client().receive_secret(url, Some(opts)).await?;
 

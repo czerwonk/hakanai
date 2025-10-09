@@ -20,6 +20,12 @@ pub struct GetArgs {
 
     #[arg(
         long,
+        help = "Ask for decryption key if the URL does not contain a key in fragment."
+    )]
+    pub ask_key: bool,
+
+    #[arg(
+        long,
         env = "HAKANAI_TO_STDOUT",
         help = "Output the secret to stdout even if it is a file. This is useful for piping the output to other commands."
     )]
@@ -50,10 +56,12 @@ pub struct GetArgs {
     #[arg(
         short,
         long,
-        help = "If the secret is protected by a passphrase, provide it here.",
-        env = "HAKANAI_PASSPHRASE"
+        help = "If the secret is protected by a passphrase, provide it here."
     )]
     pub passphrase: Option<String>,
+
+    #[arg(long, help = "Ask for passphrase protecting the secret.")]
+    pub ask_passphrase: bool,
 }
 
 impl GetArgs {
@@ -84,6 +92,16 @@ impl GetArgs {
 
         if let Some(ref output_dir) = self.output_dir {
             Self::validate_output_directory(output_dir)?;
+        }
+
+        if self.passphrase.is_some() && self.ask_passphrase {
+            return Err(anyhow!(
+                "The --passphrase option cannot be used with --ask-passphrase."
+            ));
+        }
+
+        if self.key.is_some() && self.ask_key {
+            return Err(anyhow!("The --key option cannot be used with --ask-key."));
         }
 
         Ok(())
@@ -120,9 +138,14 @@ impl GetArgs {
             return Ok(url);
         }
 
-        let key = self.key.clone().unwrap_or_default();
+        let key = if self.ask_key {
+            rpassword::prompt_password("Enter decryption key: ")?
+        } else {
+            self.key.clone().unwrap_or_default()
+        };
+
         if key.is_empty() {
-            return Err(anyhow!("No key provided in URL or as an argument"));
+            return Err(anyhow!("No decryption key provided"));
         }
 
         url.set_fragment(Some(&key));
@@ -139,6 +162,8 @@ impl GetArgs {
             extract: false,
             output_dir: None,
             passphrase: None,
+            ask_key: false,
+            ask_passphrase: false,
         }
     }
 
@@ -175,6 +200,18 @@ impl GetArgs {
     #[cfg(test)]
     pub fn with_passphrase(mut self, passphrase: &str) -> Self {
         self.passphrase = Some(passphrase.to_string());
+        self
+    }
+
+    #[cfg(test)]
+    pub fn with_ask_key(mut self) -> Self {
+        self.ask_key = true;
+        self
+    }
+
+    #[cfg(test)]
+    pub fn with_ask_passphrase(mut self) -> Self {
+        self.ask_passphrase = true;
         self
     }
 }
@@ -346,6 +383,38 @@ mod tests {
     }
 
     #[test]
+    fn test_validate_key_conflicting() {
+        let args = GetArgs::builder("https://example.com/s/test")
+            .with_key("key")
+            .with_ask_key();
+
+        let result = args.validate();
+        assert!(result.is_err(), "Expected error, got: {:?}", result);
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("--key option cannot be used with --ask-key.")
+        );
+    }
+
+    #[test]
+    fn test_validate_passphrase_conflicting() {
+        let args = GetArgs::builder("https://example.com/s/test")
+            .with_passphrase("passphrase")
+            .with_ask_passphrase();
+
+        let result = args.validate();
+        assert!(result.is_err(), "Expected error, got: {:?}", result);
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("--passphrase option cannot be used with --ask-passphrase.")
+        );
+    }
+
+    #[test]
     fn test_secret_url_with_fragment_in_url() {
         let args = GetArgs::builder("https://example.com/s/test#mykey");
         let url = args.secret_url().expect("Failed to get secret URL");
@@ -370,7 +439,7 @@ mod tests {
             result
                 .unwrap_err()
                 .to_string()
-                .contains("No key provided in URL or as an argument")
+                .contains("No decryption key provided")
         );
     }
 
@@ -396,7 +465,7 @@ mod tests {
             result
                 .unwrap_err()
                 .to_string()
-                .contains("No key provided in URL or as an argument")
+                .contains("No decryption key provided")
         );
     }
 
