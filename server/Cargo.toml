@@ -15,13 +15,13 @@ categories = ["cryptography", "security"]
 [dependencies]
 actix-cors = "0.7.1"
 actix-web = "4.11.0"
-anyhow = "1.0.98"
-async-trait = "0.1.88"
+anyhow = "1.0.100"
+async-trait = "0.1.89"
 base64 = "0.22.1"
-clap = { version = "4.5.42", features = ["derive", "env"] }
+clap = { version = "4.5.49", features = ["derive", "env"] }
 futures-util = "0.3"
 hakanai-lib = { workspace = true, features = ["minimal"] }
-humantime = "2.2.0"
+humantime = "2.3.0"
 ipnet = "2.11.0"
 opentelemetry = "0.31.0"
 opentelemetry-appender-tracing = "0.31.1"
@@ -29,25 +29,25 @@ opentelemetry-instrumentation-actix-web = { version = "0.23.0", features = ["met
 opentelemetry-otlp = { version = "0.31.0", features = ["grpc-tonic", "trace", "metrics", "logs"] }
 opentelemetry-resource-detectors = "0.10.0"
 opentelemetry_sdk = { version = "0.31.0", features = ["rt-tokio"] }
-rand = "0.9.1"
+rand = "0.9.2"
 redis = { version = "0.32.7", features = ["tokio-comp", "connection-manager"] }
-reqwest = { version = "0.12.22", features = ["json"] }
-serde = { version = "1.0.219", features = ["derive"] }
-serde_json = "1.0.140"
+reqwest = { version = "0.12.24", features = ["json"] }
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.145"
 sha2 = "0.10.9"
-thiserror = "2.0.12"
-tokio = { version = "1.45.1", features = ["full"] }
+thiserror = "2.0.17"
+tokio = { version = "1.47.1", features = ["full"] }
 tracing = "0.1.41"
-tracing-actix-web = "0.7.18"
+tracing-actix-web = "0.7.19"
 tracing-opentelemetry = "0.32.0"
-tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
-uuid = { version = "1.17.0", features = ["serde", "v4"] }
+tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }
+uuid = { version = "1.18.1", features = ["serde", "v4"] }
 
 [build-dependencies]
-anyhow = "1.0.98"
-handlebars = "6.3.0"
-serde_json = "1.0.140"
+anyhow = "1.0.100"
+handlebars = "6.3.2"
+serde_json = "1.0.145"
 
 [dev-dependencies]
-serde_json = "1.0.140"
-tempfile = "3.14.0"
+serde_json = "1.0.145"
+tempfile = "3.23.0"

@@ -13,21 +13,21 @@ keywords = ["encryption", "secret", "sharing", "zero-knowledge", "privacy"]
 categories = ["cryptography", "security", "command-line-utilities"]
 
 [dependencies]
-anyhow = "1.0.98"
-async-trait = "0.1.88"
-clap = { version = "4.5.42", features = ["derive", "env"] }
+anyhow = "1.0.100"
+async-trait = "0.1.89"
+clap = { version = "4.5.49", features = ["derive", "env"] }
 colored = "3.0.0"
 hakanai-lib = { workspace = true, features = ["testing"] }
-humantime = "2.2.0"
+humantime = "2.3.0"
 indicatif = "0.18.0"
 ipnet = { version = "2.11.0", features = ["serde"] }
 qrcode = "0.14"
-reqwest = { version = "0.12.22", features = ["json"] }
-rpassword = "7.3.1"
-tokio = { version = "1.45.1", features = ["full"] }
-url = "2.5.4"
-zeroize = "1.8.1"
+reqwest = { version = "0.12.24", features = ["json"] }
+rpassword = "7.4.0"
+tokio = { version = "1.47.1", features = ["full"] }
+url = "2.5.7"
+zeroize = "1.8.2"
 zip = "6.0.0"
 
 [dev-dependencies]
-tempfile = "3.15.0"
+tempfile = "3.23.0"

@@ -50,7 +50,7 @@ impl CryptoContext {
 
         Ok(Self {
             key: key.to_vec(),
-            nonce: vec![0; AES_GCM_NONCE_SIZE], // nonce will be set later
+            nonce: vec![0u8; AES_GCM_NONCE_SIZE], // nonce will be set later
             used: false,
         })
     }
@@ -64,8 +64,7 @@ impl CryptoContext {
             return Err(ClientError::CryptoError("Payload too short".to_string()));
         }
 
-        let nonce = &payload[..AES_GCM_NONCE_SIZE];
-        self.nonce = nonce.to_vec();
+        self.nonce = payload[..AES_GCM_NONCE_SIZE].to_vec();
         Ok(())
     }
 
@@ -86,15 +85,23 @@ impl CryptoContext {
         // Mark context as used to prevent nonce reuse
         self.used = true;
 
-        let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(self.key.as_ref()));
-        let nonce = Nonce::from_slice(&self.nonce);
-        Ok(cipher.encrypt(nonce, plaintext)?)
+        let key: &Key<Aes256Gcm> = self.key.as_slice().into();
+        let cipher = Aes256Gcm::new(key);
+
+        let mut nonce = Nonce::default();
+        nonce.copy_from_slice(&self.nonce);
+
+        Ok(cipher.encrypt(&nonce, plaintext)?)
     }
 
     fn decrypt(&self, ciphertext: &[u8]) -> Result<Vec<u8>, ClientError> {
-        let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(self.key.as_ref()));
-        let nonce = Nonce::from_slice(&self.nonce);
-        Ok(cipher.decrypt(nonce, ciphertext)?)
+        let key: &Key<Aes256Gcm> = self.key.as_slice().into();
+        let cipher = Aes256Gcm::new(key);
+
+        let mut nonce = Nonce::default();
+        nonce.copy_from_slice(&self.nonce);
+
+        Ok(cipher.decrypt(&nonce, ciphertext)?)
     }
 
     #[cfg(test)]
