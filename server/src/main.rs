@@ -15,7 +15,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use clap::Parser;
-use redis::aio::ConnectionManager;
+use redis::aio::{ConnectionManager, ConnectionManagerConfig};
 use tokio::time::timeout;
 use tracing::{debug, info, warn};
 
@@ -27,6 +27,7 @@ use crate::token::{RedisTokenStore, TokenManager, TokenStore};
 
 /// Connection timeout for Redis operations during startup
 const REDIS_CONNECTION_TIMEOUT: Duration = Duration::from_secs(10);
+const REDIS_MAX_DELAY_MS: u64 = 1000;
 
 #[actix_web::main]
 async fn main() -> Result<()> {
@@ -107,9 +108,12 @@ async fn connect_to_redis(dsn: &str) -> anyhow::Result<ConnectionManager> {
     info!("Connecting to Redis");
 
     let client = redis::Client::open(dsn)?;
+    let config = ConnectionManagerConfig::default()
+        .set_connection_timeout(REDIS_CONNECTION_TIMEOUT)
+        .set_max_delay(REDIS_MAX_DELAY_MS);
     let con = timeout(
         REDIS_CONNECTION_TIMEOUT,
-        redis::aio::ConnectionManager::new(client),
+        redis::aio::ConnectionManager::new_with_config(client, config),
     )
     .await
     .map_err(|_| anyhow::anyhow!("Timed out connecting to Redis"))??;
