@@ -1,4 +1,4 @@
 {
   version = "2.19.3";
-  cargoHash = "sha256-cwiEsj5nK9FPjg/fRpTiENcjQdWTT0w2g3V7KWw7IVo=";
+  cargoHash = "sha256-k9+DADy12XxsRf1ulsUyFAGhC9par3T0v/HmQfDqcFw=";
 }
