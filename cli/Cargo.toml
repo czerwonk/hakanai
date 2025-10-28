@@ -19,7 +19,7 @@ clap = { version = "4.5.50", features = ["derive", "env"] }
 colored = "3.0.0"
 hakanai-lib = { workspace = true, features = ["testing"] }
 humantime = "2.3.0"
-indicatif = "0.18.1"
+indicatif = "0.18.2"
 ipnet = { version = "2.11.0", features = ["serde"] }
 qrcode = "0.14"
 reqwest = { version = "0.12.24", features = ["json"] }
