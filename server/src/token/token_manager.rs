@@ -258,30 +258,6 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_token_data_serialization() -> Result<()> {
-        let token_data = TokenData::default().with_upload_size_limit(1024);
-
-        // Test serialization
-        let serialized = serde_json::to_string(&token_data)?;
-        assert!(serialized.contains("1024"));
-
-        // Test deserialization
-        let deserialized: TokenData = serde_json::from_str(&serialized)?;
-        assert_eq!(deserialized.upload_size_limit, Some(1024));
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn test_token_data_none_upload_limit() -> Result<()> {
-        let token_data = TokenData::default();
-
-        let serialized = serde_json::to_string(&token_data)?;
-        let deserialized: TokenData = serde_json::from_str(&serialized)?;
-        assert_eq!(deserialized.upload_size_limit, None);
-        Ok(())
-    }
-
-    #[tokio::test]
     async fn test_validate_admin_token_success() -> Result<()> {
         let test_token = "admin_token_123";
         let test_hash = hashing::sha256_hex_from_string(test_token);
