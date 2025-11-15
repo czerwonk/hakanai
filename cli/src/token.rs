@@ -27,6 +27,7 @@ async fn create_token_request(admin_token: &str, args: &TokenArgs) -> Result<Cre
     let request = CreateTokenRequest {
         upload_size_limit: args.limit,
         ttl_seconds: args.ttl.as_secs(),
+        one_time: args.one_time,
     };
 
     let client = reqwest::Client::new();
