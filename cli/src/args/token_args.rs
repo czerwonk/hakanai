@@ -35,4 +35,11 @@ pub struct TokenArgs {
         value_parser = human_size::parse,
     )]
     pub limit: Option<i64>,
+
+    #[arg(
+        long,
+        help = "If set, the token can only be used once.",
+        default_value_t = false
+    )]
+    pub one_time: bool,
 }

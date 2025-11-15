@@ -163,9 +163,7 @@ mod tests {
             .with_admin_token("admin_hash")
             .with_stored_token(
                 "token_hash",
-                TokenData {
-                    upload_size_limit: Some(1024),
-                },
+                TokenData::default().with_upload_size_limit(1024),
             );
 
         // Test admin token
@@ -208,13 +206,7 @@ mod tests {
             get_result
         );
         let store_result = mock
-            .store_token(
-                "any",
-                Duration::from_secs(3600),
-                TokenData {
-                    upload_size_limit: None,
-                },
-            )
+            .store_token("any", Duration::from_secs(3600), TokenData::default())
             .await;
         assert!(
             store_result.is_err(),
@@ -231,12 +223,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_mock_token_store_clear_tokens() {
-        let mock = MockTokenStore::new().with_stored_token(
-            "token1",
-            TokenData {
-                upload_size_limit: None,
-            },
-        );
+        let mock = MockTokenStore::new().with_stored_token("token1", TokenData::default());
 
         // Verify initial state
         let count = mock

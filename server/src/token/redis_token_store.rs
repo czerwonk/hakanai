@@ -28,6 +28,19 @@ impl RedisTokenStore {
     fn token_key(&self, hash: &str) -> String {
         format!("{TOKEN_PREFIX}{hash}")
     }
+
+    async fn delete_if_one_time(
+        &self,
+        key: &str,
+        token_data: &TokenData,
+    ) -> Result<(), TokenError> {
+        if !token_data.one_time {
+            return Ok(());
+        }
+
+        let _: () = self.con.clone().del(key).await?;
+        Ok(())
+    }
 }
 
 #[async_trait]
@@ -35,10 +48,11 @@ impl TokenStore for RedisTokenStore {
     #[instrument(skip(self), err)]
     async fn get_token(&self, token_hash: &str) -> Result<Option<TokenData>, TokenError> {
         let key = self.token_key(token_hash);
-        let value: Option<String> = self.con.clone().get(key).await?;
+        let value: Option<String> = self.con.clone().get(&key).await?;
 
         if let Some(data) = value {
             let token_data = TokenData::deserialize(&data)?;
+            self.delete_if_one_time(&key, &token_data).await?;
             return Ok(Some(token_data));
         }
 

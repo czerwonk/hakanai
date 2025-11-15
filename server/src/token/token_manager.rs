@@ -33,9 +33,7 @@ impl<T: TokenStore> TokenManager<T> {
 
     /// Create default token (always creates new token).
     pub async fn create_default_token(&self) -> Result<String, TokenError> {
-        let token_data = TokenData {
-            upload_size_limit: None,
-        };
+        let token_data = TokenData::default();
         self.create_user_token(token_data, Duration::from_secs(DEFAULT_TOKEN_TTL))
             .await
     }
@@ -166,9 +164,7 @@ mod tests {
     async fn test_no_token_created_when_not_empty() -> Result<()> {
         let mock_store = MockTokenStore::new().with_stored_token(
             "existing_hash",
-            TokenData {
-                upload_size_limit: Some(1000),
-            },
+            TokenData::default().with_upload_size_limit(1000),
         );
         let manager = TokenManager::new(mock_store.clone());
 
@@ -185,9 +181,7 @@ mod tests {
     async fn test_validate_token_success() -> Result<()> {
         let test_token = "test_token_123";
         let test_hash = hashing::sha256_hex_from_string(test_token);
-        let test_data = TokenData {
-            upload_size_limit: Some(5000),
-        };
+        let test_data = TokenData::default().with_upload_size_limit(5000);
 
         let mock_store = MockTokenStore::new().with_stored_token(&test_hash, test_data);
         let manager = TokenManager::new(mock_store.clone());
@@ -261,34 +255,6 @@ mod tests {
             result
         );
         assert!(matches!(result.unwrap_err(), TokenError::Custom(_)));
-    }
-
-    #[tokio::test]
-    async fn test_token_data_serialization() -> Result<()> {
-        let token_data = TokenData {
-            upload_size_limit: Some(1024),
-        };
-
-        // Test serialization
-        let serialized = serde_json::to_string(&token_data)?;
-        assert!(serialized.contains("1024"));
-
-        // Test deserialization
-        let deserialized: TokenData = serde_json::from_str(&serialized)?;
-        assert_eq!(deserialized.upload_size_limit, Some(1024));
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn test_token_data_none_upload_limit() -> Result<()> {
-        let token_data = TokenData {
-            upload_size_limit: None,
-        };
-
-        let serialized = serde_json::to_string(&token_data)?;
-        let deserialized: TokenData = serde_json::from_str(&serialized)?;
-        assert_eq!(deserialized.upload_size_limit, None);
-        Ok(())
     }
 
     #[tokio::test]

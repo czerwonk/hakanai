@@ -440,12 +440,8 @@ mod tests {
     #[actix_web::test]
     async fn test_post_secret_with_valid_token() {
         let mock_store = MockSecretStore::new();
-        let token_manager = MockTokenManager::new().with_user_token(
-            "valid_token_123",
-            TokenData {
-                upload_size_limit: None,
-            },
-        );
+        let token_manager =
+            MockTokenManager::new().with_user_token("valid_token_123", TokenData::default());
         let app_data = create_test_app_data(Box::new(mock_store.clone()), token_manager, true);
 
         let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
@@ -591,9 +587,7 @@ mod tests {
         let mock_store = MockSecretStore::new();
         let token_manager = MockTokenManager::new().with_user_token(
             "limited_token",
-            TokenData {
-                upload_size_limit: Some(1024), // 1KB limit
-            },
+            TokenData::default().with_upload_size_limit(1024), // 1KB limit
         );
         let app_data = create_test_app_data(Box::new(mock_store), token_manager, true);
 
@@ -737,12 +731,8 @@ mod tests {
         let mock_store = MockSecretStore::new();
         let mock_observer = MockObserver::new();
         let observer_clone = mock_observer.clone();
-        let token_manager = MockTokenManager::new().with_user_token(
-            "valid_token",
-            TokenData {
-                upload_size_limit: None,
-            },
-        );
+        let token_manager =
+            MockTokenManager::new().with_user_token("valid_token", TokenData::default());
 
         let mut app_data = create_test_app_data(Box::new(mock_store.clone()), token_manager, true);
         app_data
