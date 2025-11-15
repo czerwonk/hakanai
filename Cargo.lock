@@ -1130,7 +1130,7 @@ dependencies = [
 
 [[package]]
 name = "hakanai"
-version = "2.19.3"
+version = "2.20.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1152,7 +1152,7 @@ dependencies = [
 
 [[package]]
 name = "hakanai-lib"
-version = "2.19.3"
+version = "2.20.0"
 dependencies = [
  "aes-gcm",
  "async-stream",
@@ -1176,7 +1176,7 @@ dependencies = [
 
 [[package]]
 name = "hakanai-server"
-version = "2.19.3"
+version = "2.20.0"
 dependencies = [
  "actix-cors",
  "actix-web",
@@ -1213,7 +1213,7 @@ dependencies = [
 
 [[package]]
 name = "hakanai-wasm"
-version = "2.19.3"
+version = "2.20.0"
 dependencies = [
  "qrcode",
  "wasm-bindgen",
