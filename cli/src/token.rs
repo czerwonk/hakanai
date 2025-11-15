@@ -24,11 +24,9 @@ pub async fn token(args: TokenArgs) -> Result<()> {
 }
 
 async fn create_token_request(admin_token: &str, args: &TokenArgs) -> Result<CreateTokenResponse> {
-    let request = CreateTokenRequest {
-        upload_size_limit: args.limit,
-        ttl_seconds: args.ttl.as_secs(),
-        one_time: args.one_time,
-    };
+    let mut request = CreateTokenRequest::new(args.ttl.as_secs());
+    request.upload_size_limit = args.limit;
+    request.one_time = args.one_time;
 
     let client = reqwest::Client::new();
     let url = args.server.join("api/v1/admin/tokens")?;

@@ -22,6 +22,7 @@ impl TokenData {
         serde_json::from_str(str)
     }
 
+    #[cfg(test)]
     pub fn with_upload_size_limit(mut self, upload_size_limit: i64) -> Self {
         self.upload_size_limit = Some(upload_size_limit);
         self
