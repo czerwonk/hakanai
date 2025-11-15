@@ -104,11 +104,8 @@ mod tests {
         )
         .await;
 
-        let request_body = CreateTokenRequest {
-            upload_size_limit: Some(1048576), // 1MB
-            ttl_seconds: 2592000,             // 30 days
-            one_time: false,
-        };
+        let request_body = CreateTokenRequest::new(2592000) // 30 days
+            .with_upload_size_limit(1048576); // 1MB
 
         let req = test::TestRequest::post()
             .uri("/api/v1/admin/tokens")
@@ -136,11 +133,7 @@ mod tests {
         )
         .await;
 
-        let request_body = CreateTokenRequest {
-            upload_size_limit: None,
-            ttl_seconds: 3600,
-            one_time: false,
-        };
+        let request_body = CreateTokenRequest::new(3600); // 1 hour
 
         let req = test::TestRequest::post()
             .uri("/api/v1/admin/tokens")
@@ -164,11 +157,7 @@ mod tests {
         )
         .await;
 
-        let request_body = CreateTokenRequest {
-            upload_size_limit: Some(2048),
-            ttl_seconds: 1800,
-            one_time: false,
-        };
+        let request_body = CreateTokenRequest::new(1800).with_upload_size_limit(2048);
 
         let req = test::TestRequest::post()
             .uri("/api/v1/admin/tokens")
@@ -194,11 +183,7 @@ mod tests {
         )
         .await;
 
-        let request_body = CreateTokenRequest {
-            upload_size_limit: None,
-            ttl_seconds: 3600,
-            one_time: false,
-        };
+        let request_body = CreateTokenRequest::new(3600);
 
         let req = test::TestRequest::post()
             .uri("/api/v1/admin/tokens")
@@ -226,11 +211,7 @@ mod tests {
         )
         .await;
 
-        let request_body = CreateTokenRequest {
-            upload_size_limit: Some(5120),
-            ttl_seconds: 7200,
-            one_time: false,
-        };
+        let request_body = CreateTokenRequest::new(7200).with_upload_size_limit(5120);
 
         let req = test::TestRequest::post()
             .uri("/api/v1/admin/tokens")
@@ -266,11 +247,7 @@ mod tests {
         )
         .await;
 
-        let request_body = CreateTokenRequest {
-            upload_size_limit: None, // No size limit
-            ttl_seconds: 900,        // 15 minutes
-            one_time: false,
-        };
+        let request_body = CreateTokenRequest::new(900); // 15 minutes
 
         let req = test::TestRequest::post()
             .uri("/api/v1/admin/tokens")
@@ -301,11 +278,7 @@ mod tests {
         )
         .await;
 
-        let request_body = CreateTokenRequest {
-            upload_size_limit: None, // No size limit
-            ttl_seconds: 900,        // 15 minutes
-            one_time: true,
-        };
+        let request_body = CreateTokenRequest::new(900).with_one_time();
 
         let req = test::TestRequest::post()
             .uri("/api/v1/admin/tokens")
@@ -388,11 +361,8 @@ mod tests {
         )
         .await;
 
-        let request_body = CreateTokenRequest {
-            upload_size_limit: Some(10 * 1024 * 1024), // 10MB
-            ttl_seconds: 365 * 24 * 3600,              // 1 year
-            one_time: false,
-        };
+        let request_body =
+            CreateTokenRequest::new(365 * 24 * 3600).with_upload_size_limit(10 * 1024 * 1024); // 10MB
 
         let req = test::TestRequest::post()
             .uri("/api/v1/admin/tokens")
@@ -426,11 +396,7 @@ mod tests {
         )
         .await;
 
-        let request_body = CreateTokenRequest {
-            upload_size_limit: Some(1024),
-            ttl_seconds: 3600,
-            one_time: false,
-        };
+        let request_body = CreateTokenRequest::new(3600).with_upload_size_limit(1024);
 
         let req = test::TestRequest::post()
             .uri("/api/v1/admin/tokens")
@@ -502,11 +468,7 @@ mod tests {
         )
         .await;
 
-        let request_body = CreateTokenRequest {
-            upload_size_limit: Some(1024),
-            ttl_seconds: 3600,
-            one_time: false,
-        };
+        let request_body = CreateTokenRequest::new(3600).with_upload_size_limit(1024);
 
         let req = test::TestRequest::post()
             .uri("/api/v1/admin/tokens")
@@ -540,11 +502,7 @@ mod tests {
         )
         .await;
 
-        let request_body = CreateTokenRequest {
-            upload_size_limit: Some(1024),
-            ttl_seconds: 3600,
-            one_time: false,
-        };
+        let request_body = CreateTokenRequest::new(3600).with_upload_size_limit(1024);
 
         // Test first range
         let req = test::TestRequest::post()
@@ -587,11 +545,7 @@ mod tests {
         )
         .await;
 
-        let request_body = CreateTokenRequest {
-            upload_size_limit: Some(1024),
-            ttl_seconds: 3600,
-            one_time: false,
-        };
+        let request_body = CreateTokenRequest::new(3600).with_upload_size_limit(1024);
 
         // Test IPv4 localhost
         let req = test::TestRequest::post()

@@ -26,14 +26,14 @@ impl CreateTokenRequest {
     }
 
     /// Set the upload size limit
-    #[cfg(test)]
+    #[cfg(any(test, feature = "testing"))]
     pub fn with_upload_size_limit(mut self, limit: i64) -> Self {
         self.upload_size_limit = Some(limit);
         self
     }
 
     /// Set the one time use flag
-    #[cfg(test)]
+    #[cfg(any(test, feature = "testing"))]
     pub fn with_one_time(mut self) -> Self {
         self.one_time = true;
         self
