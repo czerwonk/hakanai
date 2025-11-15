@@ -10,7 +10,7 @@ pub struct TokenData {
 
     /// Wether the token is one-time use.
     #[serde(default)]
-    pub is_one_time: bool,
+    pub one_time: bool,
 }
 
 impl TokenData {
@@ -20,11 +20,6 @@ impl TokenData {
 
     pub fn deserialize(str: &str) -> Result<Self, serde_json::Error> {
         serde_json::from_str(str)
-    }
-
-    pub fn with_one_time(mut self) -> Self {
-        self.is_one_time = true;
-        self
     }
 
     pub fn with_upload_size_limit(mut self, upload_size_limit: i64) -> Self {
@@ -37,7 +32,7 @@ impl Default for TokenData {
     fn default() -> Self {
         Self {
             upload_size_limit: None,
-            is_one_time: false,
+            one_time: false,
         }
     }
 }

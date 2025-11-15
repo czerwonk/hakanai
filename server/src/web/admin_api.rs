@@ -38,6 +38,7 @@ pub async fn create_token(
     if let Some(size_limit) = request.upload_size_limit {
         token_data = token_data.with_upload_size_limit(size_limit);
     }
+    token_data.one_time = request.one_time;
 
     let ttl_seconds = request.ttl_seconds;
     let ttl = Duration::from_secs(ttl_seconds);
@@ -108,6 +109,7 @@ mod tests {
         let request_body = CreateTokenRequest {
             upload_size_limit: Some(1048576), // 1MB
             ttl_seconds: 2592000,             // 30 days
+            one_time: false,
         };
 
         let req = test::TestRequest::post()
@@ -139,6 +141,7 @@ mod tests {
         let request_body = CreateTokenRequest {
             upload_size_limit: None,
             ttl_seconds: 3600,
+            one_time: false,
         };
 
         let req = test::TestRequest::post()
@@ -166,6 +169,7 @@ mod tests {
         let request_body = CreateTokenRequest {
             upload_size_limit: Some(2048),
             ttl_seconds: 1800,
+            one_time: false,
         };
 
         let req = test::TestRequest::post()
@@ -195,6 +199,7 @@ mod tests {
         let request_body = CreateTokenRequest {
             upload_size_limit: None,
             ttl_seconds: 3600,
+            one_time: false,
         };
 
         let req = test::TestRequest::post()
@@ -226,6 +231,7 @@ mod tests {
         let request_body = CreateTokenRequest {
             upload_size_limit: Some(5120),
             ttl_seconds: 7200,
+            one_time: false,
         };
 
         let req = test::TestRequest::post()
@@ -265,6 +271,7 @@ mod tests {
         let request_body = CreateTokenRequest {
             upload_size_limit: None, // No size limit
             ttl_seconds: 900,        // 15 minutes
+            one_time: false,
         };
 
         let req = test::TestRequest::post()
@@ -279,6 +286,41 @@ mod tests {
 
         let response: CreateTokenResponse = test::read_body_json(resp).await;
         assert_eq!(response.token, "minimal_token");
+    }
+
+    #[actix_web::test]
+    async fn test_create_token_as_one_time() {
+        let token_manager = MockTokenManager::new()
+            .with_admin_token("admin_token")
+            .with_created_token("one_time_token");
+
+        let app_data = create_test_app_data(token_manager);
+
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(app_data))
+                .service(web::scope("/api/v1").configure(configure_routes)),
+        )
+        .await;
+
+        let request_body = CreateTokenRequest {
+            upload_size_limit: None, // No size limit
+            ttl_seconds: 900,        // 15 minutes
+            one_time: true,
+        };
+
+        let req = test::TestRequest::post()
+            .uri("/api/v1/admin/tokens")
+            .insert_header(("Authorization", "Bearer admin_token"))
+            .insert_header(("x-forwarded-for", "127.0.0.1"))
+            .set_json(&request_body)
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 200);
+
+        let response: CreateTokenResponse = test::read_body_json(resp).await;
+        assert_eq!(response.token, "one_time_token");
     }
 
     #[actix_web::test]
@@ -351,6 +393,7 @@ mod tests {
         let request_body = CreateTokenRequest {
             upload_size_limit: Some(10 * 1024 * 1024), // 10MB
             ttl_seconds: 365 * 24 * 3600,              // 1 year
+            one_time: false,
         };
 
         let req = test::TestRequest::post()
@@ -388,6 +431,7 @@ mod tests {
         let request_body = CreateTokenRequest {
             upload_size_limit: Some(1024),
             ttl_seconds: 3600,
+            one_time: false,
         };
 
         let req = test::TestRequest::post()
@@ -424,6 +468,7 @@ mod tests {
         let request_body = CreateTokenRequest {
             upload_size_limit: Some(1024),
             ttl_seconds: 3600,
+            one_time: false,
         };
 
         let req = test::TestRequest::post()
@@ -462,6 +507,7 @@ mod tests {
         let request_body = CreateTokenRequest {
             upload_size_limit: Some(1024),
             ttl_seconds: 3600,
+            one_time: false,
         };
 
         let req = test::TestRequest::post()
@@ -499,6 +545,7 @@ mod tests {
         let request_body = CreateTokenRequest {
             upload_size_limit: Some(1024),
             ttl_seconds: 3600,
+            one_time: false,
         };
 
         // Test first range
@@ -545,6 +592,7 @@ mod tests {
         let request_body = CreateTokenRequest {
             upload_size_limit: Some(1024),
             ttl_seconds: 3600,
+            one_time: false,
         };
 
         // Test IPv4 localhost

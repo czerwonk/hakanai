@@ -10,6 +10,9 @@ pub struct CreateTokenRequest {
     pub upload_size_limit: Option<i64>,
     /// TTL in seconds
     pub ttl_seconds: u64,
+    /// Wether it is a one time use token
+    #[serde(default)]
+    pub one_time: bool,
 }
 
 /// Response model for creating user tokens via admin API
