@@ -3,8 +3,7 @@
 use serde::{Deserialize, Serialize};
 
 /// Token metadata stored in Redis.
-#[derive(Deserialize, Serialize, Clone, Debug)]
-#[derive(Default)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub struct TokenData {
     /// Optional upload size limit in bytes.
     pub upload_size_limit: Option<i64>,
@@ -15,6 +14,11 @@ pub struct TokenData {
 }
 
 impl TokenData {
+    // Create a new TokenData instance with default values.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
     pub fn serialize(&self) -> Result<String, serde_json::Error> {
         serde_json::to_string(self)
     }
@@ -29,7 +33,6 @@ impl TokenData {
         self
     }
 }
-
 
 #[cfg(test)]
 mod tests {

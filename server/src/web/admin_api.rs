@@ -34,7 +34,7 @@ pub async fn create_token(
 ) -> Result<HttpResponse> {
     let _ = admin_user; // Ensure admin user is authenticated
 
-    let mut token_data = TokenData::default();
+    let mut token_data = TokenData::new();
     token_data.upload_size_limit = request.upload_size_limit;
     token_data.one_time = request.one_time;
 
