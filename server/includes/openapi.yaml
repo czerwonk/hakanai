@@ -313,6 +313,10 @@ components:
           minimum: 1
           description: Token time-to-live in seconds
           example: 2592000
+        one_time:
+          type: boolean
+          description: Whether the token is one-time use (true) or reusable (false)
+          example: false
     CreateTokenResponse:
       type: object
       required:
