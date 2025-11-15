@@ -34,9 +34,10 @@ pub async fn create_token(
 ) -> Result<HttpResponse> {
     let _ = admin_user; // Ensure admin user is authenticated
 
-    let token_data = TokenData {
-        upload_size_limit: request.upload_size_limit,
-    };
+    let mut token_data = TokenData::default();
+    if let Some(size_limit) = request.upload_size_limit {
+        token_data = token_data.with_upload_size_limit(size_limit);
+    }
 
     let ttl_seconds = request.ttl_seconds;
     let ttl = Duration::from_secs(ttl_seconds);

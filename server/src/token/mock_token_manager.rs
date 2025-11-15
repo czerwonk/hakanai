@@ -98,12 +98,7 @@ impl MockTokenManager {
     pub fn with_unlimited_user_tokens(self, tokens: &[&str]) -> Self {
         let mut user_tokens = self.get_user_tokens_mut();
         for token in tokens {
-            user_tokens.insert(
-                token.to_string(),
-                TokenData {
-                    upload_size_limit: None,
-                },
-            );
+            user_tokens.insert(token.to_string(), TokenData::default());
         }
         drop(user_tokens);
         self
@@ -113,9 +108,7 @@ impl MockTokenManager {
     pub fn with_limited_user_token(self, token: &str, size_limit: i64) -> Self {
         self.get_user_tokens_mut().insert(
             token.to_string(),
-            TokenData {
-                upload_size_limit: Some(size_limit),
-            },
+            TokenData::default().with_upload_size_limit(size_limit),
         );
         self
     }
@@ -187,9 +180,7 @@ mod tests {
         let mock = MockTokenManager::new()
             .with_user_token(
                 "user_token",
-                TokenData {
-                    upload_size_limit: Some(1024),
-                },
+                TokenData::default().with_upload_size_limit(1024),
             )
             .with_admin_token("admin_token")
             .with_created_token("new_token");
@@ -219,12 +210,7 @@ mod tests {
 
         // Test token creation
         let result = mock
-            .create_user_token(
-                TokenData {
-                    upload_size_limit: None,
-                },
-                Duration::from_secs(3600),
-            )
+            .create_user_token(TokenData::default(), Duration::from_secs(3600))
             .await?;
         assert_eq!(result, "new_token");
 
@@ -236,12 +222,7 @@ mod tests {
         let mock = MockTokenManager::new().with_creation_failure();
 
         let result = mock
-            .create_user_token(
-                TokenData {
-                    upload_size_limit: None,
-                },
-                Duration::from_secs(3600),
-            )
+            .create_user_token(TokenData::default(), Duration::from_secs(3600))
             .await;
         assert!(
             result.is_err(),
