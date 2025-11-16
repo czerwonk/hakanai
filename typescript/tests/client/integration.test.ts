@@ -123,6 +123,15 @@ const createMockServices = () => {
       });
     }
 
+    // POST /api/v1/one-time-token - retrieve one-time token
+    const oneTimeTokenMatch = urlObj.pathname.match(/^\/api\/v1\/one-time-token/);
+    if (oneTimeTokenMatch && (!options?.method || options.method === "POST")) {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ token: "one-time" }),
+      });
+    }
+
     return Promise.resolve({
       ok: false,
       status: 404,
@@ -237,23 +246,11 @@ describe("HakanaiClient Integration", () => {
   });
 
   test("receive one-time token", async () => {
-    const originalText = "Binary file content or any text treated as file";
-    const filename = "test-document.txt";
-    const textBytes = encodeText(originalText);
+    const expected = "one-time";
 
-    const originalPayload = client.createPayload(filename);
-    originalPayload.setFromBytes(textBytes.buffer as ArrayBuffer);
+    const token = await client.receiveOneTimeToken();
 
-    // Send the secret
-    const secretUrl = await client.sendPayload(originalPayload, 1800);
-
-    expect(secretUrl).toMatch(/^http:\/\/localhost:8080\/s\/[0-9a-f-]+#[A-Za-z0-9_-]+:[A-Za-z0-9_-]{22}$/i);
-
-    // Receive the secret
-    const retrievedPayload = await client.receivePayload(secretUrl);
-
-    expect(retrievedPayload.decode!()).toBe(originalText);
-    expect(retrievedPayload.filename).toBe(filename);
+    expect(token).toBe(expected);
   });
 
   test("payload data is base64-encoded in internal format", async () => {
