@@ -438,7 +438,7 @@ class HakanaiClient {
    *   - AUTHENTICATION_REQUIRED: Server requires auth token
    *   - INVALID_TOKEN: Provided token is invalid
    *   - INVALID_RESTRICTIONS: Provided restrictions are invalid
-   *   - SEND_FAILED: General send failure
+   *   - REQUEST_FAILED: General failure
    */
   async sendPayload(
     payload: PayloadData,

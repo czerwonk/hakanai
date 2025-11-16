@@ -30,7 +30,7 @@ describe("Error Module", () => {
       test("should identify valid HakanaiError", () => {
         const hakanaiError = {
           name: "HakanaiError",
-          code: "SEND_FAILED",
+          code: "REQUEST_FAILED",
           message: "Failed to send",
         };
 
@@ -91,13 +91,13 @@ describe("Error Module", () => {
     test("should handle HakanaiError with translation", () => {
       const hakanaiError = {
         name: "HakanaiError",
-        code: HakanaiErrorCodes.SEND_FAILED,
+        code: HakanaiErrorCodes.REQUEST_FAILED,
         message: "Original message",
       };
 
       handleAPIError(hakanaiError, "Fallback message", mockHandler);
 
-      expect(mockHandler.displayError).toHaveBeenCalledWith("Translated: SEND_FAILED");
+      expect(mockHandler.displayError).toHaveBeenCalledWith("Translated: REQUEST_FAILED");
       expect(mockHandler.onAuthenticationError).not.toHaveBeenCalled();
     });
 

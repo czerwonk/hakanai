@@ -244,7 +244,7 @@ describe("Error Code Constants", () => {
 
     expect(codes).toContain("AUTHENTICATION_REQUIRED");
     expect(codes).toContain("INVALID_TOKEN");
-    expect(codes).toContain("SEND_FAILED");
+    expect(codes).toContain("REQUEST_FAILED");
     expect(codes).toContain("SECRET_NOT_FOUND");
     expect(codes).toContain("SECRET_ALREADY_ACCESSED");
     expect(codes).toContain("RETRIEVE_FAILED");

@@ -236,6 +236,26 @@ describe("HakanaiClient Integration", () => {
     expect(retrievedPayload.filename).toBe(filename);
   });
 
+  test("receive one-time token", async () => {
+    const originalText = "Binary file content or any text treated as file";
+    const filename = "test-document.txt";
+    const textBytes = encodeText(originalText);
+
+    const originalPayload = client.createPayload(filename);
+    originalPayload.setFromBytes(textBytes.buffer as ArrayBuffer);
+
+    // Send the secret
+    const secretUrl = await client.sendPayload(originalPayload, 1800);
+
+    expect(secretUrl).toMatch(/^http:\/\/localhost:8080\/s\/[0-9a-f-]+#[A-Za-z0-9_-]+:[A-Za-z0-9_-]{22}$/i);
+
+    // Receive the secret
+    const retrievedPayload = await client.receivePayload(secretUrl);
+
+    expect(retrievedPayload.decode!()).toBe(originalText);
+    expect(retrievedPayload.filename).toBe(filename);
+  });
+
   test("payload data is base64-encoded in internal format", async () => {
     const originalText = "test message";
     const textBytes = encodeText(originalText);
