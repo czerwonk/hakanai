@@ -9,7 +9,7 @@ import { initTheme } from "./core/theme";
 import { initFeatures } from "./core/app-config";
 import { registerServiceWorker } from "./core/service-worker";
 import { ErrorHandler, handleAPIError } from "./core/error";
-import { generateRandomId, showElement } from "./core/dom-utils";
+import { expandView, generateRandomId, showElement } from "./core/dom-utils";
 import { displayErrorMessage } from "./components/error-display";
 import { createLabeledInputWithCopy } from "./core/result-utils";
 
@@ -75,6 +75,7 @@ function showSuccess(token: string): void {
   createLabeledInputWithCopy(div, "Token URL", id, tokenUrl, "Copy URL to clipboard");
 
   container.appendChild(div);
+  expandView();
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
