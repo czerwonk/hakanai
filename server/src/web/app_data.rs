@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-use std::time;
+use std::time::Duration;
 
 use crate::observer::ObserverManager;
 use crate::secret::SecretStore;
@@ -26,7 +26,7 @@ pub struct AppData {
     pub token_creator: Box<dyn TokenCreator>,
 
     /// The maximum time-to-live (TTL) for secrets
-    pub max_ttl: time::Duration,
+    pub max_ttl: Duration,
 
     /// Defines whether the application can be used without authentication and limits for anonymous users.
     pub anonymous_usage: AnonymousOptions,
@@ -57,6 +57,9 @@ pub struct AppData {
 
     /// The maximum upload size allowed for the server, in bytes.
     pub upload_size_limit: usize,
+
+    /// The time-to-live (TTL) for one-time tokens
+    pub one_time_token_ttl: Duration,
 }
 
 #[cfg(test)]
@@ -69,7 +72,7 @@ impl Default for AppData {
             secret_store: Box::new(MockSecretStore::new()),
             token_validator: Box::new(MockTokenManager::new()),
             token_creator: Box::new(MockTokenManager::new()),
-            max_ttl: time::Duration::from_secs(86400), // 24 hours
+            max_ttl: Duration::from_secs(86400), // 24 hours
             anonymous_usage: AnonymousOptions {
                 allowed: false,
                 upload_size_limit: 32 * 1024, // 32KB
@@ -82,7 +85,8 @@ impl Default for AppData {
             trusted_ip_header: "x-forwarded-for".to_string(),
             country_header: None,
             asn_header: None,
-            upload_size_limit: 10 * 1024 * 1024, // 10MB
+            upload_size_limit: 10 * 1024 * 1024,           // 10MB
+            one_time_token_ttl: Duration::from_secs(3600), // 1 day
         }
     }
 }
@@ -108,7 +112,7 @@ impl AppData {
     }
 
     #[cfg(test)]
-    pub fn with_max_ttl(mut self, max_ttl: time::Duration) -> Self {
+    pub fn with_max_ttl(mut self, max_ttl: Duration) -> Self {
         self.max_ttl = max_ttl;
         self
     }

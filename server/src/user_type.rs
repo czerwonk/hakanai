@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /// User type for authentication and tracing
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum UserType {
     Anonymous,
     Authenticated,

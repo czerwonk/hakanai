@@ -99,6 +99,7 @@ where
             country_header: args.country_header.clone(),
             asn_header: args.asn_header.clone(),
             upload_size_limit: args.upload_size_limit,
+            one_time_token_ttl: args.one_time_token_ttl,
         };
         let size_limit = size_limit::calculate(args.upload_size_limit);
         App::new()

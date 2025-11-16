@@ -15,6 +15,7 @@ const I18nKeys = {
     HomepageTitle: "page.homepage.title",
     PrivacyTitle: "page.privacy.title",
     ShareTitle: "page.share.title",
+    OneTimeTokenTitle: "page.oneTimeToken.title",
   },
 
   Label: {
@@ -62,6 +63,7 @@ const I18nKeys = {
     Url: "helper.url",
     Passphrase: "helper.passphrase",
     PassphraseInput: "helper.passphraseInput",
+    OneTimeToken: "helper.oneTimeToken",
   },
 
   Time: {
@@ -85,6 +87,7 @@ const I18nKeys = {
     Copied: "button.copied",
     Copy: "button.copy",
     Create: "button.create",
+    CreateOneTimeToken: "button.createOneTimeToken",
     Download: "button.download",
     Preview: "button.preview",
     ReadClipboard: "button.readClipboard",
@@ -282,6 +285,7 @@ const translations: Translations = {
     [I18nKeys.Page.GetTitle]: "Hakanai - Retrieve Secret",
     [I18nKeys.Page.HomepageTitle]: "Hakanai - One-Time Secret Sharing",
     [I18nKeys.Page.ShareTitle]: "Hakanai - Share Data",
+    [I18nKeys.Page.OneTimeTokenTitle]: "Hakanai - One-Time Token",
 
     [I18nKeys.Label.AllowedIPs]: "IP Address Restrictions:",
     [I18nKeys.Label.AllowedCountries]: "Country Restrictions:",
@@ -337,6 +341,8 @@ const translations: Translations = {
     [I18nKeys.Helper.Passphrase]:
       "Require a passphrase to access this secret. The passphrase can be shared through a different channel (e.g., phone call) for enhanced security.",
     [I18nKeys.Helper.PassphraseInput]: "This secret requires a passphrase to access",
+    [I18nKeys.Helper.OneTimeToken]:
+      "Creates a single use token to be used to allow one time exceptions of upload limits",
 
     [I18nKeys.Aria.Passphrase]: "Enter a passphrase that will be required to access this secret",
     [I18nKeys.Aria.PassphraseInput]: "Enter the passphrase for this protected secret",
@@ -366,6 +372,7 @@ const translations: Translations = {
     [I18nKeys.Button.Preview]: "👁️ Show",
     [I18nKeys.Button.ChooseFile]: "📁 Choose File",
     [I18nKeys.Button.ReadClipboard]: "📄 Read Clipboard",
+    [I18nKeys.Button.CreateOneTimeToken]: "🔑 Create One-Time Token",
 
     [I18nKeys.Dropzone.Primary]: "Drop files here or click to select",
     [I18nKeys.Dropzone.Secondary]: "Supports all file types",
@@ -518,6 +525,7 @@ const translations: Translations = {
     [I18nKeys.Page.GetTitle]: "Hakanai - Secret abrufen",
     [I18nKeys.Page.HomepageTitle]: "Hakanai - Einmal-Secret-Sharing",
     [I18nKeys.Page.ShareTitle]: "Hakanai - Daten teilen",
+    [I18nKeys.Page.OneTimeTokenTitle]: "Hakanai - Einmal-Token erzeugen",
 
     [I18nKeys.Label.AllowedIPs]: "IP-Adress-Beschränkungen:",
     [I18nKeys.Label.AllowedCountries]: "Länder-Beschränkungen:",
@@ -574,6 +582,8 @@ const translations: Translations = {
     [I18nKeys.Helper.Passphrase]:
       "Erfordert eine Passphrase zum Zugriff auf dieses Secret. Für erhöhte Sicheheit kann die Passphrase über einen anderen Kanal (z.B. Telefonanruf) geteilt werden.",
     [I18nKeys.Helper.PassphraseInput]: "Dieses Secret erfordert eine Passphrase für den Zugriff",
+    [I18nKeys.Helper.OneTimeToken]:
+      "Generiert ein Einmal-Token, welches einmalig das erstellen eines Secrets über die geltenden Upload-Limits erlaubt",
 
     [I18nKeys.Aria.Passphrase]: "Passphrase eingeben, die für den Zugriff auf dieses Secret erforderlich ist",
     [I18nKeys.Aria.PassphraseInput]: "Passphrase für dieses geschützte Secret eingeben",
@@ -603,6 +613,7 @@ const translations: Translations = {
     [I18nKeys.Button.Preview]: "👁️ Vorschau",
     [I18nKeys.Button.ChooseFile]: "📁 Datei auswählen",
     [I18nKeys.Button.ReadClipboard]: "📄 Zwischenablage lesen",
+    [I18nKeys.Button.CreateOneTimeToken]: "🔑 One-Time Token erzeugen",
 
     [I18nKeys.Dropzone.Primary]: "Dateien hier ablegen oder zum Auswählen klicken",
     [I18nKeys.Dropzone.Secondary]: "Unterstützt alle Dateitypen",

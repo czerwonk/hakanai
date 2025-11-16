@@ -25,6 +25,6 @@ const createBundle = (fileName) => ({
   ...commonConfig,
 });
 
-const bundles = ["create-secret", "get-secret", "share", "common", "sw"];
+const bundles = ["create-secret", "get-secret", "share", "common", "sw", "one-time-token"];
 
 export default bundles.map((fileName) => createBundle(fileName));

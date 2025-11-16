@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    {{> head}}
+    <meta
+      name="description"
+      content="Create and share one-time secrets securely with Hakanai - zero-knowledge secret sharing"
+      data-i18n-content="meta.one-time-token"
+    />
+    <title data-i18n-title="page.oneTimeToken.title">Hakanai - Create One Time Token</title>
+  </head>
+  <body>
+    {{> language_selector}} {{> theme_switcher}}
+    <main class="container">
+      {{> header}}
+      <section aria-labelledby="main-heading">
+        <form id="one-time-token-form" novalidate>
+          <button type="submit" id="createBtn" class="btn primary" data-i18n="button.createOneTimeToken">
+            Create One Time Token
+          </button>
+          <span data-i18n="helper.oneTimeToken" class="input-helper"
+            >Creates a single use token to be used to allow one time exceptions of upload limits</span
+          >
+        </form>
+        <div id="result" role="region" aria-live="polite" aria-atomic="true"></div>
+      </section>
+      {{> footer}}
+    </main>
+    <noscript>
+      <div class="container">
+        <div class="result error">
+          <h3 data-i18n="msg.jsRequired">JavaScript Required</h3>
+          <p data-i18n="msg.jsRequiredDetail">
+            This application requires JavaScript to encrypt secrets securely in your browser.
+          </p>
+        </div>
+      </div>
+    </noscript>
+
+    <script type="module" src="/one-time-token.js?v={{cache_buster}}"></script>
+  </body>
+</html>

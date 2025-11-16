@@ -8,7 +8,7 @@ use tracing::{Span, error, instrument};
 use uuid::Uuid;
 
 use hakanai_lib::models::{
-    PostSecretRequest, PostSecretResponse, SecretRestrictions, restrictions,
+    CreateTokenResponse, PostSecretRequest, PostSecretResponse, SecretRestrictions, restrictions,
 };
 
 use super::app_data::AppData;
@@ -17,13 +17,17 @@ use super::size_limited_json::SizeLimitedJson;
 use super::user::User;
 use crate::observer::SecretEventContext;
 use crate::secret::SecretStorePopResult;
+use crate::token::TokenData;
+use crate::user_type::UserType;
 
 /// Configures the Actix Web services for the application.
 ///
 /// This function registers the API routes and sets up the application data,
 /// including the data store that will be shared across all handlers.
 pub fn configure(cfg: &mut web::ServiceConfig) {
-    cfg.service(get_secret).service(post_secret);
+    cfg.service(get_secret)
+        .service(post_secret)
+        .service(post_one_time_token);
 }
 
 #[get("/secret/{id}")]
@@ -232,17 +236,6 @@ fn ensure_restrictions_are_supported(
     Ok(())
 }
 
-/// Extracts and validates the X-Request-Id header from the request.
-/// Only accepts valid UUID v4 format to prevent log injection.
-fn extract_request_id(http_req: &HttpRequest) -> Option<String> {
-    http_req
-        .headers()
-        .get("x-request-id")
-        .and_then(|header_value| header_value.to_str().ok())
-        .filter(|request_id| Uuid::parse_str(request_id).is_ok())
-        .map(|s| s.to_string())
-}
-
 #[instrument]
 fn ensure_ttl_is_valid(expires_in: Duration, max_ttl: Duration) -> Result<()> {
     if expires_in > max_ttl {
@@ -253,6 +246,51 @@ fn ensure_ttl_is_valid(expires_in: Duration, max_ttl: Duration) -> Result<()> {
     } else {
         Ok(())
     }
+}
+
+#[post("/one-time-token")]
+#[instrument(skip(app_data, http_req, user), fields(request_id = tracing::field::Empty, user_type = tracing::field::Empty), err)]
+async fn post_one_time_token(
+    http_req: HttpRequest,
+    user: User, // This ensures authentication/authorization happens
+    app_data: web::Data<AppData>,
+) -> Result<web::Json<CreateTokenResponse>> {
+    if let Some(request_id) = extract_request_id(&http_req) {
+        Span::current().record("request_id", request_id);
+    }
+    Span::current().record("user_type", user.user_type.to_string());
+
+    if user.user_type == UserType::Anonymous {
+        return Err(error::ErrorUnauthorized(
+            "Not allowed to create one-time tokens",
+        ));
+    }
+
+    let mut token_data = TokenData::new();
+    token_data.one_time = true;
+    token_data.upload_size_limit = user.upload_size_limit.map(|limit| limit as i64);
+
+    let token_creator = app_data.token_creator.as_ref();
+    let token = token_creator
+        .create_user_token(token_data, app_data.one_time_token_ttl)
+        .await
+        .map_err(|e| {
+            error!("Error while creating one-time token: {e}");
+            error::ErrorInternalServerError("Operation failed")
+        })?;
+
+    Ok(web::Json(CreateTokenResponse { token }))
+}
+
+/// Extracts and validates the X-Request-Id header from the request.
+/// Only accepts valid UUID v4 format to prevent log injection.
+fn extract_request_id(http_req: &HttpRequest) -> Option<String> {
+    http_req
+        .headers()
+        .get("x-request-id")
+        .and_then(|header_value| header_value.to_str().ok())
+        .filter(|request_id| Uuid::parse_str(request_id).is_ok())
+        .map(|s| s.to_string())
 }
 
 #[cfg(test)]
@@ -633,6 +671,56 @@ mod tests {
         let req = test::TestRequest::post()
             .uri("/secret")
             .set_json(&payload)
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 401); // Unauthorized
+    }
+
+    #[actix_web::test]
+    async fn test_post_one_time_access_with_valid_token() {
+        let mock_store = MockSecretStore::new();
+        let token_manager =
+            MockTokenManager::new().with_user_token("valid_token_123", TokenData::default());
+        let app_data = create_test_app_data(Box::new(mock_store.clone()), token_manager, true);
+
+        let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
+            |cfg| {
+                configure(cfg);
+            },
+        ))
+        .await;
+
+        let req = test::TestRequest::post()
+            .uri("/one-time-token")
+            .insert_header(("Authorization", "Bearer valid_token_123"))
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 200);
+
+        let body: CreateTokenResponse = test::read_body_json(resp).await;
+        assert!(!body.token.is_empty());
+    }
+
+    #[actix_web::test]
+    async fn test_post_one_time_token_anonymous_access_denied() {
+        let mock_store = MockSecretStore::new();
+        let app_data = create_test_app_data(
+            Box::new(mock_store),
+            MockTokenManager::new(),
+            false, // Don't allow anonymous
+        );
+
+        let app = test::init_service(App::new().app_data(web::Data::new(app_data)).configure(
+            |cfg| {
+                configure(cfg);
+            },
+        ))
+        .await;
+
+        let req = test::TestRequest::post()
+            .uri("/one-time-token")
             .to_request();
 
         let resp = test::call_service(&app, req).await;

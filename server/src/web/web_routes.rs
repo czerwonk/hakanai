@@ -18,31 +18,33 @@ const HIGHLY_VOLATILE_CACHE_MAX_AGE: u64 = 300; // 5 minutes
 /// including the data store that will be shared across all handlers.
 pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg.route("/", web::get().to(serve_index))
+        .route("/app-icon-192.png", web::get().to(serve_app_icon_192))
+        .route("/app-icon-512.png", web::get().to(serve_app_icon_512))
+        .route("/app-icon.svg", web::get().to(serve_app_icon))
         .route("/banner.svg", web::get().to(serve_banner))
+        .route("/common.js", web::get().to(serve_common_js))
         .route("/config.json", web::get().to(serve_config))
         .route("/create", web::get().to(serve_create_secret_html))
         .route("/create-secret.js", web::get().to(serve_create_secret_js))
-        .route("/common.js", web::get().to(serve_common_js))
         .route("/docs", web::get().to(serve_docs_html))
         .route("/get", web::get().to(serve_get_secret_html))
         .route("/get-secret.js", web::get().to(serve_get_secret_js))
+        .route("/hakanai_wasm.js", web::get().to(serve_wasm_js))
+        .route("/hakanai_wasm_bg.wasm", web::get().to(serve_wasm_binary))
         .route("/icon.svg", web::get().to(serve_icon))
-        .route("/app-icon.svg", web::get().to(serve_app_icon))
-        .route("/app-icon-192.png", web::get().to(serve_app_icon_192))
-        .route("/app-icon-512.png", web::get().to(serve_app_icon_512))
         .route("/impressum", web::get().to(serve_impressum))
         .route("/logo.svg", web::get().to(serve_logo))
         .route("/manifest.json", web::get().to(serve_manifest))
+        .route("/one-time-token", web::get().to(serve_one_time_token_html))
+        .route("/one-time-token.js", web::get().to(serve_one_time_token_js))
         .route("/openapi.yaml", web::get().to(serve_openapi_yaml))
         .route("/privacy", web::get().to(serve_privacy))
         .route("/robots.txt", web::get().to(serve_robots_txt))
-        .route("/sw.js", web::get().to(serve_service_worker))
         .route("/share", web::get().to(serve_share_html))
         .route("/share.js", web::get().to(serve_share_js))
         .route("/share.shortcut", web::get().to(serve_shortcut))
         .route("/style.css", web::get().to(serve_css))
-        .route("/hakanai_wasm.js", web::get().to(serve_wasm_js))
-        .route("/hakanai_wasm_bg.wasm", web::get().to(serve_wasm_binary));
+        .route("/sw.js", web::get().to(serve_service_worker));
 }
 
 fn serve_with_caching_header(content: &[u8], content_type: &str, max_age: u64) -> HttpResponse {
@@ -324,6 +326,22 @@ async fn serve_share_html() -> impl Responder {
 async fn serve_share_js() -> impl Responder {
     serve_with_caching_header(
         include_bytes!("../../includes/share.js"),
+        "application/javascript",
+        VOLATILE_CACHE_MAX_AGE,
+    )
+}
+
+async fn serve_one_time_token_html() -> impl Responder {
+    serve_with_caching_header(
+        include_bytes!("../../includes/one-time-token.html"),
+        "text/html",
+        HIGHLY_VOLATILE_CACHE_MAX_AGE,
+    )
+}
+
+async fn serve_one_time_token_js() -> impl Responder {
+    serve_with_caching_header(
+        include_bytes!("../../includes/one-time-token.js"),
         "application/javascript",
         VOLATILE_CACHE_MAX_AGE,
     )

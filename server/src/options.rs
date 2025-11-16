@@ -223,6 +223,15 @@ pub struct Args {
         help = "Directory path to override embedded web assets (e.g., for custom branding or theming)."
     )]
     pub custom_assets_dir: Option<PathBuf>,
+
+    #[arg(
+        long,
+        default_value = "7d",
+        env = "HAKANAI_ONE_TIME_TOKEN_TTL",
+        help = "Time to live for one time tokens. Defaults to 1 week.",
+        value_parser = humantime::parse_duration
+    )]
+    pub one_time_token_ttl: Duration,
 }
 
 impl Args {
@@ -296,6 +305,7 @@ mod tests {
             asn_header: None,
             custom_assets_dir: None,
             stats_ttl: Duration::from_secs(3600),
+            one_time_token_ttl: Duration::from_secs(604800),
         }
     }
 
