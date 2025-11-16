@@ -147,9 +147,9 @@ dependencies = [
 
 [[package]]
 name = "actix-web"
-version = "4.11.0"
+version = "4.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a597b77b5c6d6a1e1097fddde329a83665e25c5437c696a3a9a4aa514a614dea"
+checksum = "2233f53f6cb18ae038ce1f0713ca0c72ca0c4b71fe9aaeb59924ce2c89c6dd85"
 dependencies = [
  "actix-codec",
  "actix-http",
@@ -182,7 +182,7 @@ dependencies = [
  "serde_json",
  "serde_urlencoded",
  "smallvec",
- "socket2 0.5.10",
+ "socket2 0.6.1",
  "time",
  "tracing",
  "url",
@@ -1130,7 +1130,7 @@ dependencies = [
 
 [[package]]
 name = "hakanai"
-version = "2.20.0"
+version = "2.20.1"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1152,7 +1152,7 @@ dependencies = [
 
 [[package]]
 name = "hakanai-lib"
-version = "2.20.0"
+version = "2.20.1"
 dependencies = [
  "aes-gcm",
  "async-stream",
@@ -1176,7 +1176,7 @@ dependencies = [
 
 [[package]]
 name = "hakanai-server"
-version = "2.20.0"
+version = "2.20.1"
 dependencies = [
  "actix-cors",
  "actix-web",
@@ -1213,7 +1213,7 @@ dependencies = [
 
 [[package]]
 name = "hakanai-wasm"
-version = "2.20.0"
+version = "2.20.1"
 dependencies = [
  "qrcode",
  "wasm-bindgen",
@@ -1559,9 +1559,9 @@ dependencies = [
 
 [[package]]
 name = "image"
-version = "0.25.8"
+version = "0.25.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "529feb3e6769d234375c4cf1ee2ce713682b8e76538cb13f9fc23e1400a591e7"
+checksum = "e6506c6c10786659413faa717ceebcb8f70731c0a60cbae39795fdf114519c1a"
 dependencies = [
  "bytemuck",
  "byteorder-lite",
