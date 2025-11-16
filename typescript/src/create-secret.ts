@@ -18,7 +18,7 @@ import { RestrictionsTabs } from "./components/restrictions-tabs";
 import { RestrictionData, toSecretRestrictions } from "./core/restriction-data";
 import { SizeLimitIndicator } from "./components/size-limit";
 import { registerServiceWorker } from "./core/service-worker";
-import { getExt, isImageExt, sanitizeFileName, readFileAsArrayBuffer } from "./core/file-utils";
+import { sanitizeFileName, readFileAsArrayBuffer } from "./core/file-utils";
 import { FileListComponent } from "./components/file-list";
 import { TarBuilder } from "./core/tar-builder";
 

@@ -113,6 +113,7 @@ const I18nKeys = {
     ClipboardRequiredDetail: "msg.clipboardRequiredDetail",
     CopyFailed: "msg.copyFailed",
     CreateFailed: "msg.createFailed",
+    CreateOneTimeTokenFailed: "msg.createOneTimeTokenFailed",
     CreateNote: "msg.createNote",
     Creating: "msg.creating",
     CreatingSecret: "msg.creatingSecret",
@@ -387,6 +388,7 @@ const translations: Translations = {
     [I18nKeys.Msg.EmptyFile]: "Please select a file to share",
     [I18nKeys.Msg.FileSizeExceeded]: "File size ({{fileSize}}) exceeds the {{limit}} limit. Please use a smaller file.",
     [I18nKeys.Msg.CreateFailed]: "Failed to create secret",
+    [I18nKeys.Msg.CreateOneTimeTokenFailed]: "Failed to create one-time token",
     [I18nKeys.Msg.FileReadError]: "Error reading file",
     [I18nKeys.Msg.InvalidFilename]: "Invalid filename. Please select a file with a valid name.",
     [I18nKeys.Msg.EmptyUrl]: "Please enter a valid secret URL",
@@ -629,6 +631,7 @@ const translations: Translations = {
     [I18nKeys.Msg.FileSizeExceeded]:
       "Dateigröße ({{fileSize}}) überschreitet das {{limit}} Limit. Bitte eine kleinere Datei verwenden.",
     [I18nKeys.Msg.CreateFailed]: "Fehler beim Erstellen des Secrets",
+    [I18nKeys.Msg.CreateOneTimeTokenFailed]: "Fehler beim Erstellen des Tokens",
     [I18nKeys.Msg.FileReadError]: "Fehler beim Lesen der Datei",
     [I18nKeys.Msg.InvalidFilename]: "Ungültiger Dateiname. Bitte eine Datei mit einem gültigen Namen auswählen.",
     [I18nKeys.Msg.EmptyUrl]: "Bitte eine gültige Secret-URL eingeben",
