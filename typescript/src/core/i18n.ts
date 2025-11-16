@@ -247,7 +247,7 @@ const I18nKeys = {
     RetrieveFailed: "error.RETRIEVE_FAILED",
     SecretAlreadyAccessed: "error.SECRET_ALREADY_ACCESSED",
     SecretNotFound: "error.SECRET_NOT_FOUND",
-    SendFailed: "error.SEND_FAILED",
+    RequestFailed: "error.REQUEST_FAILED",
   },
 
   Validation: {
@@ -469,7 +469,7 @@ const translations: Translations = {
     [I18nKeys.Page.PrivacyTitle]: "Privacy Policy",
 
     [I18nKeys.Error.AccessDenied]: "Access denied - you are not allowed to access the secret",
-    [I18nKeys.Error.SendFailed]: "Failed to send secret",
+    [I18nKeys.Error.RequestFailed]: "Request failed",
     [I18nKeys.Error.AuthenticationRequired]: "Authentication required - Please enter your authentication token",
     [I18nKeys.Error.InvalidToken]: "Invalid authentication token - Please check your token and try again",
     [I18nKeys.Error.SecretNotFound]: "Secret not found or has expired",
@@ -715,7 +715,7 @@ const translations: Translations = {
     [I18nKeys.Page.PrivacyTitle]: "Datenschutzerklärung",
 
     [I18nKeys.Error.AccessDenied]: "Zugriff verweigert - Keine Berechtigung auf das Secret zuzugreifen",
-    [I18nKeys.Error.SendFailed]: "Fehler beim Senden des Secrets",
+    [I18nKeys.Error.RequestFailed]: "Fehler beim Verarbeiten der Anfrage",
     [I18nKeys.Error.AuthenticationRequired]: "Authentifizierung erforderlich - Bitte Authentifizierungs-Token eingeben",
     [I18nKeys.Error.InvalidToken]: "Ungültiges Authentifizierungs-Token - Bitte Token überprüfen und erneut versuchen",
     [I18nKeys.Error.SecretNotFound]: "Secret nicht gefunden oder abgelaufen",

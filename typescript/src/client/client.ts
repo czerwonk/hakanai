@@ -23,6 +23,10 @@ interface SecretResponse {
   id: string;
 }
 
+interface TokenResponse {
+  token: string;
+}
+
 interface SecretRestrictions {
   allowed_ips?: string[];
   allowed_countries?: string[];
@@ -175,15 +179,7 @@ class HakanaiClient {
    * Create appropriate HakanaiError for HTTP response errors
    * @private
    */
-  private createSendPayloadError(response: Response): HakanaiError {
-    if (response.status === 401) {
-      return new HakanaiError(
-        HakanaiErrorCodes.AUTHENTICATION_REQUIRED,
-        "Authentication required: Please provide a valid authentication token",
-        response.status,
-      );
-    }
-
+  private createAPIErrorFromResponse(response: Response): HakanaiError {
     if (response.status === 403) {
       return new HakanaiError(
         HakanaiErrorCodes.INVALID_TOKEN,
@@ -210,8 +206,8 @@ class HakanaiClient {
 
     // Generic error for other status codes
     return new HakanaiError(
-      HakanaiErrorCodes.SEND_FAILED,
-      `Failed to send secret: ${response.status} ${response.statusText}`,
+      HakanaiErrorCodes.REQUEST_FAILED,
+      `Failed: ${response.status} ${response.statusText}`,
       response.status,
     );
   }
@@ -355,21 +351,21 @@ class HakanaiClient {
         if (xhr.status >= 200 && xhr.status < 300) {
           promiseManager.resolve(response);
         } else {
-          promiseManager.reject(this.createSendPayloadError(response));
+          promiseManager.reject(this.createAPIErrorFromResponse(response));
         }
       };
 
       xhr.onerror = () => {
         // Network-level error (connection failed, etc.)
-        promiseManager.reject(new HakanaiError(HakanaiErrorCodes.SEND_FAILED, "Network error during request"));
+        promiseManager.reject(new HakanaiError(HakanaiErrorCodes.REQUEST_FAILED, "Network error during request"));
       };
 
       xhr.onabort = () => {
-        promiseManager.reject(new HakanaiError(HakanaiErrorCodes.SEND_FAILED, "Request aborted"));
+        promiseManager.reject(new HakanaiError(HakanaiErrorCodes.REQUEST_FAILED, "Request aborted"));
       };
 
       xhr.ontimeout = () => {
-        promiseManager.reject(new HakanaiError(HakanaiErrorCodes.SEND_FAILED, "Request timed out"));
+        promiseManager.reject(new HakanaiError(HakanaiErrorCodes.REQUEST_FAILED, "Request timed out"));
       };
 
       xhr.open("POST", `${this.baseUrl}/api/v1/secret`);
@@ -419,7 +415,7 @@ class HakanaiClient {
     const response = await this.sendWithXHR(bodyData, headers, progressObserver);
 
     if (!response.ok) {
-      throw this.createSendPayloadError(response);
+      throw this.createAPIErrorFromResponse(response);
     }
 
     const responseData: SecretResponse = await response.json();
@@ -621,6 +617,34 @@ class HakanaiClient {
    */
   createPayload(filename?: string): PayloadData {
     return new PayloadDataImpl("", filename);
+  }
+
+  /**
+   * Recevies a one-time token from the server
+   * @returns One-time token string reveived from the server
+   */
+  public async receiveOneTimeToken(): Promise<string> {
+    const requestId = crypto.randomUUID();
+
+    const headers: Record<string, string> = {
+      "X-Request-Id": requestId,
+    };
+
+    const response = await fetch(`${this.baseUrl}/api/v1/one-time-token`, {
+      method: "POST",
+      headers,
+    });
+
+    if (!response.ok) {
+      throw this.createAPIErrorFromResponse(response);
+    }
+
+    const responseData: TokenResponse = await response.json();
+    if (!responseData.token || typeof responseData.token !== "string") {
+      throw new HakanaiError(HakanaiErrorCodes.INVALID_SERVER_RESPONSE, "Invalid response: missing token");
+    }
+
+    return responseData.token;
   }
 }
 

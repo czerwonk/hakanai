@@ -4,6 +4,7 @@
  * Common functionality for static pages (homepage, impressum, privacy)
  * Contains shared theme and i18n components
  */
+import { HakanaiClient } from "./hakanai-client";
 import { initI18n, I18nKeys } from "./core/i18n";
 import { initTheme } from "./core/theme";
 import { initFeatures } from "./core/app-config";
@@ -32,8 +33,12 @@ function setupFormHandler(): void {
 }
 
 async function createToken(): Promise<void> {
+  const baseUrl = window.location.origin.includes("file://") ? "http://localhost:8080" : window.location.origin;
+
+  const client = new HakanaiClient(baseUrl);
+
   try {
-    const token = "test1234"; // TODO: implement API call
+    const token = await client.receiveOneTimeToken();
 
     showSuccess(token);
   } catch (error: unknown) {

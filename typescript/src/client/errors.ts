@@ -11,7 +11,7 @@ const HakanaiErrorCodes = {
   /** Provided authentication token is invalid */
   INVALID_TOKEN: "INVALID_TOKEN",
   /** Failed to send secret to server */
-  SEND_FAILED: "SEND_FAILED",
+  REQUEST_FAILED: "SEND_FAILED",
   /** Secret not found or has expired */
   SECRET_NOT_FOUND: "SECRET_NOT_FOUND",
   /** Secret has already been accessed once */
