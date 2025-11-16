@@ -589,19 +589,28 @@ async function initTokenInputVisibility(): Promise<void> {
     return;
   }
 
+  const url = new URL(window.location.href);
+  const tokenParam = url.hash.slice(1);
+
   const showTokenInput = await shouldShowTokenInput();
-  if (!showTokenInput) {
+  if (!showTokenInput && !tokenParam) {
     hideElement(tokenInputGroup);
     return;
   }
 
   showElement(tokenInputGroup);
 
-  // add listener to update size limit visibility on token input changes
   const authTokenInput = document.getElementById("authToken") as HTMLInputElement;
-  if (authTokenInput) {
-    authTokenInput.addEventListener("input", updateSizeLimitVisibility);
+  if (!authTokenInput) {
+    return;
   }
+
+  if (tokenParam) {
+    authTokenInput.value = tokenParam;
+  }
+
+  // add listener to update size limit visibility on token input changes
+  authTokenInput.addEventListener("input", updateSizeLimitVisibility);
 }
 
 async function shouldShowTokenInput(): Promise<boolean> {
