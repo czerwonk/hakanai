@@ -1,6 +1,6 @@
 {
   "name": "@hakanai/client",
-  "version": "2.19.2",
+  "version": "2.20.1",
   "description": "Zero-knowledge client library for Hakanai one-time secret sharing",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
