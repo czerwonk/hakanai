@@ -41,7 +41,7 @@ tracing = "0.1.43"
 tracing-actix-web = "0.7.19"
 tracing-opentelemetry = "0.32.0"
 tracing-subscriber = { version = "0.3.22", features = ["env-filter"] }
-uuid = { version = "1.18.1", features = ["serde", "v4"] }
+uuid = { version = "1.19.0", features = ["serde", "v4"] }
 
 [build-dependencies]
 anyhow = "1.0.100"
