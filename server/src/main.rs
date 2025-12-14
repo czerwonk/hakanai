@@ -27,7 +27,7 @@ use crate::token::{RedisTokenStore, TokenManager, TokenStore};
 
 /// Connection timeout for Redis operations during startup
 const REDIS_CONNECTION_TIMEOUT: Duration = Duration::from_secs(10);
-const REDIS_MAX_DELAY_MS: u64 = 1000;
+const REDIS_MAX_DELAY: Duration = Duration::from_millis(2);
 
 #[actix_web::main]
 async fn main() -> Result<()> {
@@ -109,8 +109,8 @@ async fn connect_to_redis(dsn: &str) -> anyhow::Result<ConnectionManager> {
 
     let client = redis::Client::open(dsn)?;
     let config = ConnectionManagerConfig::default()
-        .set_connection_timeout(REDIS_CONNECTION_TIMEOUT)
-        .set_max_delay(REDIS_MAX_DELAY_MS);
+        .set_connection_timeout(Some(REDIS_CONNECTION_TIMEOUT))
+        .set_max_delay(REDIS_MAX_DELAY);
     let con = timeout(
         REDIS_CONNECTION_TIMEOUT,
         redis::aio::ConnectionManager::new_with_config(client, config),

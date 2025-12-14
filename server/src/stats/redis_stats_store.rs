@@ -103,7 +103,7 @@ impl StatsStore for RedisStatsStore {
 
             // Fetch values for all keys in this batch
             if !keys.is_empty() {
-                let values: Vec<Option<String>> = con.get(keys).await?;
+                let values: Vec<Option<String>> = con.mget(keys).await?;
                 for value in values.into_iter().flatten() {
                     if let Ok(stat) = serde_json::from_str(&value) {
                         stats.push(stat);
