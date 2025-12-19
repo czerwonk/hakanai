@@ -4,7 +4,6 @@ use std::time::Duration;
 
 use async_trait::async_trait;
 use thiserror::Error;
-use tracing::error;
 use uuid::Uuid;
 
 use hakanai_lib::models::SecretRestrictions;
