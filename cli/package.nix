@@ -5,6 +5,7 @@
   openssl,
   darwin,
   stdenv,
+  cacert,
 }:
 
 let
@@ -35,7 +36,10 @@ rustPlatform.buildRustPackage {
 
   nativeBuildInputs = [
     pkg-config
+    cacert
   ];
+
+  SSL_CERT_FILE = "${cacert}/etc/ssl/certs/ca-bundle.crt";
 
   buildInputs = [
     openssl
