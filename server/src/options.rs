@@ -86,6 +86,15 @@ pub struct Args {
     )]
     pub redis_reconnection_max_delay: Duration,
 
+    /// The timeout for redis requets
+    #[arg(
+        long,
+        value_name = "REDIS_RESPONSE_TIMEOUT",
+        env = "HAKANAI_REDIS_RESPONSE_TIMEOUT",
+        value_parser = humantime::parse_duration
+    )]
+    pub redis_response_timeout: Option<Duration>,
+
     #[arg(
         long,
         value_name = "STATS_TTL",
@@ -328,6 +337,7 @@ mod tests {
             one_time_token_ttl: Duration::from_secs(604800),
             redis_connection_timeout: Duration::from_secs(10),
             redis_reconnection_max_delay: Duration::from_millis(10),
+            redis_response_timeout: None,
         }
     }
 

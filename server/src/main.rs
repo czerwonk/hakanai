@@ -106,7 +106,8 @@ async fn connect_to_redis(args: &Args) -> anyhow::Result<ConnectionManager> {
     let client = redis::Client::open(args.redis_dsn.clone())?;
     let config = ConnectionManagerConfig::default()
         .set_connection_timeout(Some(args.redis_connection_timeout))
-        .set_max_delay(args.redis_reconnection_max_delay);
+        .set_max_delay(args.redis_reconnection_max_delay)
+        .set_response_timeout(args.redis_response_timeout);
     let con = timeout(
         args.redis_connection_timeout,
         redis::aio::ConnectionManager::new_with_config(client, config),
