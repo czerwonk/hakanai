@@ -2,7 +2,7 @@
 
 [package]
 name = "hakanai-server"
-version = "2.20.3"
+version = "2.20.4"
 edition = "2024"
 license = "Apache-2.0"
 description = "Server for Hakanai, a secure secret sharing service."
@@ -38,8 +38,8 @@ sha2 = "0.10.9"
 thiserror = "2.0.17"
 tokio = { version = "1.49.0", features = ["full"] }
 tracing = "0.1.44"
-tracing-actix-web = "0.7.20"
-tracing-opentelemetry = "0.32.0"
+tracing-actix-web = "0.7.21"
+tracing-opentelemetry = "0.32.1"
 tracing-subscriber = { version = "0.3.22", features = ["env-filter"] }
 uuid = { version = "1.19.0", features = ["serde", "v4"] }
 

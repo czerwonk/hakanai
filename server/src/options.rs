@@ -66,6 +66,26 @@ pub struct Args {
     )]
     pub redis_dsn: String,
 
+    /// The timeout for redis connections
+    #[arg(
+        long,
+        value_name = "REDIS_CONNECTION_TIMEOUT",
+        env = "HAKANAI_REDIS_CONNECTION_TIMEOUT",
+        default_value = "10s",
+        value_parser = humantime::parse_duration
+    )]
+    pub redis_connection_timeout: Duration,
+
+    /// The max delay for redis reconnections
+    #[arg(
+        long,
+        value_name = "REDIS_RECONNECTION_MAX_DELAY",
+        env = "HAKANAI_REDIS_RECONNECTION_MAX_DELAY",
+        default_value = "10ms",
+        value_parser = humantime::parse_duration
+    )]
+    pub redis_reconnection_max_delay: Duration,
+
     #[arg(
         long,
         value_name = "STATS_TTL",

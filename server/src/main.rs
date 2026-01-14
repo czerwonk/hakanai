@@ -25,10 +25,6 @@ use crate::secret::RedisSecretStore;
 use crate::stats::RedisStatsStore;
 use crate::token::{RedisTokenStore, TokenManager, TokenStore};
 
-/// Connection timeout for Redis operations during startup
-const REDIS_CONNECTION_TIMEOUT: Duration = Duration::from_secs(10);
-const REDIS_MAX_DELAY: Duration = Duration::from_millis(2);
-
 #[actix_web::main]
 async fn main() -> Result<()> {
     let args = Args::parse();
@@ -47,7 +43,7 @@ async fn main() -> Result<()> {
 
     info!("Hakanai Server (v{})", env!("CARGO_PKG_VERSION"));
 
-    let redis_con = match connect_to_redis(&args.redis_dsn).await {
+    let redis_con = match connect_to_redis(&args).await {
         Ok(con) => con,
         Err(e) => {
             eprintln!("Failed to connect to Redis: {e}");
@@ -104,15 +100,15 @@ async fn main() -> Result<()> {
     res
 }
 
-async fn connect_to_redis(dsn: &str) -> anyhow::Result<ConnectionManager> {
+async fn connect_to_redis(args: &Args) -> anyhow::Result<ConnectionManager> {
     info!("Connecting to Redis");
 
-    let client = redis::Client::open(dsn)?;
+    let client = redis::Client::open(args.redis_dsn.clone())?;
     let config = ConnectionManagerConfig::default()
-        .set_connection_timeout(Some(REDIS_CONNECTION_TIMEOUT))
-        .set_max_delay(REDIS_MAX_DELAY);
+        .set_connection_timeout(Some(args.redis_connection_timeout))
+        .set_max_delay(args.redis_reconnection_max_delay);
     let con = timeout(
-        REDIS_CONNECTION_TIMEOUT,
+        args.redis_connection_timeout,
         redis::aio::ConnectionManager::new_with_config(client, config),
     )
     .await
