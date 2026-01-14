@@ -326,6 +326,8 @@ mod tests {
             custom_assets_dir: None,
             stats_ttl: Duration::from_secs(3600),
             one_time_token_ttl: Duration::from_secs(604800),
+            redis_connection_timeout: Duration::from_secs(10),
+            redis_reconnection_max_delay: Duration::from_millis(10),
         }
     }
 
