@@ -134,7 +134,7 @@ class PayloadDataImpl implements PayloadData {
       throw new HakanaiError(HakanaiErrorCodes.INVALID_PAYLOAD, "Invalid payload: filename must be string or null");
     }
 
-    return new PayloadDataImpl(new Uint8Array(data), filename);
+    return new PayloadDataImpl(new Uint8Array(data), filename ?? undefined);
   }
 }
 
