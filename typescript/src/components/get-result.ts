@@ -33,7 +33,7 @@ export function showSecret(
   title.textContent = window.i18n.t(I18nKeys.Msg.SuccessTitle);
   resultDiv.appendChild(title);
 
-  const decodedBytes = payload.decodeBytes();
+  const decodedBytes = payload.bytes();
   const isBinaryFile = payload.filename != null || ContentAnalysis.isBinary(decodedBytes);
 
   if (payload.filename) {
@@ -282,7 +282,7 @@ function downloadSecret(payload: PayloadData, decodedBytes: ArrayBuffer): void {
 
 async function shareTextSecret(payload: PayloadData): Promise<void> {
   try {
-    const text = payload.decode();
+    const text = payload.text();
 
     await shareContent({
       text: text,

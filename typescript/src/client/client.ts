@@ -157,7 +157,7 @@ class HakanaiClient {
       throw new HakanaiError(HakanaiErrorCodes.INVALID_PAYLOAD, "Payload must be an object");
     }
 
-    if (!payload.data || typeof payload.data !== "string" || payload.data.length === 0) {
+    if (!payload.data || payload.data.length === 0) {
       throw new HakanaiError(HakanaiErrorCodes.INVALID_PAYLOAD, "Payload data cannot be empty");
     }
 
@@ -600,7 +600,7 @@ class HakanaiClient {
       }
 
       // Validate payload structure
-      if (!payload || typeof payload !== "object" || typeof payload.data !== "string") {
+      if (!payload || typeof payload !== "object" || typeof payload.data !== "object") {
         throw new HakanaiError(HakanaiErrorCodes.INVALID_PAYLOAD, "Invalid payload structure");
       }
 
@@ -616,7 +616,7 @@ class HakanaiClient {
    * @returns Empty PayloadData object ready for data
    */
   createPayload(filename?: string): PayloadData {
-    return new PayloadDataImpl("", filename);
+    return new PayloadDataImpl(new Uint8Array(), filename);
   }
 
   /**

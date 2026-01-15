@@ -173,7 +173,7 @@ describe("HakanaiClient Integration", () => {
     // Receive the secret
     const retrievedPayload = await client.receivePayload(secretUrl);
 
-    expect(retrievedPayload.decode!()).toBe(originalText);
+    expect(retrievedPayload.text!()).toBe(originalText);
     expect(retrievedPayload.filename).toBeUndefined();
   });
 
@@ -193,7 +193,7 @@ describe("HakanaiClient Integration", () => {
     // Receive the secret
     const retrievedPayload = await client.receivePayload(secretUrl);
 
-    expect(retrievedPayload.decode!()).toBe(originalText);
+    expect(retrievedPayload.text!()).toBe(originalText);
     expect(retrievedPayload.filename).toBe(filename);
   });
 
@@ -208,7 +208,7 @@ describe("HakanaiClient Integration", () => {
     const secretUrl = await client.sendPayload(originalPayload);
     const retrievedPayload = await client.receivePayload(secretUrl);
 
-    expect(retrievedPayload.decode!()).toBe(originalText);
+    expect(retrievedPayload.text!()).toBe(originalText);
     expect(retrievedPayload.filename).toBe(filename);
   });
 
@@ -222,7 +222,7 @@ describe("HakanaiClient Integration", () => {
     const secretUrl = await client.sendPayload(originalPayload);
     const retrievedPayload = await client.receivePayload(secretUrl);
 
-    expect(retrievedPayload.decode!()).toBe(originalText);
+    expect(retrievedPayload.text!()).toBe(originalText);
     expect(retrievedPayload.filename).toBeUndefined();
   });
 
@@ -238,7 +238,7 @@ describe("HakanaiClient Integration", () => {
     const secretUrl = await client.sendPayload(originalPayload);
     const retrievedPayload = await client.receivePayload(secretUrl);
 
-    const decodedData = retrievedPayload.decode!();
+    const decodedData = retrievedPayload.text!();
     expect(decodedData).toBe(largeData);
     expect(decodedData).toHaveLength(10011);
     expect(decodedData.endsWith(" end marker")).toBe(true);
@@ -323,45 +323,6 @@ describe("HakanaiClient Integration", () => {
     // Hash should be exactly 22 base64url characters
     expect(hash).toMatch(/^[A-Za-z0-9_-]{22}$/);
     expect(hash).toHaveLength(22);
-  });
-
-  test("PayloadData decode() method works correctly", async () => {
-    const originalText = "Test message with unicode: 🔐 åëïöü";
-    const filename = "test.txt";
-    const textBytes = encodeText(originalText);
-
-    const originalPayload = client.createPayload(filename);
-    originalPayload.setFromBytes(textBytes.buffer as ArrayBuffer);
-
-    const secretUrl = await client.sendPayload(originalPayload);
-    const retrievedPayload = await client.receivePayload(secretUrl);
-
-    // Test the decode() method
-    expect(retrievedPayload.decode).toBeDefined();
-    const decodedData = retrievedPayload.decode!();
-    expect(decodedData).toBe(originalText);
-  });
-
-  test("PayloadData decodeBytes() method works correctly", async () => {
-    const originalText = "Binary data test";
-    const filename = "binary.dat";
-    const textBytes = encodeText(originalText);
-
-    const originalPayload = client.createPayload(filename);
-    originalPayload.setFromBytes(textBytes.buffer as ArrayBuffer);
-
-    const secretUrl = await client.sendPayload(originalPayload);
-    const retrievedPayload = await client.receivePayload(secretUrl);
-
-    // Test the decodeBytes() method
-    expect(retrievedPayload.decodeBytes).toBeDefined();
-    const decodedBytes = retrievedPayload.decodeBytes!();
-    expect(decodedBytes).toBeInstanceOf(Uint8Array);
-
-    // Convert back to string to verify
-    const decoder = new TextDecoder();
-    const decodedString = decoder.decode(decodedBytes);
-    expect(decodedString).toBe(originalText);
   });
 
   test("hash mismatch validation fails", async () => {
