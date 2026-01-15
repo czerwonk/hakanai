@@ -13,17 +13,17 @@ describe("UrlParser", () => {
     test("parses URLs with hash correctly", () => {
       const testCases = [
         {
-          url: "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:47DEQpj8HBSa-_TImW-5JA",
+          url: "https://example.com/s/01KF0SR30C1X5CASYPDAJ0G6GB#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:47DEQpj8HBSa-_TImW-5JA",
           expected: {
-            secretId: "550e8400-e29b-41d4-a716-446655440000",
+            secretId: "01KF0SR30C1X5CASYPDAJ0G6GB",
             secretKey: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", // 43 chars
             hash: "47DEQpj8HBSa-_TImW-5JA",
           },
         },
         {
-          url: "http://localhost:8080/s/123e4567-e89b-12d3-a456-426614174000#bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb:LPJNul-wow4m6Dsqxbning",
+          url: "http://localhost:8080/s/01KF0SR30C1X5CASYPDAJ0G6GB#bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb:LPJNul-wow4m6Dsqxbning",
           expected: {
-            secretId: "123e4567-e89b-12d3-a456-426614174000",
+            secretId: "01KF0SR30C1X5CASYPDAJ0G6GB",
             secretKey: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", // 43 chars
             hash: "LPJNul-wow4m6Dsqxbning",
           },
@@ -38,8 +38,8 @@ describe("UrlParser", () => {
 
     test("rejects URLs without hash (no legacy support)", () => {
       const testCases = [
-        "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-        "http://localhost:8080/s/123e4567-e89b-12d3-a456-426614174000#ccccccccccccccccccccccccccccccccccccccccccc",
+        "https://example.com/s/01KF0SR30C1X5CASYPDAJ0G6GB#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "http://localhost:8080/s/01KF0SR30C1X5CASYPDAJ0G6GB#ccccccccccccccccccccccccccccccccccccccccccc",
       ];
 
       for (const url of testCases) {
@@ -55,9 +55,9 @@ describe("UrlParser", () => {
 
     test("handles valid base64url hash characters", () => {
       const urls = [
-        "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:47DEQpj8HBSa-_TImW-5JA",
-        "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:LPJNul-wow4m6Dsqxbning",
-        "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:XohImNooBHFR0OVvjcYpJw",
+        "https://example.com/s/01KF0SR30C1X5CASYPDAJ0G6GB#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:47DEQpj8HBSa-_TImW-5JA",
+        "https://example.com/s/01KF0SR30C1X5CASYPDAJ0G6GB#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:LPJNul-wow4m6Dsqxbning",
+        "https://example.com/s/01KF0SR30C1X5CASYPDAJ0G6GB#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:XohImNooBHFR0OVvjcYpJw",
       ];
 
       for (const url of urls) {
@@ -66,8 +66,7 @@ describe("UrlParser", () => {
     });
 
     test("rejects URLs with colon but empty hash", () => {
-      const url =
-        "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:";
+      const url = "https://example.com/s/01KF0SR30C1X5CASYPDAJ0G6GB#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:";
 
       expect(() => UrlParser.parseSecretUrl(url)).toThrow();
       try {
@@ -80,7 +79,7 @@ describe("UrlParser", () => {
 
     test("correctly strips hash prefix before splitting", () => {
       const url =
-        "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:47DEQpj8HBSa-_TImW-5JA";
+        "https://example.com/s/01KF0SR30C1X5CASYPDAJ0G6GB#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:47DEQpj8HBSa-_TImW-5JA";
 
       const result = UrlParser.parseSecretUrl(url);
 
@@ -93,8 +92,7 @@ describe("UrlParser", () => {
     });
 
     test("rejects URLs without hash (former legacy format)", () => {
-      const url =
-        "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+      const url = "https://example.com/s/01KF0SR30C1X5CASYPDAJ0G6GB#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
 
       expect(() => UrlParser.parseSecretUrl(url)).toThrow();
       try {
@@ -107,11 +105,11 @@ describe("UrlParser", () => {
 
     test("rejects URLs with invalid hash format", () => {
       const invalidUrls = [
-        "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:invalid_hash_format",
-        "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:too_short",
-        "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:contains_invalid+chars",
-        "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:contains_invalid/chars",
-        "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:contains_invalid=chars",
+        "https://example.com/s/01KF0SR30C1X5CASYPDAJ0G6GB#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:invalid_hash_format",
+        "https://example.com/s/01KF0SR30C1X5CASYPDAJ0G6GB#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:too_short",
+        "https://example.com/s/01KF0SR30C1X5CASYPDAJ0G6GB#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:contains_invalid+chars",
+        "https://example.com/s/01KF0SR30C1X5CASYPDAJ0G6GB#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:contains_invalid/chars",
+        "https://example.com/s/01KF0SR30C1X5CASYPDAJ0G6GB#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:contains_invalid=chars",
       ];
 
       for (const url of invalidUrls) {
@@ -127,8 +125,8 @@ describe("UrlParser", () => {
 
     test("rejects URLs with invalid key format even with valid hash", () => {
       const invalidUrls = [
-        "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#invalid_key:47DEQpj8HBSa-_TImW-5JA",
-        "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#too_short:47DEQpj8HBSa-_TImW-5JA",
+        "https://example.com/s/01KF0SR30C1X5CASYPDAJ0G6GB#invalid_key:47DEQpj8HBSa-_TImW-5JA",
+        "https://example.com/s/01KF0SR30C1X5CASYPDAJ0G6GB#too_short:47DEQpj8HBSa-_TImW-5JA",
       ];
 
       for (const url of invalidUrls) {
@@ -142,18 +140,13 @@ describe("UrlParser", () => {
     });
 
     test("rejects URLs with invalid secret ID even with valid key and hash", () => {
-      const invalidUrls = [
-        "https://example.com/s/invalid-uuid#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:47DEQpj8HBSa-_TImW-5JA",
-        "https://example.com/s/550e8400-e29b-41d4-a716-44665544000Z#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:47DEQpj8HBSa-_TImW-5JA",
-      ];
-
-      for (const url of invalidUrls) {
-        expect(() => UrlParser.parseSecretUrl(url)).toThrow();
-        try {
-          UrlParser.parseSecretUrl(url);
-        } catch (error: any) {
-          expect(error.code).toBe(HakanaiErrorCodes.INVALID_SECRET_ID);
-        }
+      const url =
+        "https://example.com/s/invalid-ulid#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:47DEQpj8HBSa-_TImW-5JA";
+      expect(() => UrlParser.parseSecretUrl(url)).toThrow();
+      try {
+        UrlParser.parseSecretUrl(url);
+      } catch (error: any) {
+        expect(error.code).toBe(HakanaiErrorCodes.INVALID_SECRET_ID);
       }
     });
 
@@ -176,7 +169,7 @@ describe("UrlParser", () => {
     });
 
     test("rejects URLs without fragment", () => {
-      const url = "https://example.com/s/550e8400-e29b-41d4-a716-446655440000";
+      const url = "https://example.com/s/01KF0SR30C1X5CASYPDAJ0G6GB0";
 
       expect(() => UrlParser.parseSecretUrl(url)).toThrow();
       try {
@@ -193,7 +186,7 @@ describe("UrlParser", () => {
       // So fragmentParts[1] would just be "hash", not "hash:extra:data"
       // Let's test this behavior
       const url =
-        "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:47DEQpj8HBSa-_TImW-5JA:extra:data";
+        "https://example.com/s/01KF0SR30C1X5CASYPDAJ0G6GB#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:47DEQpj8HBSa-_TImW-5JA:extra:data";
 
       // This should actually succeed because fragmentParts[1] is just the valid hash
       const result = UrlParser.parseSecretUrl(url);
@@ -206,16 +199,14 @@ describe("UrlParser", () => {
     test("provides helpful error messages", () => {
       try {
         UrlParser.parseSecretUrl(
-          "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:invalid",
+          "https://example.com/s/01KF0SR30C1X5CASYPDAJ0G6GB#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:invalid",
         );
       } catch (error: any) {
         expect(error.message).toBe("Hash must be a 22-character base64url string (truncated SHA-256)");
       }
 
       try {
-        UrlParser.parseSecretUrl(
-          "https://example.com/s/550e8400-e29b-41d4-a716-446655440000#invalid:47DEQpj8HBSa-_TImW-5JA",
-        );
+        UrlParser.parseSecretUrl("https://example.com/s/01KF0SR30C1X5CASYPDAJ0G6GB#invalid:47DEQpj8HBSa-_TImW-5JA");
       } catch (error: any) {
         expect(error.message).toBe("Secret key must be a 43-character base64url string (32 bytes)");
       }

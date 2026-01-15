@@ -12,7 +12,7 @@ Hakanai implements a **separation of concerns** security model:
 ### Zero-Knowledge Flow
 
 1. **Client encrypts** secret with AES-256-GCM
-2. **Server stores** only encrypted blob + UUID
+2. **Server stores** only encrypted blob + secret identifier
 3. **URL contains** decryption key (or shared separately)
 4. **Recipient decrypts** client-side
 5. **Secret auto-destructs** after first access

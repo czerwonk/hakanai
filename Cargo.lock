@@ -1226,6 +1226,7 @@ dependencies = [
  "tokio",
  "ulid",
  "url",
+ "uuid",
  "zeroize",
 ]
 

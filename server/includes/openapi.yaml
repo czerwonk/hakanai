@@ -137,7 +137,7 @@ paths:
         - name: id
           in: path
           required: true
-          description: UUID of the secret to retrieve
+          description: ULID of the secret to retrieve
           schema:
             type: string
             format: ulid

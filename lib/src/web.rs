@@ -7,6 +7,7 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use reqwest::{Body, Url};
 use ulid::Ulid;
+use uuid::Uuid;
 
 use crate::client::{Client, ClientError};
 use crate::models::{PostSecretRequest, PostSecretResponse, restrictions};
@@ -58,7 +59,7 @@ impl Client<Vec<u8>> for WebClient {
 
         let timeout = opt.timeout.unwrap_or(DEFAULT_REQUEST_TIMEOUT);
         let user_agent = opt.user_agent.unwrap_or(DEFAULT_USER_AGENT.to_string());
-        let request_id = Ulid::new().to_string();
+        let request_id = Uuid::new_v4().to_string();
 
         let mut req = self
             .web_client
@@ -106,7 +107,7 @@ impl Client<Vec<u8>> for WebClient {
         let opt = opts.unwrap_or_default();
         let user_agent = opt.user_agent.unwrap_or(DEFAULT_USER_AGENT.to_string());
         let timeout = opt.timeout.unwrap_or(DEFAULT_REQUEST_TIMEOUT);
-        let request_id = Ulid::new().to_string();
+        let request_id = Uuid::new_v4().to_string();
 
         let mut req = self
             .web_client
