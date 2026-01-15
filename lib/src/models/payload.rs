@@ -169,4 +169,35 @@ mod tests {
         assert_eq!(payload.data.len(), 0);
         assert_eq!(payload.filename, Some("".to_string()));
     }
+
+    #[test]
+    fn test_deserialize_invalid_msgpack() {
+        let invalid_bytes = b"not valid msgpack data";
+        let result = Payload::deserialize(invalid_bytes);
+        assert!(result.is_err(), "should fail on invalid msgpack data");
+    }
+
+    #[test]
+    fn test_deserialize_empty_bytes() {
+        let result = Payload::deserialize(&[]);
+        assert!(result.is_err(), "should fail on empty input");
+    }
+
+    #[test]
+    fn test_deserialize_truncated_data() {
+        let payload = Payload::from_bytes(b"test").with_filename("test.txt");
+        let serialized = payload.serialize().unwrap();
+
+        let truncated = &serialized[..serialized.len() / 2];
+        let result = Payload::deserialize(truncated);
+        assert!(result.is_err(), "should fail on truncated data");
+    }
+
+    #[test]
+    fn test_deserialize_wrong_structure() {
+        // Valid msgpack but wrong structure (a simple integer)
+        let wrong_structure = rmp_serde::to_vec(&42i32).unwrap();
+        let result = Payload::deserialize(&wrong_structure);
+        assert!(result.is_err(), "should fail on wrong msgpack structure");
+    }
 }
