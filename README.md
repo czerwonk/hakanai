@@ -25,6 +25,10 @@ Hakanai embodies the Japanese concept of transience - secrets that exist only fo
 
 **Enhanced Security Mode**: With `--separate-key`, the secret URL and decryption key are provided separately, allowing you to share them through different communication channels for defense in depth.
 
+## Breaking Changes
+
+With version 3.x hakanai has switched from using UUIDs as secret identifiers to ULIDs. This allows for shorter URLs. Secret URLs created with previous versions below 3.x will not work anymore. Also the secret storage format has changed. Secrets are now encoded using MessagePack instead of JSON. This change reduces secret size significantly since binary data has not to be base64-encoded anymore.
+
 ## Quick Start
 
 ### Docker Compose (Recommended)
