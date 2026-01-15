@@ -125,7 +125,7 @@ class PayloadDataImpl implements PayloadData {
     const [data, filename] = decoded;
 
     // Validate data is Uint8Array or can be converted
-    if (!(data instanceof Uint8Array)) {
+    if (!Array.isArray(data)) {
       throw new HakanaiError(HakanaiErrorCodes.INVALID_PAYLOAD, "Invalid payload: data must be binary");
     }
 
