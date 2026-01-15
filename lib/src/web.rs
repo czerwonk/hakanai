@@ -6,7 +6,6 @@ use std::time::Duration;
 use async_trait::async_trait;
 use bytes::Bytes;
 use reqwest::{Body, Url};
-use ulid::Ulid;
 use uuid::Uuid;
 
 use crate::client::{Client, ClientError};
