@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
+import { encode, decode } from "@msgpack/msgpack";
 import { HakanaiError, HakanaiErrorCodes } from "./errors";
 
 interface PayloadData {
-  readonly data: string;
+  readonly data: Uint8Array;
   readonly filename?: string;
 
   /**
@@ -17,34 +18,39 @@ interface PayloadData {
   setFromBase64(base64Data: string): void;
 
   /**
-   * Decode the base64-encoded data field to a readable string
+   * Return the payload data as a UTF-8 string
    */
-  decode(): string;
+  text(): string;
 
-  /**
-   * Decode the base64-encoded data field to bytes for binary data
+  /*
+   * Return the raw bytes of the payload data
    */
-  decodeBytes(): Uint8Array;
+  bytes(): Uint8Array;
 
   /*
    * Set the filename associated with the payload (optional)
    */
   setFilename(filename: string): void;
+
+  /**
+   * Serialize the payload to MessagePack format matching Rust's rmp_serde
+   */
+  serialize(): Uint8Array;
 }
 
 /**
  * PayloadData implementation class
  */
 class PayloadDataImpl implements PayloadData {
-  private _data: string = "";
+  private _data: Uint8Array = new Uint8Array();
   private _filename?: string;
 
-  constructor(data: string = "", filename?: string) {
+  constructor(data: Uint8Array = new Uint8Array(), filename?: string) {
     this._data = data;
     this._filename = filename;
   }
 
-  get data(): string {
+  get data(): Uint8Array {
     return this._data;
   }
 
@@ -53,20 +59,7 @@ class PayloadDataImpl implements PayloadData {
   }
 
   setFromBytes(bytes: ArrayBuffer): void {
-    if (!(bytes instanceof ArrayBuffer)) {
-      throw new HakanaiError(HakanaiErrorCodes.EXPECTED_UINT8_ARRAY, "Data must be a ArrayBuffer");
-    }
-
-    // Convert bytes to base64 for storage
-    let binaryString = "";
-    const chunkSize = 8192;
-
-    for (let i = 0; i < bytes.byteLength; i += chunkSize) {
-      const chunk = bytes.slice(i, i + chunkSize);
-      binaryString += String.fromCharCode(...new Uint8Array(chunk));
-    }
-
-    this._data = btoa(binaryString);
+    this._data = new Uint8Array(bytes);
   }
 
   setFromBase64(base64Data: string): void {
@@ -79,25 +72,69 @@ class PayloadDataImpl implements PayloadData {
       throw new HakanaiError(HakanaiErrorCodes.INVALID_INPUT_FORMAT, "Invalid base64 format");
     }
 
-    this._data = base64Data;
-  }
-
-  decode(): string {
-    const decoder = new TextDecoder();
-    return decoder.decode(this.decodeBytes());
-  }
-
-  decodeBytes(): Uint8Array {
-    const binaryString = atob(this._data);
+    const binaryString = atob(base64Data);
     const bytes = new Uint8Array(binaryString.length);
     for (let i = 0; i < binaryString.length; i++) {
       bytes[i] = binaryString.charCodeAt(i);
     }
-    return bytes;
+    this._data = bytes;
+  }
+
+  text(): string {
+    const decoder = new TextDecoder();
+    return decoder.decode(this._data.buffer);
+  }
+
+  bytes(): Uint8Array {
+    return this._data;
   }
 
   setFilename(filename: string): void {
     this._filename = filename;
+  }
+
+  /**
+   * Serialize the payload to MessagePack format.
+   * The payload is serialized as a 2-element array: [data, filename]
+   */
+  serialize(): Uint8Array {
+    const payload: [Uint8Array, string | null] = [this._data, this._filename ?? null];
+    return new Uint8Array(encode(payload));
+  }
+
+  /**
+   * Deserialize a MessagePack payload.
+   *
+   * @param bytes - MessagePack-encoded bytes
+   * @returns PayloadDataImpl instance
+   * @throws {HakanaiError} If deserialization fails or format is invalid
+   */
+  static deserialize(bytes: ArrayBuffer): PayloadDataImpl {
+    let decoded: unknown;
+    try {
+      decoded = decode(bytes);
+    } catch {
+      throw new HakanaiError(HakanaiErrorCodes.INVALID_PAYLOAD, "Failed to decode MessagePack payload");
+    }
+
+    // Validate the decoded structure is a 2-element array
+    if (!Array.isArray(decoded) || decoded.length !== 2) {
+      throw new HakanaiError(HakanaiErrorCodes.INVALID_PAYLOAD, "Invalid payload structure: expected 2-element array");
+    }
+
+    const [data, filename] = decoded;
+
+    // Validate data is Uint8Array or can be converted
+    if (!Array.isArray(data) && !(data instanceof Uint8Array)) {
+      throw new HakanaiError(HakanaiErrorCodes.INVALID_PAYLOAD, "Invalid payload: data must be binary");
+    }
+
+    // Validate filename is string or null
+    if (filename !== null && typeof filename !== "string") {
+      throw new HakanaiError(HakanaiErrorCodes.INVALID_PAYLOAD, "Invalid payload: filename must be string or null");
+    }
+
+    return new PayloadDataImpl(new Uint8Array(data), filename ?? undefined);
   }
 }
 

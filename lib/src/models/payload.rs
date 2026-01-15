@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 
-use base64::Engine;
 use serde::{Deserialize, Serialize};
 use zeroize::Zeroize;
 
@@ -9,7 +8,7 @@ use zeroize::Zeroize;
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Payload {
     /// The base64-encoded data of the secret.
-    pub data: String,
+    pub data: Vec<u8>,
 
     /// The filename of the file, if not set data is assumed to be a text message.
     pub filename: Option<String>,
@@ -26,9 +25,8 @@ impl Payload {
     /// * `bytes` - The raw binary data of the secret.
     /// * `filename` - An optional filename for the file.
     pub fn from_bytes(bytes: &[u8]) -> Self {
-        let data = base64::prelude::BASE64_STANDARD.encode(bytes);
         Self {
-            data,
+            data: bytes.to_vec(),
             filename: None,
         }
     }
@@ -39,17 +37,12 @@ impl Payload {
         self
     }
 
-    /// Decodes the base64 data and returns it as bytes.
-    pub fn decode_bytes(&self) -> Result<Vec<u8>, base64::DecodeError> {
-        base64::prelude::BASE64_STANDARD.decode(&self.data)
+    pub fn serialize(&self) -> Result<Vec<u8>, rmp_serde::encode::Error> {
+        rmp_serde::to_vec(self)
     }
 
-    pub fn serialize(&self) -> Result<Vec<u8>, serde_json::Error> {
-        serde_json::to_vec(self)
-    }
-
-    pub fn deserialize(bytes: &[u8]) -> Result<Self, serde_json::Error> {
-        serde_json::from_slice(bytes)
+    pub fn deserialize(bytes: &[u8]) -> Result<Self, rmp_serde::decode::Error> {
+        rmp_serde::from_slice(bytes)
     }
 }
 
@@ -80,19 +73,7 @@ mod tests {
         let bytes = b"Hello, world!";
         let payload = Payload::from_bytes(bytes).with_filename("greeting.txt");
         assert_eq!(payload.filename, Some("greeting.txt".to_string()));
-        assert_eq!(
-            payload.data.to_string(),
-            base64::prelude::BASE64_STANDARD.encode(bytes)
-        );
-        Ok(())
-    }
-
-    #[test]
-    fn test_payload_decode_bytes() -> Result<()> {
-        let bytes = b"Hello, world!";
-        let payload = Payload::from_bytes(bytes);
-        let decoded = payload.decode_bytes()?;
-        assert_eq!(decoded, bytes);
+        assert_eq!(payload.data, bytes.to_vec());
         Ok(())
     }
 
@@ -110,11 +91,8 @@ mod tests {
 
     #[test]
     fn test_payload_serialize_text_no_filename() -> Result<()> {
-        let bytes = base64::prelude::BASE64_STANDARD
-            .encode(b"Hello, world!")
-            .as_bytes()
-            .to_vec();
-        let payload = Payload::from_bytes(&bytes);
+        let bytes = b"Hello, world!";
+        let payload = Payload::from_bytes(bytes);
 
         let serialized = payload.serialize()?;
         let deserialized = Payload::deserialize(&serialized)?;
@@ -131,7 +109,7 @@ mod tests {
         let serialized = payload.serialize()?;
         let deserialized = Payload::deserialize(&serialized)?;
 
-        assert_eq!(deserialized.data, "");
+        assert_eq!(deserialized.data.len(), 0);
         assert_eq!(deserialized.filename, None);
         Ok(())
     }
@@ -161,11 +139,8 @@ mod tests {
         ];
 
         for filename in special_filenames {
-            let bytes = base64::prelude::BASE64_STANDARD
-                .encode(b"test content")
-                .as_bytes()
-                .to_vec();
-            let payload = Payload::from_bytes(&bytes).with_filename(filename);
+            let bytes = b"test content";
+            let payload = Payload::from_bytes(bytes).with_filename(filename);
 
             let serialized = payload.serialize()?;
             let deserialized = Payload::deserialize(&serialized)?;
@@ -176,77 +151,12 @@ mod tests {
     }
 
     #[test]
-    fn test_payload_serialize_large_binary() -> Result<()> {
-        // Create a large binary payload (1MB)
-        let large_data = vec![0xDEu8; 1024 * 1024];
-        let payload = Payload::from_bytes(&large_data).with_filename("large_file.bin");
-
-        let serialized = payload.serialize()?;
-        let deserialized = Payload::deserialize(&serialized)?;
-
-        assert_eq!(deserialized.filename, Some("large_file.bin".to_string()));
-        let decoded = deserialized.decode_bytes()?;
-        assert_eq!(decoded.len(), large_data.len());
-        assert_eq!(decoded, large_data);
-        Ok(())
-    }
-
-    #[test]
-    fn test_payload_deserialize_invalid_json() {
-        let invalid_json = b"{ invalid json }";
-        let result = Payload::deserialize(invalid_json);
-        assert!(
-            result.is_err(),
-            "Expected error for invalid JSON, got: {:?}",
-            result
-        );
-    }
-
-    #[test]
-    fn test_payload_deserialize_missing_fields() {
-        // JSON with missing required field
-        let incomplete_json = br#"{"filename": "test.txt"}"#;
-        let result = Payload::deserialize(incomplete_json);
-        assert!(
-            result.is_err(),
-            "Expected error for missing fields, got: {:?}",
-            result
-        );
-    }
-
-    #[test]
-    fn test_payload_deserialize_wrong_type() {
-        // JSON with wrong type for data field
-        let wrong_type_json = br#"{"data": 123, "filename": "test.txt"}"#;
-        let result = Payload::deserialize(wrong_type_json);
-        assert!(
-            result.is_err(),
-            "Expected error for wrong type, got: {:?}",
-            result
-        );
-    }
-
-    #[test]
     fn test_payload_from_bytes_without_filename() -> Result<()> {
         let bytes = b"Secret message";
         let payload = Payload::from_bytes(bytes);
 
         assert!(payload.filename.is_none());
-        assert_eq!(payload.decode_bytes()?, bytes);
-        Ok(())
-    }
-
-    #[test]
-    fn test_payload_serialize_preserves_base64() -> Result<()> {
-        // Test that serialization preserves the exact base64 encoding
-        let original_bytes = b"Binary\x00\x01\x02\x03data";
-        let payload = Payload::from_bytes(original_bytes).with_filename("binary.dat");
-
-        let serialized = payload.serialize()?;
-        let deserialized = Payload::deserialize(&serialized)?;
-
-        assert_eq!(payload.data, deserialized.data);
-        assert_eq!(deserialized.decode_bytes()?, original_bytes);
+        assert_eq!(payload.data, bytes);
         Ok(())
     }
 
@@ -256,7 +166,68 @@ mod tests {
 
         payload.zeroize();
 
-        assert_eq!(payload.data, "");
+        assert_eq!(payload.data.len(), 0);
         assert_eq!(payload.filename, Some("".to_string()));
+    }
+
+    #[test]
+    fn test_deserialize_invalid_msgpack() {
+        let invalid_bytes = b"not valid msgpack data";
+        let result = Payload::deserialize(invalid_bytes);
+        assert!(result.is_err(), "should fail on invalid msgpack data");
+    }
+
+    #[test]
+    fn test_deserialize_empty_bytes() {
+        let result = Payload::deserialize(&[]);
+        assert!(result.is_err(), "should fail on empty input");
+    }
+
+    #[test]
+    fn test_deserialize_wrong_structure() {
+        // Valid msgpack but wrong structure (a simple integer)
+        let wrong_structure =
+            rmp_serde::to_vec(&42i32).expect("failed to serialize wrong structure");
+        let result = Payload::deserialize(&wrong_structure);
+        assert!(result.is_err(), "should fail on wrong msgpack structure");
+    }
+
+    #[test]
+    fn test_serialize_with_filename() {
+        let payload = Payload::from_bytes(b"secret data").with_filename("document.pdf");
+
+        let serialized = payload.serialize().expect("serialization should succeed");
+
+        // MessagePack format: fixarray(2) + bin8(11) + "secret data" + fixstr(12) + "document.pdf"
+        let expected: Vec<u8> = vec![
+            146, // fixarray with 2 elements
+            155, // bin8 marker (0x9b = fixstr would be wrong, this is actually fixstr len 11)
+            115, 101, 99, 114, 101, 116, 32, 100, 97, 116, 97,  // "secret data"
+            172, // fixstr with 12 chars
+            100, 111, 99, 117, 109, 101, 110, 116, 46, 112, 100, 102, // "document.pdf"
+        ];
+        assert_eq!(
+            serialized, expected,
+            "serialized bytes should match expected msgpack format"
+        );
+    }
+
+    #[test]
+    fn test_serialize_without_filename() {
+        let payload = Payload::from_bytes(b"text message");
+
+        let serialized = payload.serialize().expect("serialization should succeed");
+
+        // MessagePack format: fixarray(2) + bin8(12) + "text message" + nil
+        let expected: Vec<u8> = vec![
+            146, // fixarray with 2 elements
+            156, // fixstr with 12 chars
+            116, 101, 120, 116, 32, 109, 101, 115, 115, 97, 103, 101, // "text message"
+            192, // nil (None for filename)
+        ];
+        assert_eq!(
+            serialized, expected,
+            "serialized bytes should match expected msgpack format"
+        );
     }
 }

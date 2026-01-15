@@ -77,7 +77,7 @@ class InputValidation {
   }
 
   /**
-   * Validate secret ID format (UUID)
+   * Validate secret ID format (ULID)
    * @param id - Secret ID string to validate
    * @throws {HakanaiError} If ID format is invalid
    */
@@ -90,9 +90,9 @@ class InputValidation {
       throw new HakanaiError(HakanaiErrorCodes.MISSING_SECRET_ID, "Secret ID cannot be empty");
     }
 
-    // Validate UUID format (flexible - supports v1-v8)
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
-      throw new HakanaiError(HakanaiErrorCodes.INVALID_SECRET_ID, "Secret ID must be a valid UUID");
+    // Validate ULID format
+    if (!/^[0-9A-HJKMNP-TV-Z]{26}$/.test(id)) {
+      throw new HakanaiError(HakanaiErrorCodes.INVALID_SECRET_ID, "Secret ID must be a valid ULID");
     }
   }
 

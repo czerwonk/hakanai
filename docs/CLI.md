@@ -108,7 +108,7 @@ Retrieve and display a secret.
 # Get using full URL
 hakanai get https://hakanai.example.com/secret/550e8400-e29b-41d4-a716-446655440000
 
-# Get using short link format  
+# Get using short link format
 hakanai get https://hakanai.example.com/s/550e8400-e29b-41d4-a716-446655440000
 
 # Get with separate key (when --separate-key was used)
@@ -211,7 +211,7 @@ echo "mypassword123" | hakanai send
 hakanai send -f ~/Documents/contract.pdf
 
 # Quick retrieval to stdout
-hakanai get https://hakanai.example.com/s/uuid --to-stdout
+hakanai get https://hakanai.example.com/s/ulid --to-stdout
 ```
 
 ### Enterprise/Team Usage

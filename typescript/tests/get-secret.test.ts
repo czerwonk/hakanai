@@ -115,11 +115,11 @@ describe("get-secret.ts", () => {
       const { hasUrlFragment } = getSecretModule;
 
       // Real-world crypto key patterns
-      expect(hasUrlFragment("https://example.com/s/uuid#AbCdEfGhIjKlMnOpQrStUvWxYz123456")).toBe(true);
-      expect(hasUrlFragment("https://example.com/s/uuid#base64-url-safe_key")).toBe(true);
+      expect(hasUrlFragment("https://example.com/s/ulid#AbCdEfGhIjKlMnOpQrStUvWxYz123456")).toBe(true);
+      expect(hasUrlFragment("https://example.com/s/ulid#base64-url-safe_key")).toBe(true);
 
       // Should not false positive on empty fragments
-      expect(hasUrlFragment("https://example.com/s/uuid#")).toBe(false);
+      expect(hasUrlFragment("https://example.com/s/ulid#")).toBe(false);
     });
   });
 });

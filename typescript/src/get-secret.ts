@@ -252,7 +252,7 @@ function setupUrlInput(): void {
   const urlInput = document.getElementById("secretUrl") as HTMLInputElement;
   const keyInput = document.getElementById("secretKey") as HTMLInputElement;
 
-  urlInput.placeholder = `${baseUrl}/s/uuid#key`;
+  urlInput.placeholder = `${baseUrl}/s/id#key`;
 
   if (window.location.pathname.match(/^\/s\/[^\/]+$/)) {
     urlInput.value = window.location.href;

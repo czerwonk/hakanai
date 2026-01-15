@@ -163,7 +163,7 @@ impl Drop for CryptoContext {
 ///
 /// // Receive the secret (automatically decrypted)
 /// let received = client.receive_secret(secret_url, None).await?;
-/// assert_eq!(received.data, "My secret message");
+/// assert_eq!(received.data, b"My secret message");
 /// # Ok(())
 /// # }
 /// ```
@@ -409,7 +409,7 @@ mod tests {
             .receive_secret(send_result, None)
             .await?;
 
-        assert_eq!(receive_result.decode_bytes()?, secret_data);
+        assert_eq!(receive_result.data, secret_data);
         Ok(())
     }
 

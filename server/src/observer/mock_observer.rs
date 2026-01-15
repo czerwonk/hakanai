@@ -4,7 +4,7 @@ use std::sync::{Arc, Mutex};
 
 use actix_web::http::header::HeaderMap;
 use async_trait::async_trait;
-use uuid::Uuid;
+use ulid::Ulid;
 
 use super::{SecretEventContext, SecretObserver};
 
@@ -14,8 +14,8 @@ use super::{SecretEventContext, SecretObserver};
 /// for verification in tests.
 #[derive(Clone)]
 pub struct MockObserver {
-    created_events: Arc<Mutex<Vec<(Uuid, HeaderMap)>>>,
-    retrieved_events: Arc<Mutex<Vec<(Uuid, HeaderMap)>>>,
+    created_events: Arc<Mutex<Vec<(Ulid, HeaderMap)>>>,
+    retrieved_events: Arc<Mutex<Vec<(Ulid, HeaderMap)>>>,
 }
 
 impl MockObserver {
@@ -27,33 +27,33 @@ impl MockObserver {
     }
 
     // Private accessor functions for cleaner lock handling
-    fn get_created_events_mut(&self) -> std::sync::MutexGuard<'_, Vec<(Uuid, HeaderMap)>> {
+    fn get_created_events_mut(&self) -> std::sync::MutexGuard<'_, Vec<(Ulid, HeaderMap)>> {
         self.created_events.lock().expect("Failed to acquire lock")
     }
 
-    fn get_retrieved_events_mut(&self) -> std::sync::MutexGuard<'_, Vec<(Uuid, HeaderMap)>> {
+    fn get_retrieved_events_mut(&self) -> std::sync::MutexGuard<'_, Vec<(Ulid, HeaderMap)>> {
         self.retrieved_events
             .lock()
             .expect("Failed to acquire lock")
     }
 
-    pub fn get_created_events(&self) -> Vec<(Uuid, HeaderMap)> {
+    pub fn get_created_events(&self) -> Vec<(Ulid, HeaderMap)> {
         self.get_created_events_mut().clone()
     }
 
-    pub fn get_retrieved_events(&self) -> Vec<(Uuid, HeaderMap)> {
+    pub fn get_retrieved_events(&self) -> Vec<(Ulid, HeaderMap)> {
         self.get_retrieved_events_mut().clone()
     }
 }
 
 #[async_trait]
 impl SecretObserver for MockObserver {
-    async fn on_secret_created(&self, secret_id: Uuid, context: &SecretEventContext) {
+    async fn on_secret_created(&self, secret_id: Ulid, context: &SecretEventContext) {
         self.get_created_events_mut()
             .push((secret_id, context.headers.clone()));
     }
 
-    async fn on_secret_retrieved(&self, secret_id: Uuid, context: &SecretEventContext) {
+    async fn on_secret_retrieved(&self, secret_id: Ulid, context: &SecretEventContext) {
         self.get_retrieved_events_mut()
             .push((secret_id, context.headers.clone()));
     }

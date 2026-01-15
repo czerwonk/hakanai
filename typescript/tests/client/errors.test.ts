@@ -64,7 +64,7 @@ const createMockXHR = (
     upload: {},
     status: config.status || 200,
     statusText: config.statusText || "OK",
-    responseText: config.responseText || '{"id": "test-uuid"}',
+    responseText: config.responseText || '{"id": "test-id"}',
     onload: null as any,
     onerror: null as any,
   };
@@ -227,12 +227,11 @@ describe("Error Handling", () => {
 
     const client = new HakanaiClient("http://localhost:8080");
 
-    // Use a proper UUID and 32-byte base64 key for the test
-    const validUuid = "550e8400-e29b-41d4-a716-446655440000";
+    const validId = "01KF0SR30C1X5CASYPDAJ0G6GB";
     const validKey = Base64UrlSafe.encode(new Uint8Array(32)); // 32 zero bytes
     const validHash = "AAAAAAAAAAAAAAAAAAAAAA"; // 22-char base64url hash
     await expect(
-      client.receivePayload("http://localhost:8080/s/" + validUuid + "#" + validKey + ":" + validHash),
+      client.receivePayload("http://localhost:8080/s/" + validId + "#" + validKey + ":" + validHash),
     ).rejects.toThrow("Secret not found or has expired");
   });
 });
@@ -337,11 +336,11 @@ describe("Error Code Constants", () => {
     }
 
     try {
-      InputValidation.validateSecretId("not-a-uuid");
+      InputValidation.validateSecretId("invalid-id");
       fail("Expected HakanaiError to be thrown");
     } catch (error: any) {
       expect(error.code).toBe(HakanaiErrorCodes.INVALID_SECRET_ID);
-      expect(error.message).toBe("Secret ID must be a valid UUID");
+      expect(error.message).toBe("Secret ID must be a valid ULID");
     }
 
     // Test secret key: missing vs invalid

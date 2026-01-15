@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use anyhow::Result;
-use uuid::Uuid;
+use ulid::Ulid;
 
 use opentelemetry::trace::TracerProvider;
 use opentelemetry::{KeyValue, global};
@@ -99,7 +99,7 @@ fn get_resource() -> Resource {
     let instance_id = std::env::var("POD_NAME")
         .or_else(|_| std::env::var("HOSTNAME"))
         .or_else(|_| std::env::var("CONTAINER_ID"))
-        .unwrap_or_else(|_| Uuid::new_v4().to_string());
+        .unwrap_or_else(|_| Ulid::new().to_string());
 
     Resource::builder()
         .with_service_name(service_name)

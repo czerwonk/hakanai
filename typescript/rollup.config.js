@@ -1,7 +1,9 @@
 import typescript from "@rollup/plugin-typescript";
+import resolve from "@rollup/plugin-node-resolve";
 
 const commonConfig = {
   plugins: [
+    resolve(),
     typescript({
       tsconfig: "./tsconfig.json",
       sourceMap: false,

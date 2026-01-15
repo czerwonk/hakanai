@@ -8,7 +8,7 @@ use anyhow::Result;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use tracing::{instrument, warn};
-use uuid::Uuid;
+use ulid::Ulid;
 
 use super::{SecretEventContext, SecretObserver};
 
@@ -22,8 +22,8 @@ pub enum WebhookAction {
 /// Webhook notification payload.
 #[derive(Serialize, Deserialize, Debug)]
 pub struct WebhookPayload {
-    /// UUID of the secret.
-    pub secret_id: uuid::Uuid,
+    /// Unique identifier of the secret.
+    pub secret_id: Ulid,
     /// Action that triggered the webhook.
     pub action: WebhookAction,
     /// Additional details about the request (e.g. exctracted from headers)
@@ -41,7 +41,7 @@ pub struct WebhookObserver {
 #[async_trait]
 impl SecretObserver for WebhookObserver {
     #[instrument(skip(self, context))]
-    async fn on_secret_created(&self, secret_id: Uuid, context: &SecretEventContext) {
+    async fn on_secret_created(&self, secret_id: Ulid, context: &SecretEventContext) {
         let mut details = self.filter_headers(&context.headers);
         if let Some(user_type) = &context.user_type {
             details.insert("user_type".to_string(), user_type.to_string());
@@ -71,7 +71,7 @@ impl SecretObserver for WebhookObserver {
     }
 
     #[instrument(skip(self, context))]
-    async fn on_secret_retrieved(&self, secret_id: Uuid, context: &SecretEventContext) {
+    async fn on_secret_retrieved(&self, secret_id: Ulid, context: &SecretEventContext) {
         let payload = WebhookPayload {
             secret_id,
             action: WebhookAction::Retrieved,

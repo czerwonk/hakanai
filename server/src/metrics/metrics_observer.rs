@@ -8,7 +8,7 @@
 use async_trait::async_trait;
 use opentelemetry::KeyValue;
 use tracing::instrument;
-use uuid::Uuid;
+use ulid::Ulid;
 
 use hakanai_lib::models::SecretRestrictions;
 
@@ -31,7 +31,7 @@ impl MetricsObserver {
 #[async_trait]
 impl SecretObserver for MetricsObserver {
     #[instrument(skip(self, context))]
-    async fn on_secret_created(&self, _secret_id: Uuid, context: &SecretEventContext) {
+    async fn on_secret_created(&self, _secret_id: Ulid, context: &SecretEventContext) {
         // Determine user type for labeling
         let user_type = context
             .user_type
@@ -71,7 +71,7 @@ impl SecretObserver for MetricsObserver {
     }
 
     #[instrument(skip(self, _context))]
-    async fn on_secret_retrieved(&self, _secret_id: Uuid, _context: &SecretEventContext) {
+    async fn on_secret_retrieved(&self, _secret_id: Ulid, _context: &SecretEventContext) {
         self.metrics.secrets_retrieved_counter.add(1, &[]);
     }
 }

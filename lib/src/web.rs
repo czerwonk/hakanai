@@ -210,8 +210,8 @@ mod tests {
     use std::error::Error;
     use std::time::Duration;
 
+    use ulid::Ulid;
     use url::Url;
-    use uuid::Uuid;
 
     type Result<T> = std::result::Result<T, Box<dyn Error>>;
 
@@ -220,7 +220,7 @@ mod tests {
         let mut server = mockito::Server::new_async().await;
         let client = WebClient::new();
 
-        let secret_id = Uuid::new_v4();
+        let secret_id = Ulid::new();
         let _m = server
             .mock("POST", "/api/v1/secret")
             .with_status(200)
@@ -280,7 +280,7 @@ mod tests {
         let mut server = mockito::Server::new_async().await;
         let client = WebClient::new();
 
-        let secret_id = Uuid::new_v4();
+        let secret_id = Ulid::new();
         let secret_data = b"my_secret_data";
 
         let _m = server
@@ -304,7 +304,7 @@ mod tests {
         let mut server = mockito::Server::new_async().await;
         let client = WebClient::new();
 
-        let secret_id = Uuid::new_v4();
+        let secret_id = Ulid::new();
 
         let _m = server
             .mock("GET", format!("/s/{secret_id}").as_str())
@@ -357,7 +357,7 @@ mod tests {
         let mut server = mockito::Server::new_async().await;
         let client = WebClient::new();
 
-        let secret_id = Uuid::new_v4();
+        let secret_id = Ulid::new();
         let secret_data = b"passphrase_protected_secret";
 
         let _m = server
@@ -390,7 +390,7 @@ mod tests {
         let mut server = mockito::Server::new_async().await;
         let client = WebClient::new();
 
-        let secret_id = Uuid::new_v4();
+        let secret_id = Ulid::new();
         let secret_data = b"empty_passphrase_secret";
 
         let _m = server
@@ -419,7 +419,7 @@ mod tests {
         let mut server = mockito::Server::new_async().await;
         let client = WebClient::new();
 
-        let secret_id = Uuid::new_v4();
+        let secret_id = Ulid::new();
         let secret_data = b"unprotected_secret";
 
         let _m = server
@@ -451,7 +451,7 @@ mod tests {
         let mut server = mockito::Server::new_async().await;
         let client = WebClient::new();
 
-        let secret_id = Uuid::new_v4();
+        let secret_id = Ulid::new();
 
         let _m = server
             .mock("GET", format!("/s/{secret_id}").as_str())
@@ -481,7 +481,7 @@ mod tests {
         let mut server = mockito::Server::new_async().await;
         let client = WebClient::new();
 
-        let secret_id = Uuid::new_v4();
+        let secret_id = Ulid::new();
         let secret_data = b"multi_option_secret";
 
         let _m = server
@@ -515,7 +515,7 @@ mod tests {
         let mut server = mockito::Server::new_async().await;
         let client = WebClient::new();
 
-        let secret_id = Uuid::new_v4();
+        let secret_id = Ulid::new();
         let secret_data = b"header_format_test";
 
         // Verify the exact hash format

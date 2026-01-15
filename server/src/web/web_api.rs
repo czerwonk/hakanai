@@ -5,7 +5,7 @@ use std::time::Duration;
 
 use actix_web::{HttpRequest, Result, error, get, post, web};
 use tracing::{Span, error, instrument};
-use uuid::Uuid;
+use ulid::Ulid;
 
 use hakanai_lib::models::{
     CreateTokenResponse, PostSecretRequest, PostSecretResponse, SecretRestrictions, restrictions,
@@ -42,7 +42,7 @@ async fn get_secret(
 /// Retrieves and consumes a secret from the data store.
 ///
 /// This function handles the core logic for the `GET /secret/{id}` endpoint.
-/// It parses the UUID from the request path, retrieves the corresponding secret
+/// It parses the Ulid from the request path, retrieves the corresponding secret
 /// from the data store, and returns it. Upon successful retrieval, the secret
 /// is consumed and can no longer be accessed.
 ///
@@ -54,7 +54,7 @@ async fn get_secret(
 /// # Errors
 ///
 /// This function will return an error if:
-/// - The provided ID is not a valid UUID (`ErrorBadRequest`).
+/// - The provided ID is not a valid Ulid (`ErrorBadRequest`).
 /// - The secret is not found in the data store (`ErrorNotFound`).
 /// - An internal error occurs while accessing the data store (`ErrorInternalServerError`).
 #[instrument(skip(app_data, http_req), fields(id = tracing::field::Empty, request_id = tracing::field::Empty), err)]
@@ -63,7 +63,7 @@ pub async fn get_secret_from_request(
     req: web::Path<String>,
     app_data: web::Data<AppData>,
 ) -> Result<String> {
-    let id = Uuid::parse_str(&req.into_inner())
+    let id = Ulid::from_string(&req.into_inner())
         .map_err(|_| error::ErrorBadRequest("Invalid link format"))?;
     Span::current().record("id", id.to_string());
 
@@ -99,7 +99,7 @@ pub async fn get_secret_from_request(
 
 #[instrument(skip(app_data, http_req), err)]
 async fn verify_restrictions_for_secret(
-    id: Uuid,
+    id: Ulid,
     http_req: &HttpRequest,
     app_data: &AppData,
 ) -> Result<()> {
@@ -182,7 +182,7 @@ async fn post_secret(
         ensure_restrictions_are_supported(restrictions, &app_data)?;
     }
 
-    let id = uuid::Uuid::new_v4();
+    let id = Ulid::new();
     let mut ctx = SecretEventContext::new(http_req.headers().clone())
         .with_user_type(user.user_type)
         .with_ttl(req.expires_in)
@@ -283,13 +283,13 @@ async fn post_one_time_token(
 }
 
 /// Extracts and validates the X-Request-Id header from the request.
-/// Only accepts valid UUID v4 format to prevent log injection.
+/// Only accepts valid Ulid v4 format to prevent log injection.
 fn extract_request_id(http_req: &HttpRequest) -> Option<String> {
     http_req
         .headers()
         .get("x-request-id")
         .and_then(|header_value| header_value.to_str().ok())
-        .filter(|request_id| Uuid::parse_str(request_id).is_ok())
+        .filter(|request_id| Ulid::from_string(request_id).is_ok())
         .map(|s| s.to_string())
 }
 
@@ -346,7 +346,7 @@ mod tests {
         .await;
 
         let req = test::TestRequest::get()
-            .uri(&format!("/secret/{}", uuid::Uuid::new_v4()))
+            .uri(&format!("/secret/{}", Ulid::new()))
             .to_request();
 
         let resp = test::call_service(&app, req).await;
@@ -369,7 +369,7 @@ mod tests {
         .await;
 
         let req = test::TestRequest::get()
-            .uri(&format!("/secret/{}", uuid::Uuid::new_v4()))
+            .uri(&format!("/secret/{}", Ulid::new()))
             .to_request();
 
         let resp = test::call_service(&app, req).await;
@@ -390,7 +390,7 @@ mod tests {
         .await;
 
         let req = test::TestRequest::get()
-            .uri(&format!("/secret/{}", uuid::Uuid::new_v4()))
+            .uri(&format!("/secret/{}", Ulid::new()))
             .to_request();
 
         let resp = test::call_service(&app, req).await;
@@ -410,7 +410,7 @@ mod tests {
         .await;
 
         let req = test::TestRequest::get()
-            .uri(&format!("/secret/{}", uuid::Uuid::new_v4()))
+            .uri(&format!("/secret/{}", Ulid::new()))
             .to_request();
 
         let resp = test::call_service(&app, req).await;
@@ -776,7 +776,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_observer_notification_on_secret_retrieval() {
-        let secret_id = Uuid::new_v4();
+        let secret_id = Ulid::new();
         let mock_store = MockSecretStore::new()
             .with_pop_result(SecretStorePopResult::Found("test_secret".to_string()));
         let mock_observer = MockObserver::new();
@@ -867,7 +867,7 @@ mod tests {
     #[actix_web::test]
     async fn test_get_secret_with_ip_restriction_allowed() {
         // Create a secret with IP restrictions that allow the request
-        let secret_id = Uuid::new_v4();
+        let secret_id = Ulid::new();
         let allowed_ips = vec!["192.168.1.0/24".must_parse(), "10.0.0.0/8".must_parse()];
 
         let mock_store = MockSecretStore::new()
@@ -901,7 +901,7 @@ mod tests {
     #[actix_web::test]
     async fn test_get_secret_with_ip_restriction_blocked() {
         // Create a secret with IP restrictions that block the request
-        let secret_id = Uuid::new_v4();
+        let secret_id = Ulid::new();
         let allowed_ips = vec!["192.168.1.0/24".must_parse()];
 
         let mock_store = MockSecretStore::new()
@@ -933,7 +933,7 @@ mod tests {
     #[actix_web::test]
     async fn test_get_secret_with_no_ip_restrictions() {
         // Create a secret without IP restrictions - should be accessible from any IP
-        let secret_id = Uuid::new_v4();
+        let secret_id = Ulid::new();
 
         let mock_store = MockSecretStore::new()
             .with_pop_result(SecretStorePopResult::Found("test_secret".to_string()));
@@ -963,7 +963,7 @@ mod tests {
     #[actix_web::test]
     async fn test_get_secret_with_ipv6_restriction() {
         // Test IPv6 address restrictions
-        let secret_id = Uuid::new_v4();
+        let secret_id = Ulid::new();
         let allowed_ips = vec!["2001:db8::/32".must_parse()];
 
         let mock_store = MockSecretStore::new()
@@ -995,7 +995,7 @@ mod tests {
     #[actix_web::test]
     async fn test_get_secret_with_multiple_ip_restrictions() {
         // Test with multiple IP ranges allowed
-        let secret_id = Uuid::new_v4();
+        let secret_id = Ulid::new();
         let allowed_ips = vec![
             "192.168.1.0/24".must_parse(),
             "10.0.0.0/8".must_parse(),
@@ -1031,7 +1031,7 @@ mod tests {
     #[actix_web::test]
     async fn test_get_secret_with_single_ip_restriction() {
         // Test restriction to a single IP address (using /32 for IPv4)
-        let secret_id = Uuid::new_v4();
+        let secret_id = Ulid::new();
         let allowed_ips = vec!["192.168.1.100/32".must_parse()];
 
         let mock_store = MockSecretStore::new()
@@ -1144,7 +1144,7 @@ mod tests {
     #[actix_web::test]
     async fn test_get_secret_ip_restriction_with_proxy_chain() {
         // Test IP extraction from proxy chain (multiple IPs in x-forwarded-for)
-        let secret_id = Uuid::new_v4();
+        let secret_id = Ulid::new();
         let allowed_ips = vec!["192.168.1.0/24".must_parse()];
 
         let mock_store = MockSecretStore::new()
@@ -1176,7 +1176,7 @@ mod tests {
     #[actix_web::test]
     async fn test_get_secret_with_empty_ip_restrictions() {
         // Test that empty IP restrictions array means no access allowed
-        let secret_id = Uuid::new_v4();
+        let secret_id = Ulid::new();
         let allowed_ips = vec![]; // Empty restrictions
 
         let mock_store = MockSecretStore::new()
@@ -1511,7 +1511,7 @@ mod tests {
     // Tests for passphrase functionality
     #[actix_web::test]
     async fn test_get_secret_with_correct_passphrase() {
-        let secret_id = uuid::Uuid::new_v4();
+        let secret_id = Ulid::new();
         let passphrase_hash = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"; // SHA-256 of "password"
 
         let mut restrictions = SecretRestrictions::default();
@@ -1546,7 +1546,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_get_secret_with_wrong_passphrase() {
-        let secret_id = uuid::Uuid::new_v4();
+        let secret_id = Ulid::new();
         let correct_hash = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"; // SHA-256 of "password"
         let wrong_hash = "ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f"; // SHA-256 of "secret"
 
@@ -1579,7 +1579,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_get_secret_missing_required_passphrase() {
-        let secret_id = uuid::Uuid::new_v4();
+        let secret_id = Ulid::new();
         let passphrase_hash = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8";
 
         let mut restrictions = SecretRestrictions::default();
@@ -1615,7 +1615,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_get_secret_with_empty_passphrase_hash() {
-        let secret_id = uuid::Uuid::new_v4();
+        let secret_id = Ulid::new();
 
         // Empty passphrase hash should be treated as no restriction
         let mut restrictions = SecretRestrictions::default();
@@ -1654,7 +1654,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_get_secret_with_passphrase_and_other_restrictions() {
-        let secret_id = uuid::Uuid::new_v4();
+        let secret_id = Ulid::new();
         let passphrase_hash = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8";
 
         let mut restrictions = SecretRestrictions::default();
@@ -1728,7 +1728,7 @@ mod tests {
         );
 
         let body: PostSecretResponse = test::read_body_json(resp).await;
-        assert!(!body.id.is_nil(), "Should return valid UUID");
+        assert!(!body.id.is_nil(), "Should return valid Ulid");
 
         // Verify the restrictions were stored
         let restrictions_ops = mock_store.get_set_restrictions_operations();
@@ -1750,7 +1750,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_get_secret_unicode_passphrase() {
-        let secret_id = uuid::Uuid::new_v4();
+        let secret_id = Ulid::new();
         // Pre-calculated hash for unicode string "パスワード123🔒"
         let unicode_hash = "8c11c547bf7a78f0f6f3e1e67e2b24ef1df0b82e4e3f21e44bb4e8f8e3b5f4a9";
 
@@ -1790,7 +1790,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_get_secret_case_sensitive_passphrase() {
-        let secret_id = uuid::Uuid::new_v4();
+        let secret_id = Ulid::new();
         let lowercase_hash = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"; // "password"
         let uppercase_hash = "E6B87050BDB5543D56C7B06E8C528F73045A0AD81F96AB9B21DF04D9862CB63E"; // "PASSWORD" in uppercase
 

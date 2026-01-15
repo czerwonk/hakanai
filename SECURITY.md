@@ -81,7 +81,7 @@ Hakanai implements a zero-knowledge architecture where:
 #### Application Security (Built-in)
 
 - **Authentication**: Token-based with SHA-256 hashing
-- **Input Validation**: UUID format validation, size limits
+- **Input Validation**: ULID format validation, size limits
 - **CORS Policy**: Restrictive by default
 - **Security Headers**: X-Frame-Options, X-Content-Type-Options, HSTS
 - **Memory Safety**: Sensitive data zeroized after use

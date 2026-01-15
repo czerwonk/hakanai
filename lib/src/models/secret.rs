@@ -4,6 +4,7 @@ use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
+use ulid::Ulid;
 
 use super::restrictions::SecretRestrictions;
 
@@ -49,7 +50,7 @@ impl PostSecretRequest {
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct PostSecretResponse {
     /// The unique identifier of the created secret.
-    pub id: uuid::Uuid,
+    pub id: Ulid,
 }
 
 impl PostSecretResponse {
@@ -58,7 +59,7 @@ impl PostSecretResponse {
     /// # Arguments
     ///
     /// * `id` - The unique identifier of the secret.
-    pub fn new(id: uuid::Uuid) -> Self {
+    pub fn new(id: Ulid) -> Self {
         Self { id }
     }
 }

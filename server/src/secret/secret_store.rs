@@ -4,7 +4,7 @@ use std::time::Duration;
 
 use async_trait::async_trait;
 use thiserror::Error;
-use uuid::Uuid;
+use ulid::Ulid;
 
 use hakanai_lib::models::SecretRestrictions;
 
@@ -49,11 +49,11 @@ pub enum SecretStorePopResult {
 #[async_trait]
 pub trait SecretStore: Send + Sync {
     /// Atomically retrieves and removes a value from the data store based on its
-    /// `Uuid`.
+    /// `Ulid`.
     ///
     /// # Arguments
     ///
-    /// * `id` - The `Uuid` of the item to retrieve and remove.
+    /// * `id` - The `Ulid` of the item to retrieve and remove.
     ///
     /// # Returns
     ///
@@ -62,7 +62,7 @@ pub trait SecretStore: Send + Sync {
     /// If the item was not found, it returns `SecretStorePopResult::NotFound`.
     /// If the item was accessed before and does not exist anymore, it returns SecretStorePopResult::AlreadyAccessed.
     /// If an error occurs, it returns `SecretStoreError`.
-    async fn pop(&self, id: Uuid) -> Result<SecretStorePopResult, SecretStoreError>;
+    async fn pop(&self, id: Ulid) -> Result<SecretStorePopResult, SecretStoreError>;
 
     /// Stores a value in the data store with a given `Uuid` and an expiration
     /// duration.
@@ -81,7 +81,7 @@ pub trait SecretStore: Send + Sync {
     /// error occurs.
     async fn put(
         &self,
-        id: Uuid,
+        id: Ulid,
         data: String,
         expires_in: Duration,
     ) -> Result<(), SecretStoreError>;
@@ -105,7 +105,7 @@ pub trait SecretStore: Send + Sync {
     /// A `Result` which is `Ok(())` on successful storage, or an `Err` if an error occurs.
     async fn set_restrictions(
         &self,
-        id: Uuid,
+        id: Ulid,
         restrictions: &SecretRestrictions,
         expires_in: Duration,
     ) -> Result<(), SecretStoreError>;
@@ -122,6 +122,6 @@ pub trait SecretStore: Send + Sync {
     /// `None` if no restrictions, or an `Err` if an error occurs.
     async fn get_restrictions(
         &self,
-        id: Uuid,
+        id: Ulid,
     ) -> Result<Option<SecretRestrictions>, SecretStoreError>;
 }

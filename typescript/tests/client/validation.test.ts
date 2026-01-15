@@ -127,35 +127,25 @@ describe("InputValidation", () => {
   });
 
   describe("validateSecretId", () => {
-    test("accepts valid UUIDs", () => {
-      const validUuids = [
-        "550e8400-e29b-41d4-a716-446655440000", // v4 UUID
-        "123e4567-e89b-12d3-a456-426614174000", // v1 UUID
-        "01234567-89ab-1def-8123-456789abcdef", // v1 UUID with correct version
-        "01234567-89AB-4DEF-9123-456789ABCDEF", // v4 UUID uppercase
-      ];
-
-      for (const uuid of validUuids) {
-        expect(() => InputValidation.validateSecretId(uuid)).not.toThrow();
-      }
+    test("accepts valid ULIDs", () => {
+      const validUlid = "01KF0SR30C1X5CASYPDAJ0G6GB";
+      expect(() => InputValidation.validateSecretId(validUlid)).not.toThrow();
     });
 
-    test("rejects invalid UUID formats", () => {
-      const invalidUuids = [
-        "not-a-uuid",
-        "550e8400-e29b-41d4-a716-44665544000", // Too short
-        "550e8400-e29b-41d4-a716-4466554400000", // Too long
-        "550e8400-e29b-41d4-a716-44665544000Z", // Invalid character
-        "550e8400e29b41d4a716446655440000", // Missing dashes
+    test("rejects invalid ULID formats", () => {
+      const invalids = [
+        "01KF0SR30C1X5CASYPDAJ0G6G", // Too short
+        "01KF0SR30C1X5CASYPDAJ0G6GBA", // Too long
+        "01KF0SR30C1X5CISYPDAJ0G6GB", // Invalid character
       ];
 
-      for (const uuid of invalidUuids) {
-        expect(() => InputValidation.validateSecretId(uuid)).toThrow();
+      for (const id of invalids) {
+        expect(() => InputValidation.validateSecretId(id)).toThrow();
         try {
-          InputValidation.validateSecretId(uuid);
+          InputValidation.validateSecretId(id);
         } catch (error: any) {
           expect(error.code).toBe(HakanaiErrorCodes.INVALID_SECRET_ID);
-          expect(error.message).toBe("Secret ID must be a valid UUID");
+          expect(error.message).toBe("Secret ID must be a valid ULID");
         }
       }
     });

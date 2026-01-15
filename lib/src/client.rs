@@ -194,6 +194,18 @@ pub enum ClientError {
     #[error("parsing JSON failed")]
     Json(#[from] serde_json::Error),
 
+    /// MessagePack deserialization failed.
+    ///
+    /// This error occurs when deserializing the response from MessagePack format fails.
+    #[error("parsing MessagePack failed")]
+    MessagePackDecoding(#[from] rmp_serde::decode::Error),
+
+    /// MessagePack serialization failed.
+    ///
+    /// This error occurs when serializing the payload to MessagePack format fails.
+    #[error("encoding MessagePack failed")]
+    MessagePackEncoding(#[from] rmp_serde::encode::Error),
+
     /// URL parsing failed.
     ///
     /// This error occurs when constructing or parsing URLs, typically when

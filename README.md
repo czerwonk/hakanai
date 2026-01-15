@@ -25,6 +25,10 @@ Hakanai embodies the Japanese concept of transience - secrets that exist only fo
 
 **Enhanced Security Mode**: With `--separate-key`, the secret URL and decryption key are provided separately, allowing you to share them through different communication channels for defense in depth.
 
+## Breaking Changes
+
+With version 3.x hakanai has switched from using UUIDs as secret identifiers to ULIDs. This allows for shorter URLs. Secret URLs created with previous versions below 3.x will not work anymore. Also the secret storage format has changed. Secrets are now encoded using MessagePack instead of JSON. This change reduces secret size significantly since binary data has not to be base64-encoded anymore.
+
 ## Quick Start
 
 ### Docker Compose (Recommended)
@@ -74,13 +78,13 @@ echo "restricted secret" | hakanai send --allow-ip 192.168.1.0/24 --allow-countr
 
 ```bash
 # Get using the URL returned by send
-hakanai get https://hakanai.example.com/s/uuid-here
+hakanai get https://hakanai.example.com/s/ulid-here
 
 # Get with separate key (when --separate-key was used)
-hakanai get https://hakanai.example.com/s/uuid-here --key base64-key
+hakanai get https://hakanai.example.com/s/ulid-here --key base64-key
 
 # Save to custom location
-hakanai get https://hakanai.example.com/s/uuid-here --output-dir /downloads/
+hakanai get https://hakanai.example.com/s/ulid-here --output-dir /downloads/
 ```
 
 ### Web Interface
