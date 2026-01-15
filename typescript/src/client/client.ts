@@ -157,7 +157,7 @@ class HakanaiClient {
       throw new HakanaiError(HakanaiErrorCodes.INVALID_PAYLOAD, "Payload must be an object");
     }
 
-    if (!payload.data || payload.data.length === 0) {
+    if (!payload.data || !(payload.data instanceof Uint8Array) || payload.data.length === 0) {
       throw new HakanaiError(HakanaiErrorCodes.INVALID_PAYLOAD, "Payload data cannot be empty");
     }
 
@@ -451,15 +451,10 @@ class HakanaiClient {
 
     const cryptoContext = await CryptoContext.generate();
     try {
-      const secretPayload = {
-        data: payload.data,
-        filename: payload.filename ?? null,
-      };
-      const payloadJson = JSON.stringify(secretPayload);
-      const payloadBytes = new TextEncoder().encode(payloadJson);
+      const payloadBytes = payload.serialize();
 
-      const encryptedData = await cryptoContext.encrypt(payloadBytes.buffer);
-      const hash = await HashUtils.hashContent(payloadBytes.buffer);
+      const encryptedData = await cryptoContext.encrypt(payloadBytes.buffer as ArrayBuffer);
+      const hash = await HashUtils.hashContent(payloadBytes.buffer as ArrayBuffer);
 
       // Clear payload bytes after encryption
       SecureMemory.clearUint8Array(payloadBytes);
@@ -587,24 +582,12 @@ class HakanaiClient {
         await this.verifyHash(decryptedBytes.buffer as ArrayBuffer, hash);
       }
 
-      const decryptedJson = new TextDecoder().decode(decryptedBytes);
+      const payload = PayloadDataImpl.deserialize(decryptedBytes.buffer as ArrayBuffer);
 
-      // Clear decrypted bytes after converting to string
+      // Clear decrypted bytes after deserialization
       SecureMemory.clearUint8Array(decryptedBytes);
 
-      let payload: PayloadData;
-      try {
-        payload = JSON.parse(decryptedJson);
-      } catch (error) {
-        throw new HakanaiError(HakanaiErrorCodes.INVALID_PAYLOAD, "Failed to parse decrypted payload");
-      }
-
-      // Validate payload structure
-      if (!payload || typeof payload !== "object" || typeof payload.data !== "object") {
-        throw new HakanaiError(HakanaiErrorCodes.INVALID_PAYLOAD, "Invalid payload structure");
-      }
-
-      return new PayloadDataImpl(payload.data, payload.filename ?? undefined);
+      return payload;
     } finally {
       cryptoContext.dispose();
     }
