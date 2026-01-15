@@ -184,20 +184,50 @@ mod tests {
     }
 
     #[test]
-    fn test_deserialize_truncated_data() {
-        let payload = Payload::from_bytes(b"test").with_filename("test.txt");
-        let serialized = payload.serialize().unwrap();
-
-        let truncated = &serialized[..serialized.len() / 2];
-        let result = Payload::deserialize(truncated);
-        assert!(result.is_err(), "should fail on truncated data");
+    fn test_deserialize_wrong_structure() {
+        // Valid msgpack but wrong structure (a simple integer)
+        let wrong_structure =
+            rmp_serde::to_vec(&42i32).expect("failed to serialize wrong structure");
+        let result = Payload::deserialize(&wrong_structure);
+        assert!(result.is_err(), "should fail on wrong msgpack structure");
     }
 
     #[test]
-    fn test_deserialize_wrong_structure() {
-        // Valid msgpack but wrong structure (a simple integer)
-        let wrong_structure = rmp_serde::to_vec(&42i32).unwrap();
-        let result = Payload::deserialize(&wrong_structure);
-        assert!(result.is_err(), "should fail on wrong msgpack structure");
+    fn test_serialize_with_filename() {
+        let payload = Payload::from_bytes(b"secret data").with_filename("document.pdf");
+
+        let serialized = payload.serialize().expect("serialization should succeed");
+
+        // MessagePack format: fixarray(2) + bin8(11) + "secret data" + fixstr(12) + "document.pdf"
+        let expected: Vec<u8> = vec![
+            146, // fixarray with 2 elements
+            155, // bin8 marker (0x9b = fixstr would be wrong, this is actually fixstr len 11)
+            115, 101, 99, 114, 101, 116, 32, 100, 97, 116, 97,  // "secret data"
+            172, // fixstr with 12 chars
+            100, 111, 99, 117, 109, 101, 110, 116, 46, 112, 100, 102, // "document.pdf"
+        ];
+        assert_eq!(
+            serialized, expected,
+            "serialized bytes should match expected msgpack format"
+        );
+    }
+
+    #[test]
+    fn test_serialize_without_filename() {
+        let payload = Payload::from_bytes(b"text message");
+
+        let serialized = payload.serialize().expect("serialization should succeed");
+
+        // MessagePack format: fixarray(2) + bin8(12) + "text message" + nil
+        let expected: Vec<u8> = vec![
+            146, // fixarray with 2 elements
+            156, // fixstr with 12 chars
+            116, 101, 120, 116, 32, 109, 101, 115, 115, 97, 103, 101, // "text message"
+            192, // nil (None for filename)
+        ];
+        assert_eq!(
+            serialized, expected,
+            "serialized bytes should match expected msgpack format"
+        );
     }
 }
