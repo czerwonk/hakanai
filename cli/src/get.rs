@@ -49,7 +49,7 @@ pub async fn get<T: Factory>(factory: T, args: GetArgs) -> Result<()> {
 }
 
 fn output_secret(payload: Payload, args: GetArgs) -> Result<()> {
-    let bytes = Zeroizing::new(payload.decode_bytes()?);
+    let bytes = Zeroizing::new(payload.data.clone());
     let filename = args.filename.or_else(|| payload.filename.clone());
     let output_directory = match args.output_dir {
         Some(dir) => dir,
