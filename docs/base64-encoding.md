@@ -6,7 +6,7 @@ This document describes the Base64 encoding schemes used throughout the Hakanai 
 
 Hakanai uses two different Base64 encoding schemes for different purposes:
 
-1. **Standard Base64** - For encrypted payloads and file content
+1. **Standard Base64** - For encrypted payloads (HTTP transport)
 2. **URL-safe Base64 without padding** - For encryption keys in URLs
 
 ## Encoding Schemes
@@ -16,20 +16,22 @@ Hakanai uses two different Base64 encoding schemes for different purposes:
 **Purpose**: Used for encoding encrypted data and binary file content before transmission.
 
 **Characteristics**:
+
 - Uses the standard Base64 alphabet: `A-Z`, `a-z`, `0-9`, `+`, `/`
 - Includes padding with `=` characters to ensure the output length is a multiple of 4
 - Not safe for direct inclusion in URLs due to `+`, `/`, and `=` characters
 
 **Usage in Hakanai**:
-- Encrypted payload data (nonce + ciphertext)
-- Binary file content before encryption
-- Text content in the Payload structure
+
+- Encrypted payload data (nonce + ciphertext) for HTTP transport
+- Final encoding before sending to server
 
 ### URL-safe Base64 without Padding
 
 **Purpose**: Used exclusively for encoding AES-256 encryption keys that are included in URL fragments.
 
 **Characteristics**:
+
 - Uses URL-safe alphabet: `A-Z`, `a-z`, `0-9`, `-`, `_`
 - Character replacements:
   - `+` → `-`
@@ -38,6 +40,7 @@ Hakanai uses two different Base64 encoding schemes for different purposes:
 - Can be safely included in URLs without requiring percent-encoding
 
 **Usage in Hakanai**:
+
 - 32-byte AES-256 encryption keys in URL fragments (e.g., `#key=...`)
 
 ## Implementation Details
@@ -82,8 +85,8 @@ const standardKey = keyBase64
 
 1. **Secret Creation**:
    - User provides secret (text or binary file)
-   - Binary files are encoded with standard Base64
-   - Data is encrypted with AES-256-GCM
+   - Data is serialized using MessagePack as `[bytes, filename]` structure
+   - MessagePack payload is encrypted with AES-256-GCM
    - Encrypted payload (nonce + ciphertext) is encoded with standard Base64
    - Encryption key is encoded with URL-safe Base64 without padding
    - Server receives and stores the Base64-encoded encrypted payload
@@ -95,7 +98,7 @@ const standardKey = keyBase64
    - Encrypted payload is retrieved from server (standard Base64)
    - Payload is decoded from standard Base64
    - Data is decrypted using the key
-   - If file, the decrypted content is decoded from standard Base64
+   - Decrypted data is deserialized from MessagePack to extract bytes and optional filename
 
 ## Why Two Encoding Schemes?
 
@@ -127,6 +130,7 @@ Encrypted payloads use standard Base64 because:
 ## Testing
 
 Both encoding schemes are tested in:
+
 - `lib/src/crypto.rs` - Rust unit tests
 - `cli/src/main.rs` - CLI integration tests
 - Manual testing with various file types and sizes
@@ -134,6 +138,7 @@ Both encoding schemes are tested in:
 ## Compatibility
 
 The dual encoding approach ensures compatibility:
+
 - Works with all modern browsers
 - No issues with URL length limits (keys are always 43 characters when URL-safe encoded)
 - Binary files of any type can be shared
