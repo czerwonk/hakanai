@@ -11,6 +11,7 @@ The interactive docs are automatically generated from the OpenAPI specification 
 ## Base URL
 
 All API endpoints are relative to your server's base URL:
+
 ```
 https://your-hakanai-server.com/api/v1
 ```
@@ -69,6 +70,7 @@ Authorization: Bearer {token}  # Optional if anonymous access enabled
 #### Response
 
 **Success (201 Created):**
+
 ```json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000"
@@ -76,6 +78,7 @@ Authorization: Bearer {token}  # Optional if anonymous access enabled
 ```
 
 **Error Responses:**
+
 - **400 Bad Request**: Invalid request body or malformed data
 - **401 Unauthorized**: Invalid or missing token (when authentication required)
 - **413 Payload Too Large**: Secret data exceeds size limits
@@ -131,6 +134,7 @@ X-Secret-Passphrase: sha256-hash-of-passphrase  # Required for passphrase-protec
 #### Response
 
 **Success (200 OK):**
+
 ```
 Content-Type: text/plain
 
@@ -138,6 +142,7 @@ decrypted secret data here
 ```
 
 **Error Responses:**
+
 - **401 Unauthorized**: Missing or incorrect passphrase
 - **403 Forbidden**: Access denied due to IP/country/ASN restrictions
 - **404 Not Found**: Secret doesn't exist or has expired
@@ -179,6 +184,7 @@ Authorization: Bearer {admin-token}
 #### Response
 
 **Success (201 Created):**
+
 ```json
 {
   "token": "generated-user-token-string"
@@ -186,6 +192,7 @@ Authorization: Bearer {admin-token}
 ```
 
 **Error Responses:**
+
 - **401 Unauthorized**: Invalid or missing admin token
 - **403 Forbidden**: Request not from trusted IP range
 - **400 Bad Request**: Invalid request body
@@ -266,20 +273,38 @@ All endpoints return consistent error responses:
 
 ### Secret Data
 
-All secret data must be base64 encoded before sending to the API:
+Secret data is serialized using MessagePack before encryption. The payload structure contains the raw bytes and an optional filename:
 
 ```python
-import base64
+import msgpack
 
 # Encode text secret
 secret_text = "my secret message"
-encoded = base64.b64encode(secret_text.encode('utf-8')).decode('utf-8')
+payload = [secret_text.encode('utf-8'), None]  # [data, filename]
+encoded = msgpack.packb(payload)
 
-# Encode binary file
+# Encode binary file with filename
 with open('document.pdf', 'rb') as f:
     binary_data = f.read()
-    encoded = base64.b64encode(binary_data).decode('utf-8')
+    payload = [binary_data, "document.pdf"]  # [data, filename]
+    encoded = msgpack.packb(payload)
 ```
+
+```javascript
+// Using msgpack-lite in JavaScript
+import msgpack from "msgpack-lite";
+
+// Encode text secret
+const secretText = "my secret message";
+const payload = [new TextEncoder().encode(secretText), null];
+const encoded = msgpack.encode(payload);
+
+// Encode binary file with filename
+const payload = [fileBytes, "document.pdf"];
+const encoded = msgpack.encode(payload);
+```
+
+The MessagePack-encoded payload is then encrypted with AES-256-GCM before being base64-encoded for HTTP transport.
 
 ### Passphrase Hashing
 
@@ -310,6 +335,7 @@ echo -n "my secret passphrase" | sha256sum | cut -d' ' -f1
 ### Country Codes
 
 Use ISO 3166-1 alpha-2 country codes (uppercase):
+
 - `US` (United States)
 - `DE` (Germany)
 - `CA` (Canada)
@@ -320,6 +346,7 @@ Use ISO 3166-1 alpha-2 country codes (uppercase):
 ### ASN Numbers
 
 Autonomous System Numbers as 32-bit unsigned integers:
+
 - `13335` (Cloudflare)
 - `15169` (Google)
 - `16509` (Amazon)
@@ -364,13 +391,13 @@ def create_secret(base_url, data, token=None):
     headers = {'Content-Type': 'application/json'}
     if token:
         headers['Authorization'] = f'Bearer {token}'
-    
+
     payload = {
         'data': base64.b64encode(data.encode()).decode(),
         'expires_in': 3600
     }
-    
-    response = requests.post(f'{base_url}/api/v1/secret', 
+
+    response = requests.post(f'{base_url}/api/v1/secret',
                             json=payload, headers=headers)
     return response.json()['id']
 
@@ -380,8 +407,8 @@ def get_secret(base_url, secret_id, passphrase=None):
     if passphrase:
         headers['X-Secret-Passphrase'] = hashlib.sha256(
             passphrase.encode()).hexdigest()
-    
-    response = requests.get(f'{base_url}/api/v1/secret/{secret_id}', 
+
+    response = requests.get(f'{base_url}/api/v1/secret/{secret_id}',
                            headers=headers)
     return response.text
 ```
@@ -391,35 +418,33 @@ def get_secret(base_url, secret_id, passphrase=None):
 ```javascript
 // Create secret
 async function createSecret(baseUrl, data, token) {
-    const response = await fetch(`${baseUrl}/api/v1/secret`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': token ? `Bearer ${token}` : undefined
-        },
-        body: JSON.stringify({
-            data: btoa(data),
-            expires_in: 3600
-        })
-    });
-    return (await response.json()).id;
+  const response = await fetch(`${baseUrl}/api/v1/secret`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: token ? `Bearer ${token}` : undefined,
+    },
+    body: JSON.stringify({
+      data: btoa(data),
+      expires_in: 3600,
+    }),
+  });
+  return (await response.json()).id;
 }
 
-// Retrieve secret  
+// Retrieve secret
 async function getSecret(baseUrl, secretId, passphrase) {
-    const headers = {};
-    if (passphrase) {
-        const encoder = new TextEncoder();
-        const data = encoder.encode(passphrase);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        headers['X-Secret-Passphrase'] = hashArray
-            .map(b => b.toString(16).padStart(2, '0')).join('');
-    }
-    
-    const response = await fetch(`${baseUrl}/api/v1/secret/${secretId}`, 
-                                { headers });
-    return await response.text();
+  const headers = {};
+  if (passphrase) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(passphrase);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    headers["X-Secret-Passphrase"] = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+  }
+
+  const response = await fetch(`${baseUrl}/api/v1/secret/${secretId}`, { headers });
+  return await response.text();
 }
 ```
 
@@ -439,21 +464,25 @@ async function getSecret(baseUrl, secretId, passphrase) {
 ### Common Issues
 
 **401 Unauthorized:**
+
 - Check token is valid and not expired
 - Ensure `Authorization: Bearer {token}` header format
 - Verify server has authentication enabled
 
 **403 Forbidden:**
+
 - Check IP address against allowed ranges
 - Verify country/ASN restrictions match client location
 - Ensure admin API calls come from trusted IP ranges
 
 **413 Payload Too Large:**
+
 - Check secret size against server limits
 - Account for base64 encoding overhead (~33% increase)
 - Consider splitting large files
 
 **501 Not Implemented:**
+
 - Geo-restrictions require server configuration
 - Set `--country-header` or `--asn-header` flags
 - Configure reverse proxy to provide location headers
