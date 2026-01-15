@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use tracing::instrument;
-use uuid::Uuid;
+use ulid::Ulid;
 
 use super::{SecretEventContext, SecretObserver};
 
@@ -22,7 +22,7 @@ impl ObserverManager {
 
     /// Notify observers when a secret is created.
     #[instrument(skip(self, context))]
-    pub async fn notify_secret_created(&self, secret_id: Uuid, context: &SecretEventContext) {
+    pub async fn notify_secret_created(&self, secret_id: Ulid, context: &SecretEventContext) {
         for observer in &self.observers {
             observer.on_secret_created(secret_id, context).await;
         }
@@ -30,7 +30,7 @@ impl ObserverManager {
 
     /// Notify observers when a secret is retrieved.
     #[instrument(skip(self, context))]
-    pub async fn notify_secret_retrieved(&self, secret_id: Uuid, context: &SecretEventContext) {
+    pub async fn notify_secret_retrieved(&self, secret_id: Ulid, context: &SecretEventContext) {
         for observer in &self.observers {
             observer.on_secret_retrieved(secret_id, context).await;
         }
@@ -55,7 +55,7 @@ mod tests {
         manager.register_observer(Box::new(observer1));
         manager.register_observer(Box::new(observer2));
 
-        let secret_id = Uuid::new_v4();
+        let secret_id = Ulid::new();
         let context = SecretEventContext::new(HeaderMap::new());
 
         manager.notify_secret_created(secret_id, &context).await;
@@ -94,7 +94,7 @@ mod tests {
         manager.register_observer(Box::new(observer1));
         manager.register_observer(Box::new(observer2));
 
-        let secret_id = Uuid::new_v4();
+        let secret_id = Ulid::new();
         let context = SecretEventContext::new(HeaderMap::new());
 
         manager.notify_secret_retrieved(secret_id, &context).await;

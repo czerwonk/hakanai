@@ -10,7 +10,7 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use async_trait::async_trait;
-use uuid::Uuid;
+use ulid::Ulid;
 
 use hakanai_lib::models::SecretRestrictions;
 
@@ -35,9 +35,9 @@ pub struct MockSecretStore {
     /// Custom pop result to return (for testing different scenarios)
     custom_pop_result: Arc<Mutex<Option<SecretStorePopResult>>>,
     /// Track all put operations for testing verification
-    put_operations: Arc<Mutex<Vec<(Uuid, String, Duration)>>>,
+    put_operations: Arc<Mutex<Vec<(Ulid, String, Duration)>>>,
     /// Track all set_restrictions operations for testing verification
-    set_restrictions_operations: Arc<Mutex<Vec<(Uuid, SecretRestrictions, Duration)>>>,
+    set_restrictions_operations: Arc<Mutex<Vec<(Ulid, SecretRestrictions, Duration)>>>,
     /// Restrictions for secrets
     restrictions: Arc<Mutex<HashMap<String, SecretRestrictions>>>,
 }
@@ -98,13 +98,13 @@ impl MockSecretStore {
         *self.should_fail.lock().expect("Failed to acquire lock") = fail;
     }
 
-    fn get_put_operations_mut(&self) -> std::sync::MutexGuard<'_, Vec<(Uuid, String, Duration)>> {
+    fn get_put_operations_mut(&self) -> std::sync::MutexGuard<'_, Vec<(Ulid, String, Duration)>> {
         self.put_operations.lock().expect("Failed to acquire lock")
     }
 
     fn get_set_restrictions_operations_mut(
         &self,
-    ) -> std::sync::MutexGuard<'_, Vec<(Uuid, SecretRestrictions, Duration)>> {
+    ) -> std::sync::MutexGuard<'_, Vec<(Ulid, SecretRestrictions, Duration)>> {
         self.set_restrictions_operations
             .lock()
             .expect("Failed to acquire lock")
@@ -135,17 +135,17 @@ impl MockSecretStore {
     }
 
     /// Get all put operations for testing verification
-    pub fn get_put_operations(&self) -> Vec<(Uuid, String, Duration)> {
+    pub fn get_put_operations(&self) -> Vec<(Ulid, String, Duration)> {
         self.get_put_operations_mut().clone()
     }
 
     /// Get all set_restrictions operations for testing verification
-    pub fn get_set_restrictions_operations(&self) -> Vec<(Uuid, SecretRestrictions, Duration)> {
+    pub fn get_set_restrictions_operations(&self) -> Vec<(Ulid, SecretRestrictions, Duration)> {
         self.get_set_restrictions_operations_mut().clone()
     }
 
     /// Set restrictions for a secret (for testing)
-    pub fn with_restrictions(self, id: Uuid, restrictions: SecretRestrictions) -> Self {
+    pub fn with_restrictions(self, id: Ulid, restrictions: SecretRestrictions) -> Self {
         self.get_restrictions_mut()
             .insert(id.to_string(), restrictions);
         self
@@ -165,7 +165,7 @@ impl Default for MockSecretStore {
 
 #[async_trait]
 impl SecretStore for MockSecretStore {
-    async fn pop(&self, id: Uuid) -> Result<SecretStorePopResult, SecretStoreError> {
+    async fn pop(&self, id: Ulid) -> Result<SecretStorePopResult, SecretStoreError> {
         if self.should_fail() {
             return Err(SecretStoreError::InternalError("Mock failure".to_string()));
         }
@@ -194,7 +194,7 @@ impl SecretStore for MockSecretStore {
 
     async fn put(
         &self,
-        id: Uuid,
+        id: Ulid,
         data: String,
         expires_in: Duration,
     ) -> Result<(), SecretStoreError> {
@@ -224,7 +224,7 @@ impl SecretStore for MockSecretStore {
 
     async fn set_restrictions(
         &self,
-        id: Uuid,
+        id: Ulid,
         restrictions: &SecretRestrictions,
         expires_in: Duration,
     ) -> Result<(), SecretStoreError> {
@@ -246,7 +246,7 @@ impl SecretStore for MockSecretStore {
 
     async fn get_restrictions(
         &self,
-        id: Uuid,
+        id: Ulid,
     ) -> Result<Option<SecretRestrictions>, SecretStoreError> {
         if self.should_fail() {
             return Err(SecretStoreError::InternalError("Mock failure".to_string()));

@@ -140,8 +140,8 @@ paths:
           description: UUID of the secret to retrieve
           schema:
             type: string
-            format: uuid
-          example: 550e8400-e29b-41d4-a716-446655440000
+            format: ulid
+          example: 01KF0SR30C1X5CASYPDAJ0G6GB
         - name: X-Secret-Passphrase
           in: header
           required: false
@@ -330,9 +330,9 @@ components:
       properties:
         id:
           type: string
-          format: uuid
+          format: ulid
           description: Unique identifier for the created secret
-          example: 550e8400-e29b-41d4-a716-446655440000
+          example: 01KF0SR30C1X5CASYPDAJ0G6GB
     CreateTokenRequest:
       type: object
       required:

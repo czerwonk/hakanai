@@ -8,7 +8,7 @@
 
 use async_trait::async_trait;
 use tracing::{error, instrument};
-use uuid::Uuid;
+use ulid::Ulid;
 
 use super::secret_stats::SecretStats;
 use super::stats_store::StatsStore;
@@ -47,7 +47,7 @@ where
     T: StatsStore + Clone + Send + Sync + 'static,
 {
     #[instrument(skip(self, context))]
-    async fn on_secret_created(&self, secret_id: Uuid, context: &SecretEventContext) {
+    async fn on_secret_created(&self, secret_id: Ulid, context: &SecretEventContext) {
         let stat = SecretStats::new(context.ttl.unwrap_or_default().as_secs());
         let store = self.store.clone();
         tokio::spawn(async move {
@@ -58,7 +58,7 @@ where
     }
 
     #[instrument(skip(self, _context))]
-    async fn on_secret_retrieved(&self, secret_id: Uuid, _context: &SecretEventContext) {
+    async fn on_secret_retrieved(&self, secret_id: Ulid, _context: &SecretEventContext) {
         let store = self.store.clone();
         let event_metrics_opt = self.event_metrics.clone();
         tokio::spawn(async move {

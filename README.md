@@ -74,13 +74,13 @@ echo "restricted secret" | hakanai send --allow-ip 192.168.1.0/24 --allow-countr
 
 ```bash
 # Get using the URL returned by send
-hakanai get https://hakanai.example.com/s/uuid-here
+hakanai get https://hakanai.example.com/s/ulid-here
 
 # Get with separate key (when --separate-key was used)
-hakanai get https://hakanai.example.com/s/uuid-here --key base64-key
+hakanai get https://hakanai.example.com/s/ulid-here --key base64-key
 
 # Save to custom location
-hakanai get https://hakanai.example.com/s/uuid-here --output-dir /downloads/
+hakanai get https://hakanai.example.com/s/ulid-here --output-dir /downloads/
 ```
 
 ### Web Interface

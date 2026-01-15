@@ -7,7 +7,7 @@ use async_trait::async_trait;
 use redis::AsyncCommands;
 use redis::aio::ConnectionManager;
 use tracing::warn;
-use uuid::Uuid;
+use ulid::Ulid;
 
 use crate::stats::StatsStore;
 
@@ -26,12 +26,12 @@ impl RedisStatsStore {
         Self { con, ttl }
     }
 
-    fn key(secret_id: Uuid) -> String {
+    fn key(secret_id: Ulid) -> String {
         format!("stats:{}", secret_id)
     }
 
     /// Retrieve the stats for the given secret ID.
-    async fn retrieve_stats(&self, secret_id: Uuid) -> Result<Option<SecretStats>> {
+    async fn retrieve_stats(&self, secret_id: Ulid) -> Result<Option<SecretStats>> {
         let key = Self::key(secret_id);
         let value: Option<String> = self.con.clone().get(key).await?;
 
@@ -47,7 +47,7 @@ impl RedisStatsStore {
 #[async_trait]
 impl StatsStore for RedisStatsStore {
     /// Store the stats for the given secret ID.
-    async fn store_stats(&self, secret_id: Uuid, stats: &SecretStats) -> Result<()> {
+    async fn store_stats(&self, secret_id: Ulid, stats: &SecretStats) -> Result<()> {
         let key = Self::key(secret_id);
         let value = serde_json::to_string(stats)?;
 
@@ -61,7 +61,7 @@ impl StatsStore for RedisStatsStore {
     }
 
     /// Update the `retrieved_at` field of the stats for the given secret ID.
-    async fn update_retrieved_at(&self, secret_id: Uuid) -> Result<Option<SecretStats>> {
+    async fn update_retrieved_at(&self, secret_id: Ulid) -> Result<Option<SecretStats>> {
         if let Some(mut stat) = self.retrieve_stats(secret_id).await? {
             let retrieved_at = std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)

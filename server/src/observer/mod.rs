@@ -15,14 +15,14 @@ pub use webhook_observer::WebhookObserver;
 pub use mock_observer::MockObserver;
 
 use async_trait::async_trait;
-use uuid::Uuid;
+use ulid::Ulid;
 
 /// Observer for secret lifecycle events.
 #[async_trait]
 pub trait SecretObserver: Send + Sync {
     /// Called when a secret is created.
-    async fn on_secret_created(&self, secret_id: Uuid, context: &SecretEventContext);
+    async fn on_secret_created(&self, secret_id: Ulid, context: &SecretEventContext);
 
     /// Called when a secret is retrieved.
-    async fn on_secret_retrieved(&self, secret_id: Uuid, context: &SecretEventContext);
+    async fn on_secret_retrieved(&self, secret_id: Ulid, context: &SecretEventContext);
 }
