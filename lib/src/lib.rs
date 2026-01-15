@@ -39,7 +39,7 @@
 //!
 //! // Receive the secret (normally done by recipient)
 //! let payload = client.receive_secret(secret_url, None).await?;
-//! println!("Retrieved: {}", payload.data);
+//! println!("Retrieved: {:#?}", payload.data);
 //! # Ok(())
 //! # }
 //! ```
