@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Hakanai API
   description: Zero-knowledge one-time secret sharing service
-  version: 2.14.0
+  version: 3.0.0
   contact:
     url: https://github.com/czerwonk/hakanai
   license:
@@ -289,20 +289,19 @@ components:
       description: |
         Internal structure of the secret after decryption (for documentation only).
         This is NEVER sent unencrypted over the wire - all secrets are encrypted client-side before transmission.
-        This schema documents the JSON structure that gets encrypted into the 'data' field.
-      type: object
-      required:
-        - data
-      properties:
-        data:
-          type: string
-          format: byte
-          description: Base64-encoded actual content (text or binary)
-          example: SGVsbG8sIHdvcmxkIQ==
-        filename:
-          type: string
-          description: Optional filename for file downloads. When present, the content will be offered as a downloadable file.
-          example: document.pdf
+        The payload is serialized using MessagePack as a 2-element array: [data, filename].
+      type: array
+      items:
+        oneOf:
+          - type: string
+            format: byte
+            description: Raw bytes of the secret content (text or binary)
+          - type: string
+            nullable: true
+            description: Optional filename for file downloads. When present, the content will be offered as a downloadable file.
+      minItems: 2
+      maxItems: 2
+      example: [SGVsbG8sIHdvcmxkIQ==, "document.pdf"]
     CreateSecretRequest:
       type: object
       required:
@@ -313,7 +312,7 @@ components:
           type: string
           description: |
             Base64-encoded AES-256-GCM encrypted payload.
-            The decrypted content is a JSON object with the structure defined in the PayloadPlaintext schema.
+            The decrypted content is a MessagePack-serialized array [data, filename] as defined in the PayloadPlaintext schema.
             Encryption happens entirely client-side - the server never sees the plaintext.
           example: bXkgc2VjcmV0IG1lc3NhZ2U=
         expires_in:
