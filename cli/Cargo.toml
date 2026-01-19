@@ -16,7 +16,7 @@ categories = ["cryptography", "security", "command-line-utilities"]
 anyhow = "1.0.100"
 async-trait = "0.1.89"
 clap = { version = "4.5.54", features = ["derive", "env"] }
-colored = "3.0.0"
+colored = "3.1.1"
 hakanai-lib = { workspace = true, features = ["testing"] }
 humantime = "2.3.0"
 indicatif = "0.18.3"
