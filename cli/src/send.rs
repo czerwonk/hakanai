@@ -225,8 +225,8 @@ mod tests {
         fs::write(&file_path2, test_content2)?;
 
         let args = SendArgs::builder().with_files(vec![
-            file_path.to_string_lossy().as_ref().to_string(),
-            file_path2.to_string_lossy().as_ref().to_string(),
+            file_path.display().to_string(),
+            file_path2.display().to_string(),
         ]);
         let result = read_secret(args)?;
         assert_eq!(&result.bytes[0..4], b"PK\x03\x04", "Invalid ZIP signature");
