@@ -34,7 +34,7 @@ uuid = { version = "1.20.0", features = ["v4"] }
 zeroize = { version = "1.8.2", optional = true }
 
 [dev-dependencies]
-mockito = "1.7.1"
+mockito = "1.7.2"
 tokio = { version = "1.49.0", features = ["rt-multi-thread", "macros"] }
 
 [features]
