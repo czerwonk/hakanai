@@ -18,7 +18,7 @@ actix-web = "4.12.1"
 anyhow = "1.0.101"
 async-trait = "0.1.89"
 base64 = "0.22.1"
-clap = { version = "4.5.57", features = ["derive", "env"] }
+clap = { version = "4.5.58", features = ["derive", "env"] }
 futures-util = "0.3"
 hakanai-lib = { workspace = true, features = ["minimal"] }
 humantime = "2.3.0"
