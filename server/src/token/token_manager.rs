@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use async_trait::async_trait;
 use base64::Engine;
-use rand::{TryRngCore, rngs::OsRng};
+use rand::TryRng;
 
 use hakanai_lib::utils::hashing;
 
@@ -81,7 +81,8 @@ impl<T: TokenStore> TokenManager<T> {
     fn generate_token() -> Result<String, TokenError> {
         let mut bytes = [0u8; 32];
 
-        if let Err(err) = OsRng.try_fill_bytes(&mut bytes) {
+        let mut rng = rand::rng();
+        if let Err(err) = rng.try_fill_bytes(&mut bytes) {
             return Err(TokenError::Custom(format!(
                 "Failed to generate random bytes: {err}"
             )));
