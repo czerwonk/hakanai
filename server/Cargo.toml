@@ -14,7 +14,7 @@ categories = ["cryptography", "security"]
 
 [dependencies]
 actix-cors = "0.7.1"
-actix-web = "4.12.1"
+actix-web = "4.13.0"
 anyhow = "1.0.101"
 async-trait = "0.1.89"
 base64 = "0.22.1"
