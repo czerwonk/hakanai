@@ -15,7 +15,7 @@ categories = ["cryptography", "security"]
 [dependencies]
 actix-cors = "0.7.1"
 actix-web = "4.12.1"
-anyhow = "1.0.101"
+anyhow = "1.0.102"
 async-trait = "0.1.89"
 base64 = "0.22.1"
 clap = { version = "4.5.59", features = ["derive", "env"] }
@@ -44,7 +44,7 @@ tracing-subscriber = { version = "0.3.22", features = ["env-filter"] }
 ulid = { version = "1.2.1", features = ["serde"] }
 
 [build-dependencies]
-anyhow = "1.0.101"
+anyhow = "1.0.102"
 handlebars = "6.4.0"
 serde_json = "1.0.149"
 
