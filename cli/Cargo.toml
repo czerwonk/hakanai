@@ -30,4 +30,4 @@ zeroize = "1.8.2"
 zip = "8.1.0"
 
 [dev-dependencies]
-tempfile = "3.25.0"
+tempfile = "3.26.0"
