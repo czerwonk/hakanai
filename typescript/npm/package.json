@@ -50,7 +50,7 @@
     "node": ">=16.0.0"
   },
   "devDependencies": {
-    "@types/node": "^25.0.8",
+    "@types/node": "^25.3.3",
     "typescript": "^5.9.3"
   },
   "peerDependencies": {
