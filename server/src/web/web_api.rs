@@ -240,7 +240,8 @@ fn ensure_restrictions_are_supported(
 fn ensure_ttl_is_valid(expires_in: Duration, max_ttl: Duration) -> Result<()> {
     if expires_in > max_ttl {
         Err(error::ErrorBadRequest(format!(
-            "TTL exceeds maximum allowed duration of {} seconds",
+            "TTL ({}) exceeds maximum allowed duration of {} seconds",
+            expires_in.as_secs(),
             max_ttl.as_secs()
         )))
     } else {
