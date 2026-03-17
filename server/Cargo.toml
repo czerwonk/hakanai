@@ -2,7 +2,7 @@
 
 [package]
 name = "hakanai-server"
-version = "3.0.2"
+version = "3.0.3"
 edition = "2024"
 license = "Apache-2.0"
 description = "Server for Hakanai, a secure secret sharing service."
