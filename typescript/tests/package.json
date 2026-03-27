@@ -7,19 +7,6 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"
   },
-  "dependencies": {
-    "@msgpack/msgpack": "^3.1.3"
-  },
-  "devDependencies": {
-    "@peculiar/webcrypto": "^1.5.0",
-    "@types/jest": "^30.0.0",
-    "jest": "^30.3.0",
-    "jest-environment-jsdom": "^30.3.0",
-    "jsdom": "^29.0.0",
-    "ts-jest": "^29.4.6",
-    "typescript": "^5.9.3",
-    "web-streams-polyfill": "^4.2.0"
-  },
   "jest": {
     "preset": "ts-jest",
     "testEnvironment": "jsdom",

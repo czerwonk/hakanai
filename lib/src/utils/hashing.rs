@@ -11,7 +11,7 @@ pub fn sha256_hex_from_string(input: &str) -> String {
 /// Hashes given bytes using SHA-256 and returns the hexadecimal representation.
 pub fn sha256_hex_from_bytes(input: &[u8]) -> String {
     let hash = Sha256::digest(input);
-    format!("{hash:x}")
+    hash.iter().map(|b| format!("{b:02x}")).collect()
 }
 
 /// Hashes given bytes using SHA-256, truncates the result to the first 16 bytes. Result is then encoded to a URL-safe base64 string without padding.
