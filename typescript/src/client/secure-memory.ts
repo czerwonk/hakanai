@@ -9,7 +9,7 @@ class SecureMemory {
    * Securely clear a Uint8Array with multiple overwrite passes
    * @param array - Array to clear
    */
-  static clearUint8Array(array: Uint8Array): void {
+  static clearUint8Array(array: Uint8Array<ArrayBufferLike>): void {
     if (!(array instanceof Uint8Array)) {
       return;
     }
@@ -17,7 +17,7 @@ class SecureMemory {
     // Multiple overwrite passes with random data
     for (let pass = 0; pass < 3; pass++) {
       try {
-        crypto.getRandomValues(array);
+        crypto.getRandomValues(array as Uint8Array<ArrayBuffer>);
       } catch (error) {
         // Fallback to manual random fill if crypto not available
         for (let i = 0; i < array.length; i++) {
@@ -34,7 +34,7 @@ class SecureMemory {
    * Securely clear multiple Uint8Array objects
    * @param arrays - Arrays to clear
    */
-  static clearArrays(...arrays: Uint8Array[]): void {
+  static clearArrays(...arrays: Uint8Array<ArrayBufferLike>[]): void {
     arrays.forEach((array) => SecureMemory.clearUint8Array(array));
   }
 }

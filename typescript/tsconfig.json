@@ -3,20 +3,17 @@
     "target": "es2022",
     "module": "es2022",
     "lib": ["ES2022", "DOM"],
+    "rootDir": "./src",
     "outDir": "../server/includes",
     "allowJs": true,
     "declaration": false,
     "skipLibCheck": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "strict": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
   },
-  "include": [
-    "src/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules"],
 }
