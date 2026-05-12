@@ -32,7 +32,7 @@ rustPlatform.buildRustPackage {
   '';
   cargoBuildCommand = "cargo build --release --package hakanai";
   cargoTestCommand = "cargo test --release --package hakanai";
-  cargoHash = workspace.cargoHash;
+  cargoLock.lockFile = ../Cargo.lock;
 
   nativeBuildInputs = [
     pkg-config
