@@ -2,7 +2,7 @@
 
 [package]
 name = "hakanai-server"
-version = "3.0.6"
+version = "3.0.7"
 edition = "2024"
 license = "Apache-2.0"
 description = "Server for Hakanai, a secure secret sharing service."
@@ -14,14 +14,14 @@ categories = ["cryptography", "security"]
 
 [dependencies]
 actix-cors = "0.7.1"
-actix-web = "4.13.0"
-anyhow = "1.0.102"
+actix-web = "4.14.0"
+anyhow = "1.0.103"
 async-trait = "0.1.89"
 base64 = "0.22.1"
 clap = { version = "4.6.1", features = ["derive", "env"] }
 futures-util = "0.3"
 hakanai-lib = { workspace = true, features = ["minimal"] }
-humantime = "2.3.0"
+humantime = "2.4.0"
 ipnet = "2.12.0"
 opentelemetry = "0.32.0"
 opentelemetry-appender-tracing = "0.32.0"
@@ -29,8 +29,8 @@ opentelemetry-instrumentation-actix-web = { version = "0.24.0", features = ["met
 opentelemetry-otlp = { version = "0.32.0", features = ["grpc-tonic", "trace", "metrics", "logs"] }
 opentelemetry-resource-detectors = "0.11.0"
 opentelemetry_sdk = { version = "0.32.1", features = ["rt-tokio"] }
-rand = "0.10.1"
-redis = { version = "1.2.2", features = ["tokio-comp", "connection-manager"] }
+rand = "0.10.2"
+redis = { version = "1.3.0", features = ["tokio-comp", "connection-manager"] }
 reqwest = { version = "0.13.4", features = ["json"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.150"
@@ -38,14 +38,14 @@ sha2 = "0.11.0"
 thiserror = "2.0.18"
 tokio = { version = "1.52.3", features = ["full"] }
 tracing = "0.1.44"
-tracing-actix-web = "0.7.21"
+tracing-actix-web = "0.7.22"
 tracing-opentelemetry = "0.33.0"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
-ulid = { version = "1.2.1", features = ["serde"] }
+ulid = { version = "2.0.1", features = ["serde"] }
 
 [build-dependencies]
-anyhow = "1.0.102"
-handlebars = "6.4.1"
+anyhow = "1.0.103"
+handlebars = "6.4.3"
 serde_json = "1.0.150"
 
 [dev-dependencies]

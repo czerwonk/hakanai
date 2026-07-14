@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
-use aes_gcm::aead::rand_core::RngCore;
-use aes_gcm::aead::{Aead, OsRng};
+use aes_gcm::aead::Aead;
 use aes_gcm::{Aes256Gcm, Key, KeyInit, Nonce};
 use base64::Engine;
+use rand::Rng;
 use zeroize::{Zeroize, Zeroizing};
 
 use crate::client::ClientError;
@@ -21,10 +21,10 @@ pub struct AESCryptoContext {
 impl AESCryptoContext {
     pub fn generate() -> Self {
         let mut key = Zeroizing::new([0u8; AES_GCM_KEY_SIZE]);
-        OsRng.fill_bytes(key.as_mut_slice());
+        rand::rng().fill_bytes(key.as_mut_slice());
 
         let mut nonce = Zeroizing::new([0u8; AES_GCM_NONCE_SIZE]);
-        OsRng.fill_bytes(nonce.as_mut_slice());
+        rand::rng().fill_bytes(nonce.as_mut_slice());
 
         AESCryptoContext {
             key: key.to_vec(),
@@ -96,7 +96,11 @@ impl CryptoContext for AESCryptoContext {
         // Mark context as used to prevent nonce reuse
         self.used = true;
 
-        let key: &Key<Aes256Gcm> = self.key.as_slice().into();
+        let key: &Key<Aes256Gcm> = self
+            .key
+            .as_slice()
+            .try_into()
+            .map_err(|_| ClientError::CryptoError("Invalid key length".to_string()))?;
         let cipher = Aes256Gcm::new(key);
 
         let mut nonce = Nonce::default();
@@ -106,7 +110,11 @@ impl CryptoContext for AESCryptoContext {
     }
 
     fn decrypt(&self, ciphertext: &[u8]) -> Result<Vec<u8>, ClientError> {
-        let key: &Key<Aes256Gcm> = self.key.as_slice().into();
+        let key: &Key<Aes256Gcm> = self
+            .key
+            .as_slice()
+            .try_into()
+            .map_err(|_| ClientError::CryptoError("Invalid key length".to_string()))?;
         let cipher = Aes256Gcm::new(key);
 
         let mut nonce = Nonce::default();

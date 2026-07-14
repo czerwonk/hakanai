@@ -55,7 +55,7 @@ mod tests {
         manager.register_observer(Box::new(observer1));
         manager.register_observer(Box::new(observer2));
 
-        let secret_id = Ulid::new();
+        let secret_id = Ulid::r#gen();
         let context = SecretEventContext::new(HeaderMap::new());
 
         manager.notify_secret_created(secret_id, &context).await;
@@ -94,7 +94,7 @@ mod tests {
         manager.register_observer(Box::new(observer1));
         manager.register_observer(Box::new(observer2));
 
-        let secret_id = Ulid::new();
+        let secret_id = Ulid::r#gen();
         let context = SecretEventContext::new(HeaderMap::new());
 
         manager.notify_secret_retrieved(secret_id, &context).await;

@@ -182,7 +182,7 @@ async fn post_secret(
         ensure_restrictions_are_supported(restrictions, &app_data)?;
     }
 
-    let id = Ulid::new();
+    let id = Ulid::r#gen();
     let mut ctx = SecretEventContext::new(http_req.headers().clone())
         .with_user_type(user.user_type)
         .with_ttl(req.expires_in)
@@ -347,7 +347,7 @@ mod tests {
         .await;
 
         let req = test::TestRequest::get()
-            .uri(&format!("/secret/{}", Ulid::new()))
+            .uri(&format!("/secret/{}", Ulid::r#gen()))
             .to_request();
 
         let resp = test::call_service(&app, req).await;
@@ -370,7 +370,7 @@ mod tests {
         .await;
 
         let req = test::TestRequest::get()
-            .uri(&format!("/secret/{}", Ulid::new()))
+            .uri(&format!("/secret/{}", Ulid::r#gen()))
             .to_request();
 
         let resp = test::call_service(&app, req).await;
@@ -391,7 +391,7 @@ mod tests {
         .await;
 
         let req = test::TestRequest::get()
-            .uri(&format!("/secret/{}", Ulid::new()))
+            .uri(&format!("/secret/{}", Ulid::r#gen()))
             .to_request();
 
         let resp = test::call_service(&app, req).await;
@@ -411,7 +411,7 @@ mod tests {
         .await;
 
         let req = test::TestRequest::get()
-            .uri(&format!("/secret/{}", Ulid::new()))
+            .uri(&format!("/secret/{}", Ulid::r#gen()))
             .to_request();
 
         let resp = test::call_service(&app, req).await;
@@ -777,7 +777,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_observer_notification_on_secret_retrieval() {
-        let secret_id = Ulid::new();
+        let secret_id = Ulid::r#gen();
         let mock_store = MockSecretStore::new()
             .with_pop_result(SecretStorePopResult::Found("test_secret".to_string()));
         let mock_observer = MockObserver::new();
@@ -868,7 +868,7 @@ mod tests {
     #[actix_web::test]
     async fn test_get_secret_with_ip_restriction_allowed() {
         // Create a secret with IP restrictions that allow the request
-        let secret_id = Ulid::new();
+        let secret_id = Ulid::r#gen();
         let allowed_ips = vec!["192.168.1.0/24".must_parse(), "10.0.0.0/8".must_parse()];
 
         let mock_store = MockSecretStore::new()
@@ -902,7 +902,7 @@ mod tests {
     #[actix_web::test]
     async fn test_get_secret_with_ip_restriction_blocked() {
         // Create a secret with IP restrictions that block the request
-        let secret_id = Ulid::new();
+        let secret_id = Ulid::r#gen();
         let allowed_ips = vec!["192.168.1.0/24".must_parse()];
 
         let mock_store = MockSecretStore::new()
@@ -934,7 +934,7 @@ mod tests {
     #[actix_web::test]
     async fn test_get_secret_with_no_ip_restrictions() {
         // Create a secret without IP restrictions - should be accessible from any IP
-        let secret_id = Ulid::new();
+        let secret_id = Ulid::r#gen();
 
         let mock_store = MockSecretStore::new()
             .with_pop_result(SecretStorePopResult::Found("test_secret".to_string()));
@@ -964,7 +964,7 @@ mod tests {
     #[actix_web::test]
     async fn test_get_secret_with_ipv6_restriction() {
         // Test IPv6 address restrictions
-        let secret_id = Ulid::new();
+        let secret_id = Ulid::r#gen();
         let allowed_ips = vec!["2001:db8::/32".must_parse()];
 
         let mock_store = MockSecretStore::new()
@@ -996,7 +996,7 @@ mod tests {
     #[actix_web::test]
     async fn test_get_secret_with_multiple_ip_restrictions() {
         // Test with multiple IP ranges allowed
-        let secret_id = Ulid::new();
+        let secret_id = Ulid::r#gen();
         let allowed_ips = vec![
             "192.168.1.0/24".must_parse(),
             "10.0.0.0/8".must_parse(),
@@ -1032,7 +1032,7 @@ mod tests {
     #[actix_web::test]
     async fn test_get_secret_with_single_ip_restriction() {
         // Test restriction to a single IP address (using /32 for IPv4)
-        let secret_id = Ulid::new();
+        let secret_id = Ulid::r#gen();
         let allowed_ips = vec!["192.168.1.100/32".must_parse()];
 
         let mock_store = MockSecretStore::new()
@@ -1145,7 +1145,7 @@ mod tests {
     #[actix_web::test]
     async fn test_get_secret_ip_restriction_with_proxy_chain() {
         // Test IP extraction from proxy chain (multiple IPs in x-forwarded-for)
-        let secret_id = Ulid::new();
+        let secret_id = Ulid::r#gen();
         let allowed_ips = vec!["192.168.1.0/24".must_parse()];
 
         let mock_store = MockSecretStore::new()
@@ -1177,7 +1177,7 @@ mod tests {
     #[actix_web::test]
     async fn test_get_secret_with_empty_ip_restrictions() {
         // Test that empty IP restrictions array means no access allowed
-        let secret_id = Ulid::new();
+        let secret_id = Ulid::r#gen();
         let allowed_ips = vec![]; // Empty restrictions
 
         let mock_store = MockSecretStore::new()
@@ -1512,7 +1512,7 @@ mod tests {
     // Tests for passphrase functionality
     #[actix_web::test]
     async fn test_get_secret_with_correct_passphrase() {
-        let secret_id = Ulid::new();
+        let secret_id = Ulid::r#gen();
         let passphrase_hash = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"; // SHA-256 of "password"
 
         let mut restrictions = SecretRestrictions::default();
@@ -1547,7 +1547,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_get_secret_with_wrong_passphrase() {
-        let secret_id = Ulid::new();
+        let secret_id = Ulid::r#gen();
         let correct_hash = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"; // SHA-256 of "password"
         let wrong_hash = "ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f"; // SHA-256 of "secret"
 
@@ -1580,7 +1580,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_get_secret_missing_required_passphrase() {
-        let secret_id = Ulid::new();
+        let secret_id = Ulid::r#gen();
         let passphrase_hash = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8";
 
         let mut restrictions = SecretRestrictions::default();
@@ -1616,7 +1616,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_get_secret_with_empty_passphrase_hash() {
-        let secret_id = Ulid::new();
+        let secret_id = Ulid::r#gen();
 
         // Empty passphrase hash should be treated as no restriction
         let mut restrictions = SecretRestrictions::default();
@@ -1655,7 +1655,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_get_secret_with_passphrase_and_other_restrictions() {
-        let secret_id = Ulid::new();
+        let secret_id = Ulid::r#gen();
         let passphrase_hash = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8";
 
         let mut restrictions = SecretRestrictions::default();
@@ -1751,7 +1751,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_get_secret_unicode_passphrase() {
-        let secret_id = Ulid::new();
+        let secret_id = Ulid::r#gen();
         // Pre-calculated hash for unicode string "パスワード123🔒"
         let unicode_hash = "8c11c547bf7a78f0f6f3e1e67e2b24ef1df0b82e4e3f21e44bb4e8f8e3b5f4a9";
 
@@ -1791,7 +1791,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_get_secret_case_sensitive_passphrase() {
-        let secret_id = Ulid::new();
+        let secret_id = Ulid::r#gen();
         let lowercase_hash = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"; // "password"
         let uppercase_hash = "E6B87050BDB5543D56C7B06E8C528F73045A0AD81F96AB9B21DF04D9862CB63E"; // "PASSWORD" in uppercase
 

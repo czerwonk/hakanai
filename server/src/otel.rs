@@ -99,7 +99,7 @@ fn get_resource() -> Resource {
     let instance_id = std::env::var("POD_NAME")
         .or_else(|_| std::env::var("HOSTNAME"))
         .or_else(|_| std::env::var("CONTAINER_ID"))
-        .unwrap_or_else(|_| Ulid::new().to_string());
+        .unwrap_or_else(|_| Ulid::r#gen().to_string());
 
     Resource::builder()
         .with_service_name(service_name)
