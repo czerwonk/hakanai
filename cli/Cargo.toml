@@ -13,9 +13,9 @@ keywords = ["encryption", "secret", "sharing", "zero-knowledge", "privacy"]
 categories = ["cryptography", "security", "command-line-utilities"]
 
 [dependencies]
-anyhow = "1.0.103"
-async-trait = "0.1.89"
-clap = { version = "4.6.1", features = ["derive", "env"] }
+anyhow = "1.0.104"
+async-trait = "0.1.91"
+clap = { version = "4.6.3", features = ["derive", "env"] }
 colored = "3.1.1"
 hakanai-lib = { workspace = true, features = ["testing"] }
 humantime = "2.4.0"
@@ -24,7 +24,7 @@ ipnet = { version = "2.12.0", features = ["serde"] }
 qrcode = "0.14"
 reqwest = { version = "0.13.4", features = ["json"] }
 rpassword = "7.5.4"
-tokio = { version = "1.52.3", features = ["full"] }
+tokio = { version = "1.53.0", features = ["full"] }
 url = "2.5.8"
 zeroize = "1.9.0"
 zip = "8.6.0"
