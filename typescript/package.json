@@ -29,5 +29,8 @@
     "jsdom": "^30.0.0",
     "web-streams-polyfill": "^4.3.0",
     "csso-cli": "^4.0.2"
+  },
+  "overrides": {
+    "brace-expansion": "^5.0.8"
   }
 }
