@@ -26,7 +26,7 @@ jobs:
 
         steps:
             - name: Checkout repository
-              uses: actions/checkout@v3
+              uses: actions/checkout@v7
 
             # Download pre-built assets from pipeline
             - name: Download pre-compiled assets
