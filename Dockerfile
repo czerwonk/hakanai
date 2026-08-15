@@ -1,4 +1,4 @@
-FROM rust:slim-bookworm as builder
+FROM rust:1.97.1-slim-trixie@sha256:8e8cf8f7fd54a2d23d5a743b3a03f56e26b6c774276c33fa0595111704ebb15c AS builder
 RUN apt-get update && apt-get install -y \
     pkg-config \
     libssl-dev && \
