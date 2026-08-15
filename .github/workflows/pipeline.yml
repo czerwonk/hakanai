@@ -19,7 +19,7 @@ jobs:
     outputs:
       artifact-name: ${{ steps.set-artifact-name.outputs.name }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set artifact name
         id: set-artifact-name
@@ -66,7 +66,7 @@ jobs:
     needs: build-assets
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Download pre-compiled assets
         uses: actions/download-artifact@v4
@@ -89,7 +89,7 @@ jobs:
     needs: build-assets
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Download pre-compiled assets
         uses: actions/download-artifact@v4
@@ -112,7 +112,7 @@ jobs:
     needs: build-assets
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Download pre-compiled assets
         uses: actions/download-artifact@v4
