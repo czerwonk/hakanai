@@ -53,7 +53,7 @@ impl SecretRestrictions {
         self
     }
 
-    /// Sets the required passhphrase to access the secret
+    /// Sets the required passhphrase (hashed) to access the secret
     pub fn with_passphrase_hash(mut self, passphrase_hash: String) -> Self {
         self.passphrase_hash = Some(passphrase_hash);
         self
