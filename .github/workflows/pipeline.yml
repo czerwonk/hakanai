@@ -129,5 +129,8 @@ jobs:
   trigger-publish:
     if: startsWith(github.ref, 'refs/tags/')
     needs: [tests-passed]
-    uses: ./.github/workflows/publish.yml
+    uses: czerwonk/rust-ci/.github/workflows/publish.yml@v1
     secrets: inherit
+    with:
+      packages: '["hakanai-lib", "hakanai"]'
+      version-manifest: lib/Cargo.toml
