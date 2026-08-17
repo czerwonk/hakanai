@@ -94,7 +94,7 @@ mod tests {
             retrieved_at: None,
         };
 
-        assert_eq!(stats.has_expired(250), false);
+        assert!(!stats.has_expired(250));
     }
 
     #[test]
@@ -105,7 +105,7 @@ mod tests {
             retrieved_at: None,
         };
 
-        assert_eq!(stats.has_expired(300), true);
+        assert!(stats.has_expired(300));
     }
 
     #[test]
@@ -116,7 +116,7 @@ mod tests {
             retrieved_at: None,
         };
 
-        assert_eq!(stats.has_expired(301), true);
+        assert!(stats.has_expired(301));
     }
 
     #[test]
@@ -127,6 +127,6 @@ mod tests {
             retrieved_at: Some(250),
         };
 
-        assert_eq!(stats.has_expired(301), false);
+        assert!(!stats.has_expired(301));
     }
 }

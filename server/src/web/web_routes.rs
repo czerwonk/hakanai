@@ -617,7 +617,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_serve_config_secret_size_limit_anonymous() {
-        let expected = 1024 as usize;
+        let expected = 1024_usize;
         let app_data = create_test_app_data().with_anonymous_usage(AnonymousOptions {
             allowed: true,
             upload_size_limit: expected,
@@ -638,7 +638,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_serve_config_secret_size_limit_whitelisted() {
-        let limit = 1024 as usize;
+        let limit = 1024_usize;
         let mut app_data = create_test_app_data()
             .with_anonymous_usage(AnonymousOptions {
                 allowed: true,

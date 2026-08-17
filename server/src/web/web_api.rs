@@ -313,7 +313,7 @@ mod tests {
     fn get_header_value<'a>(headers: &'a HeaderMap, name: &str) -> &'a HeaderValue {
         headers
             .get(name)
-            .expect(format!("Header does not exist: {name}").as_str())
+            .unwrap_or_else(|| panic!("Header does not exist: {name}"))
     }
 
     // Helper function to create test AppData with default values

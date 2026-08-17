@@ -140,7 +140,7 @@ mod tests {
         ];
 
         for (input, expected) in cases {
-            let result = parse_ipnet(input).expect(&format!("Failed to parse {input}"));
+            let result = parse_ipnet(input).unwrap_or_else(|_| panic!("Failed to parse {input}"));
             assert_eq!(
                 result.to_string(),
                 expected,
@@ -219,7 +219,7 @@ mod tests {
         ];
 
         for (input, expected) in cases {
-            let result = parse_ipnet(input).expect(&format!("Failed to parse {input}"));
+            let result = parse_ipnet(input).unwrap_or_else(|_| panic!("Failed to parse {input}"));
             assert_eq!(
                 result.to_string(),
                 expected,

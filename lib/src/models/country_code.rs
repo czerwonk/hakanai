@@ -68,7 +68,7 @@ mod tests {
             let result = CountryCode::new(code);
             assert_eq!(
                 result
-                    .expect(&format!("Expected {code} to be valid"))
+                    .unwrap_or_else(|_| panic!("Expected {code} to be valid"))
                     .as_str(),
                 code
             );
