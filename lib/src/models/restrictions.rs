@@ -53,6 +53,12 @@ impl SecretRestrictions {
         self
     }
 
+    /// Sets the required passhphrase to access the secret
+    pub fn with_passphrase_hash(mut self, passphrase_hash: String) -> Self {
+        self.passphrase_hash = Some(passphrase_hash);
+        self
+    }
+
     /// Checks if any restrictions are set
     pub fn is_empty(&self) -> bool {
         let any_ips = self.allowed_ips.as_ref().is_some_and(|v| !v.is_empty());
@@ -599,8 +605,7 @@ mod tests {
 
     #[test]
     fn test_is_empty_with_empty_string_passphrase_hash() {
-        let mut restrictions = SecretRestrictions::default();
-        restrictions.passphrase_hash = Some(String::new());
+        let restrictions = SecretRestrictions::default().with_passphrase_hash(String::new());
         assert!(
             restrictions.is_empty(),
             "Empty string passphrase hash should be considered empty"
@@ -609,8 +614,7 @@ mod tests {
 
     #[test]
     fn test_is_empty_with_whitespace_passphrase_hash() {
-        let mut restrictions = SecretRestrictions::default();
-        restrictions.passphrase_hash = Some("   ".to_string());
+        let restrictions = SecretRestrictions::default().with_passphrase_hash("   ".to_string());
         assert!(
             !restrictions.is_empty(),
             "Whitespace passphrase hash should not be considered empty"

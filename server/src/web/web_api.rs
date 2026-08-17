@@ -1515,8 +1515,8 @@ mod tests {
         let secret_id = Ulid::generate();
         let passphrase_hash = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"; // SHA-256 of "password"
 
-        let mut restrictions = SecretRestrictions::default();
-        restrictions.passphrase_hash = Some(passphrase_hash.to_string());
+        let restrictions =
+            SecretRestrictions::default().with_passphrase_hash(passphrase_hash.to_string());
 
         let mock_store = MockSecretStore::new()
             .with_pop_result(SecretStorePopResult::Found(
@@ -1551,8 +1551,8 @@ mod tests {
         let correct_hash = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"; // SHA-256 of "password"
         let wrong_hash = "ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f"; // SHA-256 of "secret"
 
-        let mut restrictions = SecretRestrictions::default();
-        restrictions.passphrase_hash = Some(correct_hash.to_string());
+        let restrictions =
+            SecretRestrictions::default().with_passphrase_hash(correct_hash.to_string());
 
         let mock_store = MockSecretStore::new()
             .with_pop_result(SecretStorePopResult::Found(
@@ -1583,8 +1583,8 @@ mod tests {
         let secret_id = Ulid::generate();
         let passphrase_hash = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8";
 
-        let mut restrictions = SecretRestrictions::default();
-        restrictions.passphrase_hash = Some(passphrase_hash.to_string());
+        let restrictions =
+            SecretRestrictions::default().with_passphrase_hash(passphrase_hash.to_string());
 
         let mock_store = MockSecretStore::new()
             .with_pop_result(SecretStorePopResult::Found(
@@ -1619,8 +1619,7 @@ mod tests {
         let secret_id = Ulid::generate();
 
         // Empty passphrase hash should be treated as no restriction
-        let mut restrictions = SecretRestrictions::default();
-        restrictions.passphrase_hash = Some("".to_string());
+        let restrictions = SecretRestrictions::default().with_passphrase_hash("".to_string());
 
         let mock_store = MockSecretStore::new()
             .with_pop_result(SecretStorePopResult::Found(
@@ -1658,10 +1657,10 @@ mod tests {
         let secret_id = Ulid::generate();
         let passphrase_hash = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8";
 
-        let mut restrictions = SecretRestrictions::default();
-        restrictions.passphrase_hash = Some(passphrase_hash.to_string());
-        // Add IP restriction too
-        restrictions.allowed_ips = Some(vec!["127.0.0.0/8".must_parse()]);
+        let allowed_ips = vec!["127.0.0.0/8".must_parse()];
+        let restrictions = SecretRestrictions::default()
+            .with_passphrase_hash(passphrase_hash.to_string())
+            .with_allowed_ips(allowed_ips);
 
         let mock_store = MockSecretStore::new()
             .with_pop_result(SecretStorePopResult::Found(
@@ -1709,8 +1708,8 @@ mod tests {
         .await;
 
         let passphrase_hash = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8";
-        let mut restrictions = SecretRestrictions::default();
-        restrictions.passphrase_hash = Some(passphrase_hash.to_string());
+        let restrictions =
+            SecretRestrictions::default().with_passphrase_hash(passphrase_hash.to_string());
 
         let payload =
             PostSecretRequest::new("passphrase_secret".to_string(), Duration::from_secs(3600))
@@ -1755,8 +1754,8 @@ mod tests {
         // Pre-calculated hash for unicode string "パスワード123🔒"
         let unicode_hash = "8c11c547bf7a78f0f6f3e1e67e2b24ef1df0b82e4e3f21e44bb4e8f8e3b5f4a9";
 
-        let mut restrictions = SecretRestrictions::default();
-        restrictions.passphrase_hash = Some(unicode_hash.to_string());
+        let restrictions =
+            SecretRestrictions::default().with_passphrase_hash(unicode_hash.to_string());
 
         let mock_store = MockSecretStore::new()
             .with_pop_result(SecretStorePopResult::Found(
@@ -1795,8 +1794,8 @@ mod tests {
         let lowercase_hash = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"; // "password"
         let uppercase_hash = "E6B87050BDB5543D56C7B06E8C528F73045A0AD81F96AB9B21DF04D9862CB63E"; // "PASSWORD" in uppercase
 
-        let mut restrictions = SecretRestrictions::default();
-        restrictions.passphrase_hash = Some(lowercase_hash.to_string());
+        let restrictions =
+            SecretRestrictions::default().with_passphrase_hash(lowercase_hash.to_string());
 
         let mock_store = MockSecretStore::new()
             .with_pop_result(SecretStorePopResult::Found(
