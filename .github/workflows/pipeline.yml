@@ -103,10 +103,11 @@ jobs:
   trigger-docker:
     if: startsWith(github.ref, 'refs/tags/')
     needs: [tests-passed, build-assets]
-    uses: ./.github/workflows/docker.yml
+    uses: czerwonk/rust-ci/.github/workflows/docker.yml@v1
     secrets: inherit
     with:
-      assets-artifact-name: ${{ needs.build-assets.outputs.artifact-name }}
+      artifact-name: ${{ needs.build-assets.outputs.artifact-name }}
+      artifact-path: server/includes/
 
   trigger-release:
     if: startsWith(github.ref, 'refs/tags/')
