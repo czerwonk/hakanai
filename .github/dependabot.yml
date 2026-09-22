@@ -1,32 +1,38 @@
 version: 2
 updates:
-- package-ecosystem: cargo
-  directory: /
-  schedule:
-    interval: daily
-  groups:
-    cargo-minor-patch:
-      update-types:
-      - minor
-      - patch
-- package-ecosystem: npm
-  directory: /typescript
-  schedule:
-    interval: daily
-  groups:
-    npm-minor-patch:
-      update-types:
-      - minor
-      - patch
-- package-ecosystem: github-actions
-  directory: /
-  schedule:
-    interval: weekly
-  groups:
-    github-actions:
-      patterns:
-      - '*'
-- package-ecosystem: docker
-  directory: /
-  schedule:
-    interval: weekly
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: daily
+    groups:
+      opentelemetry:
+        patterns:
+          - "opentelemetry*"
+      cargo-minor-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: npm
+    directory: /typescript
+    schedule:
+      interval: daily
+    groups:
+      npm-minor-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
