@@ -27,7 +27,7 @@ serde = { version = "1.0.229", features = ["derive"] }
 serde_json = { version = "1.0.151", optional = true }
 serde_with = "3.23.0"
 sha2 = "0.11.0"
-thiserror = "2.0.20"
+thiserror = "2.0.21"
 ulid = { version = "3.0.0", features = ["serde"] }
 url = { version = "2.5.8", optional = true }
 uuid = { version = "1.26.1", features = ["v4"] }
