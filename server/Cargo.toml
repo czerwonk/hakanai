@@ -23,12 +23,12 @@ futures-util = "0.3"
 hakanai-lib = { workspace = true, features = ["minimal"] }
 humantime = "2.4.0"
 ipnet = "2.12.2"
-opentelemetry = "0.32.0"
-opentelemetry-appender-tracing = "0.32.0"
-opentelemetry-instrumentation-actix-web = { version = "0.24.0", features = ["metrics"] }
-opentelemetry-otlp = { version = "0.32.0", features = ["grpc-tonic", "trace", "metrics", "logs"] }
-opentelemetry-resource-detectors = "0.12.0"
-opentelemetry_sdk = { version = "0.32.1", features = ["rt-tokio"] }
+opentelemetry = "0.33.0"
+opentelemetry-appender-tracing = "0.33.0"
+opentelemetry-instrumentation-actix-web = { version = "0.25.0", features = ["metrics"] }
+opentelemetry-otlp = { version = "0.33.0", features = ["grpc-tonic", "trace", "metrics", "logs"] }
+opentelemetry-resource-detectors = "0.13.0"
+opentelemetry_sdk = { version = "0.33.0", features = ["rt-tokio"] }
 rand = "0.10.3"
 redis = { version = "1.7.1", features = ["tokio-comp", "connection-manager"] }
 reqwest = { version = "0.13.5", features = ["json"] }
@@ -39,7 +39,7 @@ thiserror = "2.0.21"
 tokio = { version = "1.53.2", features = ["full"] }
 tracing = "0.1.44"
 tracing-actix-web = "0.7.25"
-tracing-opentelemetry = "0.33.0"
+tracing-opentelemetry = "0.34.0"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 ulid = { version = "3.0.0", features = ["serde"] }
 
