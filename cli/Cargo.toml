@@ -24,7 +24,7 @@ ipnet = { version = "2.12.2", features = ["serde"] }
 qrcode = "0.14"
 reqwest = { version = "0.13.5", features = ["json"] }
 rpassword = "7.5.4"
-tokio = { version = "1.53.1", features = ["full"] }
+tokio = { version = "1.53.2", features = ["full"] }
 url = "2.5.8"
 zeroize = "1.9.0"
 zip = "8.6.0"
