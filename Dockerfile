@@ -1,4 +1,4 @@
-FROM rust:1.99.0-slim-trixie@sha256:a32456165ecc2347c799bba7b54f5aabc158831934b2b98932b81080b312de62 AS builder
+FROM rust:1.99.0-slim-trixie@sha256:2752b332db73fdbb7dc576f06c82ed1f312005784ef913d7e04a28f5f55dc581 AS builder
 RUN apt-get update && apt-get install -y \
   pkg-config \
   libssl-dev && \
