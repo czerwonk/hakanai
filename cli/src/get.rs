@@ -95,7 +95,7 @@ fn extract_archive(filename: String, bytes: &[u8], target_dir: &Path) -> Result<
             continue; // skip directories
         }
 
-        let name = file.name().to_string();
+        let name = file.name()?.to_string();
 
         // extract flat, just use the filename
         let flat_name = PathBuf::from(&name)

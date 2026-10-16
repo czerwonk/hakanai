@@ -14,7 +14,7 @@ categories = ["cryptography", "security"]
 
 [dependencies]
 actix-cors = "0.7.2"
-actix-web = "4.15.0"
+actix-web = "4.17.0"
 anyhow = "1.0.104"
 async-trait = "0.1.92"
 base64 = "0.23.1"
@@ -23,20 +23,20 @@ futures-util = "0.3"
 hakanai-lib = { workspace = true, features = ["minimal"] }
 humantime = "2.4.0"
 ipnet = "2.12.2"
-opentelemetry = "0.33.0"
-opentelemetry-appender-tracing = "0.33.0"
+opentelemetry = "0.33.1"
+opentelemetry-appender-tracing = "0.33.1"
 opentelemetry-instrumentation-actix-web = { version = "0.25.0", features = ["metrics"] }
-opentelemetry-otlp = { version = "0.33.0", features = ["grpc-tonic", "trace", "metrics", "logs"] }
+opentelemetry-otlp = { version = "0.33.1", features = ["grpc-tonic", "trace", "metrics", "logs"] }
 opentelemetry-resource-detectors = "0.13.0"
-opentelemetry_sdk = { version = "0.33.0", features = ["rt-tokio"] }
+opentelemetry_sdk = { version = "0.33.1", features = ["rt-tokio"] }
 rand = "0.10.3"
 redis = { version = "1.7.1", features = ["tokio-comp", "connection-manager"] }
 reqwest = { version = "0.13.5", features = ["json"] }
 serde = { version = "1.0.229", features = ["derive"] }
-serde_json = "1.0.151"
-sha2 = "0.11.0"
+serde_json = "1.0.154"
+sha2 = "0.11.1"
 thiserror = "2.0.21"
-tokio = { version = "1.53.2", features = ["full"] }
+tokio = { version = "1.53.3", features = ["full"] }
 tracing = "0.1.44"
 tracing-actix-web = "0.7.25"
 tracing-opentelemetry = "0.34.0"
@@ -46,8 +46,8 @@ ulid = { version = "3.0.0", features = ["serde"] }
 [build-dependencies]
 anyhow = "1.0.104"
 handlebars = "6.4.4"
-serde_json = "1.0.151"
+serde_json = "1.0.154"
 
 [dev-dependencies]
-serde_json = "1.0.151"
+serde_json = "1.0.154"
 tempfile = "3.27.0"
