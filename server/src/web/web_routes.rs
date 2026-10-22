@@ -22,6 +22,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
         .route("/app-icon-512.png", web::get().to(serve_app_icon_512))
         .route("/app-icon.svg", web::get().to(serve_app_icon))
         .route("/banner.svg", web::get().to(serve_banner))
+        .route("/banner-light.svg", web::get().to(serve_banner_light))
         .route("/common.js", web::get().to(serve_common_js))
         .route("/config.json", web::get().to(serve_config))
         .route("/create", web::get().to(serve_create_secret_html))
@@ -100,6 +101,23 @@ async fn serve_banner(asset_manager: web::Data<AssetManager>) -> impl Responder 
         Ok(content) => serve_with_caching_header(&content, "image/svg+xml", DEFAULT_CACHE_MAX_AGE),
         Err(e) => {
             error!("Failed to load banner asset: {e}");
+            HttpResponse::InternalServerError().body("Internal Server Error")
+        }
+    }
+}
+
+async fn serve_banner_light(asset_manager: web::Data<AssetManager>) -> impl Responder {
+    let asset_res = asset_manager
+        .get_embedded_asset_or_custom(
+            "banner-light.svg",
+            include_bytes!("../../../banner-light.svg"),
+        )
+        .await;
+
+    match asset_res {
+        Ok(content) => serve_with_caching_header(&content, "image/svg+xml", DEFAULT_CACHE_MAX_AGE),
+        Err(e) => {
+            error!("Failed to load light banner asset: {e}");
             HttpResponse::InternalServerError().body("Internal Server Error")
         }
     }
@@ -458,6 +476,36 @@ mod tests {
         assert!(resp.status().is_success());
         let body: serde_json::Value = test::read_body_json(resp).await;
         assert_eq!(body["features"]["impressum"], false);
+    }
+
+    #[actix_web::test]
+    async fn test_serve_banner_light() {
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(AssetManager::new(None)))
+                .route("/banner-light.svg", web::get().to(serve_banner_light)),
+        )
+        .await;
+
+        let req = test::TestRequest::get()
+            .uri("/banner-light.svg")
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+
+        assert!(resp.status().is_success(), "light banner should be served");
+        assert_eq!(
+            resp.headers()
+                .get(header::CONTENT_TYPE)
+                .map(|v| v.as_bytes()),
+            Some(b"image/svg+xml".as_slice()),
+            "light banner should be served as SVG"
+        );
+        let body = test::read_body(resp).await;
+        assert_eq!(
+            body.as_ref(),
+            include_bytes!("../../../banner-light.svg"),
+            "embedded light banner should be served when no custom asset exists"
+        );
     }
 
     #[actix_web::test]
