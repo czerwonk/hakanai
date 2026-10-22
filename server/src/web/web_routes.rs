@@ -45,7 +45,32 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
         .route("/share.js", web::get().to(serve_share_js))
         .route("/share.shortcut", web::get().to(serve_shortcut))
         .route("/style.css", web::get().to(serve_css))
-        .route("/sw.js", web::get().to(serve_service_worker));
+        .route("/sw.js", web::get().to(serve_service_worker))
+        .configure(configure_fonts);
+}
+
+const PLEX_SANS: &[u8] = include_bytes!("../../../fonts/ibm-plex-sans-latin-wght.woff2");
+const PLEX_MONO_400: &[u8] = include_bytes!("../../../fonts/ibm-plex-mono-latin-400.woff2");
+const PLEX_MONO_500: &[u8] = include_bytes!("../../../fonts/ibm-plex-mono-latin-500.woff2");
+
+/// Registers the self-hosted web fonts (IBM Plex, SIL Open Font License).
+fn configure_fonts(cfg: &mut web::ServiceConfig) {
+    cfg.route(
+        "/fonts/ibm-plex-sans-latin-wght.woff2",
+        web::get().to(|| async { serve_font(PLEX_SANS) }),
+    )
+    .route(
+        "/fonts/ibm-plex-mono-latin-400.woff2",
+        web::get().to(|| async { serve_font(PLEX_MONO_400) }),
+    )
+    .route(
+        "/fonts/ibm-plex-mono-latin-500.woff2",
+        web::get().to(|| async { serve_font(PLEX_MONO_500) }),
+    );
+}
+
+fn serve_font(content: &[u8]) -> HttpResponse {
+    serve_with_caching_header(content, "font/woff2", DEFAULT_CACHE_MAX_AGE)
 }
 
 fn serve_with_caching_header(content: &[u8], content_type: &str, max_age: u64) -> HttpResponse {
@@ -476,6 +501,46 @@ mod tests {
         assert!(resp.status().is_success());
         let body: serde_json::Value = test::read_body_json(resp).await;
         assert_eq!(body["features"]["impressum"], false);
+    }
+
+    #[actix_web::test]
+    async fn test_serve_fonts() {
+        let app = test::init_service(App::new().configure(configure_fonts)).await;
+
+        let fonts: [(&str, &[u8]); 3] = [
+            (
+                "/fonts/ibm-plex-sans-latin-wght.woff2",
+                include_bytes!("../../../fonts/ibm-plex-sans-latin-wght.woff2"),
+            ),
+            (
+                "/fonts/ibm-plex-mono-latin-400.woff2",
+                include_bytes!("../../../fonts/ibm-plex-mono-latin-400.woff2"),
+            ),
+            (
+                "/fonts/ibm-plex-mono-latin-500.woff2",
+                include_bytes!("../../../fonts/ibm-plex-mono-latin-500.woff2"),
+            ),
+        ];
+
+        for (uri, expected) in fonts {
+            let req = test::TestRequest::get().uri(uri).to_request();
+            let resp = test::call_service(&app, req).await;
+
+            assert!(resp.status().is_success(), "{uri} should be served");
+            assert_eq!(
+                resp.headers()
+                    .get(header::CONTENT_TYPE)
+                    .map(|v| v.as_bytes()),
+                Some(b"font/woff2".as_slice()),
+                "{uri} should be served as font/woff2"
+            );
+            let body = test::read_body(resp).await;
+            assert_eq!(
+                body.as_ref(),
+                expected,
+                "{uri} should serve the embedded font"
+            );
+        }
     }
 
     #[actix_web::test]

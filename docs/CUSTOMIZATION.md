@@ -123,8 +123,8 @@ The default theme ("sumi & washi") uses colors from the [Kanagawa](https://githu
 
   /* Light mode: same names with the --light- prefix */
   --light-primary: #2d4f67;
-  --light-bg-main: #8899a5;
-  --light-bg-container: #b8c3cb;
+  --light-bg-main: #e3e6ea;
+  --light-bg-container: #fbfbfc;
   --light-button-bg: #2d4f67;
   /* ... */
 
@@ -141,6 +141,24 @@ The default theme ("sumi & washi") uses colors from the [Kanagawa](https://githu
   --border-radius-lg: 0.875rem;
 }
 ```
+
+## Fonts
+
+The web interface ships self-hosted [IBM Plex](https://github.com/IBM/plex) fonts (Latin subset, SIL Open Font License, see `fonts/OFL.txt`). They are embedded in the server binary and served from `/fonts/`, so no external font service is contacted:
+
+- **IBM Plex Sans** (variable) for the interface
+- **IBM Plex Mono** (regular and medium) for secrets, URLs and keys
+
+To use your own fonts or the visitor's system fonts instead, override the font variables in your custom `style.css`:
+
+```css
+:root {
+  --font-system: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "SF Mono", "Monaco", "Inconsolata", "Fira Code", monospace;
+}
+```
+
+Custom web fonts must be served from the same origin, because the Content Security Policy only allows `font-src 'self'`.
 
 ## Security Notes
 

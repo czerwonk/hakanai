@@ -4,6 +4,31 @@
  * echoing the banner. All colors are taken from the Kanagawa palette
  * (wave/dragon for dark, lotus for light).
  */
+/* Self-hosted IBM Plex (SIL Open Font License, see fonts/OFL.txt), Latin subset */
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 100 700;
+  font-display: swap;
+  src: url("/fonts/ibm-plex-sans-latin-wght.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/ibm-plex-mono-latin-400.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 500 700;
+  font-display: swap;
+  src: url("/fonts/ibm-plex-mono-latin-500.woff2") format("woff2");
+}
+
 :root {
   /* Theme Palette - Dark (Kanagawa wave: sumi ink) */
   --dark-primary: #7fb4ca; /* springBlue */
@@ -30,18 +55,18 @@
   --dark-glow-1: #223249; /* waveBlue1 */
   --dark-glow-2: #43242b; /* winterRed */
 
-  /* Theme Palette - Light (Kanagawa lotus: ink wash on grey paper, mirrors the dark theme) */
+  /* Theme Palette - Light (GitHub-like structure with Kanagawa ink: sumiInk text, lotusViolet3 borders) */
   --light-primary: #2d4f67; /* waveBlue2 */
   --light-primary-hover: #223249; /* waveBlue1 */
-  --light-bg-main: #8899a5;
-  --light-bg-container: #b8c3cb;
-  --light-bg-input: #d0d7dc;
-  --light-bg-hover: #acb8c0;
-  --light-text: #223249; /* waveBlue1 */
+  --light-bg-main: #e3e6ea; /* lotusViolet3, lightened */
+  --light-bg-container: #fbfbfc; /* lotusViolet3, lightened */
+  --light-bg-input: #ffffff;
+  --light-bg-hover: #e3e6ea;
+  --light-text: #1f1f28; /* sumiInk3 */
   --light-text-secondary: #2d4f67; /* waveBlue2 */
-  --light-text-muted: #3f4f5a; /* lotusTeal3, darkened */
-  --light-border: #8e9da8;
-  --light-border-strong: #718797;
+  --light-text-muted: #545464; /* lotusInk1 */
+  --light-border: #c9cbd1; /* lotusViolet3 */
+  --light-border-strong: #a09cac; /* lotusViolet1 */
   --light-error: #c84053; /* lotusRed */
   --light-error-light: #d7474b; /* lotusRed2 */
   --light-warning: #cc6d00; /* lotusOrange */
@@ -68,10 +93,10 @@
   --light-error-bg: color-mix(in srgb, var(--light-error) 7%, transparent);
   --light-success-bg: color-mix(in srgb, var(--light-success) 7%, transparent);
   --light-button-bg-hover: color-mix(in srgb, var(--light-button-bg) 85%, #4e8ca2);
-  --light-button-shadow: color-mix(in srgb, #223249 18%, transparent);
-  --light-container-shadow: color-mix(in srgb, #223249 25%, transparent);
+  --light-button-shadow: color-mix(in srgb, #1f1f28 12%, transparent);
+  --light-container-shadow: color-mix(in srgb, #1f1f28 10%, transparent);
   --light-accent-bg: color-mix(in srgb, var(--light-accent) 6%, transparent);
-  --light-glow-1-strength: 45%;
+  --light-glow-1-strength: 0%;
   --light-glow-2-strength: 0%;
 
   /* Theme pointers - default to dark */
@@ -115,8 +140,8 @@
   --spacing-xl: 2rem;
 
   /* Typography */
-  --font-system: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-mono: "SF Mono", "Monaco", "Inconsolata", "Fira Code", monospace;
+  --font-system: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "IBM Plex Mono", "SF Mono", "Monaco", "Inconsolata", "Fira Code", monospace;
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
   --font-size-base: 1rem;
@@ -218,6 +243,14 @@ body[data-theme="light"] {
 
 * {
   box-sizing: border-box;
+}
+
+/* Form controls don't inherit the page font by default */
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
 }
 
 /* Base Button Styles */
@@ -366,6 +399,17 @@ body::before {
   animation: gentle-float 60s ease-in-out infinite;
   z-index: -1;
   pointer-events: none;
+}
+
+/* On near-white surfaces the mist reads as smudges, so light mode stays plain */
+body[data-theme="light"]::before {
+  display: none;
+}
+
+@media (prefers-color-scheme: light) {
+  body:not([data-theme])::before {
+    display: none;
+  }
 }
 
 @keyframes gentle-float {
@@ -655,15 +699,13 @@ body.expanded-view {
   font-size: 1.0625rem;
   background: color-mix(in srgb, var(--button-bg) 82%, var(--theme-highlight));
   border-color: color-mix(in srgb, var(--theme-highlight) 45%, transparent);
-  box-shadow: 0 4px 16px -6px color-mix(in srgb, var(--theme-highlight) 35%, transparent);
+  box-shadow: 0 1px 3px var(--button-shadow);
 }
 
 .action-card .btn:hover:not(.copied):not(.copy-failed) {
   background: color-mix(in srgb, var(--button-bg) 70%, var(--theme-highlight));
   border-color: var(--theme-highlight);
-  box-shadow:
-    0 0 0 3px color-mix(in srgb, var(--theme-highlight) 15%, transparent),
-    0 8px 24px -8px color-mix(in srgb, var(--theme-highlight) 45%, transparent);
+  box-shadow: 0 2px 6px var(--button-shadow);
 }
 
 .action-card .btn.secondary {
@@ -863,18 +905,18 @@ label {
   display: block;
   margin-bottom: var(--spacing-xs);
   color: var(--color-text);
-  font-weight: 500;
+  font-weight: 450;
   font-size: var(--font-size-sm);
   transition: color var(--transition-fast);
-  padding-left: var(--spacing-xs);
   letter-spacing: 0.02em;
   position: relative;
 }
 
+/* Hover accent sits in the gutter left of the label so text stays aligned */
 label::before {
   content: "";
   position: absolute;
-  left: 0;
+  left: calc(-1 * var(--spacing-sm));
   top: 50%;
   transform: translateY(-50%);
   width: 2px;
@@ -908,7 +950,6 @@ input::placeholder,
 textarea::placeholder {
   color: var(--color-text-muted);
   opacity: 0.6;
-  font-style: italic;
 }
 
 input[type="text"],
@@ -1092,15 +1133,20 @@ button.loading::after {
   }
 }
 
+/* Success results sit directly on the card; only errors get a frame */
 .result.success {
-  background: var(--color-success-bg);
-  border: 1px solid color-mix(in srgb, var(--theme-success) 45%, transparent);
   color: var(--color-text);
 }
 
 .result.success h3 {
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.result.success h3::before {
+  content: "✓";
   color: var(--color-success);
-  font-weight: 400;
+  margin-right: var(--spacing-xs);
 }
 
 .result.error {
@@ -1112,7 +1158,12 @@ button.loading::after {
 
 .result.error h3 {
   color: var(--color-error);
-  font-weight: 400;
+  font-weight: 500;
+}
+
+.result.error h3::before {
+  content: "✕";
+  margin-right: var(--spacing-xs);
 }
 .result.error:focus-visible {
   outline: 2px solid var(--color-error);
@@ -1197,6 +1248,12 @@ button.loading::after {
 .preview-btn,
 .secondary-btn {
   font-size: var(--font-size-sm);
+}
+
+.button-group .btn {
+  min-height: 2.5rem;
+  padding: 0.5rem 1.25rem;
+  font-size: 0.9375rem;
 }
 .secondary-btn:hover {
   background: var(--color-bg-hover);
@@ -1495,6 +1552,8 @@ button.loading::after {
   /* Expand buttons to fill width for better tap targets on mobile */
   .button-group .btn {
     flex: 1 1 auto;
+    min-height: 3rem;
+    font-size: 16px;
   }
 }
 
@@ -1575,7 +1634,7 @@ button.loading::after {
 
 /* Success result layout improvements */
 .result.success {
-  padding: var(--spacing-xl);
+  padding: 0;
 }
 .result.success h3 {
   margin-bottom: var(--spacing-lg);
@@ -1659,7 +1718,6 @@ button.loading::after {
   font-size: 0.8125rem;
   color: var(--color-text-muted);
   line-height: 1.45;
-  padding-left: var(--spacing-xs);
   opacity: 0.85;
   transition: opacity var(--transition-fast);
   white-space: pre-line;
@@ -1784,11 +1842,11 @@ fieldset {
 
 legend {
   color: var(--color-text);
-  font-weight: 500;
+  font-weight: 450;
   font-size: var(--font-size-sm);
   letter-spacing: 0.02em;
   margin-bottom: var(--spacing-xs);
-  padding: 0 0 0 var(--spacing-xs);
+  padding: 0;
 }
 
 .radio-group {
