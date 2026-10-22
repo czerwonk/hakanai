@@ -2,7 +2,7 @@
 
 [package]
 name = "hakanai-lib"
-version = "3.0.12"
+version = "3.0.13"
 edition = "2024"
 license = "Apache-2.0"
 description = "Client library for Hakanai, a secure secret sharing service."
@@ -35,7 +35,7 @@ zeroize = { version = "1.9.1", optional = true }
 
 [dev-dependencies]
 mockito = "1.7.2"
-tokio = { version = "1.53.3", features = ["rt-multi-thread", "macros"] }
+tokio = { version = "1.54.1", features = ["rt-multi-thread", "macros"] }
 
 [features]
 default = ["reqwest", "serde_json", "url", "bytes", "async-stream", "zeroize"]
