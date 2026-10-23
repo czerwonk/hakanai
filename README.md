@@ -1,6 +1,6 @@
 # Hakanai (はかない)
 
-![Banner](banner.svg)
+![Banner](banner-light.svg)
 
 A minimalist one-time secret sharing service built on zero-knowledge principles.
 
