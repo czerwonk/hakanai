@@ -19,8 +19,8 @@ if (!Date.now) {
   };
 }
 
-// Setup Web Crypto API with real implementation
-const { Crypto } = require("@peculiar/webcrypto");
+// Setup Web Crypto API with Node's built-in implementation
+const { webcrypto } = require("node:crypto");
 const { TextEncoder, TextDecoder } = require("util");
 
 // Setup ReadableStream polyfill for Node.js tests
@@ -41,23 +41,29 @@ if (!global.ReadableStream) {
   }
 }
 
-// Create crypto instance
-const cryptoInstance = new Crypto();
+// Node's SubtleCrypto returns ArrayBuffers from Node's realm, which fail
+// `instanceof ArrayBuffer` checks inside the jsdom realm (e.g. in msgpack).
+// Copy results into realm-local buffers so tests behave like a browser.
+const toRealmArrayBuffer = (value) =>
+  value instanceof ArrayBuffer || Object.prototype.toString.call(value) !== "[object ArrayBuffer]"
+    ? value
+    : new Uint8Array(value).slice().buffer;
 
-// Add randomUUID if not present (for older @peculiar/webcrypto versions)
-if (!cryptoInstance.randomUUID) {
-  cryptoInstance.randomUUID = () => {
-    // Generate a valid UUID v4
-    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
-      /[xy]/g,
-      function (c) {
-        const r = (Math.random() * 16) | 0;
-        const v = c === "x" ? r : (r & 0x3) | 0x8;
-        return v.toString(16);
-      },
-    );
-  };
-}
+const subtle = new Proxy(webcrypto.subtle, {
+  get(target, prop) {
+    const member = Reflect.get(target, prop, target);
+    if (typeof member !== "function") {
+      return member;
+    }
+    return async (...args) => toRealmArrayBuffer(await member.apply(target, args));
+  },
+});
+
+const cryptoInstance = {
+  getRandomValues: (array) => webcrypto.getRandomValues(array),
+  randomUUID: () => webcrypto.randomUUID(),
+  subtle,
+};
 
 // Setup globals for browser environment
 global.crypto = cryptoInstance;
