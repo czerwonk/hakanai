@@ -74,11 +74,7 @@ fn discover_and_generate_templates(
 
 fn should_process_template(path: &std::path::Path) -> Result<bool> {
     // Skip partials and docs directories, and non-HTML files
-    if !path.is_file() || !path.extension().map(|ext| ext == "html").unwrap_or(false) {
-        return Ok(false);
-    }
-
-    Ok(true)
+    Ok(!(!path.is_file() || !path.extension().map(|ext| ext == "html").unwrap_or(false)))
 }
 
 fn get_template_name(path: &std::path::Path) -> Result<String> {
