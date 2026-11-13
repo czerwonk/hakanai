@@ -1339,7 +1339,6 @@ dependencies = [
  "opentelemetry-appender-tracing",
  "opentelemetry-instrumentation-actix-web",
  "opentelemetry-otlp",
- "opentelemetry-resource-detectors",
  "opentelemetry_sdk",
  "rand 0.10.3",
  "redis",
@@ -1351,7 +1350,6 @@ dependencies = [
  "thiserror",
  "tokio",
  "tracing",
- "tracing-actix-web",
  "tracing-opentelemetry",
  "tracing-subscriber",
  "ulid",
@@ -2078,12 +2076,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "743fb55ba31b18fb1ecef6bdc9aa2743314978ac084044301a7eee33fb99a20d"
 
 [[package]]
-name = "mutually_exclusive_features"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e94e1e6445d314f972ff7395df2de295fe51b71821694f0b0e1e79c4f12c8577"
-
-[[package]]
 name = "nix"
 version = "0.31.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2265,17 +2257,6 @@ dependencies = [
  "prost",
  "tonic",
  "tonic-prost",
-]
-
-[[package]]
-name = "opentelemetry-resource-detectors"
-version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "60ac54422fb2a7ed2e0325b5650bedff0b6e777e33dbbac7b49572d92d689a56"
-dependencies = [
- "opentelemetry",
- "opentelemetry-semantic-conventions",
- "opentelemetry_sdk",
 ]
 
 [[package]]
@@ -3615,19 +3596,6 @@ dependencies = [
  "pin-project-lite",
  "tracing-attributes",
  "tracing-core",
-]
-
-[[package]]
-name = "tracing-actix-web"
-version = "0.7.26"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "57452ae2b79737a7f0c32ec1d430aaf7ed068c53284f6a63adf0e0855ac17f79"
-dependencies = [
- "actix-web",
- "mutually_exclusive_features",
- "pin-project-lite",
- "tracing",
- "uuid",
 ]
 
 [[package]]
