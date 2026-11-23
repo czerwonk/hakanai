@@ -9,114 +9,47 @@ on:
     branches: ["main"]
 
 jobs:
-  # Build TypeScript and WASM assets once for entire pipeline
-  build-assets:
-    runs-on: ubuntu-latest
-    outputs:
-      artifact-name: ${{ steps.set-artifact-name.outputs.name }}
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Set artifact name
-        id: set-artifact-name
-        run: echo "name=compiled-assets-${{ github.run_id }}" >> $GITHUB_OUTPUT
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: "26"
-          cache: "npm"
-          cache-dependency-path: typescript/package-lock.json
-
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y lld
-
-      - name: Install wasm-pack
-        uses: jetli/wasm-pack-action@v0.4.0
-        with:
-          version: "v0.14.0"
-
-      - name: Add wasm32 target
-        run: rustup target add wasm32-unknown-unknown
-
-      - name: Install npm dependencies
-        run: npm install --prefix typescript
-
-      - name: Build TypeScript and WASM using Makefile
-        run: make build-ts
-
-      - name: Upload compiled assets
-        uses: actions/upload-artifact@v7
-        with:
-          name: ${{ steps.set-artifact-name.outputs.name }}
-          path: |
-            server/includes/*.js
-            server/includes/*.wasm
-            server/includes/*.min.css
-          retention-days: 1
-
-  # Shared clippy + cargo test, with the pre-built assets injected
-  ci:
-    needs: build-assets
-    uses: czerwonk/rust-ci/.github/workflows/ci.yml@v1
+  # Build TypeScript and WASM assets once for the entire pipeline, then run the TypeScript tests
+  assets:
+    uses: czerwonk/rust-ci/.github/workflows/assets.yml@v2
     with:
-      artifact-name: ${{ needs.build-assets.outputs.artifact-name }}
+      node-version: "26"
+      package-dir: typescript
+      wasm: true
+      wasm-pack-version: "v0.14.0"
+      build-command: make build-ts
+      artifact-path: server/includes/
+      artifact-files: |
+        server/includes/*.js
+        server/includes/*.wasm
+        server/includes/*.min.css
+      test-command: cd typescript/tests && npm test
+
+  ci:
+    needs: assets
+    uses: czerwonk/rust-ci/.github/workflows/ci.yml@v2
+    with:
+      artifact-name: ${{ needs.assets.outputs.artifact-name }}
       artifact-path: server/includes/
       env: '{"SKIP_ASSET_BUILD": "1"}'
 
-  # Run TypeScript tests in parallel
-  typescript-test:
-    needs: build-assets
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Download pre-compiled assets
-        uses: actions/download-artifact@v8
-        with:
-          name: ${{ needs.build-assets.outputs.artifact-name }}
-          path: server/includes/
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: "26"
-          cache: "npm"
-          cache-dependency-path: typescript/package-lock.json
-
-      - name: Install npm dependencies
-        run: npm install --prefix typescript
-
-      - name: Run TypeScript tests
-        run: cd typescript/tests && npm test
-
-  # Gate job to ensure all tests pass
-  tests-passed:
-    needs: [ci, typescript-test]
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "All tests passed!"
-
-  # Trigger release workflows for tags
-  trigger-docker:
+  docker:
     if: startsWith(github.ref, 'refs/tags/')
-    needs: [tests-passed, build-assets]
-    uses: czerwonk/rust-ci/.github/workflows/docker.yml@v1
+    needs: [assets, ci]
+    uses: czerwonk/rust-ci/.github/workflows/docker.yml@v2
     secrets: inherit
     with:
-      artifact-name: ${{ needs.build-assets.outputs.artifact-name }}
+      artifact-name: ${{ needs.assets.outputs.artifact-name }}
       artifact-path: server/includes/
 
-  trigger-release:
+  release:
     if: startsWith(github.ref, 'refs/tags/')
-    needs: [tests-passed, build-assets]
-    uses: czerwonk/rust-ci/.github/workflows/release.yml@v1
+    needs: [assets, ci]
+    uses: czerwonk/rust-ci/.github/workflows/release.yml@v2
     secrets: inherit
     with:
       bin-name: hakanai
-      artifact-name: ${{ needs.build-assets.outputs.artifact-name }}
+      artifact-name: ${{ needs.assets.outputs.artifact-name }}
       artifact-path: server/includes/
       env: '{"SKIP_ASSET_BUILD": "1"}'
       matrix: |
@@ -126,10 +59,10 @@ jobs:
           {"release_for": "Linux-x86_64", "os": "ubuntu-latest", "target": "x86_64-unknown-linux-gnu"}
         ]
 
-  trigger-publish:
+  publish:
     if: startsWith(github.ref, 'refs/tags/')
-    needs: [tests-passed]
-    uses: czerwonk/rust-ci/.github/workflows/publish.yml@v1
+    needs: [assets, ci]
+    uses: czerwonk/rust-ci/.github/workflows/publish.yml@v2
     secrets: inherit
     with:
       packages: '["hakanai-lib", "hakanai"]'

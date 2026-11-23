@@ -10,7 +10,7 @@ on:
 
 jobs:
   release:
-    uses: czerwonk/rust-ci/.github/workflows/helm-release.yml@v1
+    uses: czerwonk/rust-ci/.github/workflows/helm-release.yml@v2
     secrets: inherit
     with:
       chart-path: helm/hakanai
