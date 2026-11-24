@@ -8,7 +8,7 @@ COPY . .
 ENV SKIP_ASSET_BUILD=1
 RUN cargo build --release --package hakanai-server
 
-FROM gcr.io/distroless/cc-debian13@sha256:809d04afa1be033c441f76bb0051878c342fb76d0ea236bc6dc94b655fa0fbd6
+FROM gcr.io/distroless/cc-debian13@sha256:dac90a25ffe03ebaace90cda886b081e61ab6cd77ac47eda51f7bcc15c320765
 COPY --from=builder /src/target/release/hakanai-server /app/hakanai-server
 ADD ./server/custom /custom
 ENV HAKANAI_CUSTOM_ASSETS_DIR=/custom
