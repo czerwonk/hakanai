@@ -17,20 +17,20 @@ aes-gcm = "0.11.1"
 async-stream = { version = "0.3.6", optional = true }
 async-trait = "0.1.92"
 base64 = "0.23.1"
-bytes = { version = "1.12.1", optional = true }
+bytes = { version = "1.12.2", optional = true }
 ipnet = { version = "2.12.2", features = ["serde"] }
-rand = "0.10.3"
+rand = "0.10.4"
 reqwest = { version = "0.13.5", optional = true, features = ["json", "stream"] }
 rmp-serde = "1.3.1"
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = { version = "1.0.154", optional = true }
-serde_with = "3.24.0"
+serde_with = "3.25.0"
 sha2 = "0.11.1"
 thiserror = "2.0.21"
 ulid = { version = "3.0.0", features = ["serde"] }
-url = { version = "2.5.8", optional = true }
-uuid = { version = "1.29.2", features = ["v4"] }
-zeroize = { version = "1.9.1", optional = true }
+url = { version = "2.5.9", optional = true }
+uuid = { version = "1.29.3", features = ["v4"] }
+zeroize = { version = "1.9.2", optional = true }
 
 [dev-dependencies]
 mockito = "1.7.2"

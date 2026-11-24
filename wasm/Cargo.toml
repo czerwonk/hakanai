@@ -13,4 +13,4 @@ crate-type = ["cdylib"]
 
 [dependencies]
 wasm-bindgen = "0.2"
-qrcode = "0.14"
+qrcode = "0.15"
