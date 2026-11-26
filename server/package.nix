@@ -2,7 +2,8 @@
   lib,
   rustPlatform,
   pkg-config,
-  openssl,
+  aws-lc,
+  zstd,
   darwin,
   stdenv,
   typescript,
@@ -41,7 +42,8 @@ rustPlatform.buildRustPackage {
   ];
 
   buildInputs = [
-    openssl
+    aws-lc
+    zstd
   ]
   ++ lib.optionals stdenv.isDarwin [
     darwin.apple_sdk.frameworks.Security

@@ -2,7 +2,8 @@
   lib,
   rustPlatform,
   pkg-config,
-  openssl,
+  aws-lc,
+  zstd,
   darwin,
   stdenv,
   cacert,
@@ -42,7 +43,8 @@ rustPlatform.buildRustPackage {
   SSL_CERT_FILE = "${cacert}/etc/ssl/certs/ca-bundle.crt";
 
   buildInputs = [
-    openssl
+    aws-lc
+    zstd
   ]
   ++ lib.optionals stdenv.isDarwin [
     darwin.apple_sdk.frameworks.Security
